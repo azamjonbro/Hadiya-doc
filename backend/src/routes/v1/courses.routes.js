@@ -5,6 +5,8 @@ import { requirePermission } from '../../middlewares/rbac.middleware.js'
 import { validateBody, validateQuery } from '../../middlewares/validate.middleware.js'
 import { courseController } from '../../controllers/course.controller.js'
 import { courseAssignmentController } from '../../controllers/courseAssignment.controller.js'
+import { courseReviewController } from '../../controllers/courseReview.controller.js'
+import { courseQuestionController } from '../../controllers/courseQuestion.controller.js'
 import {
   createCourseSchema,
   updateCourseSchema,
@@ -12,6 +14,12 @@ import {
   createTopicSchema,
   createAssignmentSchema,
 } from '../../validators/course.validator.js'
+import { upsertReviewSchema, listReviewsQuerySchema } from '../../validators/courseReview.validator.js'
+import {
+  createQuestionSchema,
+  createAnswerSchema,
+  listQuestionsQuerySchema,
+} from '../../validators/courseQuestion.validator.js'
 
 export const coursesRouter = Router()
 
@@ -57,3 +65,41 @@ coursesRouter.post(
   validateBody(createAssignmentSchema),
   courseAssignmentController.assign
 )
+
+// Reviews and Q&A: gated on course:read only (every employee has it) plus
+// the course actually being visible to them — not the master spec, added
+// on explicit request. Anyone who can see the course can review/ask/
+// answer; deleting is limited to the author or course:update holders.
+coursesRouter.get(
+  '/:id/reviews',
+  requirePermission(PERMISSIONS.COURSE_READ),
+  validateQuery(listReviewsQuerySchema),
+  courseReviewController.list
+)
+coursesRouter.put(
+  '/:id/reviews',
+  requirePermission(PERMISSIONS.COURSE_READ),
+  validateBody(upsertReviewSchema),
+  courseReviewController.upsert
+)
+coursesRouter.delete('/:id/reviews/:reviewId', requirePermission(PERMISSIONS.COURSE_READ), courseReviewController.remove)
+
+coursesRouter.get(
+  '/:id/questions',
+  requirePermission(PERMISSIONS.COURSE_READ),
+  validateQuery(listQuestionsQuerySchema),
+  courseQuestionController.list
+)
+coursesRouter.post(
+  '/:id/questions',
+  requirePermission(PERMISSIONS.COURSE_READ),
+  validateBody(createQuestionSchema),
+  courseQuestionController.create
+)
+coursesRouter.post(
+  '/:id/questions/:questionId/answers',
+  requirePermission(PERMISSIONS.COURSE_READ),
+  validateBody(createAnswerSchema),
+  courseQuestionController.answer
+)
+coursesRouter.delete('/:id/questions/:questionId', requirePermission(PERMISSIONS.COURSE_READ), courseQuestionController.remove)
