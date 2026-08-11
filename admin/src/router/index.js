@@ -9,6 +9,8 @@ import UsersListView from '@/views/UsersListView.vue'
 import UserDetailView from '@/views/UserDetailView.vue'
 import CoursesListView from '@/views/CoursesListView.vue'
 import CourseDetailView from '@/views/CourseDetailView.vue'
+import NewsListView from '@/views/NewsListView.vue'
+import NewsDetailView from '@/views/NewsDetailView.vue'
 
 export const router = createRouter({
   history: createWebHistory(),
@@ -40,6 +42,18 @@ export const router = createRouter({
       name: 'course-detail',
       component: CourseDetailView,
       meta: { permission: 'course:read' },
+    },
+    {
+      path: '/admin/news',
+      name: 'news-list',
+      component: NewsListView,
+      meta: { permission: 'news:read' },
+    },
+    {
+      path: '/admin/news/:id',
+      name: 'news-detail',
+      component: NewsDetailView,
+      meta: { permission: 'news:read' },
     },
     { path: '/:pathMatch(.*)*', name: 'not-found', component: NotFoundView, meta: { public: true } },
   ],

@@ -149,5 +149,19 @@
     "completed": "Completed",
     "yes": "YES",
     "no": "NO"
+  },
+  "news": {
+    "title": "News",
+    "newArticle": "+ New article",
+    "empty": "No news found",
+    "delete": "Delete",
+    "fields": {
+      "title": "Title",
+      "content": "Content",
+      "tags": "Tags (comma-separated)",
+      "departmentTargets": "Departments (comma-separated, empty = everyone)",
+      "roleTargets": "Roles (comma-separated, empty = everyone)",
+      "expiryAt": "Expiry date"
+    }
   }
 }

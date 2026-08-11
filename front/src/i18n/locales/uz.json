@@ -65,5 +65,9 @@
       "READY": "Tayyor",
       "FAILED": "Videoni qayta ishlashda xatolik yuz berdi"
     }
+  },
+  "news": {
+    "title": "Yangiliklar",
+    "empty": "Yangiliklar topilmadi"
   }
 }

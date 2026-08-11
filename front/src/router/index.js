@@ -8,6 +8,8 @@ import NotFoundView from '@/views/NotFoundView.vue'
 import CoursesView from '@/views/CoursesView.vue'
 import CourseDetailView from '@/views/CourseDetailView.vue'
 import VideoPlayerView from '@/views/VideoPlayerView.vue'
+import NewsView from '@/views/NewsView.vue'
+import NewsDetailView from '@/views/NewsDetailView.vue'
 
 export const router = createRouter({
   history: createWebHistory(),
@@ -19,6 +21,8 @@ export const router = createRouter({
     { path: '/courses', name: 'courses-list', component: CoursesView },
     { path: '/courses/:id', name: 'course-detail', component: CourseDetailView },
     { path: '/videos/:id', name: 'video-detail', component: VideoPlayerView },
+    { path: '/news', name: 'news-list', component: NewsView },
+    { path: '/news/:id', name: 'news-detail', component: NewsDetailView },
     { path: '/:pathMatch(.*)*', name: 'not-found', component: NotFoundView, meta: { public: true } },
   ],
 })

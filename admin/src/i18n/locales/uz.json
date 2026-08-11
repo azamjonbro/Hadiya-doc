@@ -149,5 +149,19 @@
     "completed": "Tugallangan",
     "yes": "HA",
     "no": "YO'Q"
+  },
+  "news": {
+    "title": "Yangiliklar",
+    "newArticle": "+ Yangi maqola",
+    "empty": "Yangiliklar topilmadi",
+    "delete": "O'chirish",
+    "fields": {
+      "title": "Sarlavha",
+      "content": "Matn",
+      "tags": "Teglar (vergul bilan)",
+      "departmentTargets": "Bo'limlar (vergul bilan, bo'sh = hammaga)",
+      "roleTargets": "Rollar (vergul bilan, bo'sh = hammaga)",
+      "expiryAt": "Amal qilish muddati"
+    }
   }
 }

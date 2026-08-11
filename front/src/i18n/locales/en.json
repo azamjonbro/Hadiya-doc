@@ -65,5 +65,9 @@
       "READY": "Ready",
       "FAILED": "Video processing failed"
     }
+  },
+  "news": {
+    "title": "News",
+    "empty": "No news found"
   }
 }

@@ -38,6 +38,13 @@ async function onLogout() {
           {{ t('courses.title') }}
         </router-link>
         <router-link
+          v-if="auth.hasPermission('news:read')"
+          to="/admin/news"
+          class="rounded-md border border-slate-300 px-3 py-1 text-sm dark:border-slate-700"
+        >
+          {{ t('news.title') }}
+        </router-link>
+        <router-link
           v-if="auth.hasPermission('user:read')"
           to="/admin/users"
           class="rounded-md border border-slate-300 px-3 py-1 text-sm dark:border-slate-700"
