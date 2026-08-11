@@ -4,22 +4,7 @@ import { courseRepository } from '../../repositories/course.repository.js'
 import { userRepository } from '../../repositories/user.repository.js'
 import { auditLogRepository } from '../../repositories/auditLog.repository.js'
 import { ApiError } from '../../utils/ApiError.js'
-
-// Server-computed access flags — never trust a client-sent "is this
-// accessible" claim, and never let the video-access layer (Phase 7) derive
-// authorization from anything but this same computation.
-function computeAccessFlags(assignment) {
-  const now = new Date()
-  const isExpired = Boolean(
-    assignment.status === 'ACTIVE' && assignment.expiresAt && now > assignment.expiresAt
-  )
-  const isOverdue = Boolean(
-    assignment.status === 'ACTIVE' && !isExpired && assignment.deadline && now > assignment.deadline
-  )
-  const notStartedYet = Boolean(assignment.startAt && now < assignment.startAt)
-  const accessible = assignment.status === 'ACTIVE' && !isExpired && !notStartedYet
-  return { isExpired, isOverdue, accessible }
-}
+import { computeAccessFlags } from './courseAssignmentAccess.js'
 
 function toPublicAssignment(assignment) {
   return {
