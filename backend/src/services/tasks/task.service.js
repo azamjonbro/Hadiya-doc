@@ -3,6 +3,7 @@ import { taskRepository } from '../../repositories/task.repository.js'
 import { userRepository } from '../../repositories/user.repository.js'
 import { auditLogRepository } from '../../repositories/auditLog.repository.js'
 import { ApiError } from '../../utils/ApiError.js'
+import { notificationService } from '../notifications/notification.service.js'
 
 function toPublicTask(task) {
   const now = new Date()
@@ -77,6 +78,16 @@ export const taskService = {
       entityId: task._id.toString(),
       metadata: { assignedTo: payload.assignedTo, title: task.title },
     })
+
+    await notificationService.notify({
+      userId: payload.assignedTo,
+      type: 'TASK_ASSIGNED',
+      title: `Task assigned: ${task.title}`,
+      message: task.deadline ? `Deadline: ${new Date(task.deadline).toLocaleDateString()}` : '',
+      relatedEntityType: 'Task',
+      relatedEntityId: task._id.toString(),
+    })
+
     return toPublicTask(task)
   },
 

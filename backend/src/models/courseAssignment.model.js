@@ -11,6 +11,10 @@ const courseAssignmentSchema = new Schema(
     deadline: { type: Date, default: null },
     expiresAt: { type: Date, default: null },
     status: { type: String, enum: ['ACTIVE', 'COMPLETED', 'CANCELLED'], default: 'ACTIVE' },
+    // Dedup markers for the scheduled reminder job — set once so the same
+    // assignment never generates the same reminder twice.
+    deadlineReminderSentAt: { type: Date, default: null },
+    expiryReminderSentAt: { type: Date, default: null },
   },
   { timestamps: true }
 )

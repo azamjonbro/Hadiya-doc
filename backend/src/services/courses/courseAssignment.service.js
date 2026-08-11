@@ -5,6 +5,7 @@ import { userRepository } from '../../repositories/user.repository.js'
 import { auditLogRepository } from '../../repositories/auditLog.repository.js'
 import { ApiError } from '../../utils/ApiError.js'
 import { computeAccessFlags } from './courseAssignmentAccess.js'
+import { notificationService } from '../notifications/notification.service.js'
 
 function toPublicAssignment(assignment) {
   return {
@@ -76,6 +77,15 @@ export const courseAssignmentService = {
       entity: 'CourseAssignment',
       entityId: assignment._id.toString(),
       metadata: { userId: payload.userId, courseId },
+    })
+
+    await notificationService.notify({
+      userId: payload.userId,
+      type: 'COURSE_ASSIGNED',
+      title: `Course assigned: ${course.title}`,
+      message: payload.deadline ? `Deadline: ${new Date(payload.deadline).toLocaleDateString()}` : '',
+      relatedEntityType: 'Course',
+      relatedEntityId: courseId,
     })
 
     return toPublicAssignment(assignment)
