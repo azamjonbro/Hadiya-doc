@@ -57,8 +57,10 @@ services:
       mc alias set local http://minio:9000 lms_minio_admin lms_minio_secret &&
       mc mb --ignore-existing local/lms-originals &&
       mc mb --ignore-existing local/lms-processed &&
+      mc mb --ignore-existing local/lms-images &&
       mc anonymous set none local/lms-originals &&
-      mc anonymous set none local/lms-processed
+      mc anonymous set none local/lms-processed &&
+      mc anonymous set download local/lms-images
       "
 
 volumes:

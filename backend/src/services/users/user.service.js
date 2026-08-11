@@ -141,6 +141,7 @@ export const userService = {
     if (payload.department !== undefined) updateData.department = payload.department
     if (payload.position !== undefined) updateData.position = payload.position
     if (payload.isActive !== undefined) updateData.isActive = payload.isActive
+    if (payload.avatar !== undefined) updateData.avatar = payload.avatar
     if (payload.roleName !== undefined) updateData.roleId = role._id
     if (payload.email !== undefined) updateData.email = payload.email.toLowerCase()
     if (payload.username !== undefined) updateData.username = payload.username.toLowerCase()

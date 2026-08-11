@@ -34,6 +34,15 @@ const envSchema = z.object({
   S3_SECRET_KEY: z.string().min(1, 'S3_SECRET_KEY is required'),
   S3_BUCKET_ORIGINALS: z.string().min(1, 'S3_BUCKET_ORIGINALS is required'),
   S3_BUCKET_PROCESSED: z.string().min(1, 'S3_BUCKET_PROCESSED is required'),
+  // Unlike the video buckets (private, served only via signed playback
+  // tokens), this one is public-read — avatars/covers/news images are
+  // rendered directly via <img src> throughout the app, same as the
+  // plain-URL fields already on the Course/News/User models.
+  S3_BUCKET_IMAGES: z.string().min(1, 'S3_BUCKET_IMAGES is required'),
+  // Optional — lets a production deploy serve images from a CDN/public
+  // domain that differs from the internal S3_ENDPOINT. Defaults to
+  // constructing the URL from S3_ENDPOINT directly (fine for local dev).
+  S3_PUBLIC_URL: z.string().optional().default(''),
 
   VIDEO_TOKEN_SECRET: z.string().min(16, 'VIDEO_TOKEN_SECRET must be at least 16 characters'),
   VIDEO_PLAYBACK_TOKEN_TTL: z.coerce.number().int().positive().default(180),

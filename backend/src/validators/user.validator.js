@@ -25,6 +25,7 @@ export const updateUserSchema = z
     position: z.string().optional(),
     password: z.string().min(8).optional(),
     isActive: z.boolean().optional(),
+    avatar: z.string().optional(),
   })
   .refine((data) => Object.keys(data).length > 0, { message: 'No fields to update' })
 

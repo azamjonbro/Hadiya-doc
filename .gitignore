@@ -16,9 +16,11 @@ logs/
 *.log
 npm-debug.log*
 
-# local storage / uploads (LocalStorageProvider dev data)
-storage/
-uploads/
+# local storage / uploads (LocalStorageProvider dev data) — anchored to the
+# repo-root-level runtime data directory, NOT backend/src/services/uploads/
+# (that's source code for the image-upload feature, not runtime data)
+/storage/
+/backend/uploads/
 tmp/
 
 # OS
