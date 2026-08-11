@@ -4,6 +4,7 @@ import { useI18n } from 'vue-i18n'
 import { useAuthStore } from '@/stores/auth'
 import { videosApi } from '@/services/videos'
 import { useVideoUpload } from '@/composables/useVideoUpload'
+import VideoReportPanel from '@/components/VideoReportPanel.vue'
 
 const props = defineProps({ topicId: { type: String, required: true } })
 
@@ -13,6 +14,7 @@ const auth = useAuthStore()
 const videos = ref([])
 const loading = ref(true)
 const errorMessage = ref('')
+const expandedReportVideoId = ref(null)
 const isDragOver = ref(false)
 
 const upload = useVideoUpload()
@@ -100,22 +102,34 @@ onMounted(load)
     <p v-if="errorMessage" class="mt-2 text-sm text-red-500">{{ errorMessage }}</p>
 
     <ul v-if="videos.length > 0" class="mt-2 divide-y divide-slate-200 dark:divide-slate-800">
-      <li v-for="video in videos" :key="video.id" class="flex items-center justify-between py-2 text-sm">
-        <div>
-          <p class="font-medium">{{ video.title }}</p>
-          <p class="text-slate-500 dark:text-slate-400">
-            {{ formatSize(video.fileSize) }} · {{ t(`videos.processing.${video.processingStatus}`) }} ·
-            {{ video.status === 'PUBLISHED' ? t('courses.status.published') : t('courses.status.draft') }}
-          </p>
+      <li v-for="video in videos" :key="video.id" class="py-2 text-sm">
+        <div class="flex items-center justify-between">
+          <div>
+            <p class="font-medium">{{ video.title }}</p>
+            <p class="text-slate-500 dark:text-slate-400">
+              {{ formatSize(video.fileSize) }} · {{ t(`videos.processing.${video.processingStatus}`) }} ·
+              {{ video.status === 'PUBLISHED' ? t('courses.status.published') : t('courses.status.draft') }}
+            </p>
+          </div>
+          <div class="flex gap-2">
+            <button
+              type="button"
+              class="text-xs underline"
+              @click="expandedReportVideoId = expandedReportVideoId === video.id ? null : video.id"
+            >
+              {{ t('videoReport.title') }}
+            </button>
+            <template v-if="auth.hasPermission('video:manage')">
+              <button type="button" class="text-xs underline" @click="toggleStatus(video)">
+                {{ video.status === 'PUBLISHED' ? t('videos.unpublish') : t('videos.publish') }}
+              </button>
+              <button type="button" class="text-xs text-red-500 underline" @click="removeVideo(video)">
+                {{ t('videos.remove') }}
+              </button>
+            </template>
+          </div>
         </div>
-        <div v-if="auth.hasPermission('video:manage')" class="flex gap-2">
-          <button type="button" class="text-xs underline" @click="toggleStatus(video)">
-            {{ video.status === 'PUBLISHED' ? t('videos.unpublish') : t('videos.publish') }}
-          </button>
-          <button type="button" class="text-xs text-red-500 underline" @click="removeVideo(video)">
-            {{ t('videos.remove') }}
-          </button>
-        </div>
+        <VideoReportPanel v-if="expandedReportVideoId === video.id" :video-id="video.id" />
       </li>
     </ul>
     <p v-else-if="!loading" class="mt-2 text-sm text-slate-500 dark:text-slate-400">{{ t('videos.empty') }}</p>

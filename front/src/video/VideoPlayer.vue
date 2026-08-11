@@ -3,6 +3,7 @@ import { onBeforeUnmount, onMounted, ref } from 'vue'
 import Hls from 'hls.js'
 import { useAuthStore } from '@/stores/auth'
 import { videoAccessApi } from '@/services/videoAccess'
+import { useVideoAnalytics } from '@/composables/useVideoAnalytics'
 
 const props = defineProps({ videoId: { type: String, required: true } })
 
@@ -17,6 +18,8 @@ const now = ref(new Date())
 // of a leaked recording harder.
 const WATERMARK_POSITIONS = ['bottom-2 right-2', 'top-2 left-2', 'bottom-2 left-2', 'top-2 right-2']
 const positionIndex = ref(0)
+
+const analytics = useVideoAnalytics(props.videoId)
 
 let hls = null
 let currentToken = null
@@ -70,6 +73,8 @@ async function setup() {
     tokenRefreshTimer = setInterval(() => {
       fetchToken().catch(() => {})
     }, 120_000)
+
+    analytics.attach(videoEl.value)
   } catch (error) {
     errorMessage.value = error.response?.data?.message ?? String(error)
   }
@@ -86,6 +91,7 @@ onMounted(() => {
 })
 
 onBeforeUnmount(() => {
+  analytics.detach()
   hls?.destroy()
   clearInterval(tokenRefreshTimer)
   clearInterval(clockTimer)

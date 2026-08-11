@@ -28,9 +28,12 @@ New event types are additive — no schema migration needed to introduce one.
 
 - **Frontend**: `useVideoAnalytics(videoId)` / `useScrollAnalytics(newsId)`
   composables push events into an in-memory buffer (`events[]`). The buffer
-  flushes every 5-15 seconds AND on `visibilitychange`/`pagehide`, using
-  `navigator.sendBeacon` for the unload case so the batch survives even if
-  the tab closes mid-request.
+  flushes every 5-15 seconds AND on `pagehide`, using `fetch` with
+  `keepalive: true` for the unload case so the batch survives even if the
+  tab closes mid-request — not `navigator.sendBeacon`, since the ingestion
+  endpoint is Bearer-token authenticated and `sendBeacon` can't attach
+  custom headers; `fetch(..., { keepalive: true })` is the modern
+  equivalent that can.
 - **Backend**: `POST /analytics/video/events` accepts a batch array and
   performs one bulk insert into `videoAnalyticsEvents`, never one write per
   event. The same request incrementally updates the authoritative

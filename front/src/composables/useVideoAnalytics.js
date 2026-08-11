@@ -1,0 +1,149 @@
+import { useAuthStore } from '@/stores/auth'
+
+const FLUSH_INTERVAL_MS = 10_000
+
+function apiBase() {
+  return import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:4000/api/v1'
+}
+
+export function useVideoAnalytics(videoId) {
+  const auth = useAuthStore()
+  const sessionId = crypto.randomUUID()
+
+  let buffer = []
+  let videoEl = null
+  let isPlaying = false
+  let lastTimeupdateAt = null
+  let lastPosition = null
+  let bufferingStartedAt = null
+  let tabHiddenAt = null
+  let flushTimer = null
+
+  function pushEvent(eventType, extra = {}) {
+    buffer.push({ eventType, timestamp: new Date().toISOString(), ...extra })
+  }
+
+  // fetch+keepalive (not navigator.sendBeacon) because the endpoint is
+  // Bearer-token authenticated and sendBeacon can't carry custom headers —
+  // keepalive is the modern equivalent that survives page/tab teardown.
+  function flush(isFinal = false) {
+    if (buffer.length === 0) return
+    const events = buffer
+    buffer = []
+    fetch(`${apiBase()}/analytics/video/events`, {
+      method: 'POST',
+      keepalive: isFinal,
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${auth.accessToken}`,
+      },
+      body: JSON.stringify({ sessionId, videoId, events }),
+    }).catch(() => {})
+  }
+
+  function onPlay() {
+    isPlaying = true
+    pushEvent('play')
+    lastTimeupdateAt = performance.now()
+    lastPosition = videoEl.currentTime
+  }
+
+  function onPause() {
+    isPlaying = false
+    pushEvent('pause')
+  }
+
+  function onSeeking() {
+    pushEvent('seeking')
+  }
+
+  function onSeeked() {
+    const from = lastPosition ?? videoEl.currentTime
+    const to = videoEl.currentTime
+    pushEvent('seeked', { metadata: { from, to } })
+    lastPosition = to
+    lastTimeupdateAt = performance.now()
+  }
+
+  function onWaiting() {
+    bufferingStartedAt = performance.now()
+    pushEvent('buffering')
+  }
+
+  function onPlaying() {
+    if (bufferingStartedAt) {
+      pushEvent('waiting', { duration: (performance.now() - bufferingStartedAt) / 1000 })
+      bufferingStartedAt = null
+    }
+  }
+
+  function onTimeupdate() {
+    if (!isPlaying || !videoEl) return
+    const now = performance.now()
+    if (lastTimeupdateAt !== null && lastPosition !== null) {
+      const elapsedSeconds = (now - lastTimeupdateAt) / 1000
+      const positionDelta = videoEl.currentTime - lastPosition
+      // Only counts as genuine playback progress when wall-clock elapsed
+      // time and position both moved forward together and roughly match —
+      // a seek jump changes position without matching elapsed time.
+      if (elapsedSeconds > 0 && elapsedSeconds < 2 && positionDelta > 0 && positionDelta < 2) {
+        pushEvent('progress', { position: lastPosition, duration: positionDelta })
+      }
+    }
+    lastTimeupdateAt = now
+    lastPosition = videoEl.currentTime
+  }
+
+  function onEnded() {
+    pushEvent('ended')
+    flush(true)
+  }
+
+  function onVisibilityChange() {
+    if (document.hidden) {
+      tabHiddenAt = performance.now()
+      pushEvent('tabHidden')
+    } else if (tabHiddenAt !== null) {
+      pushEvent('tabVisible', { duration: (performance.now() - tabHiddenAt) / 1000 })
+      tabHiddenAt = null
+    }
+  }
+
+  function onPageHide() {
+    flush(true)
+  }
+
+  function attach(el) {
+    videoEl = el
+    videoEl.addEventListener('play', onPlay)
+    videoEl.addEventListener('pause', onPause)
+    videoEl.addEventListener('seeking', onSeeking)
+    videoEl.addEventListener('seeked', onSeeked)
+    videoEl.addEventListener('waiting', onWaiting)
+    videoEl.addEventListener('playing', onPlaying)
+    videoEl.addEventListener('timeupdate', onTimeupdate)
+    videoEl.addEventListener('ended', onEnded)
+    document.addEventListener('visibilitychange', onVisibilityChange)
+    window.addEventListener('pagehide', onPageHide)
+    flushTimer = setInterval(() => flush(false), FLUSH_INTERVAL_MS)
+  }
+
+  function detach() {
+    if (!videoEl) return
+    videoEl.removeEventListener('play', onPlay)
+    videoEl.removeEventListener('pause', onPause)
+    videoEl.removeEventListener('seeking', onSeeking)
+    videoEl.removeEventListener('seeked', onSeeked)
+    videoEl.removeEventListener('waiting', onWaiting)
+    videoEl.removeEventListener('playing', onPlaying)
+    videoEl.removeEventListener('timeupdate', onTimeupdate)
+    videoEl.removeEventListener('ended', onEnded)
+    document.removeEventListener('visibilitychange', onVisibilityChange)
+    window.removeEventListener('pagehide', onPageHide)
+    clearInterval(flushTimer)
+    flush(true)
+    videoEl = null
+  }
+
+  return { attach, detach }
+}
