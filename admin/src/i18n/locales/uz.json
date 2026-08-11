@@ -3,14 +3,54 @@
     "name": "Corporate LMS — Admin"
   },
   "nav": {
-    "dashboard": "Admin boshqaruv paneli"
+    "dashboard": "Boshqaruv paneli",
+    "employees": "Xodimlar",
+    "courses": "Kurslar",
+    "news": "Yangiliklar",
+    "tasks": "Vazifalar",
+    "reports": "Hisobotlar",
+    "notifications": "Bildirishnomalar",
+    "settings": "Sozlamalar",
+    "groupManagement": "Boshqaruv",
+    "groupSystem": "Tizim"
+  },
+  "locales": {
+    "uz": "O'zbekcha",
+    "ru": "Русский",
+    "en": "English"
+  },
+  "common": {
+    "loading": "Yuklanmoqda...",
+    "goBack": "Orqaga",
+    "goToDashboard": "Bosh sahifaga",
+    "cancel": "Bekor qilish",
+    "save": "Saqlash",
+    "search": "Qidirish",
+    "filter": "Filtr",
+    "viewAll": "Barchasini ko'rish",
+    "viewDetails": "Batafsil",
+    "all": "Barchasi"
   },
   "dashboard": {
-    "title": "Boshqaruv paneli",
+    "title": "O'quv holati",
+    "subtitle": "Kompaniyada o'quv jarayoni qanday ketayotgani.",
+    "greeting": {
+      "morning": "Xayrli tong",
+      "afternoon": "Xayrli kun",
+      "evening": "Xayrli kech"
+    },
     "loading": "Ma'lumotlar yuklanmoqda...",
     "error": "Panel ma'lumotlarini yuklab bo'lmadi",
     "stale": "Keshlangan ma'lumotlar ko'rsatilmoqda — jonli yangilash mavjud emas",
     "generatedAt": "Yangilangan",
+    "attention": {
+      "title": "Diqqat talab qiladi",
+      "allClear": "Hozircha hammasi joyida — o'quv jarayoni rejaga muvofiq.",
+      "overdue": "{count} ta kurs biriktirmasi muddati o'tgan",
+      "notStarted": "{count} xodim majburiy o'quvni hali boshlamagan",
+      "lowCompletion": "O'rtacha bajarilish ko'rsatkichi past ({pct}%)",
+      "lowNewsEngagement": "Yangiliklarga qiziqish past ({pct}%)"
+    },
     "cards": {
       "totalEmployees": "Jami xodimlar",
       "activeEmployees": "Faol xodimlar",
@@ -67,24 +107,51 @@
   },
   "auth": {
     "login": {
-      "title": "Tizimga kirish",
+      "title": "Admin panel",
+      "subtitle": "O'quv, xodimlar va hisobotlarni boshqarish uchun tizimga kiring.",
       "identifier": "Email yoki foydalanuvchi nomi",
       "password": "Parol",
+      "rememberMe": "Meni eslab qol",
+      "forgotPassword": "Parolni unutdingizmi?",
       "submit": "Kirish",
       "submitting": "Kirilmoqda...",
-      "error": "Email/username yoki parol noto'g'ri"
+      "error": "Email/username yoki parol noto'g'ri",
+      "securityNotice": "Kompaniya xavfsizlik siyosati bilan himoyalangan. Kirishlar qayd etiladi va kuzatiladi.",
+      "brandTitle": "O'quv jarayonini ishonch bilan boshqaring.",
+      "brandSubtitle": "Bajarilishni kuzating, kurslarni boshqaring va butun kompaniyani majburiy o'quvlardan xabardor qiling.",
+      "highlight1": "Butun kompaniya bo'yicha o'quv natijalari bir qarashda",
+      "highlight2": "Xodimlar, kurslar va ruxsatlar bir joyda",
+      "highlight3": "Korporativ darajadagi xavfsizlik, kirishlar qayd etiladi"
     },
     "logout": "Chiqish"
   },
   "forbidden": {
+    "code": "403",
+    "title": "Kirish cheklangan",
     "message": "Bu sahifaga kirish huquqingiz yo'q. Admin panel faqat Admin/Manager/SuperAdmin uchun."
   },
   "unauthorized": {
+    "code": "401",
+    "title": "Tizimga kirish talab qilinadi",
     "message": "Davom etish uchun tizimga kiring"
   },
   "notFound": {
-    "title": "404",
-    "message": "Sahifa topilmadi"
+    "code": "404",
+    "title": "Sahifa topilmadi",
+    "message": "Ehtimol, sahifa ko'chirilgan yoki endi mavjud emas."
+  },
+  "settings": {
+    "title": "Sozlamalar",
+    "sections": {
+      "profile": "Profil",
+      "appearance": "Ko'rinish",
+      "language": "Til"
+    },
+    "appearance": {
+      "theme": "Mavzu",
+      "light": "Yorug'",
+      "dark": "Qorong'i"
+    }
   },
   "users": {
     "title": "Foydalanuvchilar",
@@ -99,6 +166,9 @@
     "loading": "Yuklanmoqda...",
     "loadMore": "Yana yuklash",
     "empty": "Foydalanuvchilar topilmadi",
+    "created": "Foydalanuvchi muvaffaqiyatli yaratildi",
+    "selected": "tanlandi",
+    "bulkDeactivated": "{count} ta foydalanuvchi faolsizlantirildi",
     "role": "Rol",
     "status": "Holat",
     "fields": {
@@ -110,7 +180,8 @@
       "position": "Lavozim",
       "password": "Parol",
       "newPassword": "Yangi parol",
-      "newPasswordHint": "O'zgartirmaslik uchun bo'sh qoldiring"
+      "newPasswordHint": "O'zgartirmaslik uchun bo'sh qoldiring",
+      "avatar": "Avatar"
     },
     "filters": {
       "search": "Qidirish...",
@@ -134,6 +205,15 @@
     "loading": "Yuklanmoqda...",
     "loadMore": "Yana yuklash",
     "empty": "Kurslar topilmadi",
+    "mandatory": "Majburiy",
+    "optional": "Ixtiyoriy",
+    "deadline": "Muddat",
+    "access": {
+      "assign": "Kursni biriktirish",
+      "assigned": "Kurs biriktirildi",
+      "expiresAt": "Tugash muddati",
+      "empty": "Hali hech kimga biriktirilmagan"
+    },
     "fields": {
       "title": "Sarlavha",
       "description": "Tavsif"
@@ -158,6 +238,23 @@
       "empty": "Mavzular topilmadi"
     }
   },
+  "courseBuilder": {
+    "title": "Yangi kurs",
+    "continue": "Davom etish",
+    "created": "Kurs yaratildi",
+    "coverUrl": "Muqova rasmi URL",
+    "bannerUrl": "Banner rasmi URL",
+    "mediaHint": "Rasm URL manzilini kiriting. Mavzu va videolarni kurs yaratilgandan keyin qo'shishingiz mumkin.",
+    "noCover": "Muqova rasmi tanlanmagan",
+    "publish": "Kursni e'lon qilish",
+    "saveDraft": "Qoralama sifatida saqlash",
+    "nextStepsHint": "Keyin modul va videolarni qo'shing",
+    "steps": {
+      "basics": "Asosiy ma'lumot",
+      "media": "Muqova va banner",
+      "review": "Ko'rib chiqish va e'lon qilish"
+    }
+  },
   "videos": {
     "title": "Videodarslar",
     "manage": "Videolar",
@@ -172,6 +269,7 @@
     "startUpload": "Yuklashni boshlash",
     "pause": "Pauza",
     "resume": "Davom ettirish",
+    "eta": "Qoldi",
     "cancelUpload": "Bekor qilish",
     "retry": "Qayta urinish",
     "uploadDone": "Yuklandi. Qayta ishlash kutilmoqda.",
@@ -220,7 +318,15 @@
     "newTask": "+ Yangi vazifa",
     "empty": "Vazifalar topilmadi",
     "assignee": "Kimga (foydalanuvchi qidirish)",
-    "pickAssignee": "Foydalanuvchini tanlang"
+    "pickAssignee": "Foydalanuvchini tanlang",
+    "priorityLabel": "Muhimlik",
+    "status": {
+      "TODO": "Bajarilishi kerak",
+      "IN_PROGRESS": "Jarayonda",
+      "COMPLETED": "Bajarildi",
+      "CANCELLED": "Bekor qilingan",
+      "OVERDUE": "Muddati o'tgan"
+    }
   },
   "notifications": {
     "title": "Bildirishnomalar",
@@ -233,5 +339,9 @@
     "readPercent": "O'qilgan foiz",
     "timeSpent": "Sarflangan vaqt",
     "openCount": "Ochilgan marta"
+  },
+  "imageUpload": {
+    "choose": "Rasm yuklash uchun bosing",
+    "error": "Rasmni yuklab bo'lmadi"
   }
 }

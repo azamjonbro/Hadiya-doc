@@ -3,14 +3,54 @@
     "name": "Corporate LMS — Admin"
   },
   "nav": {
-    "dashboard": "Admin Dashboard"
+    "dashboard": "Dashboard",
+    "employees": "Employees",
+    "courses": "Courses",
+    "news": "News",
+    "tasks": "Tasks",
+    "reports": "Reports",
+    "notifications": "Notifications",
+    "settings": "Settings",
+    "groupManagement": "Management",
+    "groupSystem": "System"
+  },
+  "locales": {
+    "uz": "O'zbekcha",
+    "ru": "Русский",
+    "en": "English"
+  },
+  "common": {
+    "loading": "Loading...",
+    "goBack": "Go back",
+    "goToDashboard": "Go to dashboard",
+    "cancel": "Cancel",
+    "save": "Save",
+    "search": "Search",
+    "filter": "Filter",
+    "viewAll": "View all",
+    "viewDetails": "View details",
+    "all": "All"
   },
   "dashboard": {
-    "title": "Dashboard",
+    "title": "Training overview",
+    "subtitle": "Here's how training is going across the company.",
+    "greeting": {
+      "morning": "Good morning",
+      "afternoon": "Good afternoon",
+      "evening": "Good evening"
+    },
     "loading": "Loading dashboard...",
     "error": "Could not load dashboard data",
     "stale": "Showing cached data — live refresh unavailable",
     "generatedAt": "Updated",
+    "attention": {
+      "title": "Attention required",
+      "allClear": "Nothing needs attention right now — training is on track.",
+      "overdue": "{count} course assignments are overdue",
+      "notStarted": "{count} employees have not started their mandatory training",
+      "lowCompletion": "Average course completion is below target ({pct}%)",
+      "lowNewsEngagement": "News engagement is low ({pct}%)"
+    },
     "cards": {
       "totalEmployees": "Total Employees",
       "activeEmployees": "Active Employees",
@@ -67,24 +107,51 @@
   },
   "auth": {
     "login": {
-      "title": "Sign in",
+      "title": "Admin console",
+      "subtitle": "Sign in to manage training, employees and reporting.",
       "identifier": "Email or username",
       "password": "Password",
+      "rememberMe": "Remember me",
+      "forgotPassword": "Forgot password?",
       "submit": "Sign in",
       "submitting": "Signing in...",
-      "error": "Invalid email/username or password"
+      "error": "Invalid email/username or password",
+      "securityNotice": "Protected by company security policy. Access is logged and monitored.",
+      "brandTitle": "Run training operations with confidence.",
+      "brandSubtitle": "Track completion, manage courses, and keep the whole company on top of mandatory training.",
+      "highlight1": "Company-wide training completion at a glance",
+      "highlight2": "Manage employees, courses and access in one place",
+      "highlight3": "Enterprise-grade security, logged and monitored access"
     },
     "logout": "Log out"
   },
   "forbidden": {
+    "code": "403",
+    "title": "Access restricted",
     "message": "You don't have access to this page. The admin panel is Admin/Manager/SuperAdmin only."
   },
   "unauthorized": {
+    "code": "401",
+    "title": "Sign in required",
     "message": "Please sign in to continue"
   },
   "notFound": {
-    "title": "404",
+    "code": "404",
+    "title": "We couldn't find that page",
     "message": "Page not found"
+  },
+  "settings": {
+    "title": "Settings",
+    "sections": {
+      "profile": "Profile",
+      "appearance": "Appearance",
+      "language": "Language"
+    },
+    "appearance": {
+      "theme": "Theme",
+      "light": "Light",
+      "dark": "Dark"
+    }
   },
   "users": {
     "title": "Users",
@@ -99,6 +166,9 @@
     "loading": "Loading...",
     "loadMore": "Load more",
     "empty": "No users found",
+    "created": "User created successfully",
+    "selected": "selected",
+    "bulkDeactivated": "{count} users deactivated",
     "role": "Role",
     "status": "Status",
     "fields": {
@@ -110,7 +180,8 @@
       "position": "Position",
       "password": "Password",
       "newPassword": "New password",
-      "newPasswordHint": "Leave blank to keep unchanged"
+      "newPasswordHint": "Leave blank to keep unchanged",
+      "avatar": "Avatar"
     },
     "filters": {
       "search": "Search...",
@@ -134,6 +205,15 @@
     "loading": "Loading...",
     "loadMore": "Load more",
     "empty": "No courses found",
+    "mandatory": "Mandatory",
+    "optional": "Optional",
+    "deadline": "Deadline",
+    "access": {
+      "assign": "Assign course",
+      "assigned": "Course assigned",
+      "expiresAt": "Expires",
+      "empty": "Not assigned to anyone yet"
+    },
     "fields": {
       "title": "Title",
       "description": "Description"
@@ -158,6 +238,23 @@
       "empty": "No topics found"
     }
   },
+  "courseBuilder": {
+    "title": "New course",
+    "continue": "Continue",
+    "created": "Course created",
+    "coverUrl": "Cover image URL",
+    "bannerUrl": "Banner image URL",
+    "mediaHint": "Paste a hosted image URL. You can add topics and upload videos after creating the course.",
+    "noCover": "No cover image set",
+    "publish": "Publish course",
+    "saveDraft": "Save as draft",
+    "nextStepsHint": "Add modules & videos next",
+    "steps": {
+      "basics": "Basic information",
+      "media": "Cover & banner",
+      "review": "Review & publish"
+    }
+  },
   "videos": {
     "title": "Videos",
     "manage": "Videos",
@@ -172,6 +269,7 @@
     "startUpload": "Start upload",
     "pause": "Pause",
     "resume": "Resume",
+    "eta": "ETA",
     "cancelUpload": "Cancel",
     "retry": "Retry",
     "uploadDone": "Uploaded. Awaiting processing.",
@@ -226,12 +324,24 @@
     "newTask": "+ New task",
     "empty": "No tasks found",
     "assignee": "Assignee (search user)",
-    "pickAssignee": "Please pick a user"
+    "pickAssignee": "Please pick a user",
+    "priorityLabel": "Priority",
+    "status": {
+      "TODO": "To do",
+      "IN_PROGRESS": "In progress",
+      "COMPLETED": "Completed",
+      "CANCELLED": "Cancelled",
+      "OVERDUE": "Overdue"
+    }
   },
   "notifications": {
     "title": "Notifications",
     "empty": "No notifications",
     "markAllRead": "Mark all as read",
     "justNow": "just now"
+  },
+  "imageUpload": {
+    "choose": "Click to upload an image",
+    "error": "Could not upload image"
   }
 }
