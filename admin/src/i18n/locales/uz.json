@@ -34,5 +34,41 @@
   "notFound": {
     "title": "404",
     "message": "Sahifa topilmadi"
+  },
+  "users": {
+    "title": "Foydalanuvchilar",
+    "newUser": "+ Yangi foydalanuvchi",
+    "cancel": "Bekor qilish",
+    "create": "Yaratish",
+    "creating": "Yaratilmoqda...",
+    "save": "Saqlash",
+    "saving": "Saqlanmoqda...",
+    "deactivate": "Faolsizlantirish",
+    "deactivating": "Faolsizlantirilmoqda...",
+    "loading": "Yuklanmoqda...",
+    "loadMore": "Yana yuklash",
+    "empty": "Foydalanuvchilar topilmadi",
+    "role": "Rol",
+    "status": "Holat",
+    "fields": {
+      "fullName": "To'liq ism",
+      "username": "Foydalanuvchi nomi",
+      "email": "Email",
+      "phone": "Telefon",
+      "department": "Bo'lim",
+      "position": "Lavozim",
+      "password": "Parol",
+      "newPassword": "Yangi parol",
+      "newPasswordHint": "O'zgartirmaslik uchun bo'sh qoldiring"
+    },
+    "filters": {
+      "search": "Qidirish...",
+      "allRoles": "Barcha rollar",
+      "allStatuses": "Barcha holatlar",
+      "active": "Faol",
+      "inactive": "Faol emas",
+      "department": "Bo'lim bo'yicha filtr",
+      "apply": "Filtrlash"
+    }
   }
 }

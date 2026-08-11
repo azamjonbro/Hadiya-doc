@@ -34,5 +34,41 @@
   "notFound": {
     "title": "404",
     "message": "Страница не найдена"
+  },
+  "users": {
+    "title": "Пользователи",
+    "newUser": "+ Новый пользователь",
+    "cancel": "Отмена",
+    "create": "Создать",
+    "creating": "Создание...",
+    "save": "Сохранить",
+    "saving": "Сохранение...",
+    "deactivate": "Деактивировать",
+    "deactivating": "Деактивация...",
+    "loading": "Загрузка...",
+    "loadMore": "Загрузить ещё",
+    "empty": "Пользователи не найдены",
+    "role": "Роль",
+    "status": "Статус",
+    "fields": {
+      "fullName": "Полное имя",
+      "username": "Имя пользователя",
+      "email": "Email",
+      "phone": "Телефон",
+      "department": "Отдел",
+      "position": "Должность",
+      "password": "Пароль",
+      "newPassword": "Новый пароль",
+      "newPasswordHint": "Оставьте пустым, чтобы не менять"
+    },
+    "filters": {
+      "search": "Поиск...",
+      "allRoles": "Все роли",
+      "allStatuses": "Все статусы",
+      "active": "Активен",
+      "inactive": "Неактивен",
+      "department": "Фильтр по отделу",
+      "apply": "Применить"
+    }
   }
 }

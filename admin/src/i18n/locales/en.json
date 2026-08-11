@@ -34,5 +34,41 @@
   "notFound": {
     "title": "404",
     "message": "Page not found"
+  },
+  "users": {
+    "title": "Users",
+    "newUser": "+ New user",
+    "cancel": "Cancel",
+    "create": "Create",
+    "creating": "Creating...",
+    "save": "Save",
+    "saving": "Saving...",
+    "deactivate": "Deactivate",
+    "deactivating": "Deactivating...",
+    "loading": "Loading...",
+    "loadMore": "Load more",
+    "empty": "No users found",
+    "role": "Role",
+    "status": "Status",
+    "fields": {
+      "fullName": "Full name",
+      "username": "Username",
+      "email": "Email",
+      "phone": "Phone",
+      "department": "Department",
+      "position": "Position",
+      "password": "Password",
+      "newPassword": "New password",
+      "newPasswordHint": "Leave blank to keep unchanged"
+    },
+    "filters": {
+      "search": "Search...",
+      "allRoles": "All roles",
+      "allStatuses": "All statuses",
+      "active": "Active",
+      "inactive": "Inactive",
+      "department": "Filter by department",
+      "apply": "Apply"
+    }
   }
 }

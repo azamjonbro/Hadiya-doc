@@ -1,28 +1,19 @@
 import { Router } from 'express'
+import { PERMISSIONS } from '@lms/shared'
 import { authenticate } from '../../middlewares/auth.middleware.js'
-import { asyncHandler } from '../../utils/asyncHandler.js'
-import { sendSuccess } from '../../utils/apiResponse.js'
-import { userRepository } from '../../repositories/user.repository.js'
-import { roleRepository } from '../../repositories/role.repository.js'
+import { requirePermission } from '../../middlewares/rbac.middleware.js'
+import { validateBody, validateQuery } from '../../middlewares/validate.middleware.js'
+import { userController } from '../../controllers/user.controller.js'
+import { createUserSchema, updateUserSchema, listUsersQuerySchema } from '../../validators/user.validator.js'
 
 export const usersRouter = Router()
 
-usersRouter.get(
-  '/me',
-  authenticate,
-  asyncHandler(async (req, res) => {
-    const user = await userRepository.findById(req.user.id)
-    const role = await roleRepository.findById(req.user.roleId)
-    sendSuccess(res, {
-      id: user._id.toString(),
-      fullName: user.fullName,
-      username: user.username,
-      email: user.email,
-      department: user.department,
-      position: user.position,
-      avatar: user.avatar,
-      role: role.name,
-      permissions: role.permissions,
-    })
-  })
-)
+usersRouter.use(authenticate)
+
+usersRouter.get('/me', userController.me)
+
+usersRouter.get('/', requirePermission(PERMISSIONS.USER_READ), validateQuery(listUsersQuerySchema), userController.list)
+usersRouter.post('/', requirePermission(PERMISSIONS.USER_CREATE), validateBody(createUserSchema), userController.create)
+usersRouter.get('/:id', requirePermission(PERMISSIONS.USER_READ), userController.getById)
+usersRouter.patch('/:id', requirePermission(PERMISSIONS.USER_UPDATE), validateBody(updateUserSchema), userController.update)
+usersRouter.delete('/:id', requirePermission(PERMISSIONS.USER_DELETE), userController.deactivate)

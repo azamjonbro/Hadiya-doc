@@ -18,6 +18,30 @@ export const userRepository = {
     return User.create(data)
   },
 
+  listPage({ search, roleId, department, isActive, cursor, limit }) {
+    const filter = {}
+    if (search) {
+      const regex = new RegExp(search.trim(), 'i')
+      filter.$or = [{ fullName: regex }, { username: regex }, { email: regex }]
+    }
+    if (roleId) filter.roleId = roleId
+    if (department) filter.department = department
+    if (isActive !== undefined) filter.isActive = isActive
+    if (cursor) filter._id = { $gt: cursor }
+
+    return User.find(filter)
+      .sort({ _id: 1 })
+      .limit(limit + 1)
+  },
+
+  updateById(id, data) {
+    return User.findByIdAndUpdate(id, { $set: data }, { new: true, runValidators: true })
+  },
+
+  setActive(id, isActive) {
+    return User.findByIdAndUpdate(id, { $set: { isActive } }, { new: true })
+  },
+
   async registerFailedLogin(userId, { maxAttempts, lockMinutes }) {
     const user = await User.findById(userId)
     if (!user) return null

@@ -30,6 +30,13 @@ async function onLogout() {
     <div class="flex items-center justify-between">
       <h1 class="text-2xl font-semibold tracking-tight">{{ t('app.name') }}</h1>
       <div class="flex items-center gap-3">
+        <router-link
+          v-if="auth.hasPermission('user:read')"
+          to="/admin/users"
+          class="rounded-md border border-slate-300 px-3 py-1 text-sm dark:border-slate-700"
+        >
+          {{ t('users.title') }}
+        </router-link>
         <select
           class="rounded-md border border-slate-300 bg-transparent px-2 py-1 text-sm dark:border-slate-700"
           @change="onLocaleChange"

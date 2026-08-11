@@ -16,6 +16,16 @@ export function errorHandler(err, req, res, _next) {
     return
   }
 
+  if (err?.name === 'CastError') {
+    sendError(res, 400, 'INVALID_ID', 'Invalid identifier format')
+    return
+  }
+
+  if (err?.code === 11000) {
+    sendError(res, 409, 'DUPLICATE_KEY', 'A record with these unique fields already exists')
+    return
+  }
+
   const message = err instanceof Error ? err.message : 'Unknown error'
   logger.error(message, {
     stack: err instanceof Error ? err.stack : undefined,
