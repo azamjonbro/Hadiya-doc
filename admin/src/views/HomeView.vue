@@ -128,6 +128,13 @@ const taskCompletionItems = computed(() => dashboard.value?.charts.taskCompletio
         >
           {{ t('users.title') }}
         </router-link>
+        <router-link
+          v-if="auth.hasPermission('report:export')"
+          to="/admin/reports"
+          class="rounded-md border border-slate-300 px-3 py-1 text-sm dark:border-slate-700"
+        >
+          {{ t('reports.title') }}
+        </router-link>
         <NotificationBell />
         <select
           class="rounded-md border border-slate-300 bg-transparent px-2 py-1 text-sm dark:border-slate-700"

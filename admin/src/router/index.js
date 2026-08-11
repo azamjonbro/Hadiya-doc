@@ -12,6 +12,7 @@ import CourseDetailView from '@/views/CourseDetailView.vue'
 import NewsListView from '@/views/NewsListView.vue'
 import NewsDetailView from '@/views/NewsDetailView.vue'
 import TasksListView from '@/views/TasksListView.vue'
+import ReportsView from '@/views/ReportsView.vue'
 
 export const router = createRouter({
   history: createWebHistory(),
@@ -61,6 +62,12 @@ export const router = createRouter({
       name: 'tasks-list',
       component: TasksListView,
       meta: { permission: 'task:create' },
+    },
+    {
+      path: '/admin/reports',
+      name: 'reports',
+      component: ReportsView,
+      meta: { permission: 'report:export' },
     },
     { path: '/:pathMatch(.*)*', name: 'not-found', component: NotFoundView, meta: { public: true } },
   ],

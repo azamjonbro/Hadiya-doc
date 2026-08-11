@@ -43,6 +43,19 @@
       "tasks": "Hali vazifalar yo'q"
     }
   },
+  "reports": {
+    "title": "Hisobotlar",
+    "subtitle": "Platforma ma'lumotlarini CSV, Excel yoki PDF formatida eksport qiling.",
+    "downloading": "Tayyorlanmoqda...",
+    "error": "Hisobotni eksport qilib bo'lmadi",
+    "types": {
+      "employee-progress": "Xodimlar progressi",
+      "course-progress": "Kurslar progressi",
+      "video-analytics": "Video tahlili",
+      "news-analytics": "Yangiliklar tahlili",
+      "task-analytics": "Vazifalar tahlili"
+    }
+  },
   "theme": {
     "light": "Yorug'",
     "dark": "Qorong'i"

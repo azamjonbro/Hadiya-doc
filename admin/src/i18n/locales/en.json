@@ -43,6 +43,19 @@
       "tasks": "No tasks yet"
     }
   },
+  "reports": {
+    "title": "Reports",
+    "subtitle": "Export platform data as CSV, Excel, or PDF.",
+    "downloading": "Preparing...",
+    "error": "Could not export this report",
+    "types": {
+      "employee-progress": "Employee Progress",
+      "course-progress": "Course Progress",
+      "video-analytics": "Video Analytics",
+      "news-analytics": "News Analytics",
+      "task-analytics": "Task Analytics"
+    }
+  },
   "theme": {
     "light": "Light",
     "dark": "Dark"

@@ -43,6 +43,19 @@
       "tasks": "Пока нет задач"
     }
   },
+  "reports": {
+    "title": "Отчёты",
+    "subtitle": "Экспорт данных платформы в CSV, Excel или PDF.",
+    "downloading": "Подготовка...",
+    "error": "Не удалось экспортировать отчёт",
+    "types": {
+      "employee-progress": "Прогресс сотрудников",
+      "course-progress": "Прогресс курсов",
+      "video-analytics": "Аналитика видео",
+      "news-analytics": "Аналитика новостей",
+      "task-analytics": "Аналитика задач"
+    }
+  },
   "theme": {
     "light": "Светлая",
     "dark": "Тёмная"
