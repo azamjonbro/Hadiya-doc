@@ -37,6 +37,10 @@ const envSchema = z.object({
 
   VIDEO_TOKEN_SECRET: z.string().min(16, 'VIDEO_TOKEN_SECRET must be at least 16 characters'),
   VIDEO_PLAYBACK_TOKEN_TTL: z.coerce.number().int().positive().default(180),
+
+  // Optional — the AI chat feature (Phase 13) degrades to a clear 503 at
+  // request time rather than failing boot when this isn't configured.
+  ANTHROPIC_API_KEY: z.string().optional().default(''),
 })
 
 const parsed = envSchema.safeParse(process.env)
