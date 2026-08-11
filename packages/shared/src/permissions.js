@@ -1,4 +1,4 @@
-import { ROLES, type RoleName } from './roles.js'
+import { ROLES } from './roles.js'
 
 /**
  * Canonical permission catalogue. RBAC is permission-based at the
@@ -7,7 +7,7 @@ import { ROLES, type RoleName } from './roles.js'
  * it can change without a deploy. `DEFAULT_ROLE_PERMISSIONS` below is only
  * the seed data for the six initial roles.
  */
-export const PERMISSIONS = {
+export const PERMISSIONS = Object.freeze({
   USER_CREATE: 'user:create',
   USER_READ: 'user:read',
   USER_UPDATE: 'user:update',
@@ -44,13 +44,11 @@ export const PERMISSIONS = {
   AI_CHAT: 'ai:chat',
 
   AUDIT_READ: 'audit:read',
-} as const
+})
 
-export type Permission = (typeof PERMISSIONS)[keyof typeof PERMISSIONS]
+export const ALL_PERMISSIONS = Object.values(PERMISSIONS)
 
-export const ALL_PERMISSIONS: Permission[] = Object.values(PERMISSIONS)
-
-const EMPLOYEE_BASE: Permission[] = [
+const EMPLOYEE_BASE = [
   PERMISSIONS.COURSE_READ,
   PERMISSIONS.VIDEO_VIEW,
   PERMISSIONS.NEWS_READ,
@@ -61,7 +59,7 @@ const EMPLOYEE_BASE: Permission[] = [
   PERMISSIONS.ANALYTICS_VIEW_OWN,
 ]
 
-const MANAGER_PERMISSIONS: Permission[] = [
+const MANAGER_PERMISSIONS = [
   ...EMPLOYEE_BASE,
   PERMISSIONS.USER_CREATE,
   PERMISSIONS.USER_READ,
@@ -76,7 +74,7 @@ const MANAGER_PERMISSIONS: Permission[] = [
   PERMISSIONS.EVENT_CREATE,
 ]
 
-const ADMIN_PERMISSIONS: Permission[] = [
+const ADMIN_PERMISSIONS = [
   ...MANAGER_PERMISSIONS,
   PERMISSIONS.USER_UPDATE,
   PERMISSIONS.USER_DELETE,
@@ -88,11 +86,11 @@ const ADMIN_PERMISSIONS: Permission[] = [
 ]
 
 /** Seed data only — the `roles` collection governs actual authorization at runtime. */
-export const DEFAULT_ROLE_PERMISSIONS: Record<RoleName, Permission[]> = {
+export const DEFAULT_ROLE_PERMISSIONS = Object.freeze({
   [ROLES.SUPERADMIN]: [...ALL_PERMISSIONS, PERMISSIONS.ROLE_MANAGE],
   [ROLES.ADMIN]: ADMIN_PERMISSIONS,
   [ROLES.MANAGER]: MANAGER_PERMISSIONS,
   [ROLES.EMPLOYEE]: EMPLOYEE_BASE,
   [ROLES.CALL_OPERATOR]: EMPLOYEE_BASE,
   [ROLES.SELLER]: EMPLOYEE_BASE,
-}
+})

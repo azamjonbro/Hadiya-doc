@@ -1,16 +1,13 @@
 import { ref } from 'vue'
-import type { ApiResponse } from '@lms/shared'
 import { http } from '@/services/http'
 
-type HealthStatus = 'checking' | 'online' | 'offline'
-
 export function useHealthCheck() {
-  const status = ref<HealthStatus>('checking')
+  const status = ref('checking')
 
-  async function check(): Promise<void> {
+  async function check() {
     status.value = 'checking'
     try {
-      const { data } = await http.get<ApiResponse<{ status: string }>>('/health')
+      const { data } = await http.get('/health')
       status.value = data.success ? 'online' : 'offline'
     } catch {
       status.value = 'offline'

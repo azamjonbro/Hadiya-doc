@@ -7,13 +7,21 @@ deployable apps and one shared package:
 
 ```
 qo'llanma/
-  backend/            Express + TypeScript API + background worker
+  backend/            Express + Node.js (plain JS) API + background worker
   front/              Vue 3 SPA — employee-facing
   admin/              Vue 3 SPA — admin + superadmin
-  packages/shared/    Shared TS types, permission matrix, DTOs
+  packages/shared/    Shared JS constants: roles, permission matrix
   docs/               This documentation
   docker-compose.yml  Local infra: MongoDB, Redis, MinIO
 ```
+
+> **Stack note**: this project is plain JavaScript (ES modules), not
+> TypeScript, by explicit user decision — the original spec called for
+> TypeScript strict mode, but the person maintaining this codebase doesn't
+> read/write TS, so the safety net of static types was traded for a stack
+> they can actually follow and debug themselves. There's no compiler step:
+> the backend runs `.js` directly via `node --watch`, and both frontends
+> use plain `<script setup>` Vue SFCs.
 
 ## Why two frontend apps instead of one
 
@@ -62,8 +70,9 @@ front/ or admin/ (Axios, Bearer access token + httpOnly refresh cookie)
 
 1. **npm workspaces monorepo.** One root `package.json` with
    `workspaces: ["backend", "front", "admin", "packages/shared"]`. Shared
-   types live once and are imported everywhere, so a backend DTO change
-   that isn't reflected in the frontend fails at `tsc` time, not at runtime.
+   constants (roles, permission keys) live once in `packages/shared` and are
+   imported everywhere, so the role/permission vocabulary can't drift
+   between the backend and the two frontends.
 
 2. **Layered backend** (`controllers → services → repositories → models`),
    organized by domain within each layer (see `docs/api-contract.md` for
@@ -73,7 +82,7 @@ front/ or admin/ (Axios, Bearer access token + httpOnly refresh cookie)
 
 3. **Video processing runs in a separate worker process**, never inside an
    HTTP request. The API enqueues a BullMQ job on upload completion; the
-   worker (`backend/src/worker.ts`, run as `npm run worker`) consumes it.
+   worker (`backend/src/worker.js`, run as `npm run worker`) consumes it.
    This means a 2GB video transcode can never block or crash the API
    process (spec §31).
 

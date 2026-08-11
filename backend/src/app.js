@@ -1,4 +1,4 @@
-import express, { type Express } from 'express'
+import express from 'express'
 import cors from 'cors'
 import helmet from 'helmet'
 import { env } from './config/env.js'
@@ -6,7 +6,7 @@ import { baseRateLimiter } from './middlewares/rateLimit.middleware.js'
 import { errorHandler, notFoundHandler } from './middlewares/error.middleware.js'
 import { v1Router } from './routes/v1/index.js'
 
-export function createApp(): Express {
+export function createApp() {
   const app = express()
 
   app.disable('x-powered-by')

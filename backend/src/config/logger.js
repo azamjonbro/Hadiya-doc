@@ -11,13 +11,13 @@ const SENSITIVE_KEYS = new Set([
   'captchatoken',
 ])
 
-function redact(value: unknown): unknown {
+function redact(value) {
   if (Array.isArray(value)) {
     return value.map(redact)
   }
   if (value && typeof value === 'object') {
-    const out: Record<string, unknown> = {}
-    for (const [key, val] of Object.entries(value as Record<string, unknown>)) {
+    const out = {}
+    for (const [key, val] of Object.entries(value)) {
       out[key] = SENSITIVE_KEYS.has(key.toLowerCase()) ? '[REDACTED]' : redact(val)
     }
     return out

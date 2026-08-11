@@ -3,15 +3,13 @@
  * truth at runtime — this list only seeds the six initial rows. New roles
  * can be added later purely as data, with no code change required.
  */
-export const ROLES = {
+export const ROLES = Object.freeze({
   SUPERADMIN: 'SUPERADMIN',
   ADMIN: 'ADMIN',
   MANAGER: 'MANAGER',
   EMPLOYEE: 'EMPLOYEE',
   CALL_OPERATOR: 'CALL_OPERATOR',
   SELLER: 'SELLER',
-} as const
+})
 
-export type RoleName = (typeof ROLES)[keyof typeof ROLES]
-
-export const SYSTEM_ROLE_NAMES: RoleName[] = Object.values(ROLES)
+export const SYSTEM_ROLE_NAMES = Object.values(ROLES)

@@ -33,7 +33,7 @@ PENDING
                     "retry processing" action for admins)
 ```
 
-This entire pipeline runs in `backend/src/worker.ts`, a **separate Node
+This entire pipeline runs in `backend/src/worker.js`, a **separate Node
 process** from the API (`npm run worker`), consuming the BullMQ queue backed
 by Redis. A stuck or slow transcode can never block API requests.
 

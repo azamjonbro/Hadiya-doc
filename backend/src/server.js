@@ -3,7 +3,7 @@ import { logger } from './config/logger.js'
 import { connectDatabase } from './config/db.js'
 import { createApp } from './app.js'
 
-async function main(): Promise<void> {
+async function main() {
   await connectDatabase()
 
   const app = createApp()
@@ -11,7 +11,7 @@ async function main(): Promise<void> {
     logger.info(`Backend listening on port ${env.PORT}`, { env: env.NODE_ENV })
   })
 
-  const shutdown = (signal: string): void => {
+  const shutdown = (signal) => {
     logger.info(`Received ${signal}, shutting down`)
     server.close(() => process.exit(0))
     setTimeout(() => process.exit(1), 10_000).unref()
@@ -21,7 +21,7 @@ async function main(): Promise<void> {
   process.on('SIGINT', () => shutdown('SIGINT'))
 }
 
-main().catch((error: unknown) => {
+main().catch((error) => {
   logger.error('Failed to start server', {
     error: error instanceof Error ? error.message : error,
   })

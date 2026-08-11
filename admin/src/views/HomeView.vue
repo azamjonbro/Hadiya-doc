@@ -1,8 +1,8 @@
-<script setup lang="ts">
+<script setup>
 import { onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useThemeStore } from '@/stores/theme'
-import { setLocale, type SupportedLocale } from '@/i18n'
+import { setLocale } from '@/i18n'
 import { useHealthCheck } from '@/composables/useHealthCheck'
 
 const { t } = useI18n()
@@ -11,8 +11,8 @@ const { status, check } = useHealthCheck()
 
 onMounted(check)
 
-function onLocaleChange(event: Event): void {
-  setLocale((event.target as HTMLSelectElement).value as SupportedLocale)
+function onLocaleChange(event) {
+  setLocale(event.target.value)
 }
 </script>
 
