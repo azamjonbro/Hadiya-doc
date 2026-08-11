@@ -169,5 +169,12 @@
     "readPercent": "Read %",
     "timeSpent": "Time spent",
     "openCount": "Times opened"
+  },
+  "tasks": {
+    "title": "Tasks",
+    "newTask": "+ New task",
+    "empty": "No tasks found",
+    "assignee": "Assignee (search user)",
+    "pickAssignee": "Please pick a user"
   }
 }

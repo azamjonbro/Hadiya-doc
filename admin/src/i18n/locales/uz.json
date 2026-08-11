@@ -164,6 +164,13 @@
       "expiryAt": "Amal qilish muddati"
     }
   },
+  "tasks": {
+    "title": "Vazifalar",
+    "newTask": "+ Yangi vazifa",
+    "empty": "Vazifalar topilmadi",
+    "assignee": "Kimga (foydalanuvchi qidirish)",
+    "pickAssignee": "Foydalanuvchini tanlang"
+  },
   "newsReport": {
     "opened": "Ochilgan",
     "readPercent": "O'qilgan foiz",

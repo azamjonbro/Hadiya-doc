@@ -42,6 +42,18 @@ async function onLogout() {
         >
           {{ t('news.title') }}
         </router-link>
+        <router-link
+          to="/tasks"
+          class="rounded-md border border-slate-300 px-3 py-1 text-sm dark:border-slate-700"
+        >
+          {{ t('tasks.title') }}
+        </router-link>
+        <router-link
+          to="/events"
+          class="rounded-md border border-slate-300 px-3 py-1 text-sm dark:border-slate-700"
+        >
+          {{ t('events.title') }}
+        </router-link>
         <select
           class="rounded-md border border-slate-300 bg-transparent px-2 py-1 text-sm dark:border-slate-700"
           @change="onLocaleChange"

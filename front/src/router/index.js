@@ -10,6 +10,8 @@ import CourseDetailView from '@/views/CourseDetailView.vue'
 import VideoPlayerView from '@/views/VideoPlayerView.vue'
 import NewsView from '@/views/NewsView.vue'
 import NewsDetailView from '@/views/NewsDetailView.vue'
+import TasksView from '@/views/TasksView.vue'
+import EventsView from '@/views/EventsView.vue'
 
 export const router = createRouter({
   history: createWebHistory(),
@@ -23,6 +25,8 @@ export const router = createRouter({
     { path: '/videos/:id', name: 'video-detail', component: VideoPlayerView },
     { path: '/news', name: 'news-list', component: NewsView },
     { path: '/news/:id', name: 'news-detail', component: NewsDetailView },
+    { path: '/tasks', name: 'tasks-list', component: TasksView },
+    { path: '/events', name: 'events-list', component: EventsView },
     { path: '/:pathMatch(.*)*', name: 'not-found', component: NotFoundView, meta: { public: true } },
   ],
 })

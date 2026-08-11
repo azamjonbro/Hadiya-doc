@@ -69,5 +69,20 @@
   "news": {
     "title": "Yangiliklar",
     "empty": "Yangiliklar topilmadi"
+  },
+  "tasks": {
+    "title": "Vazifalar",
+    "empty": "Vazifalar topilmadi",
+    "deadline": "Muddat",
+    "start": "Boshlash",
+    "complete": "Bajarildi deb belgilash"
+  },
+  "events": {
+    "title": "Tadbirlar",
+    "empty": "Tadbirlar topilmadi",
+    "newEvent": "+ Yangi tadbir",
+    "location": "Joylashuv",
+    "startAt": "Boshlanish vaqti",
+    "endAt": "Tugash vaqti"
   }
 }

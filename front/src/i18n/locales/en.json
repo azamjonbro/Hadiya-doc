@@ -69,5 +69,20 @@
   "news": {
     "title": "News",
     "empty": "No news found"
+  },
+  "tasks": {
+    "title": "Tasks",
+    "empty": "No tasks found",
+    "deadline": "Deadline",
+    "start": "Start",
+    "complete": "Mark complete"
+  },
+  "events": {
+    "title": "Events",
+    "empty": "No events found",
+    "newEvent": "+ New event",
+    "location": "Location",
+    "startAt": "Starts at",
+    "endAt": "Ends at"
   }
 }

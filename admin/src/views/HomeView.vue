@@ -45,6 +45,13 @@ async function onLogout() {
           {{ t('news.title') }}
         </router-link>
         <router-link
+          v-if="auth.hasPermission('task:create')"
+          to="/admin/tasks"
+          class="rounded-md border border-slate-300 px-3 py-1 text-sm dark:border-slate-700"
+        >
+          {{ t('tasks.title') }}
+        </router-link>
+        <router-link
           v-if="auth.hasPermission('user:read')"
           to="/admin/users"
           class="rounded-md border border-slate-300 px-3 py-1 text-sm dark:border-slate-700"
