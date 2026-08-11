@@ -1,8 +1,9 @@
 <script setup>
-import { onMounted, ref } from 'vue'
+import { onBeforeUnmount, onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { newsApi } from '@/services/news'
+import { useScrollAnalytics } from '@/composables/useScrollAnalytics'
 
 const { t } = useI18n()
 const route = useRoute()
@@ -12,11 +13,14 @@ const loading = ref(true)
 const errorMessage = ref('')
 const news = ref(null)
 
+const analytics = useScrollAnalytics(route.params.id)
+
 async function load() {
   loading.value = true
   errorMessage.value = ''
   try {
     news.value = await newsApi.getById(route.params.id)
+    analytics.start()
   } catch (error) {
     errorMessage.value = error.response?.data?.message ?? String(error)
   } finally {
@@ -25,6 +29,7 @@ async function load() {
 }
 
 onMounted(load)
+onBeforeUnmount(() => analytics.stop())
 </script>
 
 <template>

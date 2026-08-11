@@ -163,5 +163,11 @@
       "roleTargets": "Rollar (vergul bilan, bo'sh = hammaga)",
       "expiryAt": "Amal qilish muddati"
     }
+  },
+  "newsReport": {
+    "opened": "Ochilgan",
+    "readPercent": "O'qilgan foiz",
+    "timeSpent": "Sarflangan vaqt",
+    "openCount": "Ochilgan marta"
   }
 }

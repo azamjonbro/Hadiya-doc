@@ -3,6 +3,7 @@ import { onMounted, reactive, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useAuthStore } from '@/stores/auth'
 import { newsApi } from '@/services/news'
+import NewsReportPanel from '@/components/NewsReportPanel.vue'
 
 const { t } = useI18n()
 const auth = useAuthStore()
@@ -11,6 +12,7 @@ const items = ref([])
 const nextCursor = ref(null)
 const loading = ref(false)
 const errorMessage = ref('')
+const expandedReportId = ref(null)
 
 const showCreateForm = ref(false)
 const createSubmitting = ref(false)
@@ -125,14 +127,21 @@ onMounted(loadFirstPage)
     <p v-if="errorMessage" class="mt-4 text-sm text-red-500">{{ errorMessage }}</p>
 
     <ul class="mt-6 divide-y divide-slate-200 rounded-xl border border-slate-200 dark:divide-slate-800 dark:border-slate-800">
-      <li
-        v-for="item in items"
-        :key="item.id"
-        class="cursor-pointer p-4 hover:bg-slate-50 dark:hover:bg-slate-900"
-        @click="$router.push(`/admin/news/${item.id}`)"
-      >
-        <p class="font-medium">{{ item.title }}</p>
-        <p class="text-sm text-slate-500 dark:text-slate-400">{{ item.status }}</p>
+      <li v-for="item in items" :key="item.id" class="p-4">
+        <div class="flex items-center justify-between">
+          <div class="cursor-pointer" @click="$router.push(`/admin/news/${item.id}`)">
+            <p class="font-medium">{{ item.title }}</p>
+            <p class="text-sm text-slate-500 dark:text-slate-400">{{ item.status }}</p>
+          </div>
+          <button
+            type="button"
+            class="text-xs underline"
+            @click="expandedReportId = expandedReportId === item.id ? null : item.id"
+          >
+            {{ t('videoReport.title') }}
+          </button>
+        </div>
+        <NewsReportPanel v-if="expandedReportId === item.id" :news-id="item.id" />
       </li>
       <li v-if="!loading && items.length === 0" class="p-8 text-center text-sm text-slate-500 dark:text-slate-400">
         {{ t('news.empty') }}

@@ -163,5 +163,11 @@
       "roleTargets": "Roles (comma-separated, empty = everyone)",
       "expiryAt": "Expiry date"
     }
+  },
+  "newsReport": {
+    "opened": "Opened",
+    "readPercent": "Read %",
+    "timeSpent": "Time spent",
+    "openCount": "Times opened"
   }
 }
