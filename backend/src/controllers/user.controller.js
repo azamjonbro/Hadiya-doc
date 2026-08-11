@@ -1,4 +1,5 @@
 import { userService } from '../services/users/user.service.js'
+import { courseAssignmentService } from '../services/courses/courseAssignment.service.js'
 import { userRepository } from '../repositories/user.repository.js'
 import { roleRepository } from '../repositories/role.repository.js'
 import { asyncHandler } from '../utils/asyncHandler.js'
@@ -45,5 +46,9 @@ export const userController = {
   deactivate: asyncHandler(async (req, res) => {
     const user = await userService.deactivate(req.user, req.params.id)
     sendSuccess(res, user, 'User deactivated')
+  }),
+
+  getCourses: asyncHandler(async (req, res) => {
+    sendSuccess(res, await courseAssignmentService.listForUser(req.user, req.params.id))
   }),
 }

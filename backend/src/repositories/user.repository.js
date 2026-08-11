@@ -10,6 +10,10 @@ export const userRepository = {
     return User.findById(id)
   },
 
+  findByIds(ids) {
+    return User.find({ _id: { $in: ids } })
+  },
+
   countAll() {
     return User.countDocuments()
   },
