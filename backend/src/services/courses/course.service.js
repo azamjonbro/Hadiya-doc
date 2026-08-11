@@ -3,6 +3,14 @@ import { courseRepository } from '../../repositories/course.repository.js'
 import { auditLogRepository } from '../../repositories/auditLog.repository.js'
 import { slugify } from '../../utils/slugify.js'
 import { ApiError } from '../../utils/ApiError.js'
+import { cacheGet, cacheSet, cacheDel } from '../../utils/cache.js'
+
+// Course metadata is read on every catalog/detail page view and written
+// rarely (spec §39) — cached actor-independently (the DTO doesn't vary by
+// caller) with per-request visibility still enforced against the cached
+// value, and invalidated on every write below.
+const COURSE_CACHE_TTL = 5 * 60
+const courseCacheKey = (id) => `course:${id}`
 
 // Anyone without course:create (i.e. not admin-tier) only ever sees
 // published courses — draft/archived content isn't exposed to the catalog.
@@ -48,12 +56,17 @@ export const courseService = {
   },
 
   async getById(actor, id) {
-    const course = await courseRepository.findById(id)
-    if (!course) throw ApiError.notFound('Course not found')
+    let course = await cacheGet(courseCacheKey(id))
+    if (!course) {
+      const doc = await courseRepository.findById(id)
+      if (!doc) throw ApiError.notFound('Course not found')
+      course = toPublicCourse(doc)
+      await cacheSet(courseCacheKey(id), course, COURSE_CACHE_TTL)
+    }
     if (course.status !== 'PUBLISHED' && !canManageCourses(actor)) {
       throw ApiError.notFound('Course not found')
     }
-    return toPublicCourse(course)
+    return course
   },
 
   async create(actor, payload) {
@@ -73,6 +86,7 @@ export const courseService = {
     const existing = await courseRepository.findById(id)
     if (!existing) throw ApiError.notFound('Course not found')
     const updated = await courseRepository.updateById(id, { ...payload, updatedBy: actor.id })
+    await cacheDel(courseCacheKey(id))
     await auditLogRepository.record({
       actor: actor.id,
       action: 'COURSE_UPDATED',
@@ -87,6 +101,7 @@ export const courseService = {
     const existing = await courseRepository.findById(id)
     if (!existing) throw ApiError.notFound('Course not found')
     const updated = await courseRepository.archive(id)
+    await cacheDel(courseCacheKey(id))
     await auditLogRepository.record({ actor: actor.id, action: 'COURSE_ARCHIVED', entity: 'Course', entityId: id })
     return toPublicCourse(updated)
   },

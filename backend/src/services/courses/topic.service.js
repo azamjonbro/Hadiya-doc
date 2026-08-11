@@ -4,6 +4,10 @@ import { courseRepository } from '../../repositories/course.repository.js'
 import { auditLogRepository } from '../../repositories/auditLog.repository.js'
 import { slugify } from '../../utils/slugify.js'
 import { ApiError } from '../../utils/ApiError.js'
+import { cacheGet, cacheSet, cacheDel } from '../../utils/cache.js'
+
+const TOPIC_LIST_CACHE_TTL = 5 * 60
+const topicListCacheKey = (courseId) => `topics:course:${courseId}`
 
 function canManageCourses(actor) {
   return Boolean(actor.permissions?.includes(PERMISSIONS.COURSE_CREATE))
@@ -50,9 +54,18 @@ export const topicService = {
     if (course.status !== 'PUBLISHED' && !canManage) {
       throw ApiError.notFound('Course not found')
     }
-    const rows = await topicRepository.listByCourse(courseId)
-    const visible = canManage ? rows : rows.filter((t) => t.status === 'PUBLISHED')
-    return visible.map(toPublicTopic)
+
+    // Cached unfiltered (all statuses) — actor-independent — with
+    // per-request visibility filtering applied after the cache read, same
+    // pattern as course.service.js's getById.
+    let allTopics = await cacheGet(topicListCacheKey(courseId))
+    if (!allTopics) {
+      const rows = await topicRepository.listByCourse(courseId)
+      allTopics = rows.map(toPublicTopic)
+      await cacheSet(topicListCacheKey(courseId), allTopics, TOPIC_LIST_CACHE_TTL)
+    }
+
+    return canManage ? allTopics : allTopics.filter((t) => t.status === 'PUBLISHED')
   },
 
   async getById(actor, id) {
@@ -69,6 +82,7 @@ export const topicService = {
     await ensureCourseExists(courseId)
     const slug = await uniqueSlugForCourse(courseId, payload.title)
     const topic = await topicRepository.create({ ...payload, courseId, slug, createdBy: actor.id })
+    await cacheDel(topicListCacheKey(courseId))
     await auditLogRepository.record({
       actor: actor.id,
       action: 'TOPIC_CREATED',
@@ -83,6 +97,7 @@ export const topicService = {
     const existing = await topicRepository.findById(id)
     if (!existing) throw ApiError.notFound('Topic not found')
     const updated = await topicRepository.updateById(id, { ...payload, updatedBy: actor.id })
+    await cacheDel(topicListCacheKey(existing.courseId.toString()))
     await auditLogRepository.record({
       actor: actor.id,
       action: 'TOPIC_UPDATED',
@@ -97,6 +112,7 @@ export const topicService = {
     const existing = await topicRepository.findById(id)
     if (!existing) throw ApiError.notFound('Topic not found')
     await topicRepository.deleteById(id)
+    await cacheDel(topicListCacheKey(existing.courseId.toString()))
     await auditLogRepository.record({ actor: actor.id, action: 'TOPIC_DELETED', entity: 'Topic', entityId: id })
   },
 }

@@ -4,6 +4,10 @@ import { userRepository } from '../../repositories/user.repository.js'
 import { roleRepository } from '../../repositories/role.repository.js'
 import { auditLogRepository } from '../../repositories/auditLog.repository.js'
 import { ApiError } from '../../utils/ApiError.js'
+import { cacheGet, cacheSet, cacheDel } from '../../utils/cache.js'
+
+const NEWS_CACHE_TTL = 5 * 60
+const newsCacheKey = (id) => `news:${id}`
 
 function canManageNews(actor) {
   return Boolean(actor.permissions?.includes(PERMISSIONS.NEWS_CREATE))
@@ -60,13 +64,18 @@ export const newsService = {
   },
 
   async getById(actor, id) {
-    const news = await newsRepository.findById(id)
-    if (!news) throw ApiError.notFound('News not found')
+    let news = await cacheGet(newsCacheKey(id))
+    if (!news) {
+      const doc = await newsRepository.findById(id)
+      if (!doc) throw ApiError.notFound('News not found')
+      news = toPublicNews(doc)
+      await cacheSet(newsCacheKey(id), news, NEWS_CACHE_TTL)
+    }
 
     if (news.status !== 'PUBLISHED' && !canManageNews(actor)) {
       throw ApiError.notFound('News not found')
     }
-    return toPublicNews(news)
+    return news
   },
 
   async create(actor, payload) {
@@ -85,6 +94,7 @@ export const newsService = {
     const existing = await newsRepository.findById(id)
     if (!existing) throw ApiError.notFound('News not found')
     const updated = await newsRepository.updateById(id, { ...payload, updatedBy: actor.id })
+    await cacheDel(newsCacheKey(id))
     await auditLogRepository.record({
       actor: actor.id,
       action: 'NEWS_UPDATED',
@@ -98,6 +108,7 @@ export const newsService = {
   async remove(actor, id) {
     const existing = await newsRepository.findById(id)
     if (!existing) throw ApiError.notFound('News not found')
+    await cacheDel(newsCacheKey(id))
     await newsRepository.deleteById(id)
     await auditLogRepository.record({ actor: actor.id, action: 'NEWS_DELETED', entity: 'News', entityId: id })
   },
