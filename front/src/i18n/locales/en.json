@@ -1,0 +1,21 @@
+{
+  "app": {
+    "name": "Corporate LMS"
+  },
+  "nav": {
+    "dashboard": "Dashboard"
+  },
+  "theme": {
+    "light": "Light",
+    "dark": "Dark"
+  },
+  "backend": {
+    "checking": "Checking backend status...",
+    "online": "Backend is online",
+    "offline": "Could not reach backend"
+  },
+  "notFound": {
+    "title": "404",
+    "message": "Page not found"
+  }
+}

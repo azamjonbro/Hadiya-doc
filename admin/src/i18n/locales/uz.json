@@ -1,0 +1,21 @@
+{
+  "app": {
+    "name": "Corporate LMS — Admin"
+  },
+  "nav": {
+    "dashboard": "Admin boshqaruv paneli"
+  },
+  "theme": {
+    "light": "Yorug'",
+    "dark": "Qorong'i"
+  },
+  "backend": {
+    "checking": "Backend holati tekshirilmoqda...",
+    "online": "Backend ishlayapti",
+    "offline": "Backend bilan bog'lanib bo'lmadi"
+  },
+  "notFound": {
+    "title": "404",
+    "message": "Sahifa topilmadi"
+  }
+}

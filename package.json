@@ -1,0 +1,24 @@
+{
+  "name": "corporate-lms",
+  "private": true,
+  "version": "0.1.0",
+  "workspaces": [
+    "packages/shared",
+    "backend",
+    "front",
+    "admin"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "dev:backend": "npm run dev --workspace backend",
+    "dev:front": "npm run dev --workspace front",
+    "dev:admin": "npm run dev --workspace admin",
+    "build": "npm run build --workspaces --if-present",
+    "lint": "npm run lint --workspaces --if-present",
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "infra:up": "docker compose up -d",
+    "infra:down": "docker compose down"
+  }
+}

@@ -1,0 +1,67 @@
+name: corporate-lms
+
+services:
+  mongo:
+    image: mongo:7
+    restart: unless-stopped
+    ports:
+      # Host 27018 -> avoids clashing with a locally installed mongod on 27017.
+      - '27018:27017'
+    volumes:
+      - lms_mongo_data:/data/db
+    healthcheck:
+      test: ['CMD', 'mongosh', '--quiet', '--eval', 'db.adminCommand("ping")']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    ports:
+      # Host 6380 -> avoids clashing with a locally installed redis-server on 6379.
+      - '6380:6379'
+    volumes:
+      - lms_redis_data:/data
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  minio:
+    image: minio/minio:latest
+    restart: unless-stopped
+    command: server /data --console-address ":9001"
+    ports:
+      - '9000:9000' # S3 API
+      - '9001:9001' # Web console
+    environment:
+      MINIO_ROOT_USER: lms_minio_admin
+      MINIO_ROOT_PASSWORD: lms_minio_secret
+    volumes:
+      - lms_minio_data:/data
+    healthcheck:
+      test: ['CMD', 'mc', 'ready', 'local']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  minio-init:
+    image: minio/mc:latest
+    depends_on:
+      minio:
+        condition: service_healthy
+    entrypoint: >
+      /bin/sh -c "
+      mc alias set local http://minio:9000 lms_minio_admin lms_minio_secret &&
+      mc mb --ignore-existing local/lms-originals &&
+      mc mb --ignore-existing local/lms-processed &&
+      mc anonymous set none local/lms-originals &&
+      mc anonymous set none local/lms-processed
+      "
+
+volumes:
+  lms_mongo_data:
+  lms_redis_data:
+  lms_minio_data:
