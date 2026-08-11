@@ -1841,3 +1841,4 @@ UX professional enterprise-level bo‘lsin.
 Kod yozishdan oldin architecture, database schema, API contract, security model va development roadmapni ko‘rsat.
 
 Keyin PHASE 1 dan boshlab implementatsiyani bosqichma-bosqich amalga oshir.
+# Hadiya-doc
