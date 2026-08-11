@@ -6,6 +6,12 @@ import { VIDEO_PROCESSING_QUEUE } from './jobs/videoProcessingQueue.js'
 import { processVideo } from './video/processVideo.js'
 import { REMINDER_QUEUE, scheduleReminderChecks } from './jobs/reminderQueue.js'
 import { runDeadlineChecks } from './jobs/reminderJob.js'
+import {
+  DASHBOARD_AGGREGATION_QUEUE,
+  scheduleDashboardAggregation,
+  runDashboardAggregationNow,
+} from './jobs/dashboardAggregationQueue.js'
+import { dashboardCacheService } from './services/analytics/dashboardCache.service.js'
 
 async function main() {
   await connectDatabase()
@@ -45,14 +51,31 @@ async function main() {
     logger.error('Reminder job failed', { jobId: job?.id, error: err.message })
   })
 
+  const dashboardWorker = new Worker(
+    DASHBOARD_AGGREGATION_QUEUE,
+    async (job) => {
+      if (job.name === 'compute') {
+        await dashboardCacheService.recompute()
+      }
+    },
+    { connection: redisConnection, concurrency: 1 }
+  )
+
+  dashboardWorker.on('failed', (job, err) => {
+    logger.error('Dashboard aggregation job failed', { jobId: job?.id, error: err.message })
+  })
+
   await scheduleReminderChecks()
+  await scheduleDashboardAggregation()
+  await runDashboardAggregationNow()
 
   logger.info('Video processing worker started')
   logger.info('Reminder worker started (deadline checks every 15 minutes)')
+  logger.info('Dashboard aggregation worker started (recomputes every 5 minutes)')
 
   const shutdown = async (signal) => {
     logger.info(`Received ${signal}, shutting down worker`)
-    await Promise.all([videoWorker.close(), reminderWorker.close()])
+    await Promise.all([videoWorker.close(), reminderWorker.close(), dashboardWorker.close()])
     process.exit(0)
   }
   process.on('SIGTERM', () => shutdown('SIGTERM'))
