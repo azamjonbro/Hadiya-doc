@@ -12,6 +12,7 @@
     "@lms/shared": "*",
     "axios": "^1.7.7",
     "pinia": "^2.2.6",
+    "tus-js-client": "^4.3.1",
     "vue": "^3.5.12",
     "vue-i18n": "^11.4.8",
     "vue-router": "^4.4.5"

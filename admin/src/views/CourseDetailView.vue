@@ -5,6 +5,7 @@ import { useI18n } from 'vue-i18n'
 import { useAuthStore } from '@/stores/auth'
 import { coursesApi } from '@/services/courses'
 import { topicsApi } from '@/services/topics'
+import TopicVideosPanel from '@/components/TopicVideosPanel.vue'
 
 const { t } = useI18n()
 const route = useRoute()
@@ -16,6 +17,7 @@ const errorMessage = ref('')
 const saving = ref(false)
 const course = ref(null)
 const topics = ref([])
+const expandedVideosTopicId = ref(null)
 
 const form = reactive({ title: '', description: '', status: 'DRAFT' })
 
@@ -206,18 +208,28 @@ onMounted(load)
                   <p class="font-medium">{{ topic.order }}. {{ topic.title }}</p>
                   <p class="text-sm text-slate-500 dark:text-slate-400">{{ topic.status }}</p>
                 </div>
-                <div v-if="auth.hasPermission('course:update')" class="flex gap-2">
-                  <button type="button" class="text-sm underline" @click="startEditTopic(topic)">{{ t('courses.topics.edit') }}</button>
+                <div class="flex gap-2">
                   <button
-                    v-if="auth.hasPermission('course:delete')"
                     type="button"
-                    class="text-sm text-red-500 underline"
-                    @click="removeTopic(topic.id)"
+                    class="text-sm underline"
+                    @click="expandedVideosTopicId = expandedVideosTopicId === topic.id ? null : topic.id"
                   >
-                    {{ t('courses.topics.remove') }}
+                    {{ expandedVideosTopicId === topic.id ? t('videos.hide') : t('videos.manage') }}
                   </button>
+                  <template v-if="auth.hasPermission('course:update')">
+                    <button type="button" class="text-sm underline" @click="startEditTopic(topic)">{{ t('courses.topics.edit') }}</button>
+                    <button
+                      v-if="auth.hasPermission('course:delete')"
+                      type="button"
+                      class="text-sm text-red-500 underline"
+                      @click="removeTopic(topic.id)"
+                    >
+                      {{ t('courses.topics.remove') }}
+                    </button>
+                  </template>
                 </div>
               </div>
+              <TopicVideosPanel v-if="expandedVideosTopicId === topic.id" :topic-id="topic.id" />
             </template>
           </li>
           <li v-if="topics.length === 0" class="p-8 text-center text-sm text-slate-500 dark:text-slate-400">

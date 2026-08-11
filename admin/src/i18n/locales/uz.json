@@ -106,5 +106,31 @@
       "order": "Tartib",
       "empty": "Mavzular topilmadi"
     }
+  },
+  "videos": {
+    "title": "Videodarslar",
+    "manage": "Videolar",
+    "hide": "Yopish",
+    "empty": "Videolar hali yuklanmagan",
+    "publish": "Chop etish",
+    "unpublish": "Chop etishni bekor qilish",
+    "remove": "O'chirish",
+    "dropHint": "Video faylni shu yerga tashlang yoki",
+    "browse": "tanlang",
+    "required": "Majburiy",
+    "startUpload": "Yuklashni boshlash",
+    "pause": "Pauza",
+    "resume": "Davom ettirish",
+    "cancelUpload": "Bekor qilish",
+    "retry": "Qayta urinish",
+    "uploadDone": "Yuklandi. Qayta ishlash kutilmoqda.",
+    "processing": {
+      "PENDING": "Navbatda",
+      "VALIDATING": "Tekshirilmoqda",
+      "TRANSCODING": "Qayta kodlanmoqda",
+      "PACKAGING": "Paketlanmoqda",
+      "READY": "Tayyor",
+      "FAILED": "Xatolik"
+    }
   }
 }

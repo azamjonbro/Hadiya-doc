@@ -106,5 +106,31 @@
       "order": "Order",
       "empty": "No topics found"
     }
+  },
+  "videos": {
+    "title": "Videos",
+    "manage": "Videos",
+    "hide": "Hide",
+    "empty": "No videos uploaded yet",
+    "publish": "Publish",
+    "unpublish": "Unpublish",
+    "remove": "Remove",
+    "dropHint": "Drop a video file here or",
+    "browse": "browse",
+    "required": "Required",
+    "startUpload": "Start upload",
+    "pause": "Pause",
+    "resume": "Resume",
+    "cancelUpload": "Cancel",
+    "retry": "Retry",
+    "uploadDone": "Uploaded. Awaiting processing.",
+    "processing": {
+      "PENDING": "Queued",
+      "VALIDATING": "Validating",
+      "TRANSCODING": "Transcoding",
+      "PACKAGING": "Packaging",
+      "READY": "Ready",
+      "FAILED": "Failed"
+    }
   }
 }
