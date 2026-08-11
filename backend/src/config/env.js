@@ -24,6 +24,14 @@ const envSchema = z.object({
 
   LOGIN_MAX_ATTEMPTS: z.coerce.number().int().positive().default(5),
   LOGIN_LOCK_MINUTES: z.coerce.number().int().positive().default(15),
+
+  STORAGE_DRIVER: z.enum(['s3']).default('s3'),
+  S3_ENDPOINT: z.string().min(1, 'S3_ENDPOINT is required'),
+  S3_REGION: z.string().min(1, 'S3_REGION is required'),
+  S3_ACCESS_KEY: z.string().min(1, 'S3_ACCESS_KEY is required'),
+  S3_SECRET_KEY: z.string().min(1, 'S3_SECRET_KEY is required'),
+  S3_BUCKET_ORIGINALS: z.string().min(1, 'S3_BUCKET_ORIGINALS is required'),
+  S3_BUCKET_PROCESSED: z.string().min(1, 'S3_BUCKET_PROCESSED is required'),
 })
 
 const parsed = envSchema.safeParse(process.env)

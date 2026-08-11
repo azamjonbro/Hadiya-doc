@@ -4,6 +4,7 @@ import { authenticate } from '../../middlewares/auth.middleware.js'
 import { requirePermission } from '../../middlewares/rbac.middleware.js'
 import { validateBody } from '../../middlewares/validate.middleware.js'
 import { topicController } from '../../controllers/topic.controller.js'
+import { videoController } from '../../controllers/video.controller.js'
 import { updateTopicSchema } from '../../validators/course.validator.js'
 
 export const topicsRouter = Router()
@@ -11,6 +12,7 @@ export const topicsRouter = Router()
 topicsRouter.use(authenticate)
 
 topicsRouter.get('/:id', requirePermission(PERMISSIONS.COURSE_READ), topicController.getById)
+topicsRouter.get('/:id/videos', requirePermission(PERMISSIONS.VIDEO_VIEW), videoController.listByTopic)
 topicsRouter.patch(
   '/:id',
   requirePermission(PERMISSIONS.COURSE_UPDATE),
