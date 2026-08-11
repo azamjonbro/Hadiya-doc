@@ -19,6 +19,15 @@ function rewriteManifest(text, token) {
     .join('\n')
 }
 
+// req.params.file is attacker-controlled and feeds directly into the S3
+// object key below. Express decodes %2e%2e%2f sequences into the param
+// before routing sees it, so an unvalidated `file` could contain `../` and
+// walk the key into a different video's prefix within the same bucket —
+// the token only pins `videoId`, so nothing else would catch that. Segment
+// and manifest filenames are always a flat "name.ext" with no separators,
+// so anything else is rejected outright (spec §50 path traversal tests).
+const SAFE_FILENAME = /^[\w.-]+$/
+
 async function loadReadyVideo(videoId) {
   const video = await videoRepository.findById(videoId)
   if (!video || video.processingStatus !== 'READY' || !video.hlsManifestKey) {
@@ -39,6 +48,9 @@ export const videoStreamService = {
     const video = await loadReadyVideo(videoId)
     if (!video.qualities.includes(quality)) {
       throw ApiError.notFound('Quality rendition not found')
+    }
+    if (!SAFE_FILENAME.test(file)) {
+      throw ApiError.badRequest('Invalid file name', 'INVALID_FILE_NAME')
     }
 
     const prefix = video.hlsManifestKey.replace(/master\.m3u8$/, '')
