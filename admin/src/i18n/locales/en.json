@@ -155,7 +155,7 @@
   },
   "users": {
     "title": "Users",
-    "newUser": "+ New user",
+    "newUser": "New user",
     "cancel": "Cancel",
     "create": "Create",
     "creating": "Creating...",
@@ -195,7 +195,7 @@
   },
   "courses": {
     "title": "Courses",
-    "newCourse": "+ New course",
+    "newCourse": "New course",
     "cancel": "Cancel",
     "create": "Create",
     "creating": "Creating...",
@@ -231,7 +231,7 @@
     },
     "topics": {
       "title": "Topics",
-      "add": "+ Add topic",
+      "add": "Add topic",
       "edit": "Edit",
       "remove": "Remove",
       "order": "Order",
@@ -301,7 +301,7 @@
   },
   "news": {
     "title": "News",
-    "newArticle": "+ New article",
+    "newArticle": "New article",
     "empty": "No news found",
     "delete": "Delete",
     "fields": {
@@ -321,7 +321,7 @@
   },
   "tasks": {
     "title": "Tasks",
-    "newTask": "+ New task",
+    "newTask": "New task",
     "empty": "No tasks found",
     "assignee": "Assignee (search user)",
     "pickAssignee": "Please pick a user",

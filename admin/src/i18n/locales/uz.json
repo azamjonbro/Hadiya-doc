@@ -155,7 +155,7 @@
   },
   "users": {
     "title": "Foydalanuvchilar",
-    "newUser": "+ Yangi foydalanuvchi",
+    "newUser": "Yangi foydalanuvchi",
     "cancel": "Bekor qilish",
     "create": "Yaratish",
     "creating": "Yaratilmoqda...",
@@ -195,7 +195,7 @@
   },
   "courses": {
     "title": "Kurslar",
-    "newCourse": "+ Yangi kurs",
+    "newCourse": "Yangi kurs",
     "cancel": "Bekor qilish",
     "create": "Yaratish",
     "creating": "Yaratilmoqda...",
@@ -231,7 +231,7 @@
     },
     "topics": {
       "title": "Mavzular",
-      "add": "+ Mavzu qo'shish",
+      "add": "Mavzu qo'shish",
       "edit": "Tahrirlash",
       "remove": "O'chirish",
       "order": "Tartib",
@@ -301,7 +301,7 @@
   },
   "news": {
     "title": "Yangiliklar",
-    "newArticle": "+ Yangi maqola",
+    "newArticle": "Yangi maqola",
     "empty": "Yangiliklar topilmadi",
     "delete": "O'chirish",
     "fields": {
@@ -315,7 +315,7 @@
   },
   "tasks": {
     "title": "Vazifalar",
-    "newTask": "+ Yangi vazifa",
+    "newTask": "Yangi vazifa",
     "empty": "Vazifalar topilmadi",
     "assignee": "Kimga (foydalanuvchi qidirish)",
     "pickAssignee": "Foydalanuvchini tanlang",
