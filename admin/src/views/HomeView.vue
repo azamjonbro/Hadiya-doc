@@ -31,6 +31,13 @@ async function onLogout() {
       <h1 class="text-2xl font-semibold tracking-tight">{{ t('app.name') }}</h1>
       <div class="flex items-center gap-3">
         <router-link
+          v-if="auth.hasPermission('course:read')"
+          to="/admin/courses"
+          class="rounded-md border border-slate-300 px-3 py-1 text-sm dark:border-slate-700"
+        >
+          {{ t('courses.title') }}
+        </router-link>
+        <router-link
           v-if="auth.hasPermission('user:read')"
           to="/admin/users"
           class="rounded-md border border-slate-300 px-3 py-1 text-sm dark:border-slate-700"

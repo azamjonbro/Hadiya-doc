@@ -34,5 +34,25 @@
   "notFound": {
     "title": "404",
     "message": "Страница не найдена"
+  },
+  "courses": {
+    "title": "Курсы",
+    "loading": "Загрузка...",
+    "empty": "Курсы не найдены",
+    "assignedToYou": "Назначено вам",
+    "catalog": "Каталог курсов",
+    "noAssignments": "Вам пока не назначено ни одного курса",
+    "mandatory": "Обязательный",
+    "optional": "Необязательный",
+    "deadline": "Срок",
+    "badges": {
+      "onTrack": "В процессе",
+      "overdue": "Просрочен",
+      "expired": "Истёк"
+    },
+    "topics": {
+      "title": "Темы",
+      "empty": "Темы не найдены"
+    }
   }
 }

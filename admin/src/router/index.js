@@ -7,6 +7,8 @@ import UnauthorizedView from '@/views/UnauthorizedView.vue'
 import NotFoundView from '@/views/NotFoundView.vue'
 import UsersListView from '@/views/UsersListView.vue'
 import UserDetailView from '@/views/UserDetailView.vue'
+import CoursesListView from '@/views/CoursesListView.vue'
+import CourseDetailView from '@/views/CourseDetailView.vue'
 
 export const router = createRouter({
   history: createWebHistory(),
@@ -26,6 +28,18 @@ export const router = createRouter({
       name: 'user-detail',
       component: UserDetailView,
       meta: { permission: 'user:read' },
+    },
+    {
+      path: '/admin/courses',
+      name: 'courses-list',
+      component: CoursesListView,
+      meta: { permission: 'course:read' },
+    },
+    {
+      path: '/admin/courses/:id',
+      name: 'course-detail',
+      component: CourseDetailView,
+      meta: { permission: 'course:read' },
     },
     { path: '/:pathMatch(.*)*', name: 'not-found', component: NotFoundView, meta: { public: true } },
   ],

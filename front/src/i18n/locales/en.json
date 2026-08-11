@@ -34,5 +34,25 @@
   "notFound": {
     "title": "404",
     "message": "Page not found"
+  },
+  "courses": {
+    "title": "Courses",
+    "loading": "Loading...",
+    "empty": "No courses found",
+    "assignedToYou": "Assigned to you",
+    "catalog": "Course catalog",
+    "noAssignments": "No courses have been assigned to you yet",
+    "mandatory": "Mandatory",
+    "optional": "Optional",
+    "deadline": "Deadline",
+    "badges": {
+      "onTrack": "On track",
+      "overdue": "Overdue",
+      "expired": "Expired"
+    },
+    "topics": {
+      "title": "Topics",
+      "empty": "No topics found"
+    }
   }
 }

@@ -70,5 +70,41 @@
       "department": "Filter by department",
       "apply": "Apply"
     }
+  },
+  "courses": {
+    "title": "Courses",
+    "newCourse": "+ New course",
+    "cancel": "Cancel",
+    "create": "Create",
+    "creating": "Creating...",
+    "save": "Save",
+    "saving": "Saving...",
+    "archive": "Archive",
+    "loading": "Loading...",
+    "loadMore": "Load more",
+    "empty": "No courses found",
+    "fields": {
+      "title": "Title",
+      "description": "Description"
+    },
+    "status": {
+      "label": "Status",
+      "draft": "Draft",
+      "published": "Published",
+      "archived": "Archived"
+    },
+    "filters": {
+      "search": "Search...",
+      "allStatuses": "All statuses",
+      "apply": "Apply"
+    },
+    "topics": {
+      "title": "Topics",
+      "add": "+ Add topic",
+      "edit": "Edit",
+      "remove": "Remove",
+      "order": "Order",
+      "empty": "No topics found"
+    }
   }
 }

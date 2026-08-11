@@ -30,6 +30,12 @@ async function onLogout() {
     <div class="flex items-center justify-between">
       <h1 class="text-2xl font-semibold tracking-tight">{{ t('app.name') }}</h1>
       <div class="flex items-center gap-3">
+        <router-link
+          to="/courses"
+          class="rounded-md border border-slate-300 px-3 py-1 text-sm dark:border-slate-700"
+        >
+          {{ t('courses.title') }}
+        </router-link>
         <select
           class="rounded-md border border-slate-300 bg-transparent px-2 py-1 text-sm dark:border-slate-700"
           @change="onLocaleChange"

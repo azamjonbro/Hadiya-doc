@@ -34,5 +34,25 @@
   "notFound": {
     "title": "404",
     "message": "Sahifa topilmadi"
+  },
+  "courses": {
+    "title": "Kurslar",
+    "loading": "Yuklanmoqda...",
+    "empty": "Kurslar topilmadi",
+    "assignedToYou": "Sizga biriktirilgan",
+    "catalog": "Kurslar katalogi",
+    "noAssignments": "Sizga hali kurs biriktirilmagan",
+    "mandatory": "Majburiy",
+    "optional": "Ixtiyoriy",
+    "deadline": "Muddat",
+    "badges": {
+      "onTrack": "Jarayonda",
+      "overdue": "Muddati o'tgan",
+      "expired": "Muddati tugagan"
+    },
+    "topics": {
+      "title": "Mavzular",
+      "empty": "Mavzular topilmadi"
+    }
   }
 }

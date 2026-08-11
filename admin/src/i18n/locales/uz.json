@@ -70,5 +70,41 @@
       "department": "Bo'lim bo'yicha filtr",
       "apply": "Filtrlash"
     }
+  },
+  "courses": {
+    "title": "Kurslar",
+    "newCourse": "+ Yangi kurs",
+    "cancel": "Bekor qilish",
+    "create": "Yaratish",
+    "creating": "Yaratilmoqda...",
+    "save": "Saqlash",
+    "saving": "Saqlanmoqda...",
+    "archive": "Arxivlash",
+    "loading": "Yuklanmoqda...",
+    "loadMore": "Yana yuklash",
+    "empty": "Kurslar topilmadi",
+    "fields": {
+      "title": "Sarlavha",
+      "description": "Tavsif"
+    },
+    "status": {
+      "label": "Holat",
+      "draft": "Qoralama",
+      "published": "Chop etilgan",
+      "archived": "Arxivlangan"
+    },
+    "filters": {
+      "search": "Qidirish...",
+      "allStatuses": "Barcha holatlar",
+      "apply": "Filtrlash"
+    },
+    "topics": {
+      "title": "Mavzular",
+      "add": "+ Mavzu qo'shish",
+      "edit": "Tahrirlash",
+      "remove": "O'chirish",
+      "order": "Tartib",
+      "empty": "Mavzular topilmadi"
+    }
   }
 }
