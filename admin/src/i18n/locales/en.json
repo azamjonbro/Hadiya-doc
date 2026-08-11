@@ -5,6 +5,44 @@
   "nav": {
     "dashboard": "Admin Dashboard"
   },
+  "dashboard": {
+    "title": "Dashboard",
+    "loading": "Loading dashboard...",
+    "error": "Could not load dashboard data",
+    "stale": "Showing cached data — live refresh unavailable",
+    "generatedAt": "Updated",
+    "cards": {
+      "totalEmployees": "Total Employees",
+      "activeEmployees": "Active Employees",
+      "totalCourses": "Courses",
+      "mandatoryCourses": "Mandatory Courses",
+      "completedAssignments": "Completed Courses",
+      "overdueAssignments": "Overdue Courses",
+      "avgCompletionPercent": "Average Completion",
+      "avgWatchTimeSeconds": "Average Watch Time",
+      "newsEngagementPercent": "News Engagement",
+      "activeSessions": "Active Sessions"
+    },
+    "charts": {
+      "courseCompletion": "Course Completion",
+      "mostDifficultCourses": "Most Difficult Courses",
+      "employeeProgress": "Employee Progress Distribution",
+      "mostEngagedEmployees": "Most Engaged Employees",
+      "lowestEngagement": "Lowest Engagement",
+      "watchTimeByDay": "Watch Time (last 14 days)",
+      "mostSkippedVideos": "Most Skipped Videos",
+      "mostPausedVideos": "Most Paused Videos",
+      "newsEngagement": "News Engagement",
+      "taskCompletion": "Task Completion"
+    },
+    "empty": {
+      "courses": "No course activity yet",
+      "employees": "No employee activity yet",
+      "videos": "No video activity yet",
+      "news": "No news activity yet",
+      "tasks": "No tasks yet"
+    }
+  },
   "theme": {
     "light": "Light",
     "dark": "Dark"

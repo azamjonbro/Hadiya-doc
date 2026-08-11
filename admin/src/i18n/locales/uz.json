@@ -5,6 +5,44 @@
   "nav": {
     "dashboard": "Admin boshqaruv paneli"
   },
+  "dashboard": {
+    "title": "Boshqaruv paneli",
+    "loading": "Ma'lumotlar yuklanmoqda...",
+    "error": "Panel ma'lumotlarini yuklab bo'lmadi",
+    "stale": "Keshlangan ma'lumotlar ko'rsatilmoqda — jonli yangilash mavjud emas",
+    "generatedAt": "Yangilangan",
+    "cards": {
+      "totalEmployees": "Jami xodimlar",
+      "activeEmployees": "Faol xodimlar",
+      "totalCourses": "Kurslar",
+      "mandatoryCourses": "Majburiy kurslar",
+      "completedAssignments": "Tugallangan kurslar",
+      "overdueAssignments": "Muddati o'tgan kurslar",
+      "avgCompletionPercent": "O'rtacha bajarilish",
+      "avgWatchTimeSeconds": "O'rtacha ko'rish vaqti",
+      "newsEngagementPercent": "Yangiliklar bilan qiziqish",
+      "activeSessions": "Faol sessiyalar"
+    },
+    "charts": {
+      "courseCompletion": "Kurslar bajarilishi",
+      "mostDifficultCourses": "Eng qiyin kurslar",
+      "employeeProgress": "Xodimlar progressi taqsimoti",
+      "mostEngagedEmployees": "Eng faol xodimlar",
+      "lowestEngagement": "Eng past faollik",
+      "watchTimeByDay": "Ko'rish vaqti (oxirgi 14 kun)",
+      "mostSkippedVideos": "Ko'p o'tkazib yuborilgan videolar",
+      "mostPausedVideos": "Ko'p pauza qilingan videolar",
+      "newsEngagement": "Yangiliklar bilan qiziqish",
+      "taskCompletion": "Vazifalar bajarilishi"
+    },
+    "empty": {
+      "courses": "Hali kurs faolligi yo'q",
+      "employees": "Hali xodim faolligi yo'q",
+      "videos": "Hali video faolligi yo'q",
+      "news": "Hali yangilik faolligi yo'q",
+      "tasks": "Hali vazifalar yo'q"
+    }
+  },
   "theme": {
     "light": "Yorug'",
     "dark": "Qorong'i"

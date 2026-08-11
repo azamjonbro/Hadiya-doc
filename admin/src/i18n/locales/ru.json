@@ -5,6 +5,44 @@
   "nav": {
     "dashboard": "Панель администратора"
   },
+  "dashboard": {
+    "title": "Панель показателей",
+    "loading": "Загрузка данных...",
+    "error": "Не удалось загрузить данные панели",
+    "stale": "Показаны кэшированные данные — обновление недоступно",
+    "generatedAt": "Обновлено",
+    "cards": {
+      "totalEmployees": "Всего сотрудников",
+      "activeEmployees": "Активные сотрудники",
+      "totalCourses": "Курсы",
+      "mandatoryCourses": "Обязательные курсы",
+      "completedAssignments": "Завершённые курсы",
+      "overdueAssignments": "Просроченные курсы",
+      "avgCompletionPercent": "Средняя завершённость",
+      "avgWatchTimeSeconds": "Среднее время просмотра",
+      "newsEngagementPercent": "Вовлечённость в новости",
+      "activeSessions": "Активные сессии"
+    },
+    "charts": {
+      "courseCompletion": "Завершённость курсов",
+      "mostDifficultCourses": "Самые сложные курсы",
+      "employeeProgress": "Распределение прогресса сотрудников",
+      "mostEngagedEmployees": "Самые вовлечённые сотрудники",
+      "lowestEngagement": "Низкая вовлечённость",
+      "watchTimeByDay": "Время просмотра (14 дней)",
+      "mostSkippedVideos": "Часто перематываемые видео",
+      "mostPausedVideos": "Часто ставящиеся на паузу видео",
+      "newsEngagement": "Вовлечённость в новости",
+      "taskCompletion": "Выполнение задач"
+    },
+    "empty": {
+      "courses": "Пока нет активности по курсам",
+      "employees": "Пока нет активности сотрудников",
+      "videos": "Пока нет активности по видео",
+      "news": "Пока нет активности по новостям",
+      "tasks": "Пока нет задач"
+    }
+  },
   "theme": {
     "light": "Светлая",
     "dark": "Тёмная"
