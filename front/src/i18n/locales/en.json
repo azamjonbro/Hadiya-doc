@@ -54,5 +54,16 @@
       "title": "Topics",
       "empty": "No topics found"
     }
+  },
+  "videos": {
+    "empty": "No videos uploaded yet",
+    "processing": {
+      "PENDING": "Video is queued for processing",
+      "VALIDATING": "Video is being validated",
+      "TRANSCODING": "Video is being transcoded",
+      "PACKAGING": "Video is being packaged",
+      "READY": "Ready",
+      "FAILED": "Video processing failed"
+    }
   }
 }

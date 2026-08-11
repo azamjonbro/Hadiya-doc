@@ -54,5 +54,16 @@
       "title": "Mavzular",
       "empty": "Mavzular topilmadi"
     }
+  },
+  "videos": {
+    "empty": "Videolar hali yuklanmagan",
+    "processing": {
+      "PENDING": "Video qayta ishlanishi kutilmoqda",
+      "VALIDATING": "Video tekshirilmoqda",
+      "TRANSCODING": "Video qayta kodlanmoqda",
+      "PACKAGING": "Video paketlanmoqda",
+      "READY": "Tayyor",
+      "FAILED": "Videoni qayta ishlashda xatolik yuz berdi"
+    }
   }
 }

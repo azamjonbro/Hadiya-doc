@@ -77,7 +77,13 @@ export async function processVideo(videoId) {
     }
 
     let qualitiesToProduce = QUALITY_LADDER.filter((q) => q.height <= metadata.height)
-    if (qualitiesToProduce.length === 0) qualitiesToProduce = [QUALITY_LADDER[0]]
+    if (qualitiesToProduce.length === 0) {
+      // Source is shorter than even the smallest ladder rung (360p) —
+      // transcode at its own native height instead of upscaling, which
+      // would violate the "never exceed source resolution" rule (spec §31).
+      const nativeHeight = Math.round(metadata.height / 2) * 2
+      qualitiesToProduce = [{ name: `${nativeHeight}p`, height: nativeHeight }]
+    }
 
     await videoRepository.updateById(videoId, {
       processingStatus: 'TRANSCODING',

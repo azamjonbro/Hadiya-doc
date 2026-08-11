@@ -7,6 +7,7 @@ import UnauthorizedView from '@/views/UnauthorizedView.vue'
 import NotFoundView from '@/views/NotFoundView.vue'
 import CoursesView from '@/views/CoursesView.vue'
 import CourseDetailView from '@/views/CourseDetailView.vue'
+import VideoPlayerView from '@/views/VideoPlayerView.vue'
 
 export const router = createRouter({
   history: createWebHistory(),
@@ -17,6 +18,7 @@ export const router = createRouter({
     { path: '/401', name: 'unauthorized', component: UnauthorizedView, meta: { public: true } },
     { path: '/courses', name: 'courses-list', component: CoursesView },
     { path: '/courses/:id', name: 'course-detail', component: CourseDetailView },
+    { path: '/videos/:id', name: 'video-detail', component: VideoPlayerView },
     { path: '/:pathMatch(.*)*', name: 'not-found', component: NotFoundView, meta: { public: true } },
   ],
 })
