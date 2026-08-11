@@ -1,0 +1,136 @@
+name: corporate-lms-prod
+
+# Production stack — see docs/deployment.md for the full setup (env vars,
+# TLS certs, first-boot, backups). Every application service (backend,
+# worker, front, admin) is on the internal `lms-internal` network only;
+# `nginx` is the sole container with a host-exposed port, terminating TLS
+# and reverse-proxying to the rest (nginx/reverse-proxy.conf).
+#
+# `mongo`/`redis`/`minio` here are a self-hosted baseline for a single-VM
+# deploy. At real scale, point MONGO_URI/REDIS_URL/S3_* at managed
+# services instead (Atlas, ElastiCache/managed Redis, S3) and drop those
+# three services — nothing else in this file changes.
+
+services:
+  mongo:
+    image: mongo:7
+    restart: unless-stopped
+    volumes:
+      - lms_mongo_data:/data/db
+    networks: [lms-internal]
+    healthcheck:
+      test: ['CMD', 'mongosh', '--quiet', '--eval', 'db.adminCommand("ping")']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    volumes:
+      - lms_redis_data:/data
+    networks: [lms-internal]
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  minio:
+    image: minio/minio:latest
+    restart: unless-stopped
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: ${S3_ACCESS_KEY}
+      MINIO_ROOT_PASSWORD: ${S3_SECRET_KEY}
+    volumes:
+      - lms_minio_data:/data
+    networks: [lms-internal]
+    healthcheck:
+      test: ['CMD', 'mc', 'ready', 'local']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  minio-init:
+    image: minio/mc:latest
+    depends_on:
+      minio:
+        condition: service_healthy
+    networks: [lms-internal]
+    entrypoint: >
+      /bin/sh -c "
+      mc alias set local http://minio:9000 $${S3_ACCESS_KEY} $${S3_SECRET_KEY} &&
+      mc mb --ignore-existing local/$${S3_BUCKET_ORIGINALS} &&
+      mc mb --ignore-existing local/$${S3_BUCKET_PROCESSED} &&
+      mc anonymous set none local/$${S3_BUCKET_ORIGINALS} &&
+      mc anonymous set none local/$${S3_BUCKET_PROCESSED}
+      "
+    environment:
+      S3_ACCESS_KEY: ${S3_ACCESS_KEY}
+      S3_SECRET_KEY: ${S3_SECRET_KEY}
+      S3_BUCKET_ORIGINALS: ${S3_BUCKET_ORIGINALS}
+      S3_BUCKET_PROCESSED: ${S3_BUCKET_PROCESSED}
+
+  backend:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    restart: unless-stopped
+    command: ['node', 'src/server.js']
+    env_file: backend/.env
+    depends_on:
+      mongo: { condition: service_healthy }
+      redis: { condition: service_healthy }
+    networks: [lms-internal]
+
+  worker:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    restart: unless-stopped
+    command: ['node', 'src/worker.js']
+    env_file: backend/.env
+    depends_on:
+      mongo: { condition: service_healthy }
+      redis: { condition: service_healthy }
+    networks: [lms-internal]
+
+  front:
+    build:
+      context: .
+      dockerfile: front/Dockerfile
+      args:
+        VITE_API_BASE_URL: ${FRONT_API_BASE_URL}
+    restart: unless-stopped
+    networks: [lms-internal]
+
+  admin:
+    build:
+      context: .
+      dockerfile: admin/Dockerfile
+      args:
+        VITE_API_BASE_URL: ${ADMIN_API_BASE_URL}
+    restart: unless-stopped
+    networks: [lms-internal]
+
+  nginx:
+    image: nginx:1.27-alpine
+    restart: unless-stopped
+    depends_on: [backend, front, admin]
+    ports:
+      - '80:80'
+      - '443:443'
+    volumes:
+      - ./nginx/reverse-proxy.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./nginx/snippets:/etc/nginx/snippets:ro
+      - ${TLS_CERT_DIR:-./nginx/certs}:/etc/nginx/certs:ro
+    networks: [lms-internal]
+
+networks:
+  lms-internal:
+
+volumes:
+  lms_mongo_data:
+  lms_redis_data:
+  lms_minio_data:
