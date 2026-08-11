@@ -13,6 +13,7 @@
   },
   "scripts": {
     "dev:backend": "npm run dev --workspace backend",
+    "dev:worker": "npm run worker --workspace backend",
     "dev:front": "npm run dev --workspace front",
     "dev:admin": "npm run dev --workspace admin",
     "build": "npm run build --workspaces --if-present",

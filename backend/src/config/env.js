@@ -25,6 +25,8 @@ const envSchema = z.object({
   LOGIN_MAX_ATTEMPTS: z.coerce.number().int().positive().default(5),
   LOGIN_LOCK_MINUTES: z.coerce.number().int().positive().default(15),
 
+  REDIS_URL: z.string().min(1, 'REDIS_URL is required'),
+
   STORAGE_DRIVER: z.enum(['s3']).default('s3'),
   S3_ENDPOINT: z.string().min(1, 'S3_ENDPOINT is required'),
   S3_REGION: z.string().min(1, 'S3_REGION is required'),

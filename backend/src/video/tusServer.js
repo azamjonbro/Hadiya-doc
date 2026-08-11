@@ -5,6 +5,7 @@ import { logger } from '../config/logger.js'
 import { Topic } from '../models/topic.model.js'
 import { videoRepository } from '../repositories/video.repository.js'
 import { auditLogRepository } from '../repositories/auditLog.repository.js'
+import { enqueueVideoProcessing } from '../jobs/videoProcessingQueue.js'
 
 const ALLOWED_EXTENSIONS = new Set(['mp4', 'mov', 'mkv', 'webm'])
 export const VIDEO_UPLOAD_PATH = '/api/v1/videos/upload'
@@ -88,6 +89,8 @@ export const tusServer = new Server({
     }
 
     logger.info('Video upload finished', { videoId: video._id.toString(), fileSize: video.fileSize })
+
+    await enqueueVideoProcessing(video._id.toString())
 
     return {}
   },
