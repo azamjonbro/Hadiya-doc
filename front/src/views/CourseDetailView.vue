@@ -4,6 +4,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { coursesApi } from '@/services/courses'
 import { videosApi } from '@/services/videos'
+import AiChatPanel from '@/components/AiChatPanel.vue'
 
 const { t } = useI18n()
 const route = useRoute()
@@ -72,6 +73,10 @@ onMounted(load)
         <p v-if="topics.length === 0" class="text-center text-sm text-slate-500 dark:text-slate-400">
           {{ t('courses.topics.empty') }}
         </p>
+      </div>
+
+      <div class="mt-8">
+        <AiChatPanel :course-id="course.id" />
       </div>
     </template>
   </div>

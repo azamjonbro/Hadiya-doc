@@ -1,9 +1,27 @@
 {
   "app": {
-    "name": "Corporate LMS"
+    "name": "Corporate LMS",
+    "workspace": "Xodim ish maydoni"
   },
   "nav": {
-    "dashboard": "Boshqaruv paneli"
+    "dashboard": "Boshqaruv paneli",
+    "courses": "Mening kurslarim",
+    "news": "Yangiliklar",
+    "tasks": "Vazifalar",
+    "events": "Tadbirlar",
+    "notifications": "Bildirishnomalar",
+    "settings": "Sozlamalar",
+    "profile": "Profil",
+    "groupWorkspace": "Ish maydoni",
+    "groupSystem": "Tizim"
+  },
+  "shell": {
+    "searchPlaceholder": "Kurslar, yangiliklar, vazifalarni qidirish..."
+  },
+  "locales": {
+    "uz": "O'zbekcha",
+    "ru": "Русский",
+    "en": "English"
   },
   "theme": {
     "light": "Yorug'",
@@ -14,29 +32,101 @@
     "online": "Backend ishlayapti",
     "offline": "Backend bilan bog'lanib bo'lmadi"
   },
+  "common": {
+    "loading": "Yuklanmoqda...",
+    "retry": "Qayta urinish",
+    "cancel": "Bekor qilish",
+    "save": "Saqlash",
+    "viewAll": "Barchasini ko'rish",
+    "viewDetails": "Batafsil",
+    "loadMore": "Yana yuklash",
+    "search": "Qidirish",
+    "filter": "Filtr",
+    "sortBy": "Saralash",
+    "all": "Barchasi",
+    "required": "Majburiy",
+    "optional": "Ixtiyoriy",
+    "today": "Bugun",
+    "tomorrow": "Ertaga",
+    "minRead": "daq. o'qish",
+    "goToDashboard": "Bosh sahifaga",
+    "goBack": "Orqaga"
+  },
   "auth": {
     "login": {
-      "title": "Tizimga kirish",
+      "title": "Xush kelibsiz",
+      "subtitle": "O'quvni davom ettirish va jamoa yangiliklaridan xabardor bo'lish uchun tizimga kiring.",
       "identifier": "Email yoki foydalanuvchi nomi",
       "password": "Parol",
+      "rememberMe": "Meni eslab qol",
+      "forgotPassword": "Parolni unutdingizmi?",
       "submit": "Kirish",
       "submitting": "Kirilmoqda...",
-      "error": "Email/username yoki parol noto'g'ri"
+      "error": "Email/username yoki parol noto'g'ri",
+      "securityNotice": "Kompaniya xavfsizlik siyosati bilan himoyalangan. Kirishlar qayd etiladi va kuzatiladi.",
+      "brandTitle": "Butun kompaniya birga o'rganadigan joy.",
+      "brandSubtitle": "Majburiy o'quvlaringizni kuzating, kompaniya yangiliklaridan xabardor bo'ling va o'sishingizni ko'ring — barchasi bir joyda."
     },
     "logout": "Chiqish"
   },
   "forbidden": {
-    "message": "Bu sahifaga kirish huquqingiz yo'q"
+    "code": "403",
+    "title": "Kirish cheklangan",
+    "message": "Bu sahifani ko'rish uchun ruxsatingiz yo'q. Agar bu xato deb hisoblasangiz, administratorga murojaat qiling."
   },
   "unauthorized": {
-    "message": "Davom etish uchun tizimga kiring"
+    "code": "401",
+    "title": "Tizimga kirish talab qilinadi",
+    "message": "Davom etish uchun tizimga kiring."
   },
   "notFound": {
-    "title": "404",
-    "message": "Sahifa topilmadi"
+    "code": "404",
+    "title": "Sahifa topilmadi",
+    "message": "Ehtimol, sahifa ko'chirilgan yoki endi mavjud emas."
+  },
+  "dashboard": {
+    "greeting": {
+      "morning": "Xayrli tong",
+      "afternoon": "Xayrli kun",
+      "evening": "Xayrli kech"
+    },
+    "subtitle": "Bugun bajarishingiz kerak bo'lganlar shu yerda.",
+    "today": {
+      "title": "Bugun",
+      "empty": "Shoshilinch narsa yo'q — barchasi bajarilgan."
+    },
+    "continueLearning": {
+      "title": "O'qishni davom ettirish",
+      "cta": "O'qishni davom ettirish"
+    },
+    "mandatory": {
+      "title": "Majburiy o'quvlar",
+      "viewAll": "Barchasini ko'rish"
+    },
+    "progress": {
+      "title": "Mening natijalarim",
+      "overall": "Umumiy bajarilish",
+      "coursesCompleted": "Tugallangan kurslar",
+      "hoursLearned": "O'qilgan soatlar",
+      "videosWatched": "Ko'rilgan videolar",
+      "streak": "Kunlik ketma-ketlik"
+    },
+    "tasks": {
+      "title": "Vazifalar",
+      "viewAll": "Barchasini ko'rish"
+    },
+    "news": {
+      "title": "So'nggi yangiliklar",
+      "viewAll": "Barchasini ko'rish"
+    },
+    "events": {
+      "title": "Yaqinlashib kelayotgan tadbirlar",
+      "viewAll": "Barchasini ko'rish"
+    }
   },
   "courses": {
     "title": "Kurslar",
+    "myLearning": "Mening o'quvim",
     "loading": "Yuklanmoqda...",
     "empty": "Kurslar topilmadi",
     "assignedToYou": "Sizga biriktirilgan",
@@ -45,10 +135,33 @@
     "mandatory": "Majburiy",
     "optional": "Ixtiyoriy",
     "deadline": "Muddat",
+    "cancel": "Bekor qilish",
+    "create": "Yaratish",
+    "creating": "Yaratilmoqda...",
+    "loadMore": "Yana yuklash",
+    "searchPlaceholder": "Kurslarni qidirish...",
+    "featured": "To'xtagan joyingizdan davom eting",
+    "modules": "modul",
+    "duration": "davomiyligi",
+    "continue": "Davom ettirish",
+    "start": "Kursni boshlash",
+    "instructor": "O'qituvchi",
+    "curriculum": "Kurs dasturi",
+    "tabs": {
+      "all": "Barchasi",
+      "required": "Majburiy",
+      "inProgress": "Jarayonda",
+      "completed": "Tugallangan",
+      "expired": "Muddati tugagan"
+    },
     "badges": {
       "onTrack": "Jarayonda",
       "overdue": "Muddati o'tgan",
-      "expired": "Muddati tugagan"
+      "expired": "Muddati tugagan",
+      "completed": "Tugallangan"
+    },
+    "fields": {
+      "title": "Nomi"
     },
     "topics": {
       "title": "Mavzular",
@@ -57,6 +170,11 @@
   },
   "videos": {
     "empty": "Videolar hali yuklanmagan",
+    "next": "Keyingi darsga o'tish",
+    "completed": "bajarildi",
+    "resources": "Materiallar",
+    "speed": "Tezlik",
+    "quality": "Sifat",
     "processing": {
       "PENDING": "Video qayta ishlanishi kutilmoqda",
       "VALIDATING": "Video tekshirilmoqda",
@@ -66,29 +184,89 @@
       "FAILED": "Videoni qayta ishlashda xatolik yuz berdi"
     }
   },
+  "aiChat": {
+    "title": "AI o'quv yordamchisi",
+    "subtitle": "Ushbu material haqida so'rang — xulosa, asosiy fikrlar yoki test oling.",
+    "placeholder": "Savol bering...",
+    "send": "Yuborish",
+    "thinking": "O'ylayapman...",
+    "empty": "Ushbu kurs, mavzu yoki video haqida istalgan narsani so'rang.",
+    "quickActions": {
+      "summarize": "Xulosa",
+      "keyPoints": "3 ta asosiy fikr",
+      "quiz": "Test tuzib ber"
+    },
+    "errors": {
+      "unavailable": "AI chat hali sozlanmagan. Administratorga murojaat qiling.",
+      "accessDenied": "Sizda bu material haqida suhbatlashish uchun ruxsat yo'q.",
+      "generic": "Nimadir xato ketdi. Qaytadan urinib ko'ring."
+    }
+  },
   "news": {
     "title": "Yangiliklar",
-    "empty": "Yangiliklar topilmadi"
+    "empty": "Yangiliklar topilmadi",
+    "featured": "Asosiy",
+    "latest": "So'nggi",
+    "related": "O'xshash maqolalar",
+    "publishedOn": "E'lon qilindi"
   },
   "tasks": {
     "title": "Vazifalar",
-    "empty": "Vazifalar topilmadi",
+    "empty": "Vazifalar yo'q — barchasi bajarilgan",
     "deadline": "Muddat",
     "start": "Boshlash",
-    "complete": "Bajarildi deb belgilash"
+    "complete": "Bajarildi deb belgilash",
+    "priority": {
+      "LOW": "Past",
+      "MEDIUM": "O'rta",
+      "HIGH": "Yuqori",
+      "URGENT": "Shoshilinch"
+    },
+    "status": {
+      "TODO": "Bajarilishi kerak",
+      "IN_PROGRESS": "Jarayonda",
+      "COMPLETED": "Bajarildi",
+      "OVERDUE": "Muddati o'tgan",
+      "CANCELLED": "Bekor qilingan"
+    }
   },
   "events": {
     "title": "Tadbirlar",
-    "empty": "Tadbirlar topilmadi",
-    "newEvent": "+ Yangi tadbir",
+    "empty": "Yaqinlashib kelayotgan tadbirlar yo'q",
+    "newEvent": "Yangi tadbir",
     "location": "Joylashuv",
     "startAt": "Boshlanish vaqti",
-    "endAt": "Tugash vaqti"
+    "endAt": "Tugash vaqti",
+    "today": "Bugun",
+    "thisWeek": "Shu hafta",
+    "later": "Keyinroq"
   },
   "notifications": {
     "title": "Bildirishnomalar",
-    "empty": "Bildirishnomalar yo'q",
+    "empty": "Bildirishnomalar yo'q — barchasi o'qilgan",
     "markAllRead": "Hammasini o'qilgan deb belgilash",
-    "justNow": "hozir"
+    "justNow": "hozir",
+    "categories": {
+      "all": "Barchasi",
+      "training": "O'quv",
+      "tasks": "Vazifalar",
+      "news": "Yangiliklar",
+      "system": "Tizim"
+    }
+  },
+  "settings": {
+    "title": "Sozlamalar",
+    "sections": {
+      "profile": "Profil",
+      "security": "Xavfsizlik",
+      "appearance": "Ko'rinish",
+      "language": "Til",
+      "notifications": "Bildirishnomalar"
+    },
+    "appearance": {
+      "theme": "Mavzu",
+      "light": "Yorug'",
+      "dark": "Qorong'i"
+    }
   }
 }

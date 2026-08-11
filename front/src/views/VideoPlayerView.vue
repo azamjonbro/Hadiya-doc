@@ -4,6 +4,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { http } from '@/services/http'
 import VideoPlayer from '@/video/VideoPlayer.vue'
+import AiChatPanel from '@/components/AiChatPanel.vue'
 
 const { t } = useI18n()
 const route = useRoute()
@@ -47,6 +48,10 @@ onMounted(load)
         <p v-else class="rounded-lg border border-slate-200 p-8 text-center text-sm text-slate-500 dark:border-slate-800 dark:text-slate-400">
           {{ t(`videos.processing.${video.processingStatus}`) }}
         </p>
+      </div>
+
+      <div class="mt-8">
+        <AiChatPanel :course-id="video.courseId" :topic-id="video.topicId" :video-id="video.id" />
       </div>
     </template>
   </div>

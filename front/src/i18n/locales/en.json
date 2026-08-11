@@ -1,9 +1,27 @@
 {
   "app": {
-    "name": "Corporate LMS"
+    "name": "Corporate LMS",
+    "workspace": "Employee workspace"
   },
   "nav": {
-    "dashboard": "Dashboard"
+    "dashboard": "Dashboard",
+    "courses": "My Courses",
+    "news": "News",
+    "tasks": "Tasks",
+    "events": "Events",
+    "notifications": "Notifications",
+    "settings": "Settings",
+    "profile": "Profile",
+    "groupWorkspace": "Workspace",
+    "groupSystem": "System"
+  },
+  "shell": {
+    "searchPlaceholder": "Search courses, news, tasks..."
+  },
+  "locales": {
+    "uz": "O'zbekcha",
+    "ru": "Русский",
+    "en": "English"
   },
   "theme": {
     "light": "Light",
@@ -14,29 +32,101 @@
     "online": "Backend is online",
     "offline": "Could not reach backend"
   },
+  "common": {
+    "loading": "Loading...",
+    "retry": "Try again",
+    "cancel": "Cancel",
+    "save": "Save",
+    "viewAll": "View all",
+    "viewDetails": "View details",
+    "loadMore": "Load more",
+    "search": "Search",
+    "filter": "Filter",
+    "sortBy": "Sort by",
+    "all": "All",
+    "required": "Required",
+    "optional": "Optional",
+    "today": "Today",
+    "tomorrow": "Tomorrow",
+    "minRead": "min read",
+    "goToDashboard": "Go to dashboard",
+    "goBack": "Go back"
+  },
   "auth": {
     "login": {
-      "title": "Sign in",
+      "title": "Welcome back",
+      "subtitle": "Sign in to continue your training and stay up to date with your team.",
       "identifier": "Email or username",
       "password": "Password",
+      "rememberMe": "Remember me",
+      "forgotPassword": "Forgot password?",
       "submit": "Sign in",
       "submitting": "Signing in...",
-      "error": "Invalid email/username or password"
+      "error": "Invalid email/username or password",
+      "securityNotice": "Protected by company security policy. Access is logged and monitored.",
+      "brandTitle": "Where the whole company learns, together.",
+      "brandSubtitle": "Track your mandatory training, catch up on company news, and see how you're growing — all in one place."
     },
     "logout": "Log out"
   },
   "forbidden": {
-    "message": "You don't have access to this page"
+    "code": "403",
+    "title": "Access restricted",
+    "message": "You don't have permission to view this page. If you think this is a mistake, contact your administrator."
   },
   "unauthorized": {
-    "message": "Please sign in to continue"
+    "code": "401",
+    "title": "Sign in required",
+    "message": "Please sign in to continue."
   },
   "notFound": {
-    "title": "404",
-    "message": "Page not found"
+    "code": "404",
+    "title": "We couldn't find that page",
+    "message": "The page you're looking for may have been moved or no longer exists."
+  },
+  "dashboard": {
+    "greeting": {
+      "morning": "Good morning",
+      "afternoon": "Good afternoon",
+      "evening": "Good evening"
+    },
+    "subtitle": "Here's what you need to complete today.",
+    "today": {
+      "title": "Today",
+      "empty": "Nothing urgent — you're all caught up."
+    },
+    "continueLearning": {
+      "title": "Continue learning",
+      "cta": "Continue learning"
+    },
+    "mandatory": {
+      "title": "Mandatory training",
+      "viewAll": "View all"
+    },
+    "progress": {
+      "title": "My progress",
+      "overall": "Overall completion",
+      "coursesCompleted": "Courses completed",
+      "hoursLearned": "Hours learned",
+      "videosWatched": "Videos watched",
+      "streak": "Day streak"
+    },
+    "tasks": {
+      "title": "Tasks",
+      "viewAll": "View all"
+    },
+    "news": {
+      "title": "Latest news",
+      "viewAll": "View all"
+    },
+    "events": {
+      "title": "Upcoming events",
+      "viewAll": "View all"
+    }
   },
   "courses": {
     "title": "Courses",
+    "myLearning": "My Learning",
     "loading": "Loading...",
     "empty": "No courses found",
     "assignedToYou": "Assigned to you",
@@ -45,10 +135,33 @@
     "mandatory": "Mandatory",
     "optional": "Optional",
     "deadline": "Deadline",
+    "cancel": "Cancel",
+    "create": "Create",
+    "creating": "Creating...",
+    "loadMore": "Load more",
+    "searchPlaceholder": "Search courses...",
+    "featured": "Continue where you left off",
+    "modules": "modules",
+    "duration": "duration",
+    "continue": "Continue",
+    "start": "Start course",
+    "instructor": "Instructor",
+    "curriculum": "Curriculum",
+    "tabs": {
+      "all": "All",
+      "required": "Required",
+      "inProgress": "In progress",
+      "completed": "Completed",
+      "expired": "Expired"
+    },
     "badges": {
       "onTrack": "On track",
       "overdue": "Overdue",
-      "expired": "Expired"
+      "expired": "Expired",
+      "completed": "Completed"
+    },
+    "fields": {
+      "title": "Title"
     },
     "topics": {
       "title": "Topics",
@@ -57,6 +170,11 @@
   },
   "videos": {
     "empty": "No videos uploaded yet",
+    "next": "Continue to next lesson",
+    "completed": "completed",
+    "resources": "Resources",
+    "speed": "Speed",
+    "quality": "Quality",
     "processing": {
       "PENDING": "Video is queued for processing",
       "VALIDATING": "Video is being validated",
@@ -66,29 +184,89 @@
       "FAILED": "Video processing failed"
     }
   },
+  "aiChat": {
+    "title": "AI Study Assistant",
+    "subtitle": "Ask about this material — get a summary, key points, or a quiz.",
+    "placeholder": "Ask a question...",
+    "send": "Send",
+    "thinking": "Thinking...",
+    "empty": "Ask anything about this course, topic, or video.",
+    "quickActions": {
+      "summarize": "Summarize",
+      "keyPoints": "3 key points",
+      "quiz": "Make me a quiz"
+    },
+    "errors": {
+      "unavailable": "AI chat isn't set up yet. Ask your admin to enable it.",
+      "accessDenied": "You don't have access to chat about this material.",
+      "generic": "Something went wrong. Please try again."
+    }
+  },
   "news": {
     "title": "News",
-    "empty": "No news found"
+    "empty": "No news found",
+    "featured": "Featured",
+    "latest": "Latest",
+    "related": "Related articles",
+    "publishedOn": "Published"
   },
   "tasks": {
     "title": "Tasks",
-    "empty": "No tasks found",
+    "empty": "No tasks — you're all caught up",
     "deadline": "Deadline",
     "start": "Start",
-    "complete": "Mark complete"
+    "complete": "Mark complete",
+    "priority": {
+      "LOW": "Low",
+      "MEDIUM": "Medium",
+      "HIGH": "High",
+      "URGENT": "Urgent"
+    },
+    "status": {
+      "TODO": "To do",
+      "IN_PROGRESS": "In progress",
+      "COMPLETED": "Completed",
+      "OVERDUE": "Overdue",
+      "CANCELLED": "Cancelled"
+    }
   },
   "events": {
     "title": "Events",
-    "empty": "No events found",
-    "newEvent": "+ New event",
+    "empty": "No upcoming events",
+    "newEvent": "New event",
     "location": "Location",
-    "startAt": "Starts at",
-    "endAt": "Ends at"
+    "startAt": "Start",
+    "endAt": "End",
+    "today": "Today",
+    "thisWeek": "This week",
+    "later": "Later"
   },
   "notifications": {
     "title": "Notifications",
-    "empty": "No notifications",
+    "empty": "You're all caught up — no notifications",
     "markAllRead": "Mark all as read",
-    "justNow": "just now"
+    "justNow": "just now",
+    "categories": {
+      "all": "All",
+      "training": "Training",
+      "tasks": "Tasks",
+      "news": "News",
+      "system": "System"
+    }
+  },
+  "settings": {
+    "title": "Settings",
+    "sections": {
+      "profile": "Profile",
+      "security": "Security",
+      "appearance": "Appearance",
+      "language": "Language",
+      "notifications": "Notifications"
+    },
+    "appearance": {
+      "theme": "Theme",
+      "light": "Light",
+      "dark": "Dark"
+    }
   }
 }
