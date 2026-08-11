@@ -17,6 +17,7 @@ import { eventsRouter } from './events.routes.js'
 import { notificationsRouter } from './notifications.routes.js'
 import { aiChatRouter } from './aiChat.routes.js'
 import { dashboardRouter } from './dashboard.routes.js'
+import { reportsRouter } from './reports.routes.js'
 
 export const v1Router = Router()
 
@@ -38,3 +39,4 @@ v1Router.use('/events', eventsRouter)
 v1Router.use('/notifications', notificationsRouter)
 v1Router.use('/ai-chat', aiChatRouter)
 v1Router.use('/dashboard', dashboardRouter)
+v1Router.use('/reports', reportsRouter)
