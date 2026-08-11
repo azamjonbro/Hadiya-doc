@@ -11,6 +11,7 @@ import { videoStreamRouter } from './videoStream.routes.js'
 import { analyticsRouter } from './analytics.routes.js'
 import { videoAnalyticsRouter } from './videoAnalytics.routes.js'
 import { newsRouter } from './news.routes.js'
+import { newsAnalyticsRouter } from './newsAnalytics.routes.js'
 
 export const v1Router = Router()
 
@@ -26,3 +27,4 @@ v1Router.use('/video-stream', videoStreamRouter)
 v1Router.use('/analytics', analyticsRouter)
 v1Router.use('/video-analytics', videoAnalyticsRouter)
 v1Router.use('/news', newsRouter)
+v1Router.use('/news-analytics', newsAnalyticsRouter)
