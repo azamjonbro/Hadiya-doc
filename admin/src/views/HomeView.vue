@@ -1,18 +1,27 @@
 <script setup>
 import { onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
+import { useRouter } from 'vue-router'
 import { useThemeStore } from '@/stores/theme'
+import { useAuthStore } from '@/stores/auth'
 import { setLocale } from '@/i18n'
 import { useHealthCheck } from '@/composables/useHealthCheck'
 
 const { t } = useI18n()
 const theme = useThemeStore()
+const auth = useAuthStore()
+const router = useRouter()
 const { status, check } = useHealthCheck()
 
 onMounted(check)
 
 function onLocaleChange(event) {
   setLocale(event.target.value)
+}
+
+async function onLogout() {
+  await auth.logout()
+  router.push({ name: 'login' })
 }
 </script>
 
@@ -36,10 +45,19 @@ function onLocaleChange(event) {
         >
           {{ theme.theme === 'dark' ? t('theme.light') : t('theme.dark') }}
         </button>
+        <button
+          type="button"
+          class="rounded-md border border-slate-300 px-3 py-1 text-sm dark:border-slate-700"
+          @click="onLogout"
+        >
+          {{ t('auth.logout') }}
+        </button>
       </div>
     </div>
 
-    <p class="mt-2 text-slate-500 dark:text-slate-400">{{ t('nav.dashboard') }}</p>
+    <p class="mt-2 text-slate-500 dark:text-slate-400">
+      {{ t('nav.dashboard') }} — {{ auth.user?.fullName }} ({{ auth.user?.role }})
+    </p>
 
     <div class="mt-10 rounded-xl border border-slate-200 p-6 dark:border-slate-800">
       <p class="flex items-center text-sm font-medium">

@@ -1,6 +1,7 @@
 import express from 'express'
 import cors from 'cors'
 import helmet from 'helmet'
+import cookieParser from 'cookie-parser'
 import { env } from './config/env.js'
 import { baseRateLimiter } from './middlewares/rateLimit.middleware.js'
 import { errorHandler, notFoundHandler } from './middlewares/error.middleware.js'
@@ -18,6 +19,7 @@ export function createApp() {
     })
   )
   app.use(express.json({ limit: '1mb' }))
+  app.use(cookieParser())
   app.use(baseRateLimiter)
 
   app.use('/api/v1', v1Router)

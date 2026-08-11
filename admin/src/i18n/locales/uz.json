@@ -14,6 +14,23 @@
     "online": "Backend ishlayapti",
     "offline": "Backend bilan bog'lanib bo'lmadi"
   },
+  "auth": {
+    "login": {
+      "title": "Tizimga kirish",
+      "identifier": "Email yoki foydalanuvchi nomi",
+      "password": "Parol",
+      "submit": "Kirish",
+      "submitting": "Kirilmoqda...",
+      "error": "Email/username yoki parol noto'g'ri"
+    },
+    "logout": "Chiqish"
+  },
+  "forbidden": {
+    "message": "Bu sahifaga kirish huquqingiz yo'q. Admin panel faqat Admin/Manager/SuperAdmin uchun."
+  },
+  "unauthorized": {
+    "message": "Davom etish uchun tizimga kiring"
+  },
   "notFound": {
     "title": "404",
     "message": "Sahifa topilmadi"

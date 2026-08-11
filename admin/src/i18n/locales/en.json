@@ -14,6 +14,23 @@
     "online": "Backend is online",
     "offline": "Could not reach backend"
   },
+  "auth": {
+    "login": {
+      "title": "Sign in",
+      "identifier": "Email or username",
+      "password": "Password",
+      "submit": "Sign in",
+      "submitting": "Signing in...",
+      "error": "Invalid email/username or password"
+    },
+    "logout": "Log out"
+  },
+  "forbidden": {
+    "message": "You don't have access to this page. The admin panel is Admin/Manager/SuperAdmin only."
+  },
+  "unauthorized": {
+    "message": "Please sign in to continue"
+  },
   "notFound": {
     "title": "404",
     "message": "Page not found"
