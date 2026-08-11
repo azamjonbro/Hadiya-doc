@@ -84,5 +84,11 @@
     "location": "Joylashuv",
     "startAt": "Boshlanish vaqti",
     "endAt": "Tugash vaqti"
+  },
+  "notifications": {
+    "title": "Bildirishnomalar",
+    "empty": "Bildirishnomalar yo'q",
+    "markAllRead": "Hammasini o'qilgan deb belgilash",
+    "justNow": "hozir"
   }
 }

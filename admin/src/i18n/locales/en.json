@@ -176,5 +176,11 @@
     "empty": "No tasks found",
     "assignee": "Assignee (search user)",
     "pickAssignee": "Please pick a user"
+  },
+  "notifications": {
+    "title": "Notifications",
+    "empty": "No notifications",
+    "markAllRead": "Mark all as read",
+    "justNow": "just now"
   }
 }

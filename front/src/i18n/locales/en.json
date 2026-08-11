@@ -84,5 +84,11 @@
     "location": "Location",
     "startAt": "Starts at",
     "endAt": "Ends at"
+  },
+  "notifications": {
+    "title": "Notifications",
+    "empty": "No notifications",
+    "markAllRead": "Mark all as read",
+    "justNow": "just now"
   }
 }

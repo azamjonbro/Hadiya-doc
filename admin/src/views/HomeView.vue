@@ -6,6 +6,7 @@ import { useThemeStore } from '@/stores/theme'
 import { useAuthStore } from '@/stores/auth'
 import { setLocale } from '@/i18n'
 import { useHealthCheck } from '@/composables/useHealthCheck'
+import NotificationBell from '@/components/NotificationBell.vue'
 
 const { t } = useI18n()
 const theme = useThemeStore()
@@ -58,6 +59,7 @@ async function onLogout() {
         >
           {{ t('users.title') }}
         </router-link>
+        <NotificationBell />
         <select
           class="rounded-md border border-slate-300 bg-transparent px-2 py-1 text-sm dark:border-slate-700"
           @change="onLocaleChange"

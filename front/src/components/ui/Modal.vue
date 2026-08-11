@@ -1,0 +1,63 @@
+<script setup>
+import Icon from './Icon.vue'
+
+const props = defineProps({
+  modelValue: { type: Boolean, default: false },
+  title: { type: String, default: '' },
+  description: { type: String, default: '' },
+  size: { type: String, default: 'md' }, // sm | md | lg
+})
+
+defineEmits(['update:modelValue'])
+
+const sizes = { sm: 'max-w-sm', md: 'max-w-lg', lg: 'max-w-2xl' }
+</script>
+
+<template>
+  <Teleport to="body">
+    <Transition
+      enter-active-class="transition-default"
+      enter-from-class="opacity-0"
+      leave-active-class="transition-default"
+      leave-to-class="opacity-0"
+    >
+      <div v-if="modelValue" class="fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div class="absolute inset-0 bg-slate-950/50 backdrop-blur-[2px]" @click="$emit('update:modelValue', false)" />
+        <Transition
+          enter-active-class="transition-default"
+          enter-from-class="opacity-0 scale-95"
+          leave-active-class="transition-default"
+          leave-to-class="opacity-0 scale-95"
+        >
+          <div
+            v-if="modelValue"
+            class="relative w-full rounded-xl border border-border bg-surface p-6 shadow-lg"
+            :class="sizes[size]"
+            role="dialog"
+            aria-modal="true"
+          >
+            <div class="flex items-start justify-between">
+              <div>
+                <h2 v-if="title" class="text-h3 text-ink">{{ title }}</h2>
+                <p v-if="description" class="mt-1 text-small text-ink-muted">{{ description }}</p>
+              </div>
+              <button
+                type="button"
+                class="-mr-1 -mt-1 rounded-md p-1.5 text-ink-faint transition-default hover:bg-surface-2 hover:text-ink"
+                @click="$emit('update:modelValue', false)"
+              >
+                <Icon name="close" size="18" />
+              </button>
+            </div>
+            <div class="mt-4">
+              <slot />
+            </div>
+            <div v-if="$slots.footer" class="mt-6 flex items-center justify-end gap-2">
+              <slot name="footer" />
+            </div>
+          </div>
+        </Transition>
+      </div>
+    </Transition>
+  </Teleport>
+</template>

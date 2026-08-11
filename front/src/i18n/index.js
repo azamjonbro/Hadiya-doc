@@ -22,3 +22,5 @@ export function setLocale(locale) {
   i18n.global.locale.value = locale
   localStorage.setItem(STORAGE_KEY, locale)
 }
+
+export const availableLocales = ['uz', 'ru', 'en']

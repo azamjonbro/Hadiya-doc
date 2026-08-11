@@ -171,6 +171,12 @@
     "assignee": "Кому (поиск пользователя)",
     "pickAssignee": "Выберите пользователя"
   },
+  "notifications": {
+    "title": "Уведомления",
+    "empty": "Уведомлений нет",
+    "markAllRead": "Отметить все как прочитанные",
+    "justNow": "только что"
+  },
   "newsReport": {
     "opened": "Открыто",
     "readPercent": "Прочитано, %",
