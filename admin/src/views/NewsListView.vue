@@ -1,12 +1,23 @@
 <script setup>
 import { onMounted, reactive, ref } from 'vue'
+import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useAuthStore } from '@/stores/auth'
 import { newsApi } from '@/services/news'
 import NewsReportPanel from '@/components/NewsReportPanel.vue'
+import AppCard from '@/components/ui/AppCard.vue'
+import AppButton from '@/components/ui/AppButton.vue'
+import AppInput from '@/components/ui/AppInput.vue'
+import AppSelect from '@/components/ui/AppSelect.vue'
+import Modal from '@/components/ui/Modal.vue'
+import Badge from '@/components/ui/Badge.vue'
+import Skeleton from '@/components/ui/Skeleton.vue'
+import EmptyState from '@/components/ui/EmptyState.vue'
+import Icon from '@/components/ui/Icon.vue'
 
-const { t } = useI18n()
+const { t, locale } = useI18n()
 const auth = useAuthStore()
+const router = useRouter()
 
 const items = ref([])
 const nextCursor = ref(null)
@@ -14,23 +25,13 @@ const loading = ref(false)
 const errorMessage = ref('')
 const expandedReportId = ref(null)
 
-const showCreateForm = ref(false)
+const showCreateModal = ref(false)
 const createSubmitting = ref(false)
 const createError = ref('')
-const createForm = reactive({
-  title: '',
-  content: '',
-  tags: '',
-  departmentTargets: '',
-  roleTargets: '',
-  status: 'DRAFT',
-})
+const createForm = reactive({ title: '', content: '', tags: '', departmentTargets: '', roleTargets: '', status: 'DRAFT' })
 
 function toList(value) {
-  return value
-    .split(',')
-    .map((v) => v.trim())
-    .filter(Boolean)
+  return value.split(',').map((v) => v.trim()).filter(Boolean)
 }
 
 async function loadFirstPage() {
@@ -71,7 +72,7 @@ async function onCreateSubmit() {
       roleTargets: toList(createForm.roleTargets),
       status: createForm.status,
     })
-    showCreateForm.value = false
+    showCreateModal.value = false
     Object.assign(createForm, { title: '', content: '', tags: '', departmentTargets: '', roleTargets: '', status: 'DRAFT' })
     await loadFirstPage()
   } catch (error) {
@@ -81,83 +82,71 @@ async function onCreateSubmit() {
   }
 }
 
+const statusBadge = { DRAFT: 'neutral', PUBLISHED: 'success' }
+
 onMounted(loadFirstPage)
 </script>
 
 <template>
-  <div class="mx-auto max-w-5xl px-6 py-12">
+  <div class="mx-auto max-w-4xl px-6 py-8">
     <div class="flex items-center justify-between">
-      <h1 class="text-xl font-semibold tracking-tight">{{ t('news.title') }}</h1>
-      <button
-        v-if="auth.hasPermission('news:create')"
-        type="button"
-        class="rounded-md bg-slate-900 px-3 py-1.5 text-sm font-medium text-white dark:bg-white dark:text-slate-900"
-        @click="showCreateForm = !showCreateForm"
-      >
-        {{ showCreateForm ? t('courses.cancel') : t('news.newArticle') }}
-      </button>
+      <h1 class="text-h1 text-ink">{{ t('news.title') }}</h1>
+      <AppButton v-if="auth.hasPermission('news:create')" icon="plus" @click="showCreateModal = true">{{ t('news.newArticle') }}</AppButton>
     </div>
 
-    <form
-      v-if="showCreateForm"
-      class="mt-4 grid grid-cols-2 gap-3 rounded-xl border border-slate-200 p-4 dark:border-slate-800"
-      @submit.prevent="onCreateSubmit"
-    >
-      <input v-model="createForm.title" required :placeholder="t('news.fields.title')" class="col-span-2 rounded-md border border-slate-300 bg-transparent px-3 py-2 text-sm dark:border-slate-700" />
-      <textarea v-model="createForm.content" required :placeholder="t('news.fields.content')" rows="5" class="col-span-2 rounded-md border border-slate-300 bg-transparent px-3 py-2 text-sm dark:border-slate-700"></textarea>
-      <input v-model="createForm.tags" :placeholder="t('news.fields.tags')" class="rounded-md border border-slate-300 bg-transparent px-3 py-2 text-sm dark:border-slate-700" />
-      <select v-model="createForm.status" class="rounded-md border border-slate-300 bg-transparent px-3 py-2 text-sm dark:border-slate-700">
-        <option value="DRAFT">{{ t('courses.status.draft') }}</option>
-        <option value="PUBLISHED">{{ t('courses.status.published') }}</option>
-      </select>
-      <input v-model="createForm.departmentTargets" :placeholder="t('news.fields.departmentTargets')" class="rounded-md border border-slate-300 bg-transparent px-3 py-2 text-sm dark:border-slate-700" />
-      <input v-model="createForm.roleTargets" :placeholder="t('news.fields.roleTargets')" class="rounded-md border border-slate-300 bg-transparent px-3 py-2 text-sm dark:border-slate-700" />
+    <p v-if="errorMessage" class="mt-4 text-small text-danger">{{ errorMessage }}</p>
 
-      <p v-if="createError" class="col-span-2 text-sm text-red-500">{{ createError }}</p>
+    <div v-if="loading" class="mt-6 space-y-3">
+      <Skeleton v-for="i in 4" :key="i" class="h-20 w-full" />
+    </div>
 
-      <button
-        type="submit"
-        :disabled="createSubmitting"
-        class="col-span-2 rounded-md bg-slate-900 px-3 py-2 text-sm font-medium text-white disabled:opacity-50 dark:bg-white dark:text-slate-900"
-      >
-        {{ createSubmitting ? t('courses.creating') : t('courses.create') }}
-      </button>
-    </form>
-
-    <p v-if="errorMessage" class="mt-4 text-sm text-red-500">{{ errorMessage }}</p>
-
-    <ul class="mt-6 divide-y divide-slate-200 rounded-xl border border-slate-200 dark:divide-slate-800 dark:border-slate-800">
-      <li v-for="item in items" :key="item.id" class="p-4">
-        <div class="flex items-center justify-between">
-          <div class="cursor-pointer" @click="$router.push(`/admin/news/${item.id}`)">
-            <p class="font-medium">{{ item.title }}</p>
-            <p class="text-sm text-slate-500 dark:text-slate-400">{{ item.status }}</p>
+    <div v-else-if="items.length" class="mt-6 space-y-3">
+      <AppCard v-for="item in items" :key="item.id" padding="none">
+        <div class="flex items-center justify-between gap-3 p-4">
+          <div class="min-w-0 cursor-pointer" @click="router.push(`/admin/news/${item.id}`)">
+            <p class="truncate text-small font-medium text-ink">{{ item.title }}</p>
+            <p class="mt-1 flex items-center gap-2">
+              <Badge :variant="statusBadge[item.status]" size="sm">{{ t(`courses.status.${item.status.toLowerCase()}`) }}</Badge>
+              <span class="text-caption text-ink-faint">{{ new Date(item.publishAt).toLocaleDateString(locale) }}</span>
+            </p>
           </div>
-          <button
-            type="button"
-            class="text-xs underline"
-            @click="expandedReportId = expandedReportId === item.id ? null : item.id"
-          >
+          <AppButton variant="ghost" size="sm" icon="bar-chart" @click="expandedReportId = expandedReportId === item.id ? null : item.id">
             {{ t('videoReport.title') }}
-          </button>
+          </AppButton>
         </div>
-        <NewsReportPanel v-if="expandedReportId === item.id" :news-id="item.id" />
-      </li>
-      <li v-if="!loading && items.length === 0" class="p-8 text-center text-sm text-slate-500 dark:text-slate-400">
-        {{ t('news.empty') }}
-      </li>
-    </ul>
+        <div v-if="expandedReportId === item.id" class="px-4 pb-4">
+          <NewsReportPanel :news-id="item.id" />
+        </div>
+      </AppCard>
+    </div>
+
+    <EmptyState v-else icon="newspaper" :title="t('news.empty')" class="mt-6" />
 
     <div class="mt-4 flex justify-center">
-      <button
-        v-if="nextCursor"
-        type="button"
-        :disabled="loading"
-        class="rounded-md border border-slate-300 px-3 py-1.5 text-sm dark:border-slate-700"
-        @click="loadMore"
-      >
-        {{ loading ? t('courses.loading') : t('courses.loadMore') }}
-      </button>
+      <AppButton v-if="nextCursor" variant="outline" :loading="loading" @click="loadMore">{{ t('courses.loadMore') }}</AppButton>
     </div>
+
+    <Modal v-model="showCreateModal" :title="t('news.newArticle')" size="lg">
+      <form class="space-y-4" @submit.prevent="onCreateSubmit">
+        <AppInput v-model="createForm.title" required :label="t('news.fields.title')" />
+        <div>
+          <label class="mb-1.5 block text-small font-medium text-ink">{{ t('news.fields.content') }}</label>
+          <textarea v-model="createForm.content" required rows="5" class="w-full rounded-md border border-border-strong bg-surface px-3.5 py-2.5 text-body text-ink outline-none transition-default focus:border-primary focus:ring-2 focus:ring-primary/15" />
+        </div>
+        <div class="grid grid-cols-2 gap-4">
+          <AppInput v-model="createForm.tags" :label="t('news.fields.tags')" />
+          <AppSelect v-model="createForm.status" :label="t('courses.status.label')" :options="[{ value: 'DRAFT', label: t('courses.status.draft') }, { value: 'PUBLISHED', label: t('courses.status.published') }]" />
+          <AppInput v-model="createForm.departmentTargets" :label="t('news.fields.departmentTargets')" />
+          <AppInput v-model="createForm.roleTargets" :label="t('news.fields.roleTargets')" />
+        </div>
+
+        <p v-if="createError" class="text-small text-danger">{{ createError }}</p>
+
+        <div class="flex justify-end gap-2 pt-2">
+          <AppButton type="button" variant="ghost" @click="showCreateModal = false">{{ t('courses.cancel') }}</AppButton>
+          <AppButton type="submit" :loading="createSubmitting">{{ createSubmitting ? t('courses.creating') : t('courses.create') }}</AppButton>
+        </div>
+      </form>
+    </Modal>
   </div>
 </template>

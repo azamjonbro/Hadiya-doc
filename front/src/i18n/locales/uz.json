@@ -65,7 +65,10 @@
       "error": "Email/username yoki parol noto'g'ri",
       "securityNotice": "Kompaniya xavfsizlik siyosati bilan himoyalangan. Kirishlar qayd etiladi va kuzatiladi.",
       "brandTitle": "Butun kompaniya birga o'rganadigan joy.",
-      "brandSubtitle": "Majburiy o'quvlaringizni kuzating, kompaniya yangiliklaridan xabardor bo'ling va o'sishingizni ko'ring — barchasi bir joyda."
+      "brandSubtitle": "Majburiy o'quvlaringizni kuzating, kompaniya yangiliklaridan xabardor bo'ling va o'sishingizni ko'ring — barchasi bir joyda.",
+      "highlight1": "Majburiy o'quvlar, muddatlar va natijalar bir joyda",
+      "highlight2": "Kurslar, soatlar va kunlik ketma-ketlik bo'yicha o'sishingizni ko'ring",
+      "highlight3": "Korporativ darajadagi xavfsizlik, kirishlar qayd etiladi"
     },
     "logout": "Chiqish"
   },
@@ -142,6 +145,7 @@
     "searchPlaceholder": "Kurslarni qidirish...",
     "featured": "To'xtagan joyingizdan davom eting",
     "modules": "modul",
+    "videos": "video",
     "duration": "davomiyligi",
     "continue": "Davom ettirish",
     "start": "Kursni boshlash",
@@ -235,11 +239,19 @@
     "empty": "Yaqinlashib kelayotgan tadbirlar yo'q",
     "newEvent": "Yangi tadbir",
     "location": "Joylashuv",
+    "type": "Turi",
     "startAt": "Boshlanish vaqti",
     "endAt": "Tugash vaqti",
     "today": "Bugun",
     "thisWeek": "Shu hafta",
     "later": "Keyinroq"
+  },
+  "eventTypes": {
+    "MEETING": "Uchrashuv",
+    "TRAINING": "Trening",
+    "SEMINAR": "Seminar",
+    "EVENT": "Tadbir",
+    "ANNOUNCEMENT": "E'lon"
   },
   "notifications": {
     "title": "Bildirishnomalar",
@@ -268,5 +280,28 @@
       "light": "Yorug'",
       "dark": "Qorong'i"
     }
+  },
+  "reviews": {
+    "title": "Sharhlar",
+    "leaveOne": "Sharh qoldirish",
+    "editYours": "Sharhingizni tahrirlash",
+    "commentPlaceholder": "Bu kurs haqida fikringizni yozing (ixtiyoriy)",
+    "submit": "Sharhni yuborish",
+    "update": "Sharhni yangilash",
+    "submitted": "Sharh saqlandi",
+    "error": "Sharhni saqlab bo'lmadi",
+    "empty": "Hali sharhlar yo'q",
+    "count": "{count} ta sharh"
+  },
+  "qa": {
+    "title": "Savol-javob",
+    "askPlaceholder": "Bu kurs haqida savol bering...",
+    "ask": "So'rash",
+    "posted": "Savol yuborildi",
+    "error": "Yuborib bo'lmadi",
+    "empty": "Hali savollar yo'q — birinchi bo'lib so'rang",
+    "answerPlaceholder": "Javob yozing...",
+    "answer": "Javob berish",
+    "answers": "{count} ta javob"
   }
 }

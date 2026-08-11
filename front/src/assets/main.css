@@ -22,7 +22,7 @@
 
   --color-success: 21 128 61;
   --color-success-subtle: 220 250 231;
-  --color-warning: 180 92 9;
+  --color-warning: 217 119 6;
   --color-warning-subtle: 254 242 199;
   --color-danger: 185 28 28;
   --color-danger-subtle: 254 228 228;
@@ -48,13 +48,13 @@
   --color-primary-foreground: 10 12 20;
   --color-primary-subtle: 27 34 58;
 
-  --color-success: 74 222 128;
+  --color-success: 5 150 105;
   --color-success-subtle: 18 41 29;
-  --color-warning: 250 186 60;
+  --color-warning: 161 98 7;
   --color-warning-subtle: 46 34 12;
-  --color-danger: 248 113 113;
+  --color-danger: 239 68 68;
   --color-danger-subtle: 47 22 22;
-  --color-info: 56 189 248;
+  --color-info: 2 132 199;
   --color-info-subtle: 12 34 46;
 }
 

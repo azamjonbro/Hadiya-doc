@@ -65,7 +65,10 @@
       "error": "Invalid email/username or password",
       "securityNotice": "Protected by company security policy. Access is logged and monitored.",
       "brandTitle": "Where the whole company learns, together.",
-      "brandSubtitle": "Track your mandatory training, catch up on company news, and see how you're growing — all in one place."
+      "brandSubtitle": "Track your mandatory training, catch up on company news, and see how you're growing — all in one place.",
+      "highlight1": "Mandatory training, deadlines and progress in one view",
+      "highlight2": "See your growth across courses, hours and streaks",
+      "highlight3": "Enterprise-grade security, logged and monitored access"
     },
     "logout": "Log out"
   },
@@ -142,6 +145,7 @@
     "searchPlaceholder": "Search courses...",
     "featured": "Continue where you left off",
     "modules": "modules",
+    "videos": "videos",
     "duration": "duration",
     "continue": "Continue",
     "start": "Start course",
@@ -235,11 +239,19 @@
     "empty": "No upcoming events",
     "newEvent": "New event",
     "location": "Location",
+    "type": "Type",
     "startAt": "Start",
     "endAt": "End",
     "today": "Today",
     "thisWeek": "This week",
     "later": "Later"
+  },
+  "eventTypes": {
+    "MEETING": "Meeting",
+    "TRAINING": "Training",
+    "SEMINAR": "Seminar",
+    "EVENT": "Event",
+    "ANNOUNCEMENT": "Announcement"
   },
   "notifications": {
     "title": "Notifications",
@@ -268,5 +280,28 @@
       "light": "Light",
       "dark": "Dark"
     }
+  },
+  "reviews": {
+    "title": "Reviews",
+    "leaveOne": "Leave a review",
+    "editYours": "Edit your review",
+    "commentPlaceholder": "Share your thoughts about this course (optional)",
+    "submit": "Submit review",
+    "update": "Update review",
+    "submitted": "Review saved",
+    "error": "Could not save your review",
+    "empty": "No reviews yet",
+    "count": "{count} reviews"
+  },
+  "qa": {
+    "title": "Q&A",
+    "askPlaceholder": "Ask a question about this course...",
+    "ask": "Ask",
+    "posted": "Question posted",
+    "error": "Could not post",
+    "empty": "No questions yet — be the first to ask",
+    "answerPlaceholder": "Write an answer...",
+    "answer": "Answer",
+    "answers": "{count} answers"
   }
 }

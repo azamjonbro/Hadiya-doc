@@ -7,6 +7,7 @@ import { useThemeStore } from '@/stores/theme'
 import { useAuthStore } from '@/stores/auth'
 import { useUiStore } from '@/stores/ui'
 import { setLocale, availableLocales } from '@/i18n'
+import { useNotifications } from '@/composables/useNotifications'
 import Icon from '@/components/ui/Icon.vue'
 import Avatar from '@/components/ui/Avatar.vue'
 
@@ -34,7 +35,7 @@ function pickLocale(code) {
   localeOpen.value = false
 }
 
-const unreadNotifications = 3
+const { unreadCount } = useNotifications()
 </script>
 
 <template>
@@ -100,7 +101,7 @@ const unreadNotifications = 3
         class="relative flex h-9 w-9 items-center justify-center rounded-md text-ink-muted transition-default hover:bg-surface-2"
       >
         <Icon name="bell" size="17" />
-        <span v-if="unreadNotifications" class="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-danger ring-2 ring-surface" />
+        <span v-if="unreadCount > 0" class="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-danger ring-2 ring-surface" />
       </router-link>
 
       <div ref="profileRef" class="relative ml-1">

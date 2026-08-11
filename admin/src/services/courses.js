@@ -22,4 +22,10 @@ export const coursesApi = {
   createTopic(id, payload) {
     return http.post(`/courses/${id}/topics`, payload).then((r) => r.data.data)
   },
+  listAssignments(id) {
+    return http.get(`/courses/${id}/assignments`).then((r) => r.data.data)
+  },
+  assign(id, payload) {
+    return http.post(`/courses/${id}/assignments`, payload).then((r) => r.data.data)
+  },
 }

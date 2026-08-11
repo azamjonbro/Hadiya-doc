@@ -2,11 +2,22 @@
 import { reactive } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { reportsApi } from '@/services/reports'
+import AppCard from '@/components/ui/AppCard.vue'
+import AppButton from '@/components/ui/AppButton.vue'
+import Icon from '@/components/ui/Icon.vue'
 
 const { t } = useI18n()
 
 const REPORT_TYPES = ['employee-progress', 'course-progress', 'video-analytics', 'news-analytics', 'task-analytics']
 const FORMATS = ['csv', 'xlsx', 'pdf']
+
+const typeIcon = {
+  'employee-progress': 'users',
+  'course-progress': 'graduation-cap',
+  'video-analytics': 'video',
+  'news-analytics': 'newspaper',
+  'task-analytics': 'check-square',
+}
 
 // Keyed by `${type}:${format}` so each individual button shows its own
 // loading/error state rather than blocking the whole page.
@@ -28,31 +39,37 @@ async function onDownload(type, format) {
 </script>
 
 <template>
-  <div class="mx-auto max-w-4xl px-6 py-10">
-    <h1 class="text-2xl font-semibold tracking-tight text-ink">{{ t('reports.title') }}</h1>
-    <p class="mt-1 text-sm text-ink-muted">{{ t('reports.subtitle') }}</p>
+  <div class="mx-auto max-w-4xl px-6 py-8">
+    <h1 class="text-h1 text-ink">{{ t('reports.title') }}</h1>
+    <p class="mt-1 text-body text-ink-muted">{{ t('reports.subtitle') }}</p>
 
-    <div class="mt-6 divide-y divide-border rounded-lg border border-border bg-surface">
-      <div v-for="type in REPORT_TYPES" :key="type" class="flex flex-wrap items-center justify-between gap-3 p-4">
-        <div>
-          <p class="text-sm font-medium text-ink">{{ t(`reports.types.${type}`) }}</p>
-          <p v-if="errors[`${type}:csv`] || errors[`${type}:xlsx`] || errors[`${type}:pdf`]" class="mt-0.5 text-xs text-red-500">
-            {{ errors[`${type}:csv`] || errors[`${type}:xlsx`] || errors[`${type}:pdf`] }}
-          </p>
+    <div class="mt-6 space-y-3">
+      <AppCard v-for="type in REPORT_TYPES" :key="type" class="flex flex-wrap items-center justify-between gap-3">
+        <div class="flex items-center gap-3">
+          <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-primary-subtle text-primary">
+            <Icon :name="typeIcon[type]" size="17" />
+          </span>
+          <div>
+            <p class="text-small font-semibold text-ink">{{ t(`reports.types.${type}`) }}</p>
+            <p v-if="errors[`${type}:csv`] || errors[`${type}:xlsx`] || errors[`${type}:pdf`]" class="mt-0.5 text-caption text-danger">
+              {{ errors[`${type}:csv`] || errors[`${type}:xlsx`] || errors[`${type}:pdf`] }}
+            </p>
+          </div>
         </div>
         <div class="flex gap-2">
-          <button
+          <AppButton
             v-for="format in FORMATS"
             :key="format"
-            type="button"
-            class="rounded-md border border-slate-300 px-3 py-1.5 text-sm uppercase disabled:opacity-50 dark:border-slate-700"
-            :disabled="pending[`${type}:${format}`]"
+            variant="outline"
+            size="sm"
+            icon="download"
+            :loading="pending[`${type}:${format}`]"
             @click="onDownload(type, format)"
           >
-            {{ pending[`${type}:${format}`] ? t('reports.downloading') : format }}
-          </button>
+            {{ format.toUpperCase() }}
+          </AppButton>
         </div>
-      </div>
+      </AppCard>
     </div>
   </div>
 </template>

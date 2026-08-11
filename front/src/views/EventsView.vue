@@ -1,20 +1,66 @@
 <script setup>
-import { onMounted, reactive, ref } from 'vue'
+import { computed, onMounted, reactive, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useAuthStore } from '@/stores/auth'
 import { eventsApi } from '@/services/events'
+import AppCard from '@/components/ui/AppCard.vue'
+import AppButton from '@/components/ui/AppButton.vue'
+import AppInput from '@/components/ui/AppInput.vue'
+import AppSelect from '@/components/ui/AppSelect.vue'
+import Modal from '@/components/ui/Modal.vue'
+import Badge from '@/components/ui/Badge.vue'
+import Skeleton from '@/components/ui/Skeleton.vue'
+import EmptyState from '@/components/ui/EmptyState.vue'
+import Icon from '@/components/ui/Icon.vue'
 
-const { t } = useI18n()
+const { t, locale } = useI18n()
 const auth = useAuthStore()
 
 const items = ref([])
 const loading = ref(true)
 const errorMessage = ref('')
 
-const showCreateForm = ref(false)
+const showCreateModal = ref(false)
 const createSubmitting = ref(false)
 const createError = ref('')
 const createForm = reactive({ title: '', type: 'MEETING', startAt: '', endAt: '', location: '' })
+
+const typeMeta = {
+  MEETING: { icon: 'users', variant: 'primary' },
+  TRAINING: { icon: 'graduation-cap', variant: 'success' },
+  SEMINAR: { icon: 'message-square', variant: 'info' },
+  EVENT: { icon: 'calendar', variant: 'warning' },
+  ANNOUNCEMENT: { icon: 'newspaper', variant: 'neutral' },
+}
+
+const typeOptions = Object.keys(typeMeta).map((value) => ({ value, label: t('eventTypes.' + value) }))
+
+function isSameDay(a, b) {
+  return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate()
+}
+
+function isThisWeek(date, now) {
+  const diff = (date - now) / (1000 * 60 * 60 * 24)
+  return diff >= 0 && diff < 7
+}
+
+const groups = computed(() => {
+  const now = new Date()
+  const today = []
+  const week = []
+  const later = []
+  for (const ev of items.value) {
+    const date = new Date(ev.startAt)
+    if (isSameDay(date, now)) today.push(ev)
+    else if (isThisWeek(date, now)) week.push(ev)
+    else later.push(ev)
+  }
+  return [
+    { key: 'today', label: t('events.today'), items: today },
+    { key: 'thisWeek', label: t('events.thisWeek'), items: week },
+    { key: 'later', label: t('events.later'), items: later },
+  ].filter((g) => g.items.length)
+})
 
 async function load() {
   loading.value = true
@@ -39,7 +85,7 @@ async function onCreateSubmit() {
       endAt: new Date(createForm.endAt).toISOString(),
       location: createForm.location,
     })
-    showCreateForm.value = false
+    showCreateModal.value = false
     Object.assign(createForm, { title: '', type: 'MEETING', startAt: '', endAt: '', location: '' })
     await load()
   } catch (error) {
@@ -53,63 +99,65 @@ onMounted(load)
 </script>
 
 <template>
-  <div class="mx-auto max-w-3xl px-6 py-12">
+  <div class="mx-auto max-w-3xl px-6 py-8">
     <div class="flex items-center justify-between">
-      <h1 class="text-xl font-semibold tracking-tight">{{ t('events.title') }}</h1>
-      <button
-        v-if="auth.hasPermission('event:create')"
-        type="button"
-        class="rounded-md bg-slate-900 px-3 py-1.5 text-sm font-medium text-white dark:bg-white dark:text-slate-900"
-        @click="showCreateForm = !showCreateForm"
-      >
-        {{ showCreateForm ? t('courses.cancel') : t('events.newEvent') }}
-      </button>
+      <h1 class="text-h1 text-ink">{{ t('events.title') }}</h1>
+      <AppButton v-if="auth.hasPermission('event:create')" icon="plus" @click="showCreateModal = true">{{ t('events.newEvent') }}</AppButton>
     </div>
 
-    <form
-      v-if="showCreateForm"
-      class="mt-4 grid grid-cols-2 gap-3 rounded-xl border border-slate-200 p-4 dark:border-slate-800"
-      @submit.prevent="onCreateSubmit"
-    >
-      <input v-model="createForm.title" required :placeholder="t('courses.fields.title')" class="col-span-2 rounded-md border border-slate-300 bg-transparent px-3 py-2 text-sm dark:border-slate-700" />
-      <select v-model="createForm.type" class="rounded-md border border-slate-300 bg-transparent px-3 py-2 text-sm dark:border-slate-700">
-        <option value="MEETING">MEETING</option>
-        <option value="TRAINING">TRAINING</option>
-        <option value="SEMINAR">SEMINAR</option>
-        <option value="EVENT">EVENT</option>
-        <option value="ANNOUNCEMENT">ANNOUNCEMENT</option>
-      </select>
-      <input v-model="createForm.location" :placeholder="t('events.location')" class="rounded-md border border-slate-300 bg-transparent px-3 py-2 text-sm dark:border-slate-700" />
-      <label class="text-sm">
-        {{ t('events.startAt') }}
-        <input v-model="createForm.startAt" type="datetime-local" required class="mt-1 w-full rounded-md border border-slate-300 bg-transparent px-3 py-2 text-sm dark:border-slate-700" />
-      </label>
-      <label class="text-sm">
-        {{ t('events.endAt') }}
-        <input v-model="createForm.endAt" type="datetime-local" required class="mt-1 w-full rounded-md border border-slate-300 bg-transparent px-3 py-2 text-sm dark:border-slate-700" />
-      </label>
+    <p v-if="errorMessage" class="mt-4 text-small text-danger">{{ errorMessage }}</p>
 
-      <p v-if="createError" class="col-span-2 text-sm text-red-500">{{ createError }}</p>
+    <div v-if="loading" class="mt-6 space-y-4">
+      <Skeleton v-for="i in 4" :key="i" class="h-16 w-full" />
+    </div>
 
-      <button type="submit" :disabled="createSubmitting" class="col-span-2 rounded-md bg-slate-900 px-3 py-2 text-sm font-medium text-white disabled:opacity-50 dark:bg-white dark:text-slate-900">
-        {{ createSubmitting ? t('courses.creating') : t('courses.create') }}
-      </button>
-    </form>
+    <template v-else-if="items.length">
+      <div v-for="group in groups" :key="group.key" class="mt-8 first:mt-6">
+        <h2 class="mb-3 text-caption font-semibold uppercase tracking-widest text-ink-faint">{{ group.label }}</h2>
+        <div class="relative space-y-4 border-l border-border pl-6">
+          <div v-for="ev in group.items" :key="ev.id" class="relative">
+            <span class="absolute -left-[29px] top-1.5 h-3 w-3 rounded-full border-2 border-surface bg-primary" />
+            <AppCard>
+              <div class="flex items-start justify-between gap-3">
+                <div class="min-w-0">
+                  <div class="flex items-center gap-2">
+                    <Badge :variant="typeMeta[ev.type]?.variant ?? 'neutral'" size="sm">
+                      <Icon :name="typeMeta[ev.type]?.icon ?? 'calendar'" size="11" class="mr-1" />
+                      {{ t('eventTypes.' + ev.type) }}
+                    </Badge>
+                  </div>
+                  <h3 class="mt-2 text-small font-semibold text-ink">{{ ev.title }}</h3>
+                  <p v-if="ev.description" class="mt-1 text-caption text-ink-muted">{{ ev.description }}</p>
+                  <div class="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-caption text-ink-faint">
+                    <span class="flex items-center gap-1"><Icon name="clock" size="12" />{{ new Date(ev.startAt).toLocaleString(locale, { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) }}</span>
+                    <span v-if="ev.location" class="flex items-center gap-1"><Icon name="map-pin" size="12" />{{ ev.location }}</span>
+                    <span v-if="ev.participants?.length" class="flex items-center gap-1"><Icon name="users" size="12" />{{ ev.participants.length }}</span>
+                  </div>
+                </div>
+              </div>
+            </AppCard>
+          </div>
+        </div>
+      </div>
+    </template>
 
-    <p v-if="loading" class="mt-6 text-sm text-slate-500 dark:text-slate-400">{{ t('courses.loading') }}</p>
-    <p v-if="errorMessage" class="mt-4 text-sm text-red-500">{{ errorMessage }}</p>
+    <EmptyState v-else icon="calendar" :title="t('events.empty')" class="mt-6" />
 
-    <ul class="mt-6 divide-y divide-slate-200 rounded-xl border border-slate-200 dark:divide-slate-800 dark:border-slate-800">
-      <li v-for="event in items" :key="event.id" class="p-4">
-        <p class="font-medium">{{ event.title }}</p>
-        <p class="text-sm text-slate-500 dark:text-slate-400">
-          {{ event.type }} · {{ new Date(event.startAt).toLocaleString() }}
-          <template v-if="event.location"> · {{ event.location }}</template>
-        </p>
-      </li>
-      <li v-if="!loading && items.length === 0" class="p-8 text-center text-sm text-slate-500 dark:text-slate-400">
-        {{ t('events.empty') }}
-      </li>
-    </ul>
+    <Modal v-model="showCreateModal" :title="t('events.newEvent')">
+      <form class="space-y-4" @submit.prevent="onCreateSubmit">
+        <AppInput v-model="createForm.title" required :label="t('courses.fields.title')" />
+        <AppSelect v-model="createForm.type" :label="t('events.type')" :options="typeOptions" />
+        <AppInput v-model="createForm.location" :label="t('events.location')" />
+        <div class="grid grid-cols-2 gap-3">
+          <AppInput v-model="createForm.startAt" type="datetime-local" required :label="t('events.startAt')" />
+          <AppInput v-model="createForm.endAt" type="datetime-local" required :label="t('events.endAt')" />
+        </div>
+        <p v-if="createError" class="text-small text-danger">{{ createError }}</p>
+        <div class="flex justify-end gap-2 pt-2">
+          <AppButton type="button" variant="ghost" @click="showCreateModal = false">{{ t('courses.cancel') }}</AppButton>
+          <AppButton type="submit" :loading="createSubmitting">{{ createSubmitting ? t('courses.creating') : t('courses.create') }}</AppButton>
+        </div>
+      </form>
+    </Modal>
   </div>
 </template>

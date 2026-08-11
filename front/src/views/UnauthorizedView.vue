@@ -1,13 +1,19 @@
 <script setup>
 import { useI18n } from 'vue-i18n'
+import { useRouter } from 'vue-router'
+import ErrorState from '@/components/ui/ErrorState.vue'
+import AppButton from '@/components/ui/AppButton.vue'
 
 const { t } = useI18n()
+const router = useRouter()
 </script>
 
 <template>
-  <div class="flex h-full flex-col items-center justify-center gap-2 px-6 text-center">
-    <p class="text-5xl font-bold tracking-tight">401</p>
-    <p class="text-slate-500 dark:text-slate-400">{{ t('unauthorized.message') }}</p>
-    <router-link to="/login" class="mt-4 text-sm underline">{{ t('auth.login.title') }}</router-link>
+  <div class="flex min-h-screen bg-bg">
+    <ErrorState code="401" icon="lock" :title="t('unauthorized.title')" :description="t('unauthorized.message')">
+      <template #actions>
+        <AppButton icon="arrow-right" icon-position="right" @click="router.push('/login')">{{ t('auth.login.title') }}</AppButton>
+      </template>
+    </ErrorState>
   </div>
 </template>

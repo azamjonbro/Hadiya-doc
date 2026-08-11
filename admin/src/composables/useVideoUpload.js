@@ -9,8 +9,11 @@ export function useVideoUpload() {
 
   const status = ref('idle') // idle | uploading | paused | success | error
   const progress = ref(0)
+  const speedBytesPerSecond = ref(0)
+  const etaSeconds = ref(0)
   const errorMessage = ref('')
   let currentUpload = null
+  let lastSample = null
 
   function start({ file, topicId, title, description, required, order }) {
     status.value = 'uploading'
@@ -38,6 +41,18 @@ export function useVideoUpload() {
       },
       onProgress(bytesSent, bytesTotal) {
         progress.value = Math.round((bytesSent / bytesTotal) * 100)
+        const now = performance.now()
+        if (lastSample) {
+          const elapsed = (now - lastSample.time) / 1000
+          if (elapsed > 0.3) {
+            const rate = (bytesSent - lastSample.bytes) / elapsed
+            speedBytesPerSecond.value = rate
+            etaSeconds.value = rate > 0 ? Math.round((bytesTotal - bytesSent) / rate) : 0
+            lastSample = { time: now, bytes: bytesSent }
+          }
+        } else {
+          lastSample = { time: now, bytes: bytesSent }
+        }
       },
       onSuccess() {
         status.value = 'success'
@@ -72,7 +87,10 @@ export function useVideoUpload() {
     }
     status.value = 'idle'
     progress.value = 0
+    speedBytesPerSecond.value = 0
+    etaSeconds.value = 0
+    lastSample = null
   }
 
-  return { status, progress, errorMessage, start, pause, resume, cancel }
+  return { status, progress, speedBytesPerSecond, etaSeconds, errorMessage, start, pause, resume, cancel }
 }

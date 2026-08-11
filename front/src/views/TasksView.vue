@@ -1,12 +1,26 @@
 <script setup>
-import { onMounted, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { tasksApi } from '@/services/tasks'
+import AppCard from '@/components/ui/AppCard.vue'
+import AppButton from '@/components/ui/AppButton.vue'
+import Badge from '@/components/ui/Badge.vue'
+import Skeleton from '@/components/ui/Skeleton.vue'
+import EmptyState from '@/components/ui/EmptyState.vue'
+import Icon from '@/components/ui/Icon.vue'
 
-const { t } = useI18n()
+const { t, locale } = useI18n()
 const items = ref([])
 const loading = ref(true)
 const errorMessage = ref('')
+
+const priorityVariant = { LOW: 'neutral', MEDIUM: 'info', HIGH: 'warning' }
+
+const columns = computed(() => [
+  { status: 'TODO', label: t('tasks.status.TODO'), items: items.value.filter((tsk) => tsk.status === 'TODO') },
+  { status: 'IN_PROGRESS', label: t('tasks.status.IN_PROGRESS'), items: items.value.filter((tsk) => tsk.status === 'IN_PROGRESS') },
+  { status: 'COMPLETED', label: t('tasks.status.COMPLETED'), items: items.value.filter((tsk) => tsk.status === 'COMPLETED') },
+])
 
 async function load() {
   loading.value = true
@@ -23,60 +37,66 @@ async function load() {
 
 async function setStatus(task, status) {
   const updated = await tasksApi.update(task.id, { status })
-  items.value = items.value.map((t) => (t.id === task.id ? updated : t))
+  items.value = items.value.map((tsk) => (tsk.id === task.id ? updated : tsk))
 }
 
-function badgeClass(task) {
-  if (task.effectiveStatus === 'OVERDUE') return 'text-red-500'
-  if (task.effectiveStatus === 'COMPLETED') return 'text-emerald-500'
-  if (task.effectiveStatus === 'IN_PROGRESS') return 'text-amber-500'
-  return 'text-slate-500 dark:text-slate-400'
+function deadlineLabel(date) {
+  return new Date(date).toLocaleDateString(locale.value, { day: 'numeric', month: 'short' })
 }
 
 onMounted(load)
 </script>
 
 <template>
-  <div class="mx-auto max-w-3xl px-6 py-12">
-    <h1 class="text-xl font-semibold tracking-tight">{{ t('tasks.title') }}</h1>
+  <div class="mx-auto max-w-6xl px-6 py-8">
+    <h1 class="text-h1 text-ink">{{ t('tasks.title') }}</h1>
 
-    <p v-if="loading" class="mt-6 text-sm text-slate-500 dark:text-slate-400">{{ t('courses.loading') }}</p>
-    <p v-if="errorMessage" class="mt-4 text-sm text-red-500">{{ errorMessage }}</p>
+    <p v-if="errorMessage" class="mt-4 text-small text-danger">{{ errorMessage }}</p>
 
-    <ul class="mt-6 divide-y divide-slate-200 rounded-xl border border-slate-200 dark:divide-slate-800 dark:border-slate-800">
-      <li v-for="task in items" :key="task.id" class="p-4">
-        <div class="flex items-center justify-between">
-          <div>
-            <p class="font-medium">{{ task.title }}</p>
-            <p v-if="task.description" class="mt-1 text-sm text-slate-500 dark:text-slate-400">{{ task.description }}</p>
-            <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">
-              {{ task.priority }}
-              <template v-if="task.deadline"> · {{ t('tasks.deadline') }}: {{ new Date(task.deadline).toLocaleDateString() }}</template>
-            </p>
+    <div v-if="loading" class="mt-6 grid grid-cols-1 gap-5 md:grid-cols-3">
+      <Skeleton v-for="i in 3" :key="i" class="h-64 w-full" />
+    </div>
+
+    <template v-else-if="items.length">
+      <div class="mt-6 grid grid-cols-1 gap-5 md:grid-cols-3">
+        <div v-for="col in columns" :key="col.status">
+          <div class="mb-3 flex items-center gap-2">
+            <h2 class="text-small font-semibold text-ink">{{ col.label }}</h2>
+            <span class="rounded-full bg-surface-2 px-2 py-0.5 text-caption font-medium text-ink-faint">{{ col.items.length }}</span>
           </div>
-          <span class="text-sm font-medium" :class="badgeClass(task)">{{ task.effectiveStatus }}</span>
+
+          <div class="space-y-3">
+            <AppCard v-for="task in col.items" :key="task.id" :class="task.effectiveStatus === 'OVERDUE' ? 'border-danger/30' : ''">
+              <div class="flex items-start justify-between gap-2">
+                <p class="text-small font-semibold text-ink" :class="task.status === 'COMPLETED' ? 'text-ink-faint line-through' : ''">{{ task.title }}</p>
+                <Badge :variant="priorityVariant[task.priority]" size="sm">{{ t('tasks.priority.' + task.priority) }}</Badge>
+              </div>
+              <p v-if="task.description" class="mt-1.5 line-clamp-2 text-caption text-ink-muted">{{ task.description }}</p>
+
+              <div class="mt-3 flex items-center justify-between">
+                <span
+                  v-if="task.deadline"
+                  class="flex items-center gap-1 text-caption"
+                  :class="task.effectiveStatus === 'OVERDUE' ? 'font-medium text-danger' : 'text-ink-faint'"
+                >
+                  <Icon name="clock" size="12" />
+                  {{ deadlineLabel(task.deadline) }}
+                </span>
+                <span v-else />
+
+                <div v-if="task.status !== 'COMPLETED' && task.status !== 'CANCELLED'" class="flex gap-1.5">
+                  <AppButton v-if="task.status === 'TODO'" variant="ghost" size="sm" @click="setStatus(task, 'IN_PROGRESS')">{{ t('tasks.start') }}</AppButton>
+                  <AppButton variant="secondary" size="sm" icon="check" @click="setStatus(task, 'COMPLETED')">{{ t('tasks.complete') }}</AppButton>
+                </div>
+              </div>
+            </AppCard>
+
+            <p v-if="col.items.length === 0" class="rounded-lg border border-dashed border-border py-8 text-center text-caption text-ink-faint">—</p>
+          </div>
         </div>
-        <div v-if="task.status !== 'COMPLETED' && task.status !== 'CANCELLED'" class="mt-3 flex gap-2">
-          <button
-            v-if="task.status === 'TODO'"
-            type="button"
-            class="rounded-md border border-slate-300 px-3 py-1 text-xs dark:border-slate-700"
-            @click="setStatus(task, 'IN_PROGRESS')"
-          >
-            {{ t('tasks.start') }}
-          </button>
-          <button
-            type="button"
-            class="rounded-md border border-slate-300 px-3 py-1 text-xs dark:border-slate-700"
-            @click="setStatus(task, 'COMPLETED')"
-          >
-            {{ t('tasks.complete') }}
-          </button>
-        </div>
-      </li>
-      <li v-if="!loading && items.length === 0" class="p-8 text-center text-sm text-slate-500 dark:text-slate-400">
-        {{ t('tasks.empty') }}
-      </li>
-    </ul>
+      </div>
+    </template>
+
+    <EmptyState v-else icon="check-square" :title="t('tasks.empty')" class="mt-6" />
   </div>
 </template>

@@ -1,12 +1,19 @@
 <script setup>
 import { useI18n } from 'vue-i18n'
+import { useRouter } from 'vue-router'
+import ErrorState from '@/components/ui/ErrorState.vue'
+import AppButton from '@/components/ui/AppButton.vue'
 
 const { t } = useI18n()
+const router = useRouter()
 </script>
 
 <template>
-  <div class="flex h-full flex-col items-center justify-center gap-2 px-6 text-center">
-    <p class="text-5xl font-bold tracking-tight">{{ t('notFound.title') }}</p>
-    <p class="text-slate-500 dark:text-slate-400">{{ t('notFound.message') }}</p>
+  <div class="flex min-h-screen bg-bg">
+    <ErrorState code="404" icon="search" :title="t('notFound.title')" :description="t('notFound.message')">
+      <template #actions>
+        <AppButton icon="home" @click="router.push('/')">{{ t('common.goToDashboard') }}</AppButton>
+      </template>
+    </ErrorState>
   </div>
 </template>

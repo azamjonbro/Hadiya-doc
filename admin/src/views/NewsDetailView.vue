@@ -4,6 +4,12 @@ import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useAuthStore } from '@/stores/auth'
 import { newsApi } from '@/services/news'
+import AppCard from '@/components/ui/AppCard.vue'
+import AppButton from '@/components/ui/AppButton.vue'
+import AppInput from '@/components/ui/AppInput.vue'
+import AppSelect from '@/components/ui/AppSelect.vue'
+import Skeleton from '@/components/ui/Skeleton.vue'
+import Icon from '@/components/ui/Icon.vue'
 
 const { t } = useI18n()
 const route = useRoute()
@@ -15,21 +21,10 @@ const errorMessage = ref('')
 const saving = ref(false)
 const news = ref(null)
 
-const form = reactive({
-  title: '',
-  content: '',
-  tags: '',
-  departmentTargets: '',
-  roleTargets: '',
-  status: 'DRAFT',
-  expiryAt: '',
-})
+const form = reactive({ title: '', content: '', tags: '', departmentTargets: '', roleTargets: '', status: 'DRAFT', expiryAt: '' })
 
 function toList(value) {
-  return value
-    .split(',')
-    .map((v) => v.trim())
-    .filter(Boolean)
+  return value.split(',').map((v) => v.trim()).filter(Boolean)
 }
 
 async function load() {
@@ -84,60 +79,38 @@ onMounted(load)
 </script>
 
 <template>
-  <div class="mx-auto max-w-2xl px-6 py-12">
-    <button type="button" class="text-sm text-slate-500 dark:text-slate-400" @click="router.push('/admin/news')">
-      ← {{ t('news.title') }}
+  <div class="mx-auto max-w-2xl px-6 py-8">
+    <button type="button" class="flex items-center gap-1.5 text-small font-medium text-ink-muted transition-default hover:text-ink" @click="router.push('/admin/news')">
+      <Icon name="chevron-left" size="16" />
+      {{ t('news.title') }}
     </button>
 
-    <p v-if="loading" class="mt-6 text-sm text-slate-500 dark:text-slate-400">{{ t('courses.loading') }}</p>
+    <Skeleton v-if="loading" class="mt-5 h-64 w-full" />
 
     <template v-else-if="news">
-      <h1 class="mt-4 text-xl font-semibold tracking-tight">{{ news.title }}</h1>
+      <h1 class="mt-4 text-h1 text-ink">{{ news.title }}</h1>
 
-      <form class="mt-6 grid grid-cols-2 gap-3" @submit.prevent="onSave">
-        <label class="col-span-2 text-sm font-medium">
-          {{ t('news.fields.title') }}
-          <input v-model="form.title" :disabled="!auth.hasPermission('news:manage')" class="mt-1 w-full rounded-md border border-slate-300 bg-transparent px-3 py-2 text-sm disabled:opacity-50 dark:border-slate-700" />
-        </label>
-        <label class="col-span-2 text-sm font-medium">
-          {{ t('news.fields.content') }}
-          <textarea v-model="form.content" :disabled="!auth.hasPermission('news:manage')" rows="6" class="mt-1 w-full rounded-md border border-slate-300 bg-transparent px-3 py-2 text-sm disabled:opacity-50 dark:border-slate-700"></textarea>
-        </label>
-        <label class="text-sm font-medium">
-          {{ t('news.fields.tags') }}
-          <input v-model="form.tags" :disabled="!auth.hasPermission('news:manage')" class="mt-1 w-full rounded-md border border-slate-300 bg-transparent px-3 py-2 text-sm disabled:opacity-50 dark:border-slate-700" />
-        </label>
-        <label class="text-sm font-medium">
-          {{ t('courses.status.label') }}
-          <select v-model="form.status" :disabled="!auth.hasPermission('news:manage')" class="mt-1 w-full rounded-md border border-slate-300 bg-transparent px-3 py-2 text-sm disabled:opacity-50 dark:border-slate-700">
-            <option value="DRAFT">{{ t('courses.status.draft') }}</option>
-            <option value="PUBLISHED">{{ t('courses.status.published') }}</option>
-          </select>
-        </label>
-        <label class="text-sm font-medium">
-          {{ t('news.fields.departmentTargets') }}
-          <input v-model="form.departmentTargets" :disabled="!auth.hasPermission('news:manage')" class="mt-1 w-full rounded-md border border-slate-300 bg-transparent px-3 py-2 text-sm disabled:opacity-50 dark:border-slate-700" />
-        </label>
-        <label class="text-sm font-medium">
-          {{ t('news.fields.roleTargets') }}
-          <input v-model="form.roleTargets" :disabled="!auth.hasPermission('news:manage')" class="mt-1 w-full rounded-md border border-slate-300 bg-transparent px-3 py-2 text-sm disabled:opacity-50 dark:border-slate-700" />
-        </label>
-        <label class="col-span-2 text-sm font-medium">
-          {{ t('news.fields.expiryAt') }}
-          <input v-model="form.expiryAt" type="date" :disabled="!auth.hasPermission('news:manage')" class="mt-1 w-full rounded-md border border-slate-300 bg-transparent px-3 py-2 text-sm disabled:opacity-50 dark:border-slate-700" />
-        </label>
+      <AppCard class="mt-6">
+        <form class="grid grid-cols-2 gap-4" @submit.prevent="onSave">
+          <div class="col-span-2"><AppInput v-model="form.title" :label="t('news.fields.title')" :disabled="!auth.hasPermission('news:manage')" /></div>
+          <div class="col-span-2">
+            <label class="mb-1.5 block text-small font-medium text-ink">{{ t('news.fields.content') }}</label>
+            <textarea v-model="form.content" :disabled="!auth.hasPermission('news:manage')" rows="6" class="w-full rounded-md border border-border-strong bg-surface px-3.5 py-2.5 text-body text-ink outline-none transition-default focus:border-primary focus:ring-2 focus:ring-primary/15 disabled:opacity-50" />
+          </div>
+          <AppInput v-model="form.tags" :label="t('news.fields.tags')" :disabled="!auth.hasPermission('news:manage')" />
+          <AppSelect v-model="form.status" :label="t('courses.status.label')" :disabled="!auth.hasPermission('news:manage')" :options="[{ value: 'DRAFT', label: t('courses.status.draft') }, { value: 'PUBLISHED', label: t('courses.status.published') }]" />
+          <AppInput v-model="form.departmentTargets" :label="t('news.fields.departmentTargets')" :disabled="!auth.hasPermission('news:manage')" />
+          <AppInput v-model="form.roleTargets" :label="t('news.fields.roleTargets')" :disabled="!auth.hasPermission('news:manage')" />
+          <div class="col-span-2"><AppInput v-model="form.expiryAt" type="date" :label="t('news.fields.expiryAt')" :disabled="!auth.hasPermission('news:manage')" /></div>
 
-        <p v-if="errorMessage" class="col-span-2 text-sm text-red-500">{{ errorMessage }}</p>
+          <p v-if="errorMessage" class="col-span-2 text-small text-danger">{{ errorMessage }}</p>
 
-        <div v-if="auth.hasPermission('news:manage')" class="col-span-2 flex gap-3">
-          <button type="submit" :disabled="saving" class="rounded-md bg-slate-900 px-4 py-2 text-sm font-medium text-white disabled:opacity-50 dark:bg-white dark:text-slate-900">
-            {{ saving ? t('courses.saving') : t('courses.save') }}
-          </button>
-          <button type="button" class="rounded-md border border-red-400 px-4 py-2 text-sm font-medium text-red-500" @click="onDelete">
-            {{ t('news.delete') }}
-          </button>
-        </div>
-      </form>
+          <div v-if="auth.hasPermission('news:manage')" class="col-span-2 flex gap-3 pt-1">
+            <AppButton type="submit" :loading="saving">{{ saving ? t('courses.saving') : t('courses.save') }}</AppButton>
+            <AppButton type="button" variant="danger" @click="onDelete">{{ t('news.delete') }}</AppButton>
+          </div>
+        </form>
+      </AppCard>
     </template>
   </div>
 </template>

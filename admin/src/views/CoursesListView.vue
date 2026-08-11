@@ -1,22 +1,27 @@
 <script setup>
 import { onMounted, reactive, ref } from 'vue'
+import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useAuthStore } from '@/stores/auth'
 import { coursesApi } from '@/services/courses'
+import AppCard from '@/components/ui/AppCard.vue'
+import AppButton from '@/components/ui/AppButton.vue'
+import AppInput from '@/components/ui/AppInput.vue'
+import AppSelect from '@/components/ui/AppSelect.vue'
+import Badge from '@/components/ui/Badge.vue'
+import Skeleton from '@/components/ui/Skeleton.vue'
+import EmptyState from '@/components/ui/EmptyState.vue'
+import Icon from '@/components/ui/Icon.vue'
 
-const { t } = useI18n()
+const { t, locale } = useI18n()
 const auth = useAuthStore()
+const router = useRouter()
 
 const filters = reactive({ search: '', status: '' })
 const items = ref([])
 const nextCursor = ref(null)
 const loading = ref(false)
 const errorMessage = ref('')
-
-const showCreateForm = ref(false)
-const createSubmitting = ref(false)
-const createError = ref('')
-const createForm = reactive({ title: '', description: '', status: 'DRAFT' })
 
 function buildParams(cursor) {
   const params = {}
@@ -54,114 +59,67 @@ async function loadMore() {
   }
 }
 
-async function onCreateSubmit() {
-  createSubmitting.value = true
-  createError.value = ''
-  try {
-    await coursesApi.create({ ...createForm })
-    showCreateForm.value = false
-    Object.assign(createForm, { title: '', description: '', status: 'DRAFT' })
-    await loadFirstPage()
-  } catch (error) {
-    createError.value = error.response?.data?.message ?? String(error)
-  } finally {
-    createSubmitting.value = false
-  }
-}
+const statusBadge = { DRAFT: 'neutral', PUBLISHED: 'success', ARCHIVED: 'danger' }
 
 onMounted(loadFirstPage)
 </script>
 
 <template>
-  <div class="mx-auto max-w-5xl px-6 py-12">
-    <div class="flex items-center justify-between">
-      <h1 class="text-xl font-semibold tracking-tight">{{ t('courses.title') }}</h1>
-      <button
-        v-if="auth.hasPermission('course:create')"
-        type="button"
-        class="rounded-md bg-slate-900 px-3 py-1.5 text-sm font-medium text-white dark:bg-white dark:text-slate-900"
-        @click="showCreateForm = !showCreateForm"
-      >
-        {{ showCreateForm ? t('courses.cancel') : t('courses.newCourse') }}
-      </button>
+  <div class="mx-auto max-w-7xl px-6 py-8">
+    <div class="flex flex-wrap items-center justify-between gap-3">
+      <h1 class="text-h1 text-ink">{{ t('courses.title') }}</h1>
+      <AppButton v-if="auth.hasPermission('course:create')" icon="plus" @click="router.push('/admin/courses/new')">{{ t('courses.newCourse') }}</AppButton>
     </div>
 
-    <form
-      v-if="showCreateForm"
-      class="mt-4 grid grid-cols-2 gap-3 rounded-xl border border-slate-200 p-4 dark:border-slate-800"
-      @submit.prevent="onCreateSubmit"
-    >
-      <input v-model="createForm.title" required :placeholder="t('courses.fields.title')" class="col-span-2 rounded-md border border-slate-300 bg-transparent px-3 py-2 text-sm dark:border-slate-700" />
-      <textarea v-model="createForm.description" :placeholder="t('courses.fields.description')" rows="3" class="col-span-2 rounded-md border border-slate-300 bg-transparent px-3 py-2 text-sm dark:border-slate-700"></textarea>
-      <select v-model="createForm.status" class="rounded-md border border-slate-300 bg-transparent px-3 py-2 text-sm dark:border-slate-700">
-        <option value="DRAFT">{{ t('courses.status.draft') }}</option>
-        <option value="PUBLISHED">{{ t('courses.status.published') }}</option>
-        <option value="ARCHIVED">{{ t('courses.status.archived') }}</option>
-      </select>
-
-      <p v-if="createError" class="col-span-2 text-sm text-red-500">{{ createError }}</p>
-
-      <button
-        type="submit"
-        :disabled="createSubmitting"
-        class="col-span-2 rounded-md bg-slate-900 px-3 py-2 text-sm font-medium text-white disabled:opacity-50 dark:bg-white dark:text-slate-900"
-      >
-        {{ createSubmitting ? t('courses.creating') : t('courses.create') }}
-      </button>
-    </form>
-
-    <div class="mt-6 flex flex-wrap gap-2">
-      <input v-model="filters.search" :placeholder="t('courses.filters.search')" class="rounded-md border border-slate-300 bg-transparent px-3 py-1.5 text-sm dark:border-slate-700" @keyup.enter="loadFirstPage" />
-      <select v-model="filters.status" class="rounded-md border border-slate-300 bg-transparent px-3 py-1.5 text-sm dark:border-slate-700" @change="loadFirstPage">
-        <option value="">{{ t('courses.filters.allStatuses') }}</option>
-        <option value="DRAFT">{{ t('courses.status.draft') }}</option>
-        <option value="PUBLISHED">{{ t('courses.status.published') }}</option>
-        <option value="ARCHIVED">{{ t('courses.status.archived') }}</option>
-      </select>
-      <button type="button" class="rounded-md border border-slate-300 px-3 py-1.5 text-sm dark:border-slate-700" @click="loadFirstPage">
-        {{ t('courses.filters.apply') }}
-      </button>
+    <div class="mt-5 flex flex-wrap items-end gap-3">
+      <div class="w-64">
+        <AppInput v-model="filters.search" icon="search" :placeholder="t('courses.filters.search')" @keyup.enter="loadFirstPage" />
+      </div>
+      <div class="w-48">
+        <AppSelect
+          v-model="filters.status"
+          :placeholder="t('courses.filters.allStatuses')"
+          :options="[{ value: 'DRAFT', label: t('courses.status.draft') }, { value: 'PUBLISHED', label: t('courses.status.published') }, { value: 'ARCHIVED', label: t('courses.status.archived') }]"
+          @update:model-value="loadFirstPage"
+        />
+      </div>
+      <AppButton variant="outline" @click="loadFirstPage">{{ t('courses.filters.apply') }}</AppButton>
     </div>
 
-    <p v-if="errorMessage" class="mt-4 text-sm text-red-500">{{ errorMessage }}</p>
+    <p v-if="errorMessage" class="mt-4 text-small text-danger">{{ errorMessage }}</p>
 
-    <div class="mt-4 overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-800">
-      <table class="w-full text-left text-sm">
-        <thead class="border-b border-slate-200 text-slate-500 dark:border-slate-800 dark:text-slate-400">
-          <tr>
-            <th class="px-4 py-2 font-medium">{{ t('courses.fields.title') }}</th>
-            <th class="px-4 py-2 font-medium">{{ t('courses.status.label') }}</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr
-            v-for="course in items"
-            :key="course.id"
-            class="cursor-pointer border-b border-slate-100 last:border-0 hover:bg-slate-50 dark:border-slate-900 dark:hover:bg-slate-900"
-            @click="$router.push(`/admin/courses/${course.id}`)"
-          >
-            <td class="px-4 py-2">{{ course.title }}</td>
-            <td class="px-4 py-2 text-slate-500 dark:text-slate-400">{{ course.status }}</td>
-          </tr>
-          <tr v-if="!loading && items.length === 0">
-            <td colspan="2" class="px-4 py-8 text-center text-slate-500 dark:text-slate-400">
-              {{ t('courses.empty') }}
-            </td>
-          </tr>
-        </tbody>
-      </table>
+    <div v-if="loading" class="mt-6 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
+      <Skeleton v-for="i in 6" :key="i" class="h-52 w-full" />
     </div>
 
-    <div class="mt-4 flex justify-center">
-      <button
-        v-if="nextCursor"
-        type="button"
-        :disabled="loading"
-        class="rounded-md border border-slate-300 px-3 py-1.5 text-sm dark:border-slate-700"
-        @click="loadMore"
+    <div v-else-if="items.length" class="mt-6 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
+      <AppCard
+        v-for="course in items"
+        :key="course.id"
+        padding="none"
+        hover
+        class="flex cursor-pointer flex-col overflow-hidden"
+        @click="router.push(`/admin/courses/${course.id}`)"
       >
-        {{ loading ? t('courses.loading') : t('courses.loadMore') }}
-      </button>
+        <div
+          class="flex h-32 items-center justify-center bg-surface-2 text-ink-faint"
+          :style="course.cover ? `background-image:url(${course.cover});background-size:cover;background-position:center` : ''"
+        >
+          <Icon v-if="!course.cover" name="book-open" size="24" />
+        </div>
+        <div class="flex flex-1 flex-col p-4">
+          <Badge :variant="statusBadge[course.status]" size="sm" class="self-start">{{ t(`courses.status.${course.status.toLowerCase()}`) }}</Badge>
+          <h3 class="mt-2.5 line-clamp-2 text-small font-semibold text-ink">{{ course.title }}</h3>
+          <p v-if="course.description" class="mt-1 line-clamp-2 text-caption text-ink-faint">{{ course.description }}</p>
+          <p class="mt-auto pt-3 text-caption text-ink-faint">{{ new Date(course.updatedAt).toLocaleDateString(locale) }}</p>
+        </div>
+      </AppCard>
+    </div>
+
+    <EmptyState v-else icon="book-open" :title="t('courses.empty')" class="mt-6" />
+
+    <div class="mt-6 flex justify-center">
+      <AppButton v-if="nextCursor" variant="outline" :loading="loading" @click="loadMore">{{ t('courses.loadMore') }}</AppButton>
     </div>
   </div>
 </template>

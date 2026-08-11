@@ -4,13 +4,16 @@ import Hls from 'hls.js'
 import { useAuthStore } from '@/stores/auth'
 import { videoAccessApi } from '@/services/videoAccess'
 import { useVideoAnalytics } from '@/composables/useVideoAnalytics'
+import Icon from '@/components/ui/Icon.vue'
 
 const props = defineProps({ videoId: { type: String, required: true } })
+const emit = defineEmits(['timeupdate', 'ready'])
 
 const auth = useAuthStore()
 const videoEl = ref(null)
 const errorMessage = ref('')
 const now = ref(new Date())
+const ready = ref(false)
 
 // Deterrent only, never a security boundary (spec §2) — the real
 // authorization is the per-segment token re-validated on every request by
@@ -75,6 +78,13 @@ async function setup() {
     }, 120_000)
 
     analytics.attach(videoEl.value)
+    videoEl.value.addEventListener('loadeddata', () => {
+      ready.value = true
+      emit('ready')
+    })
+    videoEl.value.addEventListener('timeupdate', () => {
+      emit('timeupdate', { currentTime: videoEl.value.currentTime, duration: videoEl.value.duration || 0 })
+    })
   } catch (error) {
     errorMessage.value = error.response?.data?.message ?? String(error)
   }
@@ -101,6 +111,9 @@ onBeforeUnmount(() => {
 
 <template>
   <div class="relative overflow-hidden rounded-lg bg-black">
+    <div v-if="!ready" class="absolute inset-0 z-10 flex aspect-video w-full items-center justify-center bg-surface-2">
+      <Icon name="loader" size="28" class="animate-spin text-ink-faint" />
+    </div>
     <video ref="videoEl" controls class="aspect-video w-full" />
     <div
       class="pointer-events-none absolute select-none rounded bg-black/40 px-2 py-1 font-mono text-[10px] leading-tight text-white/70"
