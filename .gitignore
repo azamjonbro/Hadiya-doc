@@ -10,6 +10,13 @@ build/
 .env
 .env.*
 !.env.example
+# The two frontend production builds are the exception: VITE_* values are
+# baked into the public JS bundle at build time, so they are not secrets,
+# and committing them keeps Vercel/Netlify builds correct without any
+# dashboard configuration. Scoped to these two paths on purpose — a
+# backend/.env.production would hold real secrets and must stay ignored.
+!front/.env.production
+!admin/.env.production
 
 # logs
 logs/
