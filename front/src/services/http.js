@@ -61,14 +61,20 @@ http.interceptors.response.use(
       }
     }
 
-    // A 403 is not necessarily "your session died" — most of them now mean
-    // "you are signed in fine, but you may not do this yet" (a locked
-    // lesson, a course you are not assigned to). Those carry a domain error
-    // code, and bouncing the user to the login screen for one both loses
-    // their place and hides the actual reason. Only a 403 with no code —
-    // i.e. the auth layer itself rejecting us — still ends the session.
-    const isAuthorizationDenial = status === 403 && Boolean(error.response?.data?.code)
-    if ((status === 401 || status === 403) && !isAuthRoute && !isAuthorizationDenial) {
+    // Only a 401 ends a session, and only once the refresh above has failed
+    // to produce a new token. A 403 means the opposite of a dead session:
+    // the server authenticated us fine and is refusing this one action — a
+    // permission the role lacks, a lesson still locked, a course not
+    // assigned. Signing in again cannot change that answer, so bouncing to
+    // the login screen would only lose the user's place and hide the real
+    // reason.
+    //
+    // (The previous "403 with no error code" carve-out never fired:
+    // ApiError.forbidden always sets a code, defaulting to FORBIDDEN. It
+    // did misfire on `responseType: 'blob'` requests such as the report
+    // export, where the error body is a Blob and reading .code off it
+    // yields undefined — logging the user out mid-download.)
+    if (status === 401 && !isAuthRoute) {
       redirectToLogin()
     }
 

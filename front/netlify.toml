@@ -1,0 +1,42 @@
+# Netlify config for the employee app (front/).
+# Set the site's "Base directory" to `front` in the Netlify UI; every path
+# below is then relative to it. The build steps step up to the repo root
+# because this is an npm-workspaces monorepo — front/ depends on the
+# @lms/shared workspace package, which only resolves from a root install.
+#
+# Required environment variable (Site settings -> Environment variables):
+#   VITE_API_BASE_URL = https://<your-api-host>/api/v1
+# It is read at BUILD time, not runtime, so changing it needs a redeploy.
+
+[build]
+  command = "cd .. && npm ci && npm run build --workspace front"
+  publish = "dist"
+
+[build.environment]
+  NODE_VERSION = "20"
+
+# SPA fallback. Vue Router runs in history mode, so a deep link or a page
+# refresh on /courses/:id asks Netlify for a file that does not exist —
+# without this it answers a real 404 and the app never boots. Must stay
+# last: Netlify applies the first matching rule.
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+
+[[headers]]
+  for = "/assets/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
+[[headers]]
+  for = "/index.html"
+  [headers.values]
+    Cache-Control = "no-cache"
+
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+    X-Frame-Options = "DENY"

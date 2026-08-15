@@ -61,7 +61,14 @@ http.interceptors.response.use(
       }
     }
 
-    if ((status === 401 || status === 403) && !isAuthRoute) {
+    // Only a 401 ends a session, and only once the refresh above has failed
+    // to produce a new token. A 403 means the opposite of a dead session:
+    // the server authenticated us fine and is refusing this one action.
+    // That is routine in this app — a MANAGER holds course:read but not
+    // course:update, user:read but not user:update, news:create but not
+    // news:manage — so logging them out on 403 ejected them from the admin
+    // app for pressing a button their role was never allowed to use.
+    if (status === 401 && !isAuthRoute) {
       redirectToLogin()
     }
 
