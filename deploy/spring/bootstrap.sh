@@ -80,8 +80,17 @@ sleep 3
 mc alias set lms http://127.0.0.1:9000 "$MINIO_ROOT_USER" "$MINIO_ROOT_PASSWORD" >/dev/null
 for b in $BUCKETS; do mc mb --ignore-existing "lms/$b" >/dev/null && echo "    bucket $b"; done
 
-echo "==> Backend service"
+echo "==> ffmpeg (video/ffmpegUtils.js shells out to ffmpeg/ffprobe by name)"
+if ! command -v ffmpeg >/dev/null; then
+  apt-get update -qq
+  DEBIAN_FRONTEND=noninteractive apt-get install -y -qq ffmpeg
+fi
+ffmpeg -version | head -1
+
+echo "==> Backend services"
 mkdir -p "$APP_DIR"
+NODE=$(command -v node)
+
 cat > /etc/systemd/system/spring-lms.service <<UNIT
 [Unit]
 Description=Spring LMS backend
@@ -91,7 +100,7 @@ Wants=network-online.target
 [Service]
 WorkingDirectory=$APP_DIR/backend
 EnvironmentFile=$APP_DIR/backend/.env
-ExecStart=$(command -v node) src/server.js
+ExecStart=$NODE src/server.js
 Restart=always
 RestartSec=5
 # One process, 1.9 GB box, six neighbours: keep it boxed in.
@@ -102,7 +111,34 @@ StandardError=append:/var/log/spring-lms.log
 [Install]
 WantedBy=multi-user.target
 UNIT
+
+# Easy to skip, and skipping it fails quietly: the worker is the only writer of
+# the admin dashboard snapshot (the endpoint just returns null without it), and
+# it also owns video transcoding and deadline reminders.
+cat > /etc/systemd/system/spring-lms-worker.service <<UNIT
+[Unit]
+Description=Spring LMS background worker (video, reminders, dashboard aggregation)
+After=network-online.target mongod.service redis-server.service minio.service spring-lms.service
+Wants=network-online.target
+
+[Service]
+WorkingDirectory=$APP_DIR/backend
+EnvironmentFile=$APP_DIR/backend/.env
+ExecStart=$NODE src/worker.js
+Restart=always
+RestartSec=5
+# Same reasoning as the API unit: a transcode that overruns dies inside this
+# cgroup instead of pushing a neighbour out of memory.
+MemoryMax=512M
+StandardOutput=append:/var/log/spring-lms-worker.log
+StandardError=append:/var/log/spring-lms-worker.log
+
+[Install]
+WantedBy=multi-user.target
+UNIT
+
 systemctl daemon-reload
 
 echo "==> Done. Next: ship the code + .env to $APP_DIR, then"
-echo "    systemctl enable --now spring-lms && curl -s localhost:4000/api/v1/health"
+echo "    systemctl enable --now spring-lms spring-lms-worker"
+echo "    curl -s localhost:4000/api/v1/health"

@@ -17,6 +17,12 @@ function baseCookieOptions() {
   }
 }
 
+// Returns the CSRF token it issued. The double-submit check needs the caller
+// to echo that value back in a header, and a cross-origin SPA cannot read the
+// cookie to find it: the cookie belongs to the API's host, not the SPA's. So
+// the token also travels in the login/refresh response body, and the SPA keeps
+// it in storage on its own origin — still unreadable to any other site, which
+// is all the double-submit check actually relies on.
 export function setAuthCookies(res, { refreshToken }) {
   res.cookie(REFRESH_COOKIE, refreshToken, {
     ...baseCookieOptions(),
@@ -32,6 +38,8 @@ export function setAuthCookies(res, { refreshToken }) {
     path: '/',
     maxAge: ms(env.JWT_REFRESH_TTL),
   })
+
+  return csrfToken
 }
 
 export function clearAuthCookies(res) {

@@ -10,8 +10,8 @@ function requestMeta(req) {
 export const authController = {
   login: asyncHandler(async (req, res) => {
     const { accessToken, refreshToken, user } = await authService.login(req.body, requestMeta(req))
-    setAuthCookies(res, { refreshToken })
-    sendSuccess(res, { accessToken, user }, 'Logged in')
+    const csrfToken = setAuthCookies(res, { refreshToken })
+    sendSuccess(res, { accessToken, user, csrfToken }, 'Logged in')
   }),
 
   refresh: asyncHandler(async (req, res) => {
@@ -20,8 +20,8 @@ export const authController = {
       currentRefreshToken,
       requestMeta(req)
     )
-    setAuthCookies(res, { refreshToken })
-    sendSuccess(res, { accessToken, user }, 'Token refreshed')
+    const csrfToken = setAuthCookies(res, { refreshToken })
+    sendSuccess(res, { accessToken, user, csrfToken }, 'Token refreshed')
   }),
 
   logout: asyncHandler(async (req, res) => {

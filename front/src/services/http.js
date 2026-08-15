@@ -83,7 +83,39 @@ http.interceptors.response.use(
   }
 )
 
+// The CSRF token is kept on THIS origin, not read back off the cookie.
+// When the API lives on another host (qollanma.techinfo.uz) its csrf_token
+// cookie is invisible to document.cookie here, so reading it would yield
+// nothing and every /auth/refresh would 403 — logging the user out on each
+// reload. The cookie read stays as the fallback for a same-origin deploy and
+// for a session that predates this change.
+const CSRF_STORAGE_KEY = 'csrf_token'
+
+export function setCsrfToken(token) {
+  if (!token) return
+  try {
+    localStorage.setItem(CSRF_STORAGE_KEY, token)
+  } catch {
+    // Private-mode / storage-disabled browsers: the cookie fallback below
+    // still covers the same-origin case, so this is not fatal.
+  }
+}
+
+export function clearCsrfToken() {
+  try {
+    localStorage.removeItem(CSRF_STORAGE_KEY)
+  } catch {
+    /* nothing to clear if storage was never writable */
+  }
+}
+
 export function csrfHeader() {
-  const token = getCookie('csrf_token')
+  let token = null
+  try {
+    token = localStorage.getItem(CSRF_STORAGE_KEY)
+  } catch {
+    /* fall through to the cookie */
+  }
+  token = token || getCookie('csrf_token')
   return token ? { 'x-csrf-token': token } : {}
 }

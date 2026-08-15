@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia'
-import { http, csrfHeader } from '@/services/http'
+import { http, csrfHeader, setCsrfToken, clearCsrfToken } from '@/services/http'
 import { useChatStore } from './chat'
 
 const ADMIN_APP_ROLES = ['SUPERADMIN', 'ADMIN', 'MANAGER']
@@ -25,15 +25,17 @@ export const useAuthStore = defineStore('auth', {
       return this.permissions.includes(permission)
     },
 
-    setSession({ accessToken, user }) {
+    setSession({ accessToken, user, csrfToken }) {
       this.accessToken = accessToken
       this.user = user
+      setCsrfToken(csrfToken)
       if (ADMIN_APP_ROLES.includes(user.role)) useChatStore().init(accessToken, user.id)
     },
 
     clearSession() {
       this.accessToken = null
       this.user = null
+      clearCsrfToken()
       useChatStore().reset()
     },
 
