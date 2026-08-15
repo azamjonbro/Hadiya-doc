@@ -56,7 +56,9 @@ const highlights = [
 <template>
   <div class="flex min-h-screen bg-bg">
     <!-- Brand panel -->
-    <div class="relative hidden w-[44%] max-w-xl shrink-0 overflow-hidden bg-ink lg:flex lg:flex-col lg:justify-between">
+    <div
+      class="auth-brand relative hidden w-[44%] max-w-xl shrink-0 overflow-hidden border-r border-white/[0.06] lg:flex lg:flex-col lg:justify-between"
+    >
       <div
         class="pointer-events-none absolute inset-0 opacity-[0.06]"
         style="background-image: radial-gradient(currentColor 1px, transparent 1px); background-size: 22px 22px; color: white"

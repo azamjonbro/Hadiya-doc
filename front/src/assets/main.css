@@ -79,6 +79,27 @@ body {
   background-color: rgb(var(--color-primary) / 0.22);
 }
 
+/* Kirish sahifasidagi brend paneli har doim qorong'i bo'lib turishi kerak —
+   ichidagi barcha matn/ikonka oq. Avval bu yerda bg-ink ishlatilgan edi, u esa
+   --color-text tokeni: dark rejimda deyarli oqqa aylanadi va panel oq matn
+   bilan birga "oqarib" ko'rinmay qoladi. Shuning uchun ranglar token emas,
+   qat'iy qiymatlar. */
+/* Cover rasmi yo'q bo'lgandagi o'rin (hero, news kartochkasi). Ustidagi matn
+   doim oq, shuning uchun fon mavzuga qarab o'zgarmaydi. Cover bo'lsa, inline
+   background-image bu gradientni bosib ketadi. */
+.media-dark {
+  background-color: #0e111b;
+  background-image: linear-gradient(135deg, #1b2138 0%, #0b0e18 100%);
+}
+
+.auth-brand {
+  background-color: #0a0c14;
+  background-image:
+    radial-gradient(105% 78% at 12% -8%, rgb(72 106 232 / 0.5) 0%, rgb(72 106 232 / 0) 58%),
+    radial-gradient(85% 65% at 96% 104%, rgb(129 140 248 / 0.28) 0%, rgb(129 140 248 / 0) 62%),
+    linear-gradient(158deg, #121728 0%, #080a11 62%, #06070c 100%);
+}
+
 /* Slim, theme-aware scrollbars */
 * {
   scrollbar-width: thin;

@@ -161,7 +161,7 @@ onMounted(load)
     <template v-else-if="course">
       <!-- Hero -->
       <div
-        class="relative mt-5 overflow-hidden rounded-xl bg-ink"
+        class="media-dark relative mt-5 overflow-hidden rounded-xl"
         :style="course.cover ? `background-image:url(${course.cover});background-size:cover;background-position:center` : ''"
       >
         <div class="bg-gradient-to-t from-black/70 via-black/30 to-transparent px-7 py-10">

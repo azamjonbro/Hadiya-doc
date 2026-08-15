@@ -68,7 +68,7 @@ onMounted(load)
       <AppCard padding="none" hover class="mt-6 cursor-pointer overflow-hidden" @click="router.push(`/news/${featured.id}`)">
         <div class="flex flex-col lg:flex-row">
           <div
-            class="flex h-56 shrink-0 items-center justify-center bg-ink lg:h-auto lg:w-1/2"
+            class="media-dark flex h-56 shrink-0 items-center justify-center lg:h-auto lg:w-1/2"
             :style="featured.cover ? `background-image:url(${featured.cover});background-size:cover;background-position:center` : ''"
           >
             <Icon v-if="!featured.cover" name="newspaper" size="36" class="text-white/50" />
