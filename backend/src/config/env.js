@@ -14,6 +14,13 @@ const envSchema = z.object({
   JWT_REFRESH_TTL: z.string().default('30d'),
   CSRF_SECRET: z.string().min(16, 'CSRF_SECRET must be at least 16 characters'),
   COOKIE_DOMAIN: z.string().default('localhost'),
+  // 'strict' is right whenever the SPAs and the API share a registrable
+  // domain (app.example.com + api.example.com). Set 'none' only when they
+  // genuinely cannot — a frontend on *.vercel.app or *.netlify.app talking
+  // to an API elsewhere is cross-site, and a 'strict'/'lax' refresh cookie
+  // is simply never attached to POST /auth/refresh, so every session dies
+  // at the access token's TTL and can never be restored.
+  COOKIE_SAMESITE: z.enum(['strict', 'lax', 'none']).default('strict'),
 
   SUPERADMIN_EMAIL: z.string().email('SUPERADMIN_EMAIL must be a valid email'),
   SUPERADMIN_USERNAME: z.string().min(1, 'SUPERADMIN_USERNAME is required'),
@@ -77,10 +84,25 @@ if (!parsed.success) {
   process.exit(1)
 }
 
+const isProduction = parsed.data.NODE_ENV === 'production'
+
+// Browsers drop a SameSite=None cookie that is not also Secure, silently —
+// the Set-Cookie simply never lands, and the symptom is an auth loop with
+// nothing in the logs. Refuse to boot in that configuration rather than
+// ship an app whose sessions cannot survive a refresh.
+if (parsed.data.COOKIE_SAMESITE === 'none' && !isProduction) {
+  console.error(
+    'Invalid environment configuration: COOKIE_SAMESITE=none requires Secure cookies, ' +
+      'which are only sent when NODE_ENV=production. Use a same-site domain layout in ' +
+      'development, or run with NODE_ENV=production behind HTTPS.'
+  )
+  process.exit(1)
+}
+
 export const env = {
   ...parsed.data,
   allowedOrigins: parsed.data.ALLOWED_ORIGINS.split(',')
     .map((origin) => origin.trim())
     .filter(Boolean),
-  isProduction: parsed.data.NODE_ENV === 'production',
+  isProduction,
 }

@@ -9,8 +9,11 @@ const REFRESH_COOKIE_PATH = '/api/v1/auth'
 function baseCookieOptions() {
   return {
     domain: env.COOKIE_DOMAIN === 'localhost' ? undefined : env.COOKIE_DOMAIN,
-    secure: env.isProduction,
-    sameSite: 'strict',
+    // SameSite=None is only honoured on a Secure cookie (env.js refuses to
+    // boot with that combination outside production, so this can't silently
+    // degrade).
+    secure: env.isProduction || env.COOKIE_SAMESITE === 'none',
+    sameSite: env.COOKIE_SAMESITE,
   }
 }
 
