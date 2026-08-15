@@ -27,6 +27,7 @@ import { Role } from '../src/models/role.model.js'
 import { Course } from '../src/models/course.model.js'
 import { Topic } from '../src/models/topic.model.js'
 import { Video } from '../src/models/video.model.js'
+import { Material } from '../src/models/material.model.js'
 import { CourseAssignment } from '../src/models/courseAssignment.model.js'
 import { Session } from '../src/models/session.model.js'
 import { News } from '../src/models/news.model.js'
@@ -78,7 +79,7 @@ async function login(identifier, password) {
 // ---- shared fixtures ----
 let roleEmployee, roleManager
 let userA, userB, userManager
-let course, topic, video
+let course, topic, video, material
 let tokenA, tokenB, tokenManager
 const suffix = `${Date.now()}${Math.floor(Math.random() * 1000)}`
 const cleanupUserIds = []
@@ -146,6 +147,21 @@ before(async () => {
     createdBy: userManager._id,
   })
 
+  // Fake key — materialAccessService.getDownloadUrl only *presigns* a URL
+  // (a local crypto operation against S3StorageProvider), it never fetches
+  // the object, so no real upload is needed to test the authorization gate.
+  material = await Material.create({
+    topicId: topic._id,
+    courseId: course._id,
+    type: 'FILE',
+    title: 'Security Test Material',
+    status: 'PUBLISHED',
+    key: `${suffix}/file/fixture.pdf`,
+    mimeType: 'application/pdf',
+    fileSize: 100,
+    createdBy: userManager._id,
+  })
+
   // userA is assigned; userB deliberately is not — used as the "someone
   // else's resource" identity across the IDOR/authorization tests below.
   await CourseAssignment.create({
@@ -163,6 +179,7 @@ before(async () => {
 
 after(async () => {
   await CourseAssignment.deleteMany({ courseId: course._id })
+  await Material.deleteOne({ _id: material._id })
   await Video.deleteOne({ _id: video._id })
   await Topic.deleteOne({ _id: topic._id })
   await Course.deleteOne({ _id: course._id })
@@ -385,6 +402,21 @@ describe('Upload abuse protection', () => {
     })
     assert.equal(res.status, 404)
   })
+
+  test('a material upload whose bytes don\'t match its claimed type is rejected by magic-byte detection, not the client-declared filename', async () => {
+    const form = new FormData()
+    form.append('type', 'FILE')
+    form.append('title', 'evil')
+    // Filename claims .pdf but the bytes are plain text — file-type must
+    // catch this rather than trusting the extension.
+    form.append('file', new Blob([Buffer.from('not actually a pdf')], { type: 'application/pdf' }), 'evil.pdf')
+    const res = await fetch(`${BASE_URL}/topics/${topic._id}/materials`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${tokenManager}` },
+      body: form,
+    })
+    assert.equal(res.status, 400)
+  })
 })
 
 // ---------------------------------------------------------------------
@@ -553,6 +585,26 @@ describe('Video authorization and playback tokens', () => {
   test('a missing token on a stream request is rejected', async () => {
     const res = await fetch(`${BASE_URL}/video-stream/${video._id}/master.m3u8`)
     assert.equal(res.status, 401)
+  })
+})
+
+// ---------------------------------------------------------------------
+// Material authorization — mirrors the "Video authorization" block above:
+// a signed download URL must be gated by the same course-assignment check,
+// not just "any authenticated VIDEO_VIEW holder" (see
+// materialAccess.service.js).
+// ---------------------------------------------------------------------
+describe('Material authorization', () => {
+  test('a user with no assignment to the course cannot get a material download URL', async () => {
+    const { status, body } = await api(`/materials/${material._id}/download-url`, { headers: { Authorization: `Bearer ${tokenB}` } })
+    assert.equal(status, 403)
+    assert.equal(body.code, 'COURSE_ACCESS_DENIED')
+  })
+
+  test('an assigned user CAN get a material download URL', async () => {
+    const { status, body } = await api(`/materials/${material._id}/download-url`, { headers: { Authorization: `Bearer ${tokenA}` } })
+    assert.equal(status, 200)
+    assert.ok(body.data.url)
   })
 })
 

@@ -16,6 +16,11 @@ export const coursesApi = {
   archive(id) {
     return http.delete(`/courses/${id}`).then((r) => r.data.data)
   },
+  // Irreversible, and SUPERADMIN-only server-side — archive() above is the
+  // reversible one every other admin gets.
+  destroy(id) {
+    return http.delete(`/courses/${id}/permanent`).then((r) => r.data.data)
+  },
   listTopics(id) {
     return http.get(`/courses/${id}/topics`).then((r) => r.data.data)
   },
@@ -24,6 +29,9 @@ export const coursesApi = {
   },
   listAssignments(id) {
     return http.get(`/courses/${id}/assignments`).then((r) => r.data.data)
+  },
+  getUserProgress(id, userId) {
+    return http.get(`/courses/${id}/users/${userId}/progress`).then((r) => r.data.data)
   },
   assign(id, payload) {
     return http.post(`/courses/${id}/assignments`, payload).then((r) => r.data.data)

@@ -5,8 +5,12 @@ export const reportsApi = {
     return http.get('/reports').then((r) => r.data.data.types)
   },
 
-  async download(type, format) {
-    const response = await http.get(`/reports/${type}/export`, { params: { format }, responseType: 'blob' })
+  async download(type, format, filters = {}) {
+    const params = { format }
+    for (const [key, value] of Object.entries(filters)) {
+      if (value !== '' && value !== null && value !== undefined) params[key] = value
+    }
+    const response = await http.get(`/reports/${type}/export`, { params, responseType: 'blob' })
     const blob = new Blob([response.data])
     const url = URL.createObjectURL(blob)
     const a = document.createElement('a')

@@ -6,6 +6,7 @@ import { auditLogRepository } from '../../repositories/auditLog.repository.js'
 import { ApiError } from '../../utils/ApiError.js'
 import { computeAccessFlags } from './courseAssignmentAccess.js'
 import { notificationService } from '../notifications/notification.service.js'
+import { isCourseVisibleToActor } from './courseVisibility.js'
 
 function toPublicAssignment(assignment) {
   return {
@@ -86,6 +87,46 @@ export const courseAssignmentService = {
       message: payload.deadline ? `Deadline: ${new Date(payload.deadline).toLocaleDateString()}` : '',
       relatedEntityType: 'Course',
       relatedEntityId: courseId,
+    })
+
+    return toPublicAssignment(assignment)
+  },
+
+  // Self-enroll: the acting user assigns themselves, so there's no manager
+  // department scope to check and no "assignedBy someone else" notion —
+  // mandatory is always false and there's no deadline, unlike an
+  // admin/manager assignment (spec: self-enrolled courses aren't a mandate).
+  async selfEnroll(actor, courseId) {
+    const course = await courseRepository.findById(courseId)
+    if (!course) throw ApiError.notFound('Course not found')
+    if (course.status !== 'PUBLISHED') throw ApiError.notFound('Course not found')
+    if (!(await isCourseVisibleToActor(actor, course))) throw ApiError.notFound('Course not found')
+
+    const existing = await courseAssignmentRepository.findByUserAndCourse(actor.id, courseId)
+    if (existing) return toPublicAssignment(existing)
+
+    let assignment
+    try {
+      assignment = await courseAssignmentRepository.create({
+        userId: actor.id,
+        courseId,
+        mandatory: false,
+        assignedBy: actor.id,
+      })
+    } catch (error) {
+      if (error.code === 11000) {
+        assignment = await courseAssignmentRepository.findByUserAndCourse(actor.id, courseId)
+      } else {
+        throw error
+      }
+    }
+
+    await auditLogRepository.record({
+      actor: actor.id,
+      action: 'COURSE_SELF_ENROLLED',
+      entity: 'CourseAssignment',
+      entityId: assignment._id.toString(),
+      metadata: { courseId },
     })
 
     return toPublicAssignment(assignment)

@@ -4,6 +4,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { coursesApi } from '@/services/courses'
 import { videosApi } from '@/services/videos'
+import { assessmentsApi } from '@/services/assessments'
 import AiChatPanel from '@/components/AiChatPanel.vue'
 import ReviewsPanel from '@/components/ReviewsPanel.vue'
 import QAPanel from '@/components/QAPanel.vue'
@@ -25,7 +26,11 @@ const errorMessage = ref('')
 const course = ref(null)
 const topics = ref([])
 const videosByTopic = ref({})
+// A module's closing test lives alongside its videos in the curriculum —
+// it is part of the module, not a separate thing to hunt for.
+const assessmentsByTopic = ref({})
 const openTopics = ref(new Set())
+const progress = ref(null)
 const activeTab = ref('content')
 const tabs = [
   { value: 'content', label: t('courses.curriculum') },
@@ -46,10 +51,42 @@ function toggleTopic(id) {
 
 function videoIcon(video) {
   if (video.processingStatus !== 'READY') return 'lock'
+  // Lock state comes from the server alongside progress — the same answer
+  // the playback endpoint would give.
+  if (videoProgress(video).locked) return 'lock'
+  if (videoProgress(video).completed) return 'check'
   return 'play'
 }
 
+function isVideoOpen(video) {
+  return video.processingStatus === 'READY' && !videoProgress(video).locked
+}
+
 const totalVideos = () => Object.values(videosByTopic.value).reduce((sum, list) => sum + (list?.length ?? 0), 0)
+
+// Videos plus the module test — the collapsed row's number should match
+// what actually appears when it is expanded.
+function topicItemCount(topicId) {
+  return (videosByTopic.value[topicId]?.length ?? 0) + (assessmentsByTopic.value[topicId]?.length ?? 0)
+}
+
+function videoProgress(video) {
+  return progress.value?.videos?.[video.id] ?? { completionPercent: 0, completed: false }
+}
+
+function continueVideo() {
+  for (const topic of topics.value) {
+    for (const video of videosByTopic.value[topic.id] ?? []) {
+      if (video.processingStatus === 'READY' && !videoProgress(video).completed) return video
+    }
+  }
+  return Object.values(videosByTopic.value).flat()[0] ?? null
+}
+
+function onContinue() {
+  const video = continueVideo()
+  if (video) router.push(`/videos/${video.id}`)
+}
 
 async function load() {
   loading.value = true
@@ -57,9 +94,16 @@ async function load() {
   try {
     course.value = await coursesApi.getById(route.params.id)
     topics.value = await coursesApi.listTopics(route.params.id)
-    const videoLists = await Promise.all(topics.value.map((topic) => videosApi.listByTopic(topic.id)))
+    const [videoLists, assessmentLists] = await Promise.all([
+      Promise.all(topics.value.map((topic) => videosApi.listByTopic(topic.id))),
+      // A module without a test is normal, so a failure here degrades to
+      // "no test shown" rather than breaking the whole curriculum.
+      Promise.all(topics.value.map((topic) => assessmentsApi.listByTopic(topic.id).catch(() => []))),
+    ])
     videosByTopic.value = Object.fromEntries(topics.value.map((topic, i) => [topic.id, videoLists[i]]))
+    assessmentsByTopic.value = Object.fromEntries(topics.value.map((topic, i) => [topic.id, assessmentLists[i]]))
     openTopics.value = new Set(topics.value.slice(0, 1).map((tp) => tp.id))
+    progress.value = await coursesApi.getMyProgress(route.params.id)
   } catch (error) {
     errorMessage.value = error.response?.data?.message ?? String(error)
   } finally {
@@ -122,26 +166,77 @@ onMounted(load)
                   <p class="mt-0.5 text-small font-semibold text-ink">{{ topic.title }}</p>
                 </div>
                 <div class="flex items-center gap-3">
-                  <span class="text-caption text-ink-faint">{{ videosByTopic[topic.id]?.length ?? 0 }}</span>
+                  <span class="text-caption text-ink-faint">{{ topicItemCount(topic.id) }}</span>
                   <Icon :name="openTopics.has(topic.id) ? 'chevron-up' : 'chevron-down'" size="16" class="text-ink-faint" />
                 </div>
               </button>
               <div v-if="openTopics.has(topic.id)" class="divide-y divide-border border-t border-border">
+                <template v-for="video in videosByTopic[topic.id]" :key="video.id">
+                  <button
+                    type="button"
+                    class="flex w-full items-center gap-3 px-4 py-3 text-left transition-default hover:bg-surface-2 disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:bg-transparent"
+                    :disabled="!isVideoOpen(video)"
+                    :title="videoProgress(video).locked ? t('videos.lockedHint') : ''"
+                    @click="router.push(`/videos/${video.id}`)"
+                  >
+                    <span
+                      class="flex h-7 w-7 shrink-0 items-center justify-center rounded-full"
+                      :class="videoProgress(video).completed ? 'bg-success-subtle text-success' : 'bg-surface-2 text-ink-muted'"
+                    >
+                      <Icon :name="videoIcon(video)" size="13" />
+                    </span>
+                    <span class="min-w-0 flex-1 truncate text-small text-ink">{{ video.title }}</span>
+                    <span
+                      v-if="!videoProgress(video).completed && videoProgress(video).completionPercent > 0"
+                      class="shrink-0 text-caption font-medium text-primary"
+                    >
+                      {{ videoProgress(video).completionPercent }}%
+                    </span>
+                    <span v-if="video.duration" class="shrink-0 text-caption text-ink-faint">{{ formatDuration(video.duration) }}</span>
+                  </button>
+
+                  <!-- The lesson's own quiz, on its own page, opened only
+                       once the lesson has been watched through. -->
+                  <button
+                    v-if="video.hasQuiz"
+                    type="button"
+                    class="flex w-full items-center gap-3 py-2.5 pl-12 pr-4 text-left transition-default hover:bg-surface-2 disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:bg-transparent"
+                    :disabled="!videoProgress(video).completed"
+                    :title="videoProgress(video).completed ? '' : t('quiz.watchFirstHint')"
+                    @click="router.push(`/videos/${video.id}/quiz`)"
+                  >
+                    <Icon
+                      :name="videoProgress(video).completed ? 'file-text' : 'lock'"
+                      size="13"
+                      class="shrink-0 text-ink-faint"
+                    />
+                    <span class="min-w-0 flex-1 truncate text-caption text-ink-muted">{{ t('quiz.title') }}</span>
+                  </button>
+                </template>
+
+                <!-- The module's closing test, listed after its videos -->
                 <button
-                  v-for="video in videosByTopic[topic.id]"
-                  :key="video.id"
+                  v-for="assessment in assessmentsByTopic[topic.id]"
+                  :key="assessment.id"
                   type="button"
-                  class="flex w-full items-center gap-3 px-4 py-3 text-left transition-default hover:bg-surface-2 disabled:cursor-not-allowed disabled:opacity-60"
-                  :disabled="video.processingStatus !== 'READY'"
-                  @click="router.push(`/videos/${video.id}`)"
+                  class="flex w-full items-center gap-3 px-4 py-3 text-left transition-default hover:bg-surface-2"
+                  @click="router.push(`/assessments/${assessment.id}`)"
                 >
-                  <span class="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-surface-2 text-ink-muted">
-                    <Icon :name="videoIcon(video)" size="13" />
+                  <span class="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-primary-subtle text-primary">
+                    <Icon name="check-square" size="13" />
                   </span>
-                  <span class="min-w-0 flex-1 truncate text-small text-ink">{{ video.title }}</span>
-                  <span v-if="video.duration" class="shrink-0 text-caption text-ink-faint">{{ formatDuration(video.duration) }}</span>
+                  <span class="min-w-0 flex-1 truncate text-small font-medium text-ink">{{ assessment.title }}</span>
+                  <span class="shrink-0 text-caption text-ink-faint">
+                    {{ t('assessment.questionCount', { count: assessment.questionCount ?? assessment.questions?.length ?? 0 }) }}
+                  </span>
                 </button>
-                <p v-if="!videosByTopic[topic.id]?.length" class="px-4 py-4 text-center text-small text-ink-faint">{{ t('videos.empty') }}</p>
+
+                <p
+                  v-if="!videosByTopic[topic.id]?.length && !assessmentsByTopic[topic.id]?.length"
+                  class="px-4 py-4 text-center text-small text-ink-faint"
+                >
+                  {{ t('videos.empty') }}
+                </p>
               </div>
             </AppCard>
 
@@ -161,9 +256,12 @@ onMounted(load)
         <div class="space-y-5">
           <AppCard>
             <p class="text-small font-semibold text-ink">{{ t('dashboard.progress.title') }}</p>
-            <ProgressBar class="mt-3" :value="42" />
-            <p class="mt-2 text-caption text-ink-faint">42% {{ t('videos.completed') }}</p>
-            <AppButton block class="mt-4">{{ t('courses.continue') }}</AppButton>
+            <ProgressBar class="mt-3" :value="progress?.completionPercent ?? 0" />
+            <p class="mt-2 text-caption text-ink-faint">
+              {{ progress?.completionPercent ?? 0 }}% {{ t('videos.completed') }}
+              <span v-if="progress">({{ progress.completedVideos }}/{{ progress.totalVideos }})</span>
+            </p>
+            <AppButton block class="mt-4" :disabled="!continueVideo()" @click="onContinue">{{ t('courses.continue') }}</AppButton>
           </AppCard>
 
           <AiChatPanel :course-id="course.id" />

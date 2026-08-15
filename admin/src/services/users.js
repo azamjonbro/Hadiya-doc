@@ -4,6 +4,9 @@ export const usersApi = {
   list(params) {
     return http.get('/users', { params }).then((r) => r.data.data)
   },
+  departments() {
+    return http.get('/users/departments').then((r) => r.data.data)
+  },
   getById(id) {
     return http.get(`/users/${id}`).then((r) => r.data.data)
   },
@@ -15,5 +18,23 @@ export const usersApi = {
   },
   deactivate(id) {
     return http.delete(`/users/${id}`).then((r) => r.data.data)
+  },
+  getCourses(id) {
+    return http.get(`/users/${id}/courses`).then((r) => r.data.data)
+  },
+  learningStats(id) {
+    return http.get(`/users/${id}/learning-stats`).then((r) => r.data.data)
+  },
+  performance(id) {
+    return http.get(`/users/${id}/performance`).then((r) => r.data.data)
+  },
+  activity(id, days) {
+    return http.get(`/users/${id}/activity`, { params: { days } }).then((r) => r.data.data)
+  },
+  testResults(id) {
+    return http.get(`/users/${id}/test-results`).then((r) => r.data.data)
+  },
+  tasks(id) {
+    return http.get(`/users/${id}/tasks`).then((r) => r.data.data)
   },
 }

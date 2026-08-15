@@ -1,0 +1,327 @@
+import { ref, shallowRef } from 'vue'
+import { ATTENTION_REASONS } from '@lms/shared'
+
+/**
+ * Camera-based attention monitoring for video playback.
+ *
+ * PRIVACY: every frame is analysed in this tab and immediately discarded.
+ * No image data is drawn to a canvas for upload, stored, or sent anywhere —
+ * the only thing that leaves the browser is "attentive / not attentive, and
+ * why", as ordinary analytics events. The wasm runtime and the model are
+ * served from this origin, so no frame-adjacent request reaches a third
+ * party either.
+ */
+
+// Assets are served from front/public — see scripts/fetch-mediapipe-assets.mjs.
+// Deliberately not a CDN: a proctoring feature that silently stops working
+// when someone else's host is down is worse than one that never shipped.
+const WASM_PATH = '/mediapipe/wasm'
+const MODEL_PATH = '/mediapipe/face_landmarker.task'
+
+// ~7 fps. Fast enough that a multi-second grace period is measured from a
+// real signal, cheap enough to leave the video decoder alone.
+const SAMPLE_INTERVAL_MS = 140
+
+// How far the head may turn from the learner's own baseline before it counts
+// as looking away, in radians (~28° / ~22°). Generous on purpose: this fires
+// automatic warnings, so false positives cost more than missed glances.
+const YAW_LIMIT = 0.49
+const PITCH_LIMIT = 0.38
+
+// Blendshape strength at which the eyes are clearly pointed off-screen even
+// though the head still faces forward.
+const GAZE_LIMIT = 0.62
+
+// Frames of head pose averaged into the baseline before monitoring starts.
+// Everyone sits at a different angle to their webcam, so "looking at the
+// screen" is measured against where this person's head actually rests, never
+// against an absolute zero that only suits a centred desktop camera.
+const CALIBRATION_FRAMES = 25
+
+// Calibration collects frames only while a face is actually visible, so a
+// covered lens or a dark room would otherwise hold the spinner forever.
+const CALIBRATION_TIMEOUT_MS = 15_000
+
+// Attention has to be regained for this long before the warning clears —
+// stops a single frame of noise from toggling the overlay on and off.
+const RECOVERY_MS = 600
+
+const GAZE_SHAPES = [
+  'eyeLookOutLeft',
+  'eyeLookOutRight',
+  'eyeLookUpLeft',
+  'eyeLookUpRight',
+  'eyeLookDownLeft',
+  'eyeLookDownRight',
+]
+
+// MediaPipe hands back a column-major 4x4; element (row, col) is data[col*4+row].
+// Only the rotation block matters here.
+function headAngles(matrixData) {
+  const r = (row, col) => matrixData[col * 4 + row]
+  const yaw = Math.asin(Math.max(-1, Math.min(1, -r(2, 0))))
+  const pitch = Math.atan2(r(2, 1), r(2, 2))
+  return { yaw, pitch }
+}
+
+function maxGazeScore(blendshapes) {
+  if (!blendshapes?.categories) return 0
+  let max = 0
+  for (const category of blendshapes.categories) {
+    if (GAZE_SHAPES.includes(category.categoryName) && category.score > max) max = category.score
+  }
+  return max
+}
+
+export function useAttentionMonitor() {
+  // 'idle' | 'loading' | 'calibrating' | 'watching' | 'denied' | 'error'
+  const status = ref('idle')
+  const attentive = ref(true)
+  const reason = ref(null)
+  const errorMessage = ref('')
+  const cameraStream = shallowRef(null)
+
+  let landmarker = null
+  let cameraEl = null
+  let timer = null
+  let handlers = {}
+  let graceMs = 4000
+  let shouldMonitor = null
+
+  let baselineSamples = []
+  let baseline = null
+  let calibrationStartedAt = 0
+  let awaySince = null
+  let backSince = null
+  let lostAt = null
+  // Video position where the current inattentive stretch began, so the server
+  // can cut exactly that range out of the watched segments.
+  let lostAtPosition = null
+
+  function emit(name, payload) {
+    handlers[name]?.(payload)
+  }
+
+  async function loadLandmarker() {
+    // Imported lazily: ~4MB of wasm glue that nobody who never opens a
+    // monitored video should have to download.
+    const { FilesetResolver, FaceLandmarker } = await import('@mediapipe/tasks-vision')
+    const fileset = await FilesetResolver.forVisionTasks(WASM_PATH)
+    return FaceLandmarker.createFromOptions(fileset, {
+      baseOptions: { modelAssetPath: MODEL_PATH, delegate: 'GPU' },
+      runningMode: 'VIDEO',
+      numFaces: 1,
+      outputFacialTransformationMatrixes: true,
+      outputFaceBlendshapes: true,
+    })
+  }
+
+  function classify(result) {
+    if (!result.faceLandmarks?.length) return { ok: false, why: ATTENTION_REASONS.NO_FACE }
+
+    const matrix = result.facialTransformationMatrixes?.[0]?.data
+    if (!matrix) return { ok: true, why: null }
+
+    const { yaw, pitch } = headAngles(matrix)
+
+    // Still learning where this person's head normally sits.
+    if (!baseline) {
+      baselineSamples.push({ yaw, pitch })
+      if (baselineSamples.length >= CALIBRATION_FRAMES) {
+        const count = baselineSamples.length
+        baseline = {
+          yaw: baselineSamples.reduce((sum, s) => sum + s.yaw, 0) / count,
+          pitch: baselineSamples.reduce((sum, s) => sum + s.pitch, 0) / count,
+        }
+        baselineSamples = []
+        status.value = 'watching'
+      }
+      return { ok: true, why: null }
+    }
+
+    if (Math.abs(yaw - baseline.yaw) > YAW_LIMIT || Math.abs(pitch - baseline.pitch) > PITCH_LIMIT) {
+      return { ok: false, why: ATTENTION_REASONS.LOOKING_AWAY }
+    }
+    // Head forward but eyes clearly elsewhere — a phone on the desk looks
+    // exactly like this.
+    if (maxGazeScore(result.faceBlendshapes?.[0]) > GAZE_LIMIT) {
+      return { ok: false, why: ATTENTION_REASONS.LOOKING_AWAY }
+    }
+    return { ok: true, why: null }
+  }
+
+  function sample(videoEl) {
+    if (!landmarker || !cameraEl || cameraEl.readyState < 2) return
+
+    let result
+    try {
+      result = landmarker.detectForVideo(cameraEl, performance.now())
+    } catch {
+      // A dropped frame is not worth tearing the session down over.
+      return
+    }
+
+    // classify() also feeds the baseline, so it has to run before any gate
+    // below. Calibrating only while the lesson plays would deadlock: the
+    // calibration overlay covers the controls, so the video cannot start
+    // until calibration finishes, and calibration cannot finish until the
+    // video starts.
+    const verdict = classify(result)
+    const now = performance.now()
+
+    if (!baseline) {
+      // Someone off-camera, in the dark, or with the lens covered would
+      // otherwise sit on the calibration spinner forever.
+      if (now - calibrationStartedAt > CALIBRATION_TIMEOUT_MS) {
+        status.value = 'error'
+        errorMessage.value = 'No face detected — check your camera and lighting.'
+        emit('error', { message: errorMessage.value, duringCalibration: true })
+        // Releases the camera as well as the timer; stop() leaves the 'error'
+        // status alone so the overlay can still explain what happened.
+        stop()
+      }
+      return
+    }
+
+    // Nobody should be warned for looking away from a video they deliberately
+    // paused. The caller decides when that is — crucially it stays true while
+    // the policy holds playback itself, or the return to attention that ends
+    // the pause could never be observed.
+    if (shouldMonitor && !shouldMonitor()) {
+      awaySince = null
+      backSince = null
+      return
+    }
+
+    if (!verdict.ok) {
+      backSince = null
+      if (awaySince === null) awaySince = now
+      // Only after the full grace period does looking away become an event —
+      // reaching for a cup must not trigger anything.
+      if (attentive.value && now - awaySince >= graceMs) {
+        attentive.value = false
+        reason.value = verdict.why
+        lostAt = now
+        lostAtPosition = videoEl?.currentTime ?? null
+        emit('lost', { reason: verdict.why, position: lostAtPosition })
+      }
+      return
+    }
+
+    awaySince = null
+    if (attentive.value) return
+
+    if (backSince === null) backSince = now
+    if (now - backSince < RECOVERY_MS) return
+
+    attentive.value = true
+    reason.value = null
+    emit('regained', {
+      // Wall-clock seconds spent away, and the video range missed. They
+      // differ whenever the policy paused playback, and both are worth having.
+      seconds: (now - lostAt) / 1000,
+      fromPosition: lostAtPosition,
+      toPosition: videoEl?.currentTime ?? lostAtPosition,
+    })
+    backSince = null
+    lostAt = null
+    lostAtPosition = null
+  }
+
+  /**
+   * Requests the camera and starts monitoring. Resolves to true when
+   * monitoring is live, false when it could not start — the caller decides
+   * what that means, since only the policy knows whether a refused camera
+   * blocks playback or merely gets recorded.
+   */
+  async function start({ videoEl, graceSeconds = 4, isActive = null, on = {} }) {
+    // Retrying after a failure comes back through here, so release whatever
+    // the previous attempt left holding the camera before asking for it again.
+    stop()
+
+    handlers = on
+    graceMs = graceSeconds * 1000
+    shouldMonitor = isActive
+    status.value = 'loading'
+    errorMessage.value = ''
+
+    // `navigator.mediaDevices` is simply absent outside a secure context, so
+    // reaching the dev server over a LAN address instead of localhost would
+    // otherwise fail as an opaque "cannot read property of undefined" rather
+    // than something anyone can act on.
+    if (!navigator.mediaDevices?.getUserMedia) {
+      status.value = 'error'
+      errorMessage.value = window.isSecureContext
+        ? 'This browser does not support camera capture.'
+        : 'The camera is only available over HTTPS or on localhost.'
+      emit('error', { message: errorMessage.value })
+      return false
+    }
+
+    try {
+      cameraStream.value = await navigator.mediaDevices.getUserMedia({
+        // Low resolution on purpose: a face landmark model needs nothing
+        // more, and it keeps both CPU and any perceived intrusiveness down.
+        video: { width: 320, height: 240, facingMode: 'user' },
+        audio: false,
+      })
+    } catch (error) {
+      const denied = error?.name === 'NotAllowedError' || error?.name === 'SecurityError'
+      status.value = denied ? 'denied' : 'error'
+      errorMessage.value = error?.message ?? String(error)
+      emit(denied ? 'denied' : 'error', { message: errorMessage.value })
+      return false
+    }
+
+    try {
+      cameraEl = document.createElement('video')
+      cameraEl.autoplay = true
+      cameraEl.playsInline = true
+      cameraEl.muted = true
+      cameraEl.srcObject = cameraStream.value
+      await cameraEl.play()
+
+      landmarker = await loadLandmarker()
+    } catch (error) {
+      status.value = 'error'
+      errorMessage.value = error?.message ?? String(error)
+      // The camera opened but the model did not; without this the failure is
+      // invisible except for a camera light that stays on for no reason.
+      console.error('[attention] face landmarker failed to load', error)
+      emit('error', { message: errorMessage.value })
+      stop()
+      return false
+    }
+
+    baseline = null
+    baselineSamples = []
+    awaySince = null
+    backSince = null
+    attentive.value = true
+    status.value = 'calibrating'
+    calibrationStartedAt = performance.now()
+
+    timer = setInterval(() => sample(videoEl), SAMPLE_INTERVAL_MS)
+    return true
+  }
+
+  function stop() {
+    clearInterval(timer)
+    timer = null
+    landmarker?.close?.()
+    landmarker = null
+    // Releasing the track is what turns the camera indicator light off — it
+    // must happen on every teardown path, not just the tidy one.
+    cameraStream.value?.getTracks().forEach((track) => track.stop())
+    cameraStream.value = null
+    if (cameraEl) {
+      cameraEl.srcObject = null
+      cameraEl = null
+    }
+    if (status.value !== 'denied' && status.value !== 'error') status.value = 'idle'
+    attentive.value = true
+    reason.value = null
+  }
+
+  return { status, attentive, reason, errorMessage, start, stop }
+}

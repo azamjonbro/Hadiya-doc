@@ -2,12 +2,14 @@
 import { onMounted, reactive, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
+import { ROLES } from '@lms/shared'
 import { useAuthStore } from '@/stores/auth'
 import { newsApi } from '@/services/news'
 import AppCard from '@/components/ui/AppCard.vue'
 import AppButton from '@/components/ui/AppButton.vue'
 import AppInput from '@/components/ui/AppInput.vue'
 import AppSelect from '@/components/ui/AppSelect.vue'
+import AppDatePicker from '@/components/ui/AppDatePicker.vue'
 import Skeleton from '@/components/ui/Skeleton.vue'
 import Icon from '@/components/ui/Icon.vue'
 
@@ -21,10 +23,17 @@ const errorMessage = ref('')
 const saving = ref(false)
 const news = ref(null)
 
-const form = reactive({ title: '', content: '', tags: '', departmentTargets: '', roleTargets: '', status: 'DRAFT', expiryAt: '' })
+const form = reactive({ title: '', content: '', tags: '', departmentTargets: '', roleTargets: [], status: 'DRAFT', expiryAt: '' })
+const roleOptions = Object.values(ROLES)
 
 function toList(value) {
   return value.split(',').map((v) => v.trim()).filter(Boolean)
+}
+
+function toggleRole(role) {
+  const index = form.roleTargets.indexOf(role)
+  if (index === -1) form.roleTargets.push(role)
+  else form.roleTargets.splice(index, 1)
 }
 
 async function load() {
@@ -36,7 +45,7 @@ async function load() {
     form.content = news.value.content
     form.tags = news.value.tags.join(', ')
     form.departmentTargets = news.value.departmentTargets.join(', ')
-    form.roleTargets = news.value.roleTargets.join(', ')
+    form.roleTargets = [...news.value.roleTargets]
     form.status = news.value.status
     form.expiryAt = news.value.expiryAt ? news.value.expiryAt.slice(0, 10) : ''
   } catch (error) {
@@ -55,7 +64,7 @@ async function onSave() {
       content: form.content,
       tags: toList(form.tags),
       departmentTargets: toList(form.departmentTargets),
-      roleTargets: toList(form.roleTargets),
+      roleTargets: form.roleTargets,
       status: form.status,
       expiryAt: form.expiryAt ? new Date(form.expiryAt).toISOString() : null,
     })
@@ -100,8 +109,22 @@ onMounted(load)
           <AppInput v-model="form.tags" :label="t('news.fields.tags')" :disabled="!auth.hasPermission('news:manage')" />
           <AppSelect v-model="form.status" :label="t('courses.status.label')" :disabled="!auth.hasPermission('news:manage')" :options="[{ value: 'DRAFT', label: t('courses.status.draft') }, { value: 'PUBLISHED', label: t('courses.status.published') }]" />
           <AppInput v-model="form.departmentTargets" :label="t('news.fields.departmentTargets')" :disabled="!auth.hasPermission('news:manage')" />
-          <AppInput v-model="form.roleTargets" :label="t('news.fields.roleTargets')" :disabled="!auth.hasPermission('news:manage')" />
-          <div class="col-span-2"><AppInput v-model="form.expiryAt" type="date" :label="t('news.fields.expiryAt')" :disabled="!auth.hasPermission('news:manage')" /></div>
+          <div>
+            <p class="mb-1.5 text-small font-medium text-ink">{{ t('news.fields.roleTargets') }}</p>
+            <div class="flex flex-wrap gap-x-4 gap-y-1.5 rounded-md border border-border-strong p-3">
+              <label v-for="role in roleOptions" :key="role" class="flex items-center gap-2 text-small text-ink">
+                <input
+                  type="checkbox"
+                  class="h-4 w-4 rounded border-border-strong text-primary"
+                  :disabled="!auth.hasPermission('news:manage')"
+                  :checked="form.roleTargets.includes(role)"
+                  @change="toggleRole(role)"
+                />
+                {{ role }}
+              </label>
+            </div>
+          </div>
+          <div class="col-span-2"><AppDatePicker v-model="form.expiryAt" :label="t('news.fields.expiryAt')" :disabled="!auth.hasPermission('news:manage')" /></div>
 
           <p v-if="errorMessage" class="col-span-2 text-small text-danger">{{ errorMessage }}</p>
 

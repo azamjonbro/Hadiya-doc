@@ -44,6 +44,24 @@ const envSchema = z.object({
   // constructing the URL from S3_ENDPOINT directly (fine for local dev).
   S3_PUBLIC_URL: z.string().optional().default(''),
 
+  // Private bucket — course materials (files/presentations/multimedia) are
+  // only ever served via a short-lived signed URL, never a plain public one
+  // (see materialAccess.service.js), unlike S3_BUCKET_IMAGES above.
+  S3_BUCKET_MATERIALS: z.string().min(1, 'S3_BUCKET_MATERIALS is required'),
+  MATERIAL_MAX_FILE_SIZE_MB: z.coerce.number().int().positive().default(100),
+  MATERIAL_DOWNLOAD_URL_TTL: z.coerce.number().int().positive().default(120),
+
+  // Private bucket as well — a chat image/voice note/file is private
+  // correspondence between two people, so it is only ever served through a
+  // short-lived signed URL minted per message render. Defaulted (unlike
+  // the buckets above) so an existing deployment does not fail boot when
+  // it upgrades before touching its env file.
+  S3_BUCKET_CHAT: z.string().min(1).default('lms-chat'),
+  CHAT_MAX_FILE_SIZE_MB: z.coerce.number().int().positive().default(25),
+  // Longer than the material TTL: an image sits rendered in a scrollback
+  // the reader may leave open, and a 2-minute URL would break on scroll-up.
+  CHAT_ATTACHMENT_URL_TTL: z.coerce.number().int().positive().default(3600),
+
   VIDEO_TOKEN_SECRET: z.string().min(16, 'VIDEO_TOKEN_SECRET must be at least 16 characters'),
   VIDEO_PLAYBACK_TOKEN_TTL: z.coerce.number().int().positive().default(180),
 

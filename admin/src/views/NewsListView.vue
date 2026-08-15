@@ -2,6 +2,7 @@
 import { onMounted, reactive, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
+import { ROLES } from '@lms/shared'
 import { useAuthStore } from '@/stores/auth'
 import { newsApi } from '@/services/news'
 import NewsReportPanel from '@/components/NewsReportPanel.vue'
@@ -28,10 +29,17 @@ const expandedReportId = ref(null)
 const showCreateModal = ref(false)
 const createSubmitting = ref(false)
 const createError = ref('')
-const createForm = reactive({ title: '', content: '', tags: '', departmentTargets: '', roleTargets: '', status: 'DRAFT' })
+const createForm = reactive({ title: '', content: '', tags: '', departmentTargets: '', roleTargets: [], status: 'DRAFT' })
+const roleOptions = Object.values(ROLES)
 
 function toList(value) {
   return value.split(',').map((v) => v.trim()).filter(Boolean)
+}
+
+function toggleCreateRole(role) {
+  const index = createForm.roleTargets.indexOf(role)
+  if (index === -1) createForm.roleTargets.push(role)
+  else createForm.roleTargets.splice(index, 1)
 }
 
 async function loadFirstPage() {
@@ -69,11 +77,11 @@ async function onCreateSubmit() {
       content: createForm.content,
       tags: toList(createForm.tags),
       departmentTargets: toList(createForm.departmentTargets),
-      roleTargets: toList(createForm.roleTargets),
+      roleTargets: createForm.roleTargets,
       status: createForm.status,
     })
     showCreateModal.value = false
-    Object.assign(createForm, { title: '', content: '', tags: '', departmentTargets: '', roleTargets: '', status: 'DRAFT' })
+    Object.assign(createForm, { title: '', content: '', tags: '', departmentTargets: '', roleTargets: [], status: 'DRAFT' })
     await loadFirstPage()
   } catch (error) {
     createError.value = error.response?.data?.message ?? String(error)
@@ -137,7 +145,20 @@ onMounted(loadFirstPage)
           <AppInput v-model="createForm.tags" :label="t('news.fields.tags')" />
           <AppSelect v-model="createForm.status" :label="t('courses.status.label')" :options="[{ value: 'DRAFT', label: t('courses.status.draft') }, { value: 'PUBLISHED', label: t('courses.status.published') }]" />
           <AppInput v-model="createForm.departmentTargets" :label="t('news.fields.departmentTargets')" />
-          <AppInput v-model="createForm.roleTargets" :label="t('news.fields.roleTargets')" />
+          <div>
+            <p class="mb-1.5 text-small font-medium text-ink">{{ t('news.fields.roleTargets') }}</p>
+            <div class="flex flex-wrap gap-x-4 gap-y-1.5 rounded-md border border-border-strong p-3">
+              <label v-for="role in roleOptions" :key="role" class="flex items-center gap-2 text-small text-ink">
+                <input
+                  type="checkbox"
+                  class="h-4 w-4 rounded border-border-strong text-primary"
+                  :checked="createForm.roleTargets.includes(role)"
+                  @change="toggleCreateRole(role)"
+                />
+                {{ role }}
+              </label>
+            </div>
+          </div>
         </div>
 
         <p v-if="createError" class="text-small text-danger">{{ createError }}</p>

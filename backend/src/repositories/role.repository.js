@@ -5,6 +5,10 @@ export const roleRepository = {
     return Role.findById(id)
   },
 
+  findByIds(ids) {
+    return Role.find({ _id: { $in: ids } })
+  },
+
   findByName(name) {
     return Role.findOne({ name: name.toUpperCase() })
   },

@@ -2,6 +2,7 @@
 import { computed, reactive, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
+import { ROLES } from '@lms/shared'
 import { coursesApi } from '@/services/courses'
 import { useToast } from '@/composables/useToast'
 import AppButton from '@/components/ui/AppButton.vue'
@@ -15,16 +16,36 @@ const { t } = useI18n()
 const router = useRouter()
 const toast = useToast()
 
+const roleList = Object.values(ROLES)
+
 const steps = [
   { key: 'basics', labelKey: 'courseBuilder.steps.basics', icon: 'file-text' },
   { key: 'media', labelKey: 'courseBuilder.steps.media', icon: 'layers' },
+  { key: 'access', labelKey: 'courseBuilder.steps.access', icon: 'shield' },
   { key: 'review', labelKey: 'courseBuilder.steps.review', icon: 'check-circle' },
 ]
 const stepIndex = ref(0)
 
-const form = reactive({ title: '', description: '', cover: '', banner: '', status: 'DRAFT' })
+const form = reactive({
+  title: '',
+  description: '',
+  cover: '',
+  banner: '',
+  status: 'DRAFT',
+  targetRoles: [],
+  department: '',
+  autoAssign: false,
+})
 const submitting = ref(false)
 const errorMessage = ref('')
+
+function toggleRole(role) {
+  const idx = form.targetRoles.indexOf(role)
+  if (idx === -1) form.targetRoles.push(role)
+  else form.targetRoles.splice(idx, 1)
+}
+
+const hasTargeting = computed(() => form.targetRoles.length > 0 || form.department.trim().length > 0)
 
 const canProceed = computed(() => {
   if (stepIndex.value === 0) return form.title.trim().length > 0
@@ -102,14 +123,44 @@ async function onPublish(status) {
         <p class="text-caption text-ink-faint">{{ t('courseBuilder.mediaHint') }}</p>
       </div>
 
-      <!-- Step 3: Review -->
+      <!-- Step 3: Access -->
+      <div v-else-if="stepIndex === 2" class="space-y-4">
+        <h2 class="text-h3 text-ink">{{ t('courseBuilder.steps.access') }}</h2>
+        <div>
+          <p class="mb-1.5 text-small font-medium text-ink">{{ t('courses.targeting.rolesLabel') }}</p>
+          <div class="flex flex-wrap gap-2">
+            <label
+              v-for="role in roleList"
+              :key="role"
+              class="flex cursor-pointer items-center gap-2 rounded-md border px-3 py-1.5 text-small transition-default"
+              :class="form.targetRoles.includes(role) ? 'border-primary bg-primary-subtle text-primary' : 'border-border-strong text-ink-muted hover:bg-surface-2'"
+            >
+              <input type="checkbox" class="sr-only" :checked="form.targetRoles.includes(role)" @change="toggleRole(role)" />
+              {{ role }}
+            </label>
+          </div>
+        </div>
+        <AppInput v-model="form.department" :label="t('courses.targeting.departmentLabel')" :placeholder="t('courses.targeting.departmentPlaceholder')" />
+        <p class="text-caption text-ink-faint">{{ t('courses.targeting.noRestrictionHint') }}</p>
+      </div>
+
+      <!-- Step 4: Review -->
       <div v-else class="space-y-5">
         <h2 class="text-h3 text-ink">{{ t('courseBuilder.steps.review') }}</h2>
         <div class="rounded-lg border border-border bg-surface-2 p-4">
           <p class="text-small font-semibold text-ink">{{ form.title || '—' }}</p>
           <p v-if="form.description" class="mt-1 text-small text-ink-muted">{{ form.description }}</p>
           <p v-if="!form.cover" class="mt-2 text-caption text-ink-faint">{{ t('courseBuilder.noCover') }}</p>
+          <div v-if="hasTargeting" class="mt-3 flex flex-wrap items-center gap-1.5 border-t border-border pt-3">
+            <Badge v-for="role in form.targetRoles" :key="role" variant="primary" size="sm">{{ role }}</Badge>
+            <Badge v-if="form.department" variant="info" size="sm">{{ form.department }}</Badge>
+          </div>
+          <p v-else class="mt-3 text-caption text-ink-faint">{{ t('courses.targeting.noRestrictionHint') }}</p>
         </div>
+        <label v-if="hasTargeting" class="flex items-center gap-2 text-small text-ink">
+          <input v-model="form.autoAssign" type="checkbox" class="h-4 w-4 rounded border-border-strong text-primary" />
+          {{ t('courses.targeting.autoAssignLabel') }}
+        </label>
         <p v-if="errorMessage" class="text-small text-danger">{{ errorMessage }}</p>
         <div class="flex flex-wrap items-center gap-3">
           <AppButton :loading="submitting" @click="onPublish('PUBLISHED')">
@@ -120,7 +171,7 @@ async function onPublish(status) {
         </div>
       </div>
 
-      <div v-if="stepIndex < 2" class="mt-6 flex justify-between border-t border-border pt-5">
+      <div v-if="stepIndex < steps.length - 1" class="mt-6 flex justify-between border-t border-border pt-5">
         <AppButton variant="ghost" :disabled="stepIndex === 0" @click="back">{{ t('common.goBack') }}</AppButton>
         <AppButton icon="arrow-right" icon-position="right" :disabled="!canProceed" @click="next">{{ t('courseBuilder.continue') }}</AppButton>
       </div>

@@ -8,6 +8,9 @@ import UnauthorizedView from '@/views/UnauthorizedView.vue'
 import NotFoundView from '@/views/NotFoundView.vue'
 import UsersListView from '@/views/UsersListView.vue'
 import UserDetailView from '@/views/UserDetailView.vue'
+import GroupsListView from '@/views/GroupsListView.vue'
+import GroupDetailView from '@/views/GroupDetailView.vue'
+import LeaderboardView from '@/views/LeaderboardView.vue'
 import CoursesListView from '@/views/CoursesListView.vue'
 import CourseDetailView from '@/views/CourseDetailView.vue'
 import CourseBuilderView from '@/views/CourseBuilderView.vue'
@@ -15,6 +18,7 @@ import NewsListView from '@/views/NewsListView.vue'
 import NewsDetailView from '@/views/NewsDetailView.vue'
 import TasksListView from '@/views/TasksListView.vue'
 import ReportsView from '@/views/ReportsView.vue'
+import ChatInboxView from '@/views/ChatInboxView.vue'
 import NotificationsView from '@/views/NotificationsView.vue'
 import SettingsView from '@/views/SettingsView.vue'
 
@@ -40,6 +44,24 @@ export const router = createRouter({
           name: 'user-detail',
           component: UserDetailView,
           meta: { permission: 'user:read', titleKey: 'nav.employees' },
+        },
+        {
+          path: 'admin/groups',
+          name: 'groups-list',
+          component: GroupsListView,
+          meta: { permission: 'user:read', titleKey: 'nav.groups' },
+        },
+        {
+          path: 'admin/groups/:id',
+          name: 'group-detail',
+          component: GroupDetailView,
+          meta: { permission: 'user:read', titleKey: 'nav.groups' },
+        },
+        {
+          path: 'admin/leaderboard',
+          name: 'leaderboard',
+          component: LeaderboardView,
+          meta: { permission: 'analytics:view:all', titleKey: 'nav.leaderboard' },
         },
         {
           path: 'admin/courses',
@@ -83,6 +105,12 @@ export const router = createRouter({
           component: ReportsView,
           meta: { permission: 'report:export', titleKey: 'nav.reports' },
         },
+        {
+          path: 'admin/chat',
+          name: 'chat-inbox',
+          component: ChatInboxView,
+          meta: { permission: 'chat:support', titleKey: 'nav.chat' },
+        },
         { path: 'notifications', name: 'notifications', component: NotificationsView, meta: { titleKey: 'nav.notifications' } },
         { path: 'settings', name: 'settings', component: SettingsView, meta: { titleKey: 'nav.settings' } },
       ],
@@ -105,9 +133,13 @@ router.beforeEach((to) => {
     return { name: 'login', query: { redirect: to.fullPath } }
   }
 
-  // The admin app is only for SUPERADMIN/ADMIN/MANAGER — everyone else uses front/.
+  // The admin app is only for SUPERADMIN/ADMIN/MANAGER — everyone else uses
+  // front/. Re-logging in won't change their role, but sending them to the
+  // login page (rather than stranding them on a dead-end 403) lets them sign
+  // back in with an account that does have admin access.
   if (!auth.canUseAdminApp) {
-    return { name: 'forbidden' }
+    auth.clearSession()
+    return { name: 'login', query: { redirect: to.fullPath } }
   }
 
   if (to.meta.permission && !auth.hasPermission(to.meta.permission)) {

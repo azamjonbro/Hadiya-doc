@@ -26,6 +26,13 @@ export const taskRepository = {
       .limit(limit + 1)
   },
 
+  // Unpaginated, for the per-employee task analytics — one person's task
+  // history is small enough to summarise in a single pass, and a cursor
+  // would only hide part of it from the averages.
+  listAllByAssignee(assignedTo) {
+    return Task.find({ assignedTo }).sort({ createdAt: -1 })
+  },
+
   listByAssigner({ assignedBy, status, cursor, limit }) {
     const filter = { assignedBy }
     if (status) filter.status = status

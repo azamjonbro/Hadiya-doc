@@ -27,6 +27,16 @@ function toReport(video, user, progress, sessions) {
     tabSwitches: progress?.tabSwitches ?? 0,
     hiddenDurationSeconds: progress?.hiddenDurationSeconds ?? 0,
     sessionsCount: progress?.sessionsCount ?? sessions.length,
+    // Camera attention monitoring. `cameraBlocked` matters as much as the
+    // counts: a zero here means "never looked away" only when the camera was
+    // actually running, and means nothing at all when it wasn't.
+    attention: {
+      lostCount: progress?.attentionLostCount ?? 0,
+      inattentiveSeconds: Math.round(progress?.inattentiveSeconds ?? 0),
+      warnings: progress?.attentionWarnings ?? 0,
+      lockouts: progress?.attentionLockouts ?? 0,
+      cameraBlocked: Boolean(progress?.cameraBlocked),
+    },
     firstWatchedAt: progress?.firstWatchedAt ?? null,
     lastWatchedAt: progress?.lastWatchedAt ?? null,
     completed: Boolean(progress?.completedAt),

@@ -7,7 +7,9 @@ import { ApiError } from '../../utils/ApiError.js'
 import { cacheGet, cacheSet, cacheDel } from '../../utils/cache.js'
 
 const TOPIC_LIST_CACHE_TTL = 5 * 60
-const topicListCacheKey = (courseId) => `topics:course:${courseId}`
+// Exported so course.service.js can invalidate this list when it deletes a
+// whole course, rather than duplicating the key format on the other side.
+export const topicListCacheKey = (courseId) => `topics:course:${courseId}`
 
 function canManageCourses(actor) {
   return Boolean(actor.permissions?.includes(PERMISSIONS.COURSE_CREATE))

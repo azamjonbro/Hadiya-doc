@@ -29,6 +29,9 @@ function toPublicVideo(video) {
     status: video.status,
     required: video.required,
     order: video.order,
+    hasQuiz: video.hasQuiz,
+    pointsEnabled: video.pointsEnabled,
+    points: video.points,
     createdAt: video.createdAt,
     updatedAt: video.updatedAt,
   }

@@ -1,12 +1,14 @@
 import { Router } from 'express'
 import { PERMISSIONS } from '@lms/shared'
 import { authenticate } from '../../middlewares/auth.middleware.js'
-import { requirePermission } from '../../middlewares/rbac.middleware.js'
+import { requirePermission, requireRole } from '../../middlewares/rbac.middleware.js'
 import { validateBody, validateQuery } from '../../middlewares/validate.middleware.js'
 import { courseController } from '../../controllers/course.controller.js'
 import { courseAssignmentController } from '../../controllers/courseAssignment.controller.js'
 import { courseReviewController } from '../../controllers/courseReview.controller.js'
 import { courseQuestionController } from '../../controllers/courseQuestion.controller.js'
+import { attentionPolicyController } from '../../controllers/attentionPolicy.controller.js'
+import { attentionPolicySchema } from '../../validators/attentionPolicy.validator.js'
 import {
   createCourseSchema,
   updateCourseSchema,
@@ -38,6 +40,12 @@ coursesRouter.post(
   courseController.create
 )
 coursesRouter.get('/:id', requirePermission(PERMISSIONS.COURSE_READ), courseController.getById)
+coursesRouter.get('/:id/progress', requirePermission(PERMISSIONS.COURSE_READ), courseController.getMyProgress)
+coursesRouter.get(
+  '/:id/users/:userId/progress',
+  requirePermission(PERMISSIONS.ANALYTICS_VIEW_ALL),
+  courseController.getProgressForUser
+)
 coursesRouter.patch(
   '/:id',
   requirePermission(PERMISSIONS.COURSE_UPDATE),
@@ -45,6 +53,37 @@ coursesRouter.patch(
   courseController.update
 )
 coursesRouter.delete('/:id', requirePermission(PERMISSIONS.COURSE_DELETE), courseController.archive)
+// Hard delete, as opposed to the reversible archive above — SUPERADMIN only.
+coursesRouter.delete(
+  '/:id/permanent',
+  requirePermission(PERMISSIONS.COURSE_DELETE),
+  requireRole('SUPERADMIN'),
+  courseController.destroy
+)
+
+// The employee app reads the merged policy before playback starts; the admin
+// app reads the annotated form (inherited vs overridden) to render the panel.
+coursesRouter.get(
+  '/:id/attention-policy/effective',
+  requirePermission(PERMISSIONS.COURSE_READ),
+  attentionPolicyController.getEffectiveForCourse
+)
+coursesRouter.get(
+  '/:id/attention-policy',
+  requirePermission(PERMISSIONS.COURSE_READ),
+  attentionPolicyController.getForCourse
+)
+coursesRouter.put(
+  '/:id/attention-policy',
+  requirePermission(PERMISSIONS.COURSE_UPDATE),
+  validateBody(attentionPolicySchema),
+  attentionPolicyController.updateForCourse
+)
+coursesRouter.delete(
+  '/:id/attention-policy',
+  requirePermission(PERMISSIONS.COURSE_UPDATE),
+  attentionPolicyController.removeCourseOverride
+)
 
 coursesRouter.get('/:id/topics', requirePermission(PERMISSIONS.COURSE_READ), courseController.listTopics)
 coursesRouter.post(
@@ -53,6 +92,8 @@ coursesRouter.post(
   validateBody(createTopicSchema),
   courseController.createTopic
 )
+
+coursesRouter.post('/:id/enroll', requirePermission(PERMISSIONS.COURSE_READ), courseAssignmentController.enrollSelf)
 
 coursesRouter.get(
   '/:id/assignments',

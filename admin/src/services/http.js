@@ -6,12 +6,29 @@ export const http = axios.create({
   withCredentials: true,
 })
 
-// Bound from main.js after the auth store exists — kept decoupled here so
-// this module never imports the store directly (would create a circular
-// import, since the store imports `http` to make its own API calls).
+// Bound from main.js after the auth store/router exist — kept decoupled here
+// so this module never imports them directly (would create a circular
+// import, since the store imports `http` to make its own API calls, and the
+// router imports the store).
 let authStoreRef = null
 export function bindAuthStore(store) {
   authStoreRef = store
+}
+
+let routerRef = null
+export function bindRouter(router) {
+  routerRef = router
+}
+
+// Session is gone (expired access token that couldn't be silently refreshed,
+// or the server rejected us as forbidden) — send the user back to login
+// instead of leaving them stuck on a page full of failed requests.
+function redirectToLogin() {
+  authStoreRef?.clearSession()
+  const current = routerRef?.currentRoute.value
+  if (current && current.name !== 'login') {
+    routerRef.push({ name: 'login', query: { redirect: current.fullPath } })
+  }
 }
 
 http.interceptors.request.use((config) => {
@@ -42,6 +59,10 @@ http.interceptors.response.use(
         originalRequest.headers.Authorization = `Bearer ${authStoreRef.accessToken}`
         return http(originalRequest)
       }
+    }
+
+    if ((status === 401 || status === 403) && !isAuthRoute) {
+      redirectToLogin()
     }
 
     return Promise.reject(error)

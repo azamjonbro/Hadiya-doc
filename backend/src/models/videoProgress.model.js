@@ -26,6 +26,20 @@ const videoProgressSchema = new Schema(
     tabSwitches: { type: Number, default: 0 },
     hiddenDurationSeconds: { type: Number, default: 0 },
     sessionsCount: { type: Number, default: 0 },
+
+    // Camera attention monitoring. These count what the learner's own browser
+    // reported; the camera frames themselves never leave the device, so this
+    // is the entire record of it.
+    attentionLostCount: { type: Number, default: 0 },
+    inattentiveSeconds: { type: Number, default: 0 },
+    attentionWarnings: { type: Number, default: 0 },
+    attentionLockouts: { type: Number, default: 0 },
+    // Set when the learner refused the camera or it failed — distinguishes
+    // "watched attentively" from "was never actually monitored".
+    cameraBlocked: { type: Boolean, default: false },
+    // Guards the manager notification so it fires once per video, not on
+    // every batch after the threshold is crossed.
+    inattentionReportedAt: { type: Date, default: null },
     firstWatchedAt: { type: Date, default: null },
     lastWatchedAt: { type: Date, default: null },
     completedAt: { type: Date, default: null },

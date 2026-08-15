@@ -6,6 +6,7 @@ import { usersApi } from '@/services/users'
 import { useToast } from '@/composables/useToast'
 import AppButton from '@/components/ui/AppButton.vue'
 import AppInput from '@/components/ui/AppInput.vue'
+import AppDatePicker from '@/components/ui/AppDatePicker.vue'
 import Avatar from '@/components/ui/Avatar.vue'
 import Badge from '@/components/ui/Badge.vue'
 import Skeleton from '@/components/ui/Skeleton.vue'
@@ -96,8 +97,8 @@ onMounted(load)
           <input v-model="form.mandatory" type="checkbox" class="h-4 w-4 rounded border-border-strong text-primary" />
           {{ t('courses.mandatory') }}
         </label>
-        <AppInput v-model="form.deadline" type="date" :label="t('courses.deadline')" />
-        <AppInput v-model="form.expiresAt" type="date" :label="t('courses.access.expiresAt')" />
+        <AppDatePicker v-model="form.deadline" :label="t('courses.deadline')" />
+        <AppDatePicker v-model="form.expiresAt" :label="t('courses.access.expiresAt')" />
         <p v-if="errorMessage" class="col-span-2 text-small text-danger">{{ errorMessage }}</p>
         <div class="col-span-2">
           <AppButton size="sm" :loading="submitting" @click="onAssign">{{ t('courses.access.assign') }}</AppButton>

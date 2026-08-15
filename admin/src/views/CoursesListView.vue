@@ -1,5 +1,5 @@
 <script setup>
-import { onMounted, reactive, ref } from 'vue'
+import { computed, onMounted, reactive, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useAuthStore } from '@/stores/auth'
@@ -9,35 +9,54 @@ import AppButton from '@/components/ui/AppButton.vue'
 import AppInput from '@/components/ui/AppInput.vue'
 import AppSelect from '@/components/ui/AppSelect.vue'
 import Badge from '@/components/ui/Badge.vue'
+import Pagination from '@/components/ui/Pagination.vue'
 import Skeleton from '@/components/ui/Skeleton.vue'
 import EmptyState from '@/components/ui/EmptyState.vue'
 import Icon from '@/components/ui/Icon.vue'
+import CourseDangerActions from '@/components/CourseDangerActions.vue'
 
 const { t, locale } = useI18n()
 const auth = useAuthStore()
 const router = useRouter()
 
 const filters = reactive({ search: '', status: '' })
+
+const hasActiveFilters = computed(() => Boolean(filters.search || filters.status))
+
+function clearFilters() {
+  Object.assign(filters, { search: '', status: '' })
+  loadFirstPage()
+}
+
+const PAGE_SIZE = 15
+
 const items = ref([])
-const nextCursor = ref(null)
 const loading = ref(false)
 const errorMessage = ref('')
+const page = ref(1)
+const total = ref(0)
+const totalPages = ref(1)
 
-function buildParams(cursor) {
-  const params = {}
+// "17–31 of 48" — the range is derived from the page rather than from
+// items.length so it stays right while a page is still loading.
+const rangeStart = computed(() => (total.value === 0 ? 0 : (page.value - 1) * PAGE_SIZE + 1))
+const rangeEnd = computed(() => Math.min(page.value * PAGE_SIZE, total.value))
+
+function buildParams() {
+  const params = { page: page.value, limit: PAGE_SIZE }
   if (filters.search) params.search = filters.search
   if (filters.status) params.status = filters.status
-  if (cursor) params.cursor = cursor
   return params
 }
 
-async function loadFirstPage() {
+async function load() {
   loading.value = true
   errorMessage.value = ''
   try {
     const result = await coursesApi.list(buildParams())
     items.value = result.items
-    nextCursor.value = result.nextCursor
+    total.value = result.total
+    totalPages.value = result.totalPages
   } catch (error) {
     errorMessage.value = error.response?.data?.message ?? String(error)
   } finally {
@@ -45,23 +64,43 @@ async function loadFirstPage() {
   }
 }
 
-async function loadMore() {
-  if (!nextCursor.value) return
-  loading.value = true
-  try {
-    const result = await coursesApi.list(buildParams(nextCursor.value))
-    items.value = [...items.value, ...result.items]
-    nextCursor.value = result.nextCursor
-  } catch (error) {
-    errorMessage.value = error.response?.data?.message ?? String(error)
-  } finally {
-    loading.value = false
-  }
+// Any filter change invalidates the current page number — staying on page 4
+// of a result set that now has one page would show an empty screen.
+function loadFirstPage() {
+  page.value = 1
+  return load()
+}
+
+async function goToPage(next) {
+  page.value = next
+  await load()
+  window.scrollTo({ top: 0, behavior: 'smooth' })
 }
 
 const statusBadge = { DRAFT: 'neutral', PUBLISHED: 'success', ARCHIVED: 'danger' }
 
-onMounted(loadFirstPage)
+// A delete changes `total`, so the page is re-fetched rather than spliced
+// in place — otherwise the page count and the "17–31 of 48" range go stale.
+// Stepping back first avoids landing on an empty last page after removing
+// its only remaining row.
+async function onCourseDeleted() {
+  if (items.value.length === 1 && page.value > 1) page.value -= 1
+  await load()
+}
+
+// Archiving only rewrites one row, so it's patched in place — unless a
+// status filter is active, where the row may no longer belong on this page
+// at all and the server has to decide.
+function onCourseArchived(updated) {
+  if (filters.status) {
+    load()
+    return
+  }
+  const index = items.value.findIndex((c) => c.id === updated.id)
+  if (index !== -1) items.value[index] = updated
+}
+
+onMounted(load)
 </script>
 
 <template>
@@ -71,7 +110,9 @@ onMounted(loadFirstPage)
       <AppButton v-if="auth.hasPermission('course:create')" icon="plus" @click="router.push('/admin/courses/new')">{{ t('courses.newCourse') }}</AppButton>
     </div>
 
-    <div class="mt-5 flex flex-wrap items-end gap-3">
+    <!-- items-center: unlabelled controls, and the button is shorter than
+         the fields — see the same note in UsersListView. -->
+    <div class="mt-5 flex flex-wrap items-center gap-3">
       <div class="w-64">
         <AppInput v-model="filters.search" icon="search" :placeholder="t('courses.filters.search')" @keyup.enter="loadFirstPage" />
       </div>
@@ -83,7 +124,10 @@ onMounted(loadFirstPage)
           @update:model-value="loadFirstPage"
         />
       </div>
-      <AppButton variant="outline" @click="loadFirstPage">{{ t('courses.filters.apply') }}</AppButton>
+      <AppButton variant="outline" icon="search" @click="loadFirstPage">{{ t('courses.filters.apply') }}</AppButton>
+      <AppButton v-if="hasActiveFilters" variant="ghost" icon="close" @click="clearFilters">
+        {{ t('courses.filters.clear') }}
+      </AppButton>
     </div>
 
     <p v-if="errorMessage" class="mt-4 text-small text-danger">{{ errorMessage }}</p>
@@ -98,9 +142,20 @@ onMounted(loadFirstPage)
         :key="course.id"
         padding="none"
         hover
-        class="flex cursor-pointer flex-col overflow-hidden"
+        class="group relative flex cursor-pointer flex-col overflow-hidden"
         @click="router.push(`/admin/courses/${course.id}`)"
       >
+        <!-- Destructive actions stay hidden until the card is hovered or
+             something inside it has focus, so the grid reads as a catalog
+             rather than a row of delete buttons. Keyboard users get them via
+             focus-within rather than never. -->
+        <CourseDangerActions
+          :course="course"
+          layout="icons"
+          class="absolute right-2 top-2 z-10 opacity-0 transition-default focus-within:opacity-100 group-hover:opacity-100"
+          @archived="onCourseArchived"
+          @deleted="onCourseDeleted"
+        />
         <div
           class="flex h-32 items-center justify-center bg-surface-2 text-ink-faint"
           :style="course.cover ? `background-image:url(${course.cover});background-size:cover;background-position:center` : ''"
@@ -118,8 +173,13 @@ onMounted(loadFirstPage)
 
     <EmptyState v-else icon="book-open" :title="t('courses.empty')" class="mt-6" />
 
-    <div class="mt-6 flex justify-center">
-      <AppButton v-if="nextCursor" variant="outline" :loading="loading" @click="loadMore">{{ t('courses.loadMore') }}</AppButton>
+    <!-- Kept mounted whenever there are results, even for a single page, so
+         the count stays visible and the grid does not jump as pages change. -->
+    <div v-if="total > 0" class="mt-6 flex flex-wrap items-center justify-between gap-3">
+      <p class="text-small text-ink-muted">
+        {{ t('common.pagination.range', { from: rangeStart, to: rangeEnd, total }) }}
+      </p>
+      <Pagination v-if="totalPages > 1" :page="page" :total-pages="totalPages" @update:page="goToPage" />
     </div>
   </div>
 </template>

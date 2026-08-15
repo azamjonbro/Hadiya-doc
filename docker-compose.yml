@@ -58,9 +58,13 @@ services:
       mc mb --ignore-existing local/lms-originals &&
       mc mb --ignore-existing local/lms-processed &&
       mc mb --ignore-existing local/lms-images &&
+      mc mb --ignore-existing local/lms-materials &&
+      mc mb --ignore-existing local/lms-chat &&
       mc anonymous set none local/lms-originals &&
       mc anonymous set none local/lms-processed &&
-      mc anonymous set download local/lms-images
+      mc anonymous set download local/lms-images &&
+      mc anonymous set none local/lms-materials &&
+      mc anonymous set none local/lms-chat
       "
 
 volumes:

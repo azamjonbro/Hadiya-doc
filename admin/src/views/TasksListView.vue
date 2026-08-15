@@ -1,5 +1,5 @@
 <script setup>
-import { onMounted, reactive, ref } from 'vue'
+import { computed, onMounted, reactive, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useAuthStore } from '@/stores/auth'
 import { tasksApi } from '@/services/tasks'
@@ -8,12 +8,15 @@ import AppCard from '@/components/ui/AppCard.vue'
 import AppButton from '@/components/ui/AppButton.vue'
 import AppInput from '@/components/ui/AppInput.vue'
 import AppSelect from '@/components/ui/AppSelect.vue'
+import AppDatePicker from '@/components/ui/AppDatePicker.vue'
+import Avatar from '@/components/ui/Avatar.vue'
 import Modal from '@/components/ui/Modal.vue'
 import Badge from '@/components/ui/Badge.vue'
+import Icon from '@/components/ui/Icon.vue'
 import Skeleton from '@/components/ui/Skeleton.vue'
 import EmptyState from '@/components/ui/EmptyState.vue'
 
-const { t } = useI18n()
+const { t, locale } = useI18n()
 const auth = useAuthStore()
 
 const items = ref([])
@@ -32,6 +35,21 @@ const priorityOptions = [
   { value: 'MEDIUM', label: t('tasks.priority.MEDIUM') },
   { value: 'HIGH', label: t('tasks.priority.HIGH') },
 ]
+
+const statusColumns = ['TODO', 'IN_PROGRESS', 'COMPLETED', 'CANCELLED']
+const priorityVariant = { LOW: 'neutral', MEDIUM: 'info', HIGH: 'warning' }
+const priorityBorder = { LOW: 'border-l-border-strong', MEDIUM: 'border-l-info', HIGH: 'border-l-warning' }
+
+const columns = computed(() =>
+  statusColumns.map((status) => ({
+    status,
+    label: t('tasks.status.' + status),
+    items: items.value.filter((task) => task.status === status),
+  }))
+)
+
+const draggedTaskId = ref(null)
+const dragOverStatus = ref(null)
 
 async function load() {
   loading.value = true
@@ -87,14 +105,56 @@ async function onCreateSubmit() {
   }
 }
 
-const statusVariant = { OVERDUE: 'danger', COMPLETED: 'success', IN_PROGRESS: 'info', TODO: 'neutral', CANCELLED: 'neutral' }
-const priorityVariant = { LOW: 'neutral', MEDIUM: 'info', HIGH: 'warning' }
+function onDragStart(task) {
+  draggedTaskId.value = task.id
+}
+
+function onDragEnd() {
+  draggedTaskId.value = null
+  dragOverStatus.value = null
+}
+
+function onDragEnterColumn(status) {
+  dragOverStatus.value = status
+}
+
+async function onDrop(status) {
+  const taskId = draggedTaskId.value
+  dragOverStatus.value = null
+  draggedTaskId.value = null
+  const task = items.value.find((tsk) => tsk.id === taskId)
+  if (!task || task.status === status) return
+
+  const previousStatus = task.status
+  task.status = status // optimistic
+  try {
+    const updated = await tasksApi.update(taskId, { status })
+    // The update response isn't hydrated with assigneeName (only list endpoints are), so keep the row's existing name instead of overwriting it with the blank one update returns.
+    items.value = items.value.map((tsk) => (tsk.id === taskId ? { ...tsk, ...updated, assigneeName: tsk.assigneeName } : tsk))
+  } catch (error) {
+    task.status = previousStatus
+    errorMessage.value = error.response?.data?.message ?? String(error)
+  }
+}
+
+async function deleteTask(task) {
+  try {
+    await tasksApi.remove(task.id)
+    items.value = items.value.filter((tsk) => tsk.id !== task.id)
+  } catch (error) {
+    errorMessage.value = error.response?.data?.message ?? String(error)
+  }
+}
+
+function deadlineLabel(date) {
+  return new Date(date).toLocaleDateString(locale.value, { day: 'numeric', month: 'short' })
+}
 
 onMounted(load)
 </script>
 
 <template>
-  <div class="mx-auto max-w-4xl px-6 py-8">
+  <div class="mx-auto max-w-[1400px] px-6 py-8">
     <div class="flex items-center justify-between">
       <h1 class="text-h1 text-ink">{{ t('tasks.title') }}</h1>
       <AppButton v-if="auth.hasPermission('task:create')" icon="plus" @click="showCreateModal = true">{{ t('tasks.newTask') }}</AppButton>
@@ -102,21 +162,69 @@ onMounted(load)
 
     <p v-if="errorMessage" class="mt-4 text-small text-danger">{{ errorMessage }}</p>
 
-    <div v-if="loading" class="mt-6 space-y-3">
-      <Skeleton v-for="i in 4" :key="i" class="h-16 w-full" />
+    <div v-if="loading" class="mt-6 grid grid-cols-1 gap-4 md:grid-cols-4">
+      <Skeleton v-for="i in 4" :key="i" class="h-72 w-full" />
     </div>
 
-    <div v-else-if="items.length" class="mt-6 space-y-3">
-      <AppCard v-for="task in items" :key="task.id" class="flex items-center justify-between gap-3">
-        <div class="min-w-0">
-          <p class="truncate text-small font-medium text-ink">{{ task.title }}</p>
-          <p class="mt-1 text-caption text-ink-faint">{{ t('tasks.priority.' + task.priority) }}</p>
+    <div v-else-if="items.length" class="mt-6 flex gap-4 overflow-x-auto pb-2">
+      <div
+        v-for="col in columns"
+        :key="col.status"
+        class="w-72 shrink-0 rounded-lg"
+        :class="dragOverStatus === col.status ? 'bg-primary-subtle/40' : ''"
+        @dragover.prevent="onDragEnterColumn(col.status)"
+        @dragleave="dragOverStatus === col.status && (dragOverStatus = null)"
+        @drop.prevent="onDrop(col.status)"
+      >
+        <div class="mb-3 flex items-center gap-2 px-1">
+          <h2 class="text-small font-semibold text-ink">{{ col.label }}</h2>
+          <span class="rounded-full bg-surface-2 px-2 py-0.5 text-caption font-medium text-ink-faint">{{ col.items.length }}</span>
         </div>
-        <div class="flex shrink-0 items-center gap-2">
-          <Badge :variant="priorityVariant[task.priority]" size="sm">{{ t('tasks.priority.' + task.priority) }}</Badge>
-          <Badge :variant="statusVariant[task.effectiveStatus] ?? 'neutral'" size="sm">{{ t('tasks.status.' + task.effectiveStatus) }}</Badge>
+
+        <div class="min-h-[80px] space-y-2.5">
+          <AppCard
+            v-for="task in col.items"
+            :key="task.id"
+            padding="sm"
+            draggable="true"
+            class="group cursor-grab border-l-4 active:cursor-grabbing"
+            :class="[priorityBorder[task.priority], draggedTaskId === task.id ? 'opacity-40' : '']"
+            @dragstart="onDragStart(task)"
+            @dragend="onDragEnd"
+          >
+            <div class="flex items-start justify-between gap-2">
+              <p class="text-small font-medium text-ink" :class="task.status === 'COMPLETED' ? 'text-ink-faint line-through' : ''">{{ task.title }}</p>
+              <button
+                type="button"
+                class="shrink-0 rounded p-1 text-ink-faint opacity-0 transition-default hover:bg-surface-2 hover:text-danger group-hover:opacity-100"
+                @click="deleteTask(task)"
+              >
+                <Icon name="trash" size="14" />
+              </button>
+            </div>
+            <p v-if="task.description" class="mt-1 line-clamp-2 text-caption text-ink-muted">{{ task.description }}</p>
+
+            <div class="mt-3 flex items-center justify-between gap-2">
+              <Badge :variant="priorityVariant[task.priority]" size="sm">{{ t('tasks.priority.' + task.priority) }}</Badge>
+              <span
+                v-if="task.deadline"
+                class="flex items-center gap-1 text-caption"
+                :class="task.effectiveStatus === 'OVERDUE' ? 'font-medium text-danger' : 'text-ink-faint'"
+              >
+                <Icon name="clock" size="12" />
+                {{ deadlineLabel(task.deadline) }}
+              </span>
+            </div>
+
+            <div v-if="task.assigneeName" class="mt-3 flex items-center gap-1.5 border-t border-border pt-2.5">
+              <Avatar :name="task.assigneeName" size="xs" />
+              <span class="truncate text-caption text-ink-faint">{{ task.assigneeName }}</span>
+            </div>
+          </AppCard>
+
+          <p v-if="col.items.length === 0" class="rounded-lg border border-dashed border-border py-8 text-center text-caption text-ink-faint">—</p>
         </div>
-      </AppCard>
+      </div>
     </div>
 
     <EmptyState v-else icon="check-square" :title="t('tasks.empty')" class="mt-6" />
@@ -138,7 +246,7 @@ onMounted(load)
         </div>
         <div class="grid grid-cols-2 gap-4">
           <AppSelect v-model="createForm.priority" :label="t('tasks.priorityLabel')" :options="priorityOptions" />
-          <AppInput v-model="createForm.deadline" type="date" :label="t('tasks.deadline')" />
+          <AppDatePicker v-model="createForm.deadline" :label="t('tasks.deadline')" />
         </div>
 
         <p v-if="createError" class="text-small text-danger">{{ createError }}</p>

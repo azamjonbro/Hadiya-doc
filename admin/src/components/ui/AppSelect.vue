@@ -20,7 +20,12 @@ defineEmits(['update:modelValue'])
         :value="modelValue"
         @change="$emit('update:modelValue', $event.target.value)"
       >
-        <option v-if="placeholder" value="" disabled>{{ placeholder }}</option>
+        <!-- Selectable, not disabled: every select that passes a placeholder
+             is a filter ("All roles", "All statuses", ...), and a disabled
+             option cannot be chosen again — which left the user with no way
+             to clear a filter once they had picked a value. Form selects
+             pass no placeholder, so they never render this option at all. -->
+        <option v-if="placeholder" value="">{{ placeholder }}</option>
         <option v-for="opt in options" :key="opt.value" :value="opt.value">{{ opt.label }}</option>
       </select>
       <Icon name="chevron-down" size="16" class="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-ink-faint" />

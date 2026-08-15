@@ -4,6 +4,8 @@ import { roleRepository } from '../../repositories/role.repository.js'
 import { auditLogRepository } from '../../repositories/auditLog.repository.js'
 import { hashPassword } from '../../utils/hash.js'
 import { ApiError } from '../../utils/ApiError.js'
+import { courseAssignmentService } from '../courses/courseAssignment.service.js'
+import { logger } from '../../config/logger.js'
 
 const EMPLOYEE_TIER_ROLES = [ROLES.EMPLOYEE, ROLES.CALL_OPERATOR, ROLES.SELLER]
 
@@ -62,25 +64,53 @@ export const userService = {
       department = actorUser.department
     }
 
-    const rows = await userRepository.listPage({
+    const params = {
       search: query.search,
       roleId: roleFilter?._id,
       department,
       isActive: query.status === 'active' ? true : query.status === 'inactive' ? false : undefined,
       cursor: query.cursor,
+      page: query.page,
       limit: query.limit,
-    })
-
-    const hasMore = rows.length > query.limit
-    const items = hasMore ? rows.slice(0, -1) : rows
+    }
 
     const roles = await roleRepository.findAll()
     const roleById = new Map(roles.map((r) => [r._id.toString(), r]))
+    const serialize = (rows) => rows.map((u) => toPublicUser(u, roleById.get(u.roleId.toString())))
+
+    // Numbered pagination: the client needs a total to render "page 3 of 7",
+    // so this mode pays for a count query that cursor mode does not.
+    if (query.page) {
+      const [rows, total] = await Promise.all([userRepository.listPage(params), userRepository.count(params)])
+      return {
+        items: serialize(rows),
+        page: query.page,
+        limit: query.limit,
+        total,
+        totalPages: Math.max(1, Math.ceil(total / query.limit)),
+      }
+    }
+
+    const rows = await userRepository.listPage(params)
+    const hasMore = rows.length > query.limit
+    const items = hasMore ? rows.slice(0, -1) : rows
 
     return {
-      items: items.map((u) => toPublicUser(u, roleById.get(u.roleId.toString()))),
+      items: serialize(items),
       nextCursor: hasMore ? items[items.length - 1]._id.toString() : null,
     }
+  },
+
+  // Options for the admin list's department filter. A manager only ever
+  // sees their own department in the list itself (see list() above), so
+  // offering them any other department here would be a filter that can
+  // only ever return nothing.
+  async listDepartments(actor) {
+    if (actor.roleName === ROLES.MANAGER) {
+      const actorUser = await userRepository.findById(actor.id)
+      return actorUser?.department ? [actorUser.department] : []
+    }
+    return userRepository.listDepartments()
   },
 
   async getById(actor, id) {
@@ -121,6 +151,20 @@ export const userService = {
       entityId: user._id.toString(),
       metadata: { username: user.username, role: role.name },
     })
+
+    // Best-effort: a course that no longer exists shouldn't roll back the
+    // account that was just created, so failures here are logged, not thrown.
+    for (const courseId of payload.courseIds ?? []) {
+      try {
+        await courseAssignmentService.assign(actor, courseId, { userId: user._id.toString(), mandatory: true })
+      } catch (error) {
+        logger.warn('Failed to assign course during user creation', {
+          userId: user._id.toString(),
+          courseId,
+          error: error.message,
+        })
+      }
+    }
 
     return toPublicUser(user, role)
   },

@@ -37,3 +37,7 @@ coverage/
 
 # docker
 docker-compose.override.yml
+
+# MediaPipe runtime + face model for attention monitoring (~26MB).
+# Staged by: npm run assets:mediapipe --workspace front
+front/public/mediapipe/

@@ -7,4 +7,10 @@ export const tasksApi = {
   create(payload) {
     return http.post('/tasks', payload).then((r) => r.data.data)
   },
+  update(id, payload) {
+    return http.patch(`/tasks/${id}`, payload).then((r) => r.data.data)
+  },
+  remove(id) {
+    return http.delete(`/tasks/${id}`).then((r) => r.data.data)
+  },
 }

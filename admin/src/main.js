@@ -3,7 +3,7 @@ import { createPinia } from 'pinia'
 import App from './App.vue'
 import { router } from './router'
 import { i18n } from './i18n'
-import { bindAuthStore } from './services/http'
+import { bindAuthStore, bindRouter } from './services/http'
 import { useAuthStore } from './stores/auth'
 import './assets/main.css'
 
@@ -14,6 +14,7 @@ async function bootstrap() {
 
   const authStore = useAuthStore()
   bindAuthStore(authStore)
+  bindRouter(router)
   await authStore.restoreSession()
 
   app.use(router)

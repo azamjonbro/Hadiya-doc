@@ -22,6 +22,11 @@ const videoSchema = new Schema(
     status: { type: String, enum: ['DRAFT', 'PUBLISHED'], default: 'DRAFT' },
     required: { type: Boolean, default: true },
     order: { type: Number, default: 0 },
+    // hasQuiz is set only by the quiz endpoints (quiz.service.js), never
+    // directly patchable — keeps it in sync with whether a Quiz doc exists.
+    hasQuiz: { type: Boolean, default: false },
+    pointsEnabled: { type: Boolean, default: false },
+    points: { type: Number, default: 10 },
     createdBy: { type: Schema.Types.ObjectId, ref: 'User', required: true },
     updatedBy: { type: Schema.Types.ObjectId, ref: 'User', default: null },
   },

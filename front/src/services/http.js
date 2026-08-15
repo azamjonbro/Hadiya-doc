@@ -6,12 +6,29 @@ export const http = axios.create({
   withCredentials: true,
 })
 
-// Bound from main.js after the auth store exists — kept decoupled here so
-// this module never imports the store directly (would create a circular
-// import, since the store imports `http` to make its own API calls).
+// Bound from main.js after the auth store/router exist — kept decoupled here
+// so this module never imports them directly (would create a circular
+// import, since the store imports `http` to make its own API calls, and the
+// router imports the store).
 let authStoreRef = null
 export function bindAuthStore(store) {
   authStoreRef = store
+}
+
+let routerRef = null
+export function bindRouter(router) {
+  routerRef = router
+}
+
+// Session is gone (expired access token that couldn't be silently refreshed,
+// or the server rejected us as forbidden) — send the user back to login
+// instead of leaving them stuck on a page full of failed requests.
+function redirectToLogin() {
+  authStoreRef?.clearSession()
+  const current = routerRef?.currentRoute.value
+  if (current && current.name !== 'login') {
+    routerRef.push({ name: 'login', query: { redirect: current.fullPath } })
+  }
 }
 
 http.interceptors.request.use((config) => {
@@ -42,6 +59,17 @@ http.interceptors.response.use(
         originalRequest.headers.Authorization = `Bearer ${authStoreRef.accessToken}`
         return http(originalRequest)
       }
+    }
+
+    // A 403 is not necessarily "your session died" — most of them now mean
+    // "you are signed in fine, but you may not do this yet" (a locked
+    // lesson, a course you are not assigned to). Those carry a domain error
+    // code, and bouncing the user to the login screen for one both loses
+    // their place and hides the actual reason. Only a 403 with no code —
+    // i.e. the auth layer itself rejecting us — still ends the session.
+    const isAuthorizationDenial = status === 403 && Boolean(error.response?.data?.code)
+    if ((status === 401 || status === 403) && !isAuthRoute && !isAuthorizationDenial) {
+      redirectToLogin()
     }
 
     return Promise.reject(error)

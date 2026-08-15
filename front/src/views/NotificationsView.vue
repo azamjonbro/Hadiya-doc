@@ -19,6 +19,7 @@ const filtered = computed(() => (filter.value === 'unread' ? items.value.filter(
 
 const typeMeta = {
   TASK_ASSIGNED: { icon: 'check-square' },
+  TASK_DEADLINE_APPROACHING: { icon: 'clock' },
   TASK_OVERDUE: { icon: 'alert-triangle' },
   COURSE_ASSIGNED: { icon: 'graduation-cap' },
   COURSE_DEADLINE_APPROACHING: { icon: 'clock' },

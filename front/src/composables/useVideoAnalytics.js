@@ -23,6 +23,14 @@ export function useVideoAnalytics(videoId) {
     buffer.push({ eventType, timestamp: new Date().toISOString(), ...extra })
   }
 
+  // Lets the attention monitor put its own events on the same buffer, so they
+  // are batched, ordered and flushed with the playback events they have to be
+  // correlated against server-side rather than racing them on a second
+  // channel.
+  function track(eventType, extra = {}) {
+    pushEvent(eventType, extra)
+  }
+
   // fetch+keepalive (not navigator.sendBeacon) because the endpoint is
   // Bearer-token authenticated and sendBeacon can't carry custom headers —
   // keepalive is the modern equivalent that survives page/tab teardown.
@@ -145,5 +153,5 @@ export function useVideoAnalytics(videoId) {
     videoEl = null
   }
 
-  return { attach, detach }
+  return { attach, detach, track }
 }

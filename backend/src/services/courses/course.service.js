@@ -1,9 +1,19 @@
 import { PERMISSIONS } from '@lms/shared'
 import { courseRepository } from '../../repositories/course.repository.js'
+import { videoRepository } from '../../repositories/video.repository.js'
+import { videoProgressRepository } from '../../repositories/videoProgress.repository.js'
 import { auditLogRepository } from '../../repositories/auditLog.repository.js'
+import { userRepository } from '../../repositories/user.repository.js'
+import { courseAssignmentRepository } from '../../repositories/courseAssignment.repository.js'
+import { courseCascadeRepository } from '../../repositories/courseCascade.repository.js'
 import { slugify } from '../../utils/slugify.js'
 import { ApiError } from '../../utils/ApiError.js'
 import { cacheGet, cacheSet, cacheDel } from '../../utils/cache.js'
+import { isCourseVisibleToActor } from './courseVisibility.js'
+import { computeLockState, orderedCourseVideos } from './courseSequence.js'
+import { topicListCacheKey } from './topic.service.js'
+import { effectiveCacheKey as attentionPolicyCacheKey } from './attentionPolicy.service.js'
+import { notificationService } from '../notifications/notification.service.js'
 
 // Course metadata is read on every catalog/detail page view and written
 // rarely (spec §39) — cached actor-independently (the DTO doesn't vary by
@@ -18,6 +28,47 @@ function canManageCourses(actor) {
   return Boolean(actor.permissions?.includes(PERMISSIONS.COURSE_CREATE))
 }
 
+async function computeCourseProgress(actor, id, targetUserId) {
+  const course = await courseRepository.findById(id)
+  if (!course) throw ApiError.notFound('Course not found')
+  if (course.status !== 'PUBLISHED' && !canManageCourses(actor)) throw ApiError.notFound('Course not found')
+
+  const videos = await videoRepository.listByCourse(id)
+  const visibleVideos = canManageCourses(actor) ? videos : videos.filter((v) => v.status === 'PUBLISHED')
+  const progressRows = await videoProgressRepository.listByUserAndCourse(targetUserId, id)
+  const progressByVideoId = new Map(progressRows.map((p) => [p.videoId.toString(), p]))
+
+  // Lock state travels with progress because the curriculum needs both to
+  // draw a row, and they are computed from the same completion data — two
+  // endpoints would only give them a chance to disagree.
+  const orderedVideos = await orderedCourseVideos(id, { publishedOnly: !canManageCourses(actor) })
+  const locks = computeLockState(orderedVideos, progressByVideoId)
+
+  const totalVideos = visibleVideos.length
+  let completedVideos = 0
+  const videoProgress = {}
+  for (const video of visibleVideos) {
+    const videoId = video._id.toString()
+    const progress = progressByVideoId.get(videoId)
+    const completed = Boolean(progress?.completedAt)
+    if (completed) completedVideos += 1
+    videoProgress[videoId] = {
+      completionPercent: progress?.completionPercent ?? 0,
+      completed,
+      // Staff review any lesson freely; only learners are sequenced.
+      locked: canManageCourses(actor) ? false : Boolean(locks[videoId]?.locked),
+      blockedBy: locks[videoId]?.blockedBy ?? null,
+    }
+  }
+
+  return {
+    completionPercent: totalVideos ? Math.round((completedVideos / totalVideos) * 100) : 0,
+    completedVideos,
+    totalVideos,
+    videos: videoProgress,
+  }
+}
+
 function toPublicCourse(course) {
   return {
     id: course._id.toString(),
@@ -27,8 +78,51 @@ function toPublicCourse(course) {
     cover: course.cover,
     banner: course.banner,
     status: course.status,
+    targetRoles: course.targetRoles ?? [],
+    department: course.department ?? '',
     createdAt: course.createdAt,
     updatedAt: course.updatedAt,
+  }
+}
+
+// No-op unless explicitly requested and the course actually has a
+// role/department restriction to auto-assign against — never mass-assigns
+// literally every active user just because `autoAssign` was checked. Reads
+// targeting from the persisted `course` doc, not the raw payload, so a
+// partial update that omits targetRoles/department still uses the real
+// (previously saved) restriction rather than treating it as unset.
+async function autoAssignIfNeeded(actor, course, autoAssign) {
+  if (!autoAssign) return
+  const roleNames = course.targetRoles ?? []
+  const department = course.department ?? ''
+  if (!roleNames.length && !department) return
+
+  const users = await userRepository.listActiveByRolesAndDepartment({ roleNames, department })
+  const userIds = users.map((u) => u._id.toString())
+  if (!userIds.length) return
+
+  const existing = await courseAssignmentRepository.listByUsersAndCourses(userIds, [course._id.toString()])
+  const existingUserIds = new Set(existing.map((a) => a.userId.toString()))
+  const rows = userIds
+    .filter((userId) => !existingUserIds.has(userId))
+    .map((userId) => ({ userId, courseId: course._id, mandatory: true, assignedBy: actor.id }))
+  if (!rows.length) return
+
+  await courseAssignmentRepository.insertManyIgnoringDuplicates(rows)
+
+  for (const row of rows) {
+    try {
+      await notificationService.notify({
+        userId: row.userId,
+        type: 'COURSE_ASSIGNED',
+        title: `Course assigned: ${course.title}`,
+        message: '',
+        relatedEntityType: 'Course',
+        relatedEntityId: course._id.toString(),
+      })
+    } catch {
+      // Best-effort — a notification failure must not undo the assignment.
+    }
   }
 }
 
@@ -45,7 +139,32 @@ async function uniqueSlugFor(title) {
 
 export const courseService = {
   async list(actor, query) {
-    const effectiveQuery = canManageCourses(actor) ? query : { ...query, status: 'PUBLISHED' }
+    let effectiveQuery = query
+    if (!canManageCourses(actor)) {
+      const actorUser = await userRepository.findById(actor.id)
+      effectiveQuery = {
+        ...query,
+        status: 'PUBLISHED',
+        visibleToRoleName: actor.roleName,
+        visibleToDepartment: actorUser?.department ?? '',
+      }
+    }
+    // Numbered pagination: the client needs a total to render "page 3 of 7",
+    // so this mode pays for a count query that cursor mode does not.
+    if (query.page) {
+      const [rows, total] = await Promise.all([
+        courseRepository.listPage(effectiveQuery),
+        courseRepository.count(effectiveQuery),
+      ])
+      return {
+        items: rows.map(toPublicCourse),
+        page: query.page,
+        limit: query.limit,
+        total,
+        totalPages: Math.max(1, Math.ceil(total / query.limit)),
+      }
+    }
+
     const rows = await courseRepository.listPage(effectiveQuery)
     const hasMore = rows.length > query.limit
     const items = hasMore ? rows.slice(0, -1) : rows
@@ -66,12 +185,33 @@ export const courseService = {
     if (course.status !== 'PUBLISHED' && !canManageCourses(actor)) {
       throw ApiError.notFound('Course not found')
     }
+    if (!canManageCourses(actor) && !(await isCourseVisibleToActor(actor, course))) {
+      throw ApiError.notFound('Course not found')
+    }
     return course
   },
 
+  // Real per-user completion, computed from VideoProgress.completedAt —
+  // there's no cached/denormalized field for this, so it's derived on read
+  // rather than trusted from anywhere else (spec: no fabricated progress).
+  async getMyProgress(actor, id) {
+    return computeCourseProgress(actor, id, actor.id)
+  },
+
+  // Same computation, but for a manager/admin looking at someone else's
+  // progress (e.g. the employee detail page) — gated on analytics:view:all
+  // since that's the existing permission for "view another user's data".
+  async getProgressForUser(actor, id, targetUserId) {
+    if (actor.id !== targetUserId && !actor.permissions?.includes(PERMISSIONS.ANALYTICS_VIEW_ALL)) {
+      throw ApiError.forbidden('Missing required permission: analytics:view:all')
+    }
+    return computeCourseProgress(actor, id, targetUserId)
+  },
+
   async create(actor, payload) {
+    const { autoAssign, ...courseFields } = payload
     const slug = await uniqueSlugFor(payload.title)
-    const course = await courseRepository.create({ ...payload, slug, createdBy: actor.id })
+    const course = await courseRepository.create({ ...courseFields, slug, createdBy: actor.id })
     await auditLogRepository.record({
       actor: actor.id,
       action: 'COURSE_CREATED',
@@ -79,13 +219,15 @@ export const courseService = {
       entityId: course._id.toString(),
       metadata: { title: course.title },
     })
+    if (payload.status === 'PUBLISHED') await autoAssignIfNeeded(actor, course, payload.autoAssign)
     return toPublicCourse(course)
   },
 
   async update(actor, id, payload) {
     const existing = await courseRepository.findById(id)
     if (!existing) throw ApiError.notFound('Course not found')
-    const updated = await courseRepository.updateById(id, { ...payload, updatedBy: actor.id })
+    const { autoAssign, ...courseFields } = payload
+    const updated = await courseRepository.updateById(id, { ...courseFields, updatedBy: actor.id })
     await cacheDel(courseCacheKey(id))
     await auditLogRepository.record({
       actor: actor.id,
@@ -94,6 +236,9 @@ export const courseService = {
       entityId: id,
       metadata: { fields: Object.keys(payload) },
     })
+    if (payload.status === 'PUBLISHED' && existing.status !== 'PUBLISHED') {
+      await autoAssignIfNeeded(actor, updated, payload.autoAssign)
+    }
     return toPublicCourse(updated)
   },
 
@@ -104,5 +249,40 @@ export const courseService = {
     await cacheDel(courseCacheKey(id))
     await auditLogRepository.record({ actor: actor.id, action: 'COURSE_ARCHIVED', entity: 'Course', entityId: id })
     return toPublicCourse(updated)
+  },
+
+  // Permanent counterpart to archive(): the course and everything hanging
+  // off it are gone for good. Restricted to SUPERADMIN at the route layer —
+  // course:delete alone only ever buys you the reversible archive.
+  //
+  // Note this deletes database rows only. Uploaded video objects (originals
+  // and HLS segments) stay in S3, since removing them means walking a whole
+  // key prefix per video and is not something a half-finished pass should
+  // be left in the middle of.
+  async destroy(actor, id) {
+    const existing = await courseRepository.findById(id)
+    if (!existing) throw ApiError.notFound('Course not found')
+
+    // Read the video ids up front — VideoAnalyticsEvent rows only carry a
+    // videoId, so after the Video rows are deleted there is nothing left to
+    // match them on.
+    const videos = await videoRepository.listByCourse(id)
+    const videoIds = videos.map((v) => v._id)
+
+    const deleted = await courseCascadeRepository.deleteByCourse(existing._id, videoIds)
+    await courseRepository.deleteById(id)
+
+    await cacheDel(courseCacheKey(id))
+    await cacheDel(topicListCacheKey(id))
+    await cacheDel(attentionPolicyCacheKey(id))
+    await auditLogRepository.record({
+      actor: actor.id,
+      action: 'COURSE_DELETED',
+      entity: 'Course',
+      entityId: id,
+      metadata: { title: existing.title, slug: existing.slug, deleted },
+    })
+
+    return { id, title: existing.title, deleted }
   },
 }

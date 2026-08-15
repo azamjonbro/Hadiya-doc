@@ -43,6 +43,12 @@ export const PERMISSIONS = Object.freeze({
 
   AI_CHAT: 'ai:chat',
 
+  // Everyone gets a 1:1 support thread with staff without needing a
+  // permission of their own (self-only access, like task:read:own) — this
+  // permission gates the *other* side: seeing every employee's thread in
+  // the shared admin/manager inbox and replying in any of them.
+  CHAT_SUPPORT: 'chat:support',
+
   AUDIT_READ: 'audit:read',
 })
 
@@ -72,6 +78,7 @@ const MANAGER_PERMISSIONS = [
   PERMISSIONS.TASK_CREATE,
   PERMISSIONS.TASK_MANAGE_ALL,
   PERMISSIONS.EVENT_CREATE,
+  PERMISSIONS.CHAT_SUPPORT,
 ]
 
 const ADMIN_PERMISSIONS = [

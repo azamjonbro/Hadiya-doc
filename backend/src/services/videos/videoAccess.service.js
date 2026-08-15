@@ -3,6 +3,7 @@ import { PERMISSIONS } from '@lms/shared'
 import { videoRepository } from '../../repositories/video.repository.js'
 import { courseAssignmentRepository } from '../../repositories/courseAssignment.repository.js'
 import { computeAccessFlags } from '../courses/courseAssignmentAccess.js'
+import { assertVideoUnlocked } from '../courses/courseSequence.js'
 import { ApiError } from '../../utils/ApiError.js'
 import { env } from '../../config/env.js'
 
@@ -26,6 +27,11 @@ export const videoAccessService = {
         throw ApiError.forbidden('You do not have access to this course', 'COURSE_ACCESS_DENIED')
       }
     }
+
+    // Lessons open one at a time. Checked here rather than only in the
+    // sidebar, since without a playback token there is nothing to play —
+    // typing the /videos/:id URL directly gets you the same refusal.
+    await assertVideoUnlocked(actor, video)
 
     const token = jwt.sign({ sub: actor.id, videoId: video._id.toString() }, env.VIDEO_TOKEN_SECRET, {
       expiresIn: env.VIDEO_PLAYBACK_TOKEN_TTL,

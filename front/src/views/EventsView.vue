@@ -7,6 +7,7 @@ import AppCard from '@/components/ui/AppCard.vue'
 import AppButton from '@/components/ui/AppButton.vue'
 import AppInput from '@/components/ui/AppInput.vue'
 import AppSelect from '@/components/ui/AppSelect.vue'
+import AppDatePicker from '@/components/ui/AppDatePicker.vue'
 import Modal from '@/components/ui/Modal.vue'
 import Badge from '@/components/ui/Badge.vue'
 import Skeleton from '@/components/ui/Skeleton.vue'
@@ -149,8 +150,8 @@ onMounted(load)
         <AppSelect v-model="createForm.type" :label="t('events.type')" :options="typeOptions" />
         <AppInput v-model="createForm.location" :label="t('events.location')" />
         <div class="grid grid-cols-2 gap-3">
-          <AppInput v-model="createForm.startAt" type="datetime-local" required :label="t('events.startAt')" />
-          <AppInput v-model="createForm.endAt" type="datetime-local" required :label="t('events.endAt')" />
+          <AppDatePicker v-model="createForm.startAt" with-time required :label="t('events.startAt')" />
+          <AppDatePicker v-model="createForm.endAt" with-time required :label="t('events.endAt')" />
         </div>
         <p v-if="createError" class="text-small text-danger">{{ createError }}</p>
         <div class="flex justify-end gap-2 pt-2">

@@ -9,10 +9,14 @@ import NotFoundView from '@/views/NotFoundView.vue'
 import CoursesView from '@/views/CoursesView.vue'
 import CourseDetailView from '@/views/CourseDetailView.vue'
 import VideoPlayerView from '@/views/VideoPlayerView.vue'
+import AssessmentView from '@/views/AssessmentView.vue'
+import VideoQuizView from '@/views/VideoQuizView.vue'
 import NewsView from '@/views/NewsView.vue'
 import NewsDetailView from '@/views/NewsDetailView.vue'
 import TasksView from '@/views/TasksView.vue'
 import EventsView from '@/views/EventsView.vue'
+import LeaderboardView from '@/views/LeaderboardView.vue'
+import ChatView from '@/views/ChatView.vue'
 import NotificationsView from '@/views/NotificationsView.vue'
 import SettingsView from '@/views/SettingsView.vue'
 
@@ -30,10 +34,24 @@ export const router = createRouter({
         { path: 'courses', name: 'courses-list', component: CoursesView, meta: { titleKey: 'nav.courses' } },
         { path: 'courses/:id', name: 'course-detail', component: CourseDetailView, meta: { titleKey: 'courses.title' } },
         { path: 'videos/:id', name: 'video-detail', component: VideoPlayerView, meta: { titleKey: 'nav.courses' } },
+        {
+          path: 'videos/:id/quiz',
+          name: 'video-quiz',
+          component: VideoQuizView,
+          meta: { titleKey: 'nav.courses' },
+        },
+        {
+          path: 'assessments/:id',
+          name: 'assessment-detail',
+          component: AssessmentView,
+          meta: { titleKey: 'nav.courses' },
+        },
         { path: 'news', name: 'news-list', component: NewsView, meta: { titleKey: 'nav.news' } },
         { path: 'news/:id', name: 'news-detail', component: NewsDetailView, meta: { titleKey: 'nav.news' } },
         { path: 'tasks', name: 'tasks-list', component: TasksView, meta: { titleKey: 'nav.tasks', permission: 'task:read:own' } },
         { path: 'events', name: 'events-list', component: EventsView, meta: { titleKey: 'nav.events', permission: 'event:read' } },
+        { path: 'leaderboard', name: 'leaderboard', component: LeaderboardView, meta: { titleKey: 'nav.leaderboard' } },
+        { path: 'chat', name: 'chat', component: ChatView, meta: { titleKey: 'nav.chat' } },
         { path: 'notifications', name: 'notifications', component: NotificationsView, meta: { titleKey: 'nav.notifications' } },
         { path: 'settings', name: 'settings', component: SettingsView, meta: { titleKey: 'nav.settings' } },
       ],

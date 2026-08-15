@@ -6,6 +6,11 @@ export const createCourseSchema = z.object({
   cover: z.string().optional().default(''),
   banner: z.string().optional().default(''),
   status: z.enum(['DRAFT', 'PUBLISHED', 'ARCHIVED']).optional().default('DRAFT'),
+  targetRoles: z.array(z.string()).optional().default([]),
+  department: z.string().optional().default(''),
+  // One-time trigger, not a model field: when true and the course is being
+  // published, matching active users get auto-assigned. See course.service.js.
+  autoAssign: z.boolean().optional().default(false),
 })
 
 export const updateCourseSchema = z
@@ -15,12 +20,19 @@ export const updateCourseSchema = z
     cover: z.string().optional(),
     banner: z.string().optional(),
     status: z.enum(['DRAFT', 'PUBLISHED', 'ARCHIVED']).optional(),
+    targetRoles: z.array(z.string()).optional(),
+    department: z.string().optional(),
+    autoAssign: z.boolean().optional(),
   })
   .refine((data) => Object.keys(data).length > 0, { message: 'No fields to update' })
 
 export const listCoursesQuerySchema = z.object({
   search: z.string().optional(),
   status: z.enum(['DRAFT', 'PUBLISHED', 'ARCHIVED']).optional(),
+  // `page` opts into numbered pagination (response carries total/totalPages);
+  // `cursor` keeps the original "load more" behaviour. Sending both is
+  // meaningless, so page wins — see course.service.js.
+  page: z.coerce.number().int().min(1).optional(),
   cursor: z.string().optional(),
   limit: z.coerce.number().int().min(1).max(100).optional().default(20),
 })

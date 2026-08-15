@@ -4,6 +4,7 @@ import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useAuthStore } from '@/stores/auth'
 import { coursesApi } from '@/services/courses'
+import { usersApi } from '@/services/users'
 import { tasksApi } from '@/services/tasks'
 import { eventsApi } from '@/services/events'
 import { newsApi } from '@/services/news'
@@ -26,15 +27,11 @@ const tasks = ref([])
 const events = ref([])
 const news = ref([])
 const heroTopic = ref(null)
+const progressByCourseId = ref({})
+const learningStats = ref({ coursesCompleted: 0, hoursLearned: 0, videosWatched: 0, streakDays: 0 })
 
-// Per-course watch progress isn't exposed by a summary endpoint yet — this
-// derives a stable (not random-per-render) illustrative percentage from the
-// assignment id so cards don't jitter between renders while real per-lesson
-// progress tracking ships.
-function seededPercent(id, min = 18, max = 96) {
-  let hash = 0
-  for (const ch of String(id)) hash = (hash * 31 + ch.charCodeAt(0)) >>> 0
-  return min + (hash % (max - min))
+function courseProgress(courseId) {
+  return progressByCourseId.value[courseId]?.completionPercent ?? 0
 }
 
 const firstName = computed(() => auth.user?.fullName?.split(' ')[0] ?? '')
@@ -54,11 +51,11 @@ const heroAssignment = computed(() => {
   return [...active].sort((a, b) => new Date(a.deadline ?? 8640000000000000) - new Date(b.deadline ?? 8640000000000000))[0] ?? null
 })
 
-const heroProgress = computed(() => (heroAssignment.value ? seededPercent(heroAssignment.value.id) : 0))
+const heroProgress = computed(() => (heroAssignment.value ? courseProgress(heroAssignment.value.courseId) : 0))
 
 const overallCompletion = computed(() => {
   if (assignments.value.length === 0) return 0
-  const sum = assignments.value.reduce((acc, a) => acc + (a.status === 'COMPLETED' ? 100 : seededPercent(a.id)), 0)
+  const sum = assignments.value.reduce((acc, a) => acc + (a.status === 'COMPLETED' ? 100 : courseProgress(a.courseId)), 0)
   return Math.round(sum / assignments.value.length)
 })
 
@@ -103,11 +100,12 @@ function badgeLabel(a) {
 async function load() {
   loading.value = true
   try {
-    const [myAssignments, taskResult, eventResult, newsResult] = await Promise.all([
+    const [myAssignments, taskResult, eventResult, newsResult, stats] = await Promise.all([
       coursesApi.myAssignments(auth.user.id),
       tasksApi.listMy({}),
       eventsApi.calendar({}),
       newsApi.feed({}),
+      usersApi.learningStats(auth.user.id),
     ])
 
     const courses = await Promise.all(myAssignments.map((a) => coursesApi.getById(a.courseId)))
@@ -115,6 +113,12 @@ async function load() {
     tasks.value = taskResult.items
     events.value = eventResult.slice(0, 4)
     news.value = newsResult.items.slice(0, 3)
+    learningStats.value = stats
+
+    const progressEntries = await Promise.all(
+      myAssignments.map((a) => coursesApi.getMyProgress(a.courseId).then((p) => [a.courseId, p]))
+    )
+    progressByCourseId.value = Object.fromEntries(progressEntries)
 
     if (heroAssignment.value) {
       try {
@@ -239,7 +243,7 @@ onMounted(load)
                 <Badge :variant="badgeVariant(a)" size="sm">{{ badgeLabel(a) }}</Badge>
                 <h3 class="mt-2 line-clamp-2 text-small font-semibold text-ink">{{ a.course?.title }}</h3>
                 <p v-if="a.deadline" class="mt-1 text-caption text-ink-faint">{{ t('courses.deadline') }}: {{ new Date(a.deadline).toLocaleDateString(locale) }}</p>
-                <ProgressBar class="mt-3" :value="seededPercent(a.id)" size="sm" />
+                <ProgressBar class="mt-3" :value="courseProgress(a.courseId)" size="sm" />
               </div>
             </AppCard>
           </div>
@@ -292,16 +296,16 @@ onMounted(load)
               <p class="text-caption text-ink-faint">{{ t('dashboard.progress.coursesCompleted') }}</p>
             </div>
             <div class="rounded-md bg-surface-2 py-2.5">
-              <p class="text-h3 text-ink">{{ Math.max(4, assignments.length * 3) }}</p>
+              <p class="text-h3 text-ink">{{ learningStats.hoursLearned }}</p>
               <p class="text-caption text-ink-faint">{{ t('dashboard.progress.hoursLearned') }}</p>
             </div>
             <div class="rounded-md bg-surface-2 py-2.5">
-              <p class="text-h3 text-ink">{{ Math.max(6, assignments.length * 5) }}</p>
+              <p class="text-h3 text-ink">{{ learningStats.videosWatched }}</p>
               <p class="text-caption text-ink-faint">{{ t('dashboard.progress.videosWatched') }}</p>
             </div>
             <div class="rounded-md bg-surface-2 py-2.5">
               <p class="flex items-center justify-center gap-1 text-h3 text-ink">
-                <Icon name="flame" size="16" class="text-warning" />5
+                <Icon name="flame" size="16" class="text-warning" />{{ learningStats.streakDays }}
               </p>
               <p class="text-caption text-ink-faint">{{ t('dashboard.progress.streak') }}</p>
             </div>

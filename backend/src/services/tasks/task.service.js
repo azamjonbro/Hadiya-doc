@@ -4,8 +4,10 @@ import { userRepository } from '../../repositories/user.repository.js'
 import { auditLogRepository } from '../../repositories/auditLog.repository.js'
 import { ApiError } from '../../utils/ApiError.js'
 import { notificationService } from '../notifications/notification.service.js'
+import { chatService } from '../chat/chat.service.js'
+import { logger } from '../../config/logger.js'
 
-function toPublicTask(task) {
+function toPublicTask(task, assignee) {
   const now = new Date()
   const isOverdue = Boolean(
     ['TODO', 'IN_PROGRESS'].includes(task.status) && task.deadline && now > task.deadline
@@ -15,6 +17,7 @@ function toPublicTask(task) {
     title: task.title,
     description: task.description,
     assignedTo: task.assignedTo.toString(),
+    assigneeName: assignee?.fullName ?? '',
     assignedBy: task.assignedBy.toString(),
     priority: task.priority,
     deadline: task.deadline,
@@ -29,6 +32,13 @@ function toPublicTask(task) {
   }
 }
 
+async function hydrateAssignees(tasks) {
+  const userIds = [...new Set(tasks.map((task) => task.assignedTo.toString()))]
+  const users = await userRepository.findByIds(userIds)
+  const usersById = new Map(users.map((u) => [u._id.toString(), u]))
+  return tasks.map((task) => toPublicTask(task, usersById.get(task.assignedTo.toString())))
+}
+
 async function assertManagerScopeForAssignee(actor, assignedToId) {
   if (actor.roleName !== ROLES.MANAGER) return
   const [actorUser, targetUser] = await Promise.all([
@@ -37,6 +47,34 @@ async function assertManagerScopeForAssignee(actor, assignedToId) {
   ])
   if (!targetUser || targetUser.department !== actorUser.department) {
     throw ApiError.forbidden('Managers can only assign tasks within their own department', 'DEPARTMENT_SCOPE_FORBIDDEN')
+  }
+}
+
+// Chat delivery is a convenience on top of the notification, never a
+// precondition for it — a storage hiccup here must not roll back a task
+// that was already created.
+async function postTaskSystemMessage({ fromUserId, toUserId, event, task }) {
+  try {
+    await chatService.postSystemMessage({
+      fromUserId,
+      toUserId,
+      event,
+      entityType: 'Task',
+      entityId: task._id.toString(),
+      params: {
+        title: task.title,
+        priority: task.priority ?? '',
+        deadline: task.deadline ? new Date(task.deadline).toISOString() : '',
+        status: task.status ?? '',
+      },
+      preview: task.title,
+    })
+  } catch (error) {
+    logger.warn('Failed to post task system message to chat', {
+      taskId: task._id.toString(),
+      event,
+      error: error instanceof Error ? error.message : error,
+    })
   }
 }
 
@@ -52,7 +90,7 @@ export const taskService = {
     const rows = await taskRepository.listByAssigner({ assignedBy: actor.id, ...query })
     const hasMore = rows.length > query.limit
     const items = hasMore ? rows.slice(0, -1) : rows
-    return { items: items.map(toPublicTask), nextCursor: hasMore ? items[items.length - 1]._id.toString() : null }
+    return { items: await hydrateAssignees(items), nextCursor: hasMore ? items[items.length - 1]._id.toString() : null }
   },
 
   async getById(actor, id) {
@@ -88,7 +126,18 @@ export const taskService = {
       relatedEntityId: task._id.toString(),
     })
 
-    return toPublicTask(task)
+    // A bell notification is easy to miss; the assignment also lands in
+    // the DM between assigner and assignee as a system card, so it sits in
+    // the same thread where they will actually discuss it. Failing to post
+    // it must never fail the assignment itself.
+    await postTaskSystemMessage({
+      fromUserId: actor.id,
+      toUserId: payload.assignedTo,
+      event: 'TASK_ASSIGNED',
+      task,
+    })
+
+    return toPublicTask(task, assignee)
   },
 
   async update(actor, id, payload) {
@@ -121,6 +170,28 @@ export const taskService = {
       entityId: id,
       metadata: { fields: Object.keys(payload) },
     })
+
+    // A status change is the other half of the loop: the assigner asked
+    // for something, so they hear back the same way the assignee was told.
+    if (payload.status && payload.status !== existing.status) {
+      const counterpartId = isAssignee ? existing.assignedBy.toString() : existing.assignedTo.toString()
+      const event = payload.status === 'COMPLETED' ? 'TASK_COMPLETED' : 'TASK_STATUS_CHANGED'
+
+      await notificationService.notify({
+        userId: counterpartId,
+        type: event,
+        title:
+          payload.status === 'COMPLETED'
+            ? `Task completed: ${updated.title}`
+            : `Task status changed: ${updated.title}`,
+        message: `${existing.status} → ${payload.status}`,
+        relatedEntityType: 'Task',
+        relatedEntityId: id,
+      })
+
+      await postTaskSystemMessage({ fromUserId: actor.id, toUserId: counterpartId, event, task: updated })
+    }
+
     return toPublicTask(updated)
   },
 

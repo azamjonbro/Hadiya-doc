@@ -11,7 +11,7 @@ import { s3Client } from '../config/storage.js'
  * StorageProvider shape (see docs/video-streaming.md):
  *   putObject(key, body, contentType)
  *   getObject(key) -> Readable
- *   getSignedUrl(key, expiresInSeconds) -> string
+ *   getSignedUrl(key, expiresInSeconds, responseFilename?) -> string
  *   deleteObject(key)
  *   headObject(key) -> { size, contentType }
  *
@@ -49,10 +49,21 @@ export class S3StorageProvider {
     }
   }
 
-  getSignedUrl(key, expiresInSeconds) {
-    return getSignedUrl(s3Client, new GetObjectCommand({ Bucket: this.bucket, Key: key }), {
-      expiresIn: expiresInSeconds,
-    })
+  // responseFilename is optional — when set, the browser saves the download
+  // as this name instead of the opaque storage key's basename (e.g.
+  // "Syllabus.pdf" instead of a UUID).
+  getSignedUrl(key, expiresInSeconds, responseFilename) {
+    return getSignedUrl(
+      s3Client,
+      new GetObjectCommand({
+        Bucket: this.bucket,
+        Key: key,
+        ...(responseFilename
+          ? { ResponseContentDisposition: `attachment; filename="${responseFilename.replace(/"/g, '')}"` }
+          : {}),
+      }),
+      { expiresIn: expiresInSeconds }
+    )
   }
 
   async deleteObject(key) {

@@ -8,6 +8,11 @@ const courseSchema = new Schema(
     cover: { type: String, default: '' },
     banner: { type: String, default: '' },
     status: { type: String, enum: ['DRAFT', 'PUBLISHED', 'ARCHIVED'], default: 'DRAFT' },
+    // Empty targetRoles + empty department means "no restriction" (visible
+    // to everyone) — the default, backward-compatible with every existing
+    // course. When set, both constraints must match (role AND department).
+    targetRoles: { type: [String], default: [] },
+    department: { type: String, default: '' },
     createdBy: { type: Schema.Types.ObjectId, ref: 'User', required: true },
     updatedBy: { type: Schema.Types.ObjectId, ref: 'User', default: null },
   },

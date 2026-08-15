@@ -9,6 +9,8 @@
     "news": "News",
     "tasks": "Tasks",
     "events": "Events",
+    "leaderboard": "Leaderboard",
+    "chat": "Chat",
     "notifications": "Notifications",
     "settings": "Settings",
     "profile": "Profile",
@@ -48,6 +50,7 @@
     "optional": "Optional",
     "today": "Today",
     "tomorrow": "Tomorrow",
+    "clear": "Clear",
     "minRead": "min read",
     "goToDashboard": "Go to dashboard",
     "goBack": "Go back"
@@ -134,6 +137,7 @@
     "empty": "No courses found",
     "assignedToYou": "Assigned to you",
     "catalog": "Course catalog",
+    "join": "Join",
     "noAssignments": "No courses have been assigned to you yet",
     "mandatory": "Mandatory",
     "optional": "Optional",
@@ -186,6 +190,160 @@
       "PACKAGING": "Video is being packaged",
       "READY": "Ready",
       "FAILED": "Video processing failed"
+    },
+    "lockedHint": "Opens once you have watched the previous lesson through.",
+    "lockedTitle": "This lesson is not open yet"
+  },
+  "quiz": {
+    "title": "Quiz",
+    "submit": "Submit",
+    "passed": "Quiz passed!",
+    "failed": "Quiz not passed",
+    "score": "Score",
+    "passScoreShort": "pass score",
+    "retry": "Retry",
+    "open": "Open test",
+    "readyHint": "Lesson watched — the test is now available.",
+    "watchFirstHint": "The test opens once you have watched the lesson through.",
+    "backToVideo": "Back to lesson",
+    "notFound": "Test not found"
+  },
+  "gamification": {
+    "points": "points",
+    "myPoints": "My points",
+    "noBadgesYet": "No badges yet",
+    "empty": "No one on the leaderboard yet",
+    "badges": {
+      "FIRST_STEP": {
+        "title": "First step"
+      },
+      "QUIZ_TAKER": {
+        "title": "Quiz taker"
+      },
+      "QUIZ_MASTER": {
+        "title": "Quiz master"
+      },
+      "POINTS_100": {
+        "title": "100 points"
+      },
+      "POINTS_500": {
+        "title": "500 points"
+      }
+    }
+  },
+  "chat": {
+    "title": "Chat",
+    "subtitle": "Message your colleagues directly.",
+    "summary": "{chats} chats · {people} people",
+    "placeholder": "Write a message...",
+    "send": "Send",
+    "empty": "No messages yet",
+    "emptyHint": "Send the first message to start this conversation.",
+    "actions": {
+      "edit": "Edit",
+      "delete": "Delete",
+      "remove": "Remove"
+    },
+    "inbox": {
+      "empty": "No conversations yet",
+      "emptyHint": "Pick someone in the People tab to start writing.",
+      "noMessages": "No messages",
+      "noMatches": "Nothing found",
+      "noPeople": "No people found",
+      "newBadge": "New",
+      "selectPrompt": "Select a conversation to see messages",
+      "selectHint": "Or start a new one from the people directory.",
+      "searchChats": "Search conversations",
+      "searchPeople": "Name, department or position",
+      "tabs": {
+        "chats": "Chats",
+        "people": "People"
+      },
+      "groups": {
+        "new": "Recently joined",
+        "all": "All employees"
+      }
+    },
+    "header": {
+      "online": "Online",
+      "offline": "Offline",
+      "typing": "typing...",
+      "searchInChat": "Search in conversation",
+      "searchPlaceholder": "Search messages...",
+      "noResults": "No results",
+      "details": "Details"
+    },
+    "compose": {
+      "bold": "Bold",
+      "italic": "Italic",
+      "code": "Code",
+      "quote": "Quote",
+      "list": "List",
+      "link": "Link",
+      "preview": "Preview",
+      "write": "Write",
+      "markdownHint": "Markdown supported",
+      "attachImage": "Attach image",
+      "attachFile": "Attach file",
+      "recordVoice": "Record voice message"
+    },
+    "voice": {
+      "unsupported": "Your browser does not support audio recording",
+      "permissionDenied": "Microphone permission was denied",
+      "send": "Send voice message"
+    },
+    "attachment": {
+      "image": "Image",
+      "file": "File",
+      "voice": "Voice message",
+      "download": "Download"
+    },
+    "message": {
+      "edited": "edited",
+      "editedAt": "edited {value}",
+      "deleted": "Message deleted"
+    },
+    "system": {
+      "label": {
+        "TASK_ASSIGNED": "New task",
+        "TASK_COMPLETED": "Task completed",
+        "TASK_STATUS_CHANGED": "Task status changed",
+        "DEFAULT": "System message"
+      },
+      "text": {
+        "TASK_ASSIGNED": "Task “{title}” was assigned",
+        "TASK_COMPLETED": "Task “{title}” was completed",
+        "TASK_STATUS_CHANGED": "Task “{title}” — status: {status}",
+        "DEFAULT": "{title}"
+      }
+    },
+    "info": {
+      "title": "Conversation details",
+      "close": "Close",
+      "person": "Person",
+      "thread": "Conversation",
+      "position": "Position",
+      "department": "Department",
+      "role": "Role",
+      "username": "Username",
+      "email": "Email",
+      "joinedAt": "Joined",
+      "createdAt": "Created",
+      "updatedAt": "Updated",
+      "lastMessageAt": "Last message",
+      "messageCount": "Messages",
+      "peerReadAt": "Read at",
+      "notReadYet": "Not read yet",
+      "media": "Images",
+      "files": "Files"
+    },
+    "time": {
+      "today": "Today",
+      "yesterday": "Yesterday",
+      "justNow": "just now",
+      "minutesAgo": "{value}m ago",
+      "hoursAgo": "{value}h ago",
+      "daysAgo": "{value}d ago"
     }
   },
   "aiChat": {
@@ -268,12 +426,23 @@
   },
   "settings": {
     "title": "Settings",
+    "tabs": {
+      "profile": "Profile",
+      "activity": "Activity",
+      "preferences": "Preferences"
+    },
     "sections": {
       "profile": "Profile",
       "security": "Security",
+      "activity": "Activity",
+      "badges": "Badges",
       "appearance": "Appearance",
       "language": "Language",
       "notifications": "Notifications"
+    },
+    "activity": {
+      "videosCompleted": "Videos watched",
+      "quizzesPassed": "Quizzes passed"
     },
     "appearance": {
       "theme": "Theme",
@@ -303,5 +472,69 @@
     "answerPlaceholder": "Write an answer...",
     "answer": "Answer",
     "answers": "{count} answers"
+  },
+  "assessment": {
+    "notFound": "Test not found",
+    "questionCount": "{count} questions",
+    "passScore": "Pass score: {value}%",
+    "answered": "{answered} of {total} answered",
+    "submit": "Submit test",
+    "startButton": "Start test",
+    "passed": "Test passed",
+    "failed": "Test not passed",
+    "score": "Score",
+    "retry": "Try again",
+    "backToCourse": "Back to course",
+    "timeUp": "Time is up — the answers you marked were submitted.",
+    "rules": {
+      "title": "Test rules",
+      "minutes": "minutes",
+      "questions": "questions",
+      "passScore": "pass score",
+      "timer": "You get {value} minutes once you start. When the time runs out, the answers you marked are submitted automatically.",
+      "tabs": "Do not switch to another tab or window. The first time is a warning, the second ends the test.",
+      "singleSitting": "The test is taken in one sitting. Reloading the page does not reset the timer — it keeps running.",
+      "noCopy": "Copying and selecting the questions is disabled."
+    },
+    "focus": {
+      "counter": "Left window: {count}/{limit}",
+      "warningTitle": "Warning",
+      "warningBody": "You left the test window ({count}/{limit}). One more time and the test ends automatically with whatever you have marked so far.",
+      "warningAck": "Understood, continue",
+      "terminated": "The attempt was ended because you left the test window."
+    }
+  },
+  "attention": {
+    "badge": "Camera on",
+    "loading": "Preparing camera...",
+    "calibrating": "Calibrating — look at the screen",
+    "consent": {
+      "title": "This lesson is monitored by camera",
+      "body": "Your attention is checked through the camera while the video plays. If you look away for too long you will be warned and the video will pause.",
+      "privacy": "The camera image never leaves this device: all analysis runs in your browser, and frames are neither stored nor uploaded. Only an 'attentive / looked away' marker is recorded.",
+      "accept": "Allow camera",
+      "requiredHint": "This lesson cannot be watched without a camera."
+    },
+    "warning": {
+      "title": "You looked away",
+      "lookingAway": "You are looking away from the screen.",
+      "noFace": "Your face is not visible in the camera.",
+      "resumeHint": "Look back at the screen — the video resumes automatically."
+    },
+    "lockout": {
+      "title": "Video temporarily locked",
+      "body": "You looked away several times. Wait a moment and return to the lesson.",
+      "seconds": "seconds"
+    },
+    "denied": {
+      "title": "Camera access denied",
+      "body": "To watch this monitored lesson, allow camera access in your browser settings.",
+      "retry": "Try again",
+      "noBypass": "This lesson cannot be watched without a camera."
+    },
+    "error": {
+      "title": "Camera failed to start",
+      "body": "The camera could not be started. Another application may be using it."
+    }
   }
 }

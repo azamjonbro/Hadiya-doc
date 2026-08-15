@@ -8,6 +8,11 @@ export const courseAssignmentController = {
     sendSuccess(res, assignment, 'Course assigned', 201)
   }),
 
+  enrollSelf: asyncHandler(async (req, res) => {
+    const assignment = await courseAssignmentService.selfEnroll(req.user, req.params.id)
+    sendSuccess(res, assignment, 'Enrolled', 201)
+  }),
+
   listForCourse: asyncHandler(async (req, res) => {
     sendSuccess(res, await courseAssignmentService.listForCourse(req.user, req.params.id))
   }),

@@ -63,14 +63,20 @@ services:
       mc alias set local http://minio:9000 $${S3_ACCESS_KEY} $${S3_SECRET_KEY} &&
       mc mb --ignore-existing local/$${S3_BUCKET_ORIGINALS} &&
       mc mb --ignore-existing local/$${S3_BUCKET_PROCESSED} &&
+      mc mb --ignore-existing local/$${S3_BUCKET_MATERIALS} &&
+      mc mb --ignore-existing local/$${S3_BUCKET_CHAT} &&
       mc anonymous set none local/$${S3_BUCKET_ORIGINALS} &&
-      mc anonymous set none local/$${S3_BUCKET_PROCESSED}
+      mc anonymous set none local/$${S3_BUCKET_PROCESSED} &&
+      mc anonymous set none local/$${S3_BUCKET_MATERIALS} &&
+      mc anonymous set none local/$${S3_BUCKET_CHAT}
       "
     environment:
       S3_ACCESS_KEY: ${S3_ACCESS_KEY}
       S3_SECRET_KEY: ${S3_SECRET_KEY}
       S3_BUCKET_ORIGINALS: ${S3_BUCKET_ORIGINALS}
       S3_BUCKET_PROCESSED: ${S3_BUCKET_PROCESSED}
+      S3_BUCKET_MATERIALS: ${S3_BUCKET_MATERIALS}
+      S3_BUCKET_CHAT: ${S3_BUCKET_CHAT:-lms-chat}
 
   backend:
     build:

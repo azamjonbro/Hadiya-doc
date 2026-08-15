@@ -5,6 +5,7 @@ import { useRouter } from 'vue-router'
 import { ROLES } from '@lms/shared'
 import { useAuthStore } from '@/stores/auth'
 import { usersApi } from '@/services/users'
+import { coursesApi } from '@/services/courses'
 import { useToast } from '@/composables/useToast'
 import AppCard from '@/components/ui/AppCard.vue'
 import AppButton from '@/components/ui/AppButton.vue'
@@ -14,6 +15,7 @@ import Modal from '@/components/ui/Modal.vue'
 import Avatar from '@/components/ui/Avatar.vue'
 import Badge from '@/components/ui/Badge.vue'
 import ProgressBar from '@/components/ui/ProgressBar.vue'
+import Pagination from '@/components/ui/Pagination.vue'
 import Skeleton from '@/components/ui/Skeleton.vue'
 import EmptyState from '@/components/ui/EmptyState.vue'
 import Icon from '@/components/ui/Icon.vue'
@@ -25,12 +27,36 @@ const toast = useToast()
 
 const roleOptions = Object.values(ROLES).map((r) => ({ value: r, label: r }))
 
+// Departments come from the accounts that actually exist rather than being
+// typed by hand: the API filters on an exact match, so a free-text box
+// turned any typo (or "manage" for "management") into an empty result with
+// no hint as to why.
+const departmentOptions = ref([])
+
 const filters = reactive({ search: '', role: '', department: '', status: '' })
+
+const hasActiveFilters = computed(() =>
+  Boolean(filters.search || filters.role || filters.department || filters.status)
+)
+
+function clearFilters() {
+  Object.assign(filters, { search: '', role: '', department: '', status: '' })
+  loadFirstPage()
+}
+const PAGE_SIZE = 15
+
 const items = ref([])
-const nextCursor = ref(null)
 const loading = ref(false)
 const errorMessage = ref('')
 const selected = ref(new Set())
+const page = ref(1)
+const total = ref(0)
+const totalPages = ref(1)
+
+// "17–31 of 48" — derived from the page rather than from items.length so it
+// stays right while a page is still loading.
+const rangeStart = computed(() => (total.value === 0 ? 0 : (page.value - 1) * PAGE_SIZE + 1))
+const rangeEnd = computed(() => Math.min(page.value * PAGE_SIZE, total.value))
 
 const showCreateModal = ref(false)
 const createSubmitting = ref(false)
@@ -45,12 +71,30 @@ const createForm = reactive({
   position: '',
   password: '',
   isActive: true,
+  courseIds: [],
 })
+const assignableCourses = ref([])
 
-function seededPercent(id, min = 15, max = 97) {
-  let hash = 0
-  for (const ch of String(id)) hash = (hash * 31 + ch.charCodeAt(0)) >>> 0
-  return min + (hash % (max - min))
+const progressByUserId = ref({})
+
+function userProgress(userId) {
+  const p = progressByUserId.value[userId]
+  if (!p || p.total === 0) return 0
+  return Math.round((p.completed / p.total) * 100)
+}
+
+async function loadProgressForVisibleUsers(users) {
+  const entries = await Promise.all(
+    users.map(async (u) => {
+      try {
+        const assignments = await usersApi.getCourses(u.id)
+        return [u.id, { completed: assignments.filter((a) => a.status === 'COMPLETED').length, total: assignments.length }]
+      } catch {
+        return [u.id, { completed: 0, total: 0 }]
+      }
+    })
+  )
+  progressByUserId.value = { ...progressByUserId.value, ...Object.fromEntries(entries) }
 }
 
 const allSelected = computed(() => items.value.length > 0 && selected.value.size === items.value.length)
@@ -64,24 +108,27 @@ function toggleOne(id) {
   selected.value = next
 }
 
-function buildParams(cursor) {
-  const params = {}
+function buildParams() {
+  const params = { page: page.value, limit: PAGE_SIZE }
   if (filters.search) params.search = filters.search
   if (filters.role) params.role = filters.role
   if (filters.department) params.department = filters.department
   if (filters.status) params.status = filters.status
-  if (cursor) params.cursor = cursor
   return params
 }
 
-async function loadFirstPage() {
+async function load() {
   loading.value = true
   errorMessage.value = ''
+  // Selection is per page: keeping ticks for rows that are no longer on
+  // screen would make the bulk-deactivate count lie about what it affects.
   selected.value = new Set()
   try {
     const result = await usersApi.list(buildParams())
     items.value = result.items
-    nextCursor.value = result.nextCursor
+    total.value = result.total
+    totalPages.value = result.totalPages
+    loadProgressForVisibleUsers(result.items)
   } catch (error) {
     errorMessage.value = error.response?.data?.message ?? String(error)
   } finally {
@@ -89,18 +136,40 @@ async function loadFirstPage() {
   }
 }
 
-async function loadMore() {
-  if (!nextCursor.value) return
-  loading.value = true
+// Any filter change invalidates the current page number — staying on page 4
+// of a result set that now has one page would show an empty screen.
+function loadFirstPage() {
+  page.value = 1
+  return load()
+}
+
+async function goToPage(next) {
+  page.value = next
+  await load()
+  window.scrollTo({ top: 0, behavior: 'smooth' })
+}
+
+async function loadDepartments() {
   try {
-    const result = await usersApi.list(buildParams(nextCursor.value))
-    items.value = [...items.value, ...result.items]
-    nextCursor.value = result.nextCursor
-  } catch (error) {
-    errorMessage.value = error.response?.data?.message ?? String(error)
-  } finally {
-    loading.value = false
+    departmentOptions.value = (await usersApi.departments()).map((name) => ({ value: name, label: name }))
+  } catch {
+    departmentOptions.value = []
   }
+}
+
+async function loadAssignableCourses() {
+  try {
+    const result = await coursesApi.list({ status: 'PUBLISHED', limit: 100 })
+    assignableCourses.value = result.items
+  } catch {
+    assignableCourses.value = []
+  }
+}
+
+function toggleCourse(courseId) {
+  const idx = createForm.courseIds.indexOf(courseId)
+  if (idx === -1) createForm.courseIds.push(courseId)
+  else createForm.courseIds.splice(idx, 1)
 }
 
 async function onCreateSubmit() {
@@ -110,7 +179,7 @@ async function onCreateSubmit() {
     await usersApi.create({ ...createForm })
     showCreateModal.value = false
     Object.assign(createForm, {
-      fullName: '', username: '', email: '', phone: '', roleName: ROLES.EMPLOYEE, department: '', position: '', password: '', isActive: true,
+      fullName: '', username: '', email: '', phone: '', roleName: ROLES.EMPLOYEE, department: '', position: '', password: '', isActive: true, courseIds: [],
     })
     await loadFirstPage()
     toast.success(t('users.created'))
@@ -125,10 +194,17 @@ async function bulkDeactivate() {
   const ids = [...selected.value]
   await Promise.all(ids.map((id) => usersApi.deactivate(id)))
   toast.success(t('users.bulkDeactivated', { count: ids.length }))
-  await loadFirstPage()
+  // Stay where the user was working. If a status filter emptied the last
+  // page, step back rather than showing a blank table.
+  await load()
+  if (items.value.length === 0 && page.value > 1) await goToPage(page.value - 1)
 }
 
-onMounted(loadFirstPage)
+onMounted(() => {
+  load()
+  loadDepartments()
+  loadAssignableCourses()
+})
 </script>
 
 <template>
@@ -138,7 +214,10 @@ onMounted(loadFirstPage)
       <AppButton v-if="auth.hasPermission('user:create')" icon="plus" @click="showCreateModal = true">{{ t('users.newUser') }}</AppButton>
     </div>
 
-    <div class="mt-5 flex flex-wrap items-end gap-3">
+    <!-- items-center, not items-end: none of these controls has a label, and
+         the button is 4px shorter than the fields, so bottom alignment left
+         it visibly sunk below the row. -->
+    <div class="mt-5 flex flex-wrap items-center gap-3">
       <div class="w-56">
         <AppInput v-model="filters.search" icon="search" :placeholder="t('users.filters.search')" @keyup.enter="loadFirstPage" />
       </div>
@@ -146,7 +225,12 @@ onMounted(loadFirstPage)
         <AppSelect v-model="filters.role" :placeholder="t('users.filters.allRoles')" :options="roleOptions" @update:model-value="loadFirstPage" />
       </div>
       <div class="w-44">
-        <AppInput v-model="filters.department" :placeholder="t('users.filters.department')" @keyup.enter="loadFirstPage" />
+        <AppSelect
+          v-model="filters.department"
+          :placeholder="t('users.filters.allDepartments')"
+          :options="departmentOptions"
+          @update:model-value="loadFirstPage"
+        />
       </div>
       <div class="w-40">
         <AppSelect
@@ -156,7 +240,10 @@ onMounted(loadFirstPage)
           @update:model-value="loadFirstPage"
         />
       </div>
-      <AppButton variant="outline" @click="loadFirstPage">{{ t('users.filters.apply') }}</AppButton>
+      <AppButton variant="outline" icon="search" @click="loadFirstPage">{{ t('users.filters.apply') }}</AppButton>
+      <AppButton v-if="hasActiveFilters" variant="ghost" icon="close" @click="clearFilters">
+        {{ t('users.filters.clear') }}
+      </AppButton>
     </div>
 
     <Transition enter-active-class="transition-default" enter-from-class="opacity-0 -translate-y-1">
@@ -176,7 +263,7 @@ onMounted(loadFirstPage)
             <th class="px-2 py-3">{{ t('users.fields.fullName') }}</th>
             <th class="px-4 py-3">{{ t('users.role') }}</th>
             <th class="px-4 py-3">{{ t('users.fields.department') }}</th>
-            <th class="px-4 py-3">{{ t('dashboard.progress.title') }}</th>
+            <th class="px-4 py-3">{{ t('users.columns.progress') }}</th>
             <th class="px-4 py-3">{{ t('users.status') }}</th>
             <th class="w-10 px-4 py-3" />
           </tr>
@@ -215,8 +302,8 @@ onMounted(loadFirstPage)
             <td class="px-4 py-3 text-ink-muted">{{ user.department || '—' }}</td>
             <td class="px-4 py-3">
               <div class="flex items-center gap-2">
-                <div class="w-20"><ProgressBar :value="seededPercent(user.id)" size="sm" /></div>
-                <span class="text-caption text-ink-faint">{{ seededPercent(user.id) }}%</span>
+                <div class="w-20"><ProgressBar :value="userProgress(user.id)" size="sm" /></div>
+                <span class="text-caption text-ink-faint">{{ userProgress(user.id) }}%</span>
               </div>
             </td>
             <td class="px-4 py-3">
@@ -231,8 +318,13 @@ onMounted(loadFirstPage)
       <EmptyState v-if="!loading && items.length === 0" icon="users" :title="t('users.empty')" />
     </div>
 
-    <div class="mt-4 flex justify-center">
-      <AppButton v-if="nextCursor" variant="outline" :loading="loading" @click="loadMore">{{ t('users.loadMore') }}</AppButton>
+    <!-- Kept mounted whenever there are results, even for a single page, so
+         the count stays visible and the table does not jump between pages. -->
+    <div v-if="total > 0" class="mt-4 flex flex-wrap items-center justify-between gap-3">
+      <p class="text-small text-ink-muted">
+        {{ t('common.pagination.range', { from: rangeStart, to: rangeEnd, total }) }}
+      </p>
+      <Pagination v-if="totalPages > 1" :page="page" :total-pages="totalPages" @update:page="goToPage" />
     </div>
 
     <Modal v-model="showCreateModal" :title="t('users.newUser')" size="lg">
@@ -245,6 +337,22 @@ onMounted(loadFirstPage)
         <AppInput v-model="createForm.department" :label="t('users.fields.department')" />
         <AppInput v-model="createForm.position" :label="t('users.fields.position')" />
         <AppInput v-model="createForm.password" type="password" required :label="t('users.fields.password')" />
+
+        <div class="col-span-2">
+          <p class="mb-1.5 text-small font-medium text-ink">{{ t('users.fields.assignCourses') }}</p>
+          <div v-if="assignableCourses.length" class="max-h-40 space-y-1.5 overflow-y-auto rounded-md border border-border-strong p-3">
+            <label v-for="course in assignableCourses" :key="course.id" class="flex items-center gap-2 text-small text-ink">
+              <input
+                type="checkbox"
+                class="h-4 w-4 rounded border-border-strong text-primary"
+                :checked="createForm.courseIds.includes(course.id)"
+                @change="toggleCourse(course.id)"
+              />
+              {{ course.title }}
+            </label>
+          </div>
+          <p v-else class="text-small text-ink-faint">{{ t('courses.empty') }}</p>
+        </div>
 
         <p v-if="createError" class="col-span-2 text-small text-danger">{{ createError }}</p>
 

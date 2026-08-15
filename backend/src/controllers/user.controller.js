@@ -1,14 +1,25 @@
 import { userService } from '../services/users/user.service.js'
 import { courseAssignmentService } from '../services/courses/courseAssignment.service.js'
+import { learningStatsService } from '../services/analytics/learningStats.service.js'
+import { employeeInsightsService } from '../services/analytics/employeeInsights.service.js'
 import { userRepository } from '../repositories/user.repository.js'
 import { roleRepository } from '../repositories/role.repository.js'
 import { asyncHandler } from '../utils/asyncHandler.js'
 import { sendSuccess } from '../utils/apiResponse.js'
+import { ApiError } from '../utils/ApiError.js'
 
 export const userController = {
   me: asyncHandler(async (req, res) => {
     const user = await userRepository.findById(req.user.id)
     const role = await roleRepository.findById(req.user.roleId)
+    // The access token outlives the account by up to its TTL, so a user
+    // deactivated (or a role deleted) mid-session still arrives here with a
+    // structurally valid token. Answer 401 so the client clears the session
+    // and sends them back to login, rather than dereferencing null and
+    // returning a 500 the frontend reads as "the server is broken".
+    if (!user || !user.isActive || !role) {
+      throw ApiError.unauthorized('Account is no longer active', 'ACCOUNT_INACTIVE')
+    }
     sendSuccess(res, {
       id: user._id.toString(),
       fullName: user.fullName,
@@ -26,6 +37,10 @@ export const userController = {
   list: asyncHandler(async (req, res) => {
     const result = await userService.list(req.user, req.validatedQuery)
     sendSuccess(res, result)
+  }),
+
+  listDepartments: asyncHandler(async (req, res) => {
+    sendSuccess(res, await userService.listDepartments(req.user))
   }),
 
   getById: asyncHandler(async (req, res) => {
@@ -50,5 +65,25 @@ export const userController = {
 
   getCourses: asyncHandler(async (req, res) => {
     sendSuccess(res, await courseAssignmentService.listForUser(req.user, req.params.id))
+  }),
+
+  getLearningStats: asyncHandler(async (req, res) => {
+    sendSuccess(res, await learningStatsService.getForUser(req.params.id))
+  }),
+
+  getPerformance: asyncHandler(async (req, res) => {
+    sendSuccess(res, await employeeInsightsService.getPerformance(req.user, req.params.id))
+  }),
+
+  getActivity: asyncHandler(async (req, res) => {
+    sendSuccess(res, await employeeInsightsService.getActivity(req.user, req.params.id, req.validatedQuery))
+  }),
+
+  getTestResults: asyncHandler(async (req, res) => {
+    sendSuccess(res, await employeeInsightsService.getTestResults(req.user, req.params.id))
+  }),
+
+  getTasks: asyncHandler(async (req, res) => {
+    sendSuccess(res, await employeeInsightsService.getTasks(req.user, req.params.id))
   }),
 }

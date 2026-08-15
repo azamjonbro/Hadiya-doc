@@ -1,4 +1,5 @@
 import { notificationRepository } from '../../repositories/notification.repository.js'
+import { emitNotification } from '../../realtime/socket.js'
 import { ApiError } from '../../utils/ApiError.js'
 
 function toPublicNotification(n) {
@@ -19,8 +20,8 @@ export const notificationService = {
   // Called from other services (course assignment, tasks, scheduled
   // reminders, ...) — never exposed as its own authenticated endpoint,
   // since "who to notify" is always decided by the calling domain logic.
-  notify({ userId, type, title, message = '', relatedEntityType = null, relatedEntityId = null, severity = 'INFO' }) {
-    return notificationRepository.create({
+  async notify({ userId, type, title, message = '', relatedEntityType = null, relatedEntityId = null, severity = 'INFO' }) {
+    const notification = await notificationRepository.create({
       userId,
       type,
       title,
@@ -29,6 +30,15 @@ export const notificationService = {
       relatedEntityId,
       severity,
     })
+
+    // Pushed the moment it is persisted, so the bell badge and toast are
+    // live for every notification type (task assigned, course assigned,
+    // deadline reminders, ...) instead of waiting out the client's 45s
+    // poll. Every caller of notify() gets this for free — deliberately
+    // done here rather than at each call site.
+    emitNotification(String(userId), toPublicNotification(notification))
+
+    return notification
   },
 
   async list(actor, query) {

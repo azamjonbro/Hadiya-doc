@@ -7,5 +7,7 @@ export const updateVideoSchema = z
     required: z.boolean().optional(),
     order: z.coerce.number().int().optional(),
     status: z.enum(['DRAFT', 'PUBLISHED']).optional(),
+    pointsEnabled: z.boolean().optional(),
+    points: z.coerce.number().int().min(0).optional(),
   })
   .refine((data) => Object.keys(data).length > 0, { message: 'No fields to update' })

@@ -1,12 +1,15 @@
 <script setup>
-import { onMounted, reactive, ref } from 'vue'
+import { onMounted, reactive, ref, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
+import { ROLES } from '@lms/shared'
 import { useAuthStore } from '@/stores/auth'
 import { coursesApi } from '@/services/courses'
 import { topicsApi } from '@/services/topics'
-import TopicVideosPanel from '@/components/TopicVideosPanel.vue'
+import TopicContentPanel from '@/components/TopicContentPanel.vue'
 import AssignCoursePanel from '@/components/AssignCoursePanel.vue'
+import CourseDangerActions from '@/components/CourseDangerActions.vue'
+import AttentionPolicyForm from '@/components/AttentionPolicyForm.vue'
 import AppCard from '@/components/ui/AppCard.vue'
 import AppButton from '@/components/ui/AppButton.vue'
 import AppInput from '@/components/ui/AppInput.vue'
@@ -28,12 +31,30 @@ const course = ref(null)
 const topics = ref([])
 const expandedVideosTopicId = ref(null)
 
-const form = reactive({ title: '', description: '', status: 'DRAFT' })
+const form = reactive({ title: '', description: '', status: 'DRAFT', targetRoles: [], department: '', autoAssign: false })
+const showEditForm = ref(false)
+
+const roleList = Object.values(ROLES)
+function toggleRole(role) {
+  const idx = form.targetRoles.indexOf(role)
+  if (idx === -1) form.targetRoles.push(role)
+  else form.targetRoles.splice(idx, 1)
+}
+const hasTargeting = computed(() => form.targetRoles.length > 0 || form.department.trim().length > 0)
 
 const showAddTopic = ref(false)
 const addTopicSubmitting = ref(false)
 const addTopicError = ref('')
 const addTopicForm = reactive({ title: '', order: 0, status: 'DRAFT' })
+
+function nextTopicOrder() {
+  return topics.value.length ? Math.max(...topics.value.map((tp) => tp.order)) + 1 : 0
+}
+
+function toggleAddTopic() {
+  showAddTopic.value = !showAddTopic.value
+  if (showAddTopic.value) addTopicForm.order = nextTopicOrder()
+}
 
 const editingTopicId = ref(null)
 const editTopicForm = reactive({ title: '', order: 0, status: 'DRAFT' })
@@ -52,6 +73,9 @@ async function load() {
     form.title = course.value.title
     form.description = course.value.description
     form.status = course.value.status
+    form.targetRoles = [...(course.value.targetRoles ?? [])]
+    form.department = course.value.department ?? ''
+    form.autoAssign = false
     topics.value = await coursesApi.listTopics(route.params.id)
   } catch (error) {
     errorMessage.value = error.response?.data?.message ?? String(error)
@@ -72,13 +96,17 @@ async function onSave() {
   }
 }
 
-async function onArchive() {
-  try {
-    course.value = await coursesApi.archive(route.params.id)
-    form.status = course.value.status
-  } catch (error) {
-    errorMessage.value = error.response?.data?.message ?? String(error)
-  }
+// Both emitted by CourseDangerActions, which owns the confirmation dialogs
+// and the API calls themselves.
+function onCourseArchived(updated) {
+  course.value = updated
+  form.status = updated.status
+}
+
+// The course this page is about no longer exists — there is nothing left to
+// render here, so fall back to the list.
+function onCourseDeleted() {
+  router.push('/admin/courses')
 }
 
 async function onAddTopicSubmit() {
@@ -88,7 +116,7 @@ async function onAddTopicSubmit() {
     const topic = await coursesApi.createTopic(route.params.id, { ...addTopicForm })
     topics.value = [...topics.value, topic].sort((a, b) => a.order - b.order)
     showAddTopic.value = false
-    Object.assign(addTopicForm, { title: '', order: 0, status: 'DRAFT' })
+    Object.assign(addTopicForm, { title: '', order: nextTopicOrder(), status: 'DRAFT' })
   } catch (error) {
     addTopicError.value = error.response?.data?.message ?? String(error)
   } finally {
@@ -143,9 +171,18 @@ onMounted(load)
           <h1 class="text-h1 text-ink">{{ course.title }}</h1>
           <Badge :variant="statusBadge[course.status]">{{ t(`courses.status.${course.status.toLowerCase()}`) }}</Badge>
         </div>
+        <!-- Header rather than inside the edit form: the form is collapsed by
+             default, and archive/delete shouldn't be reachable only by first
+             clicking "edit". -->
+        <div class="flex flex-wrap items-center gap-2">
+          <AppButton variant="ghost" size="sm" :icon="showEditForm ? 'chevron-up' : 'pencil'" @click="showEditForm = !showEditForm">
+            {{ showEditForm ? t('courses.cancel') : t('courses.edit') }}
+          </AppButton>
+          <CourseDangerActions :course="course" size="sm" @archived="onCourseArchived" @deleted="onCourseDeleted" />
+        </div>
       </div>
 
-      <AppCard class="mt-6">
+      <AppCard v-if="showEditForm" class="mt-6">
         <h2 class="text-h3 text-ink">{{ t('courses.fields.title') }}</h2>
         <form class="mt-4 grid grid-cols-2 gap-4" @submit.prevent="onSave">
           <div class="col-span-2">
@@ -167,11 +204,46 @@ onMounted(load)
             :options="statusOptions.map((o) => ({ value: o.value, label: t(o.label) }))"
           />
 
+          <div class="col-span-2">
+            <p class="mb-1.5 text-small font-medium text-ink">{{ t('courses.targeting.rolesLabel') }}</p>
+            <div class="flex flex-wrap gap-2">
+              <label
+                v-for="role in roleList"
+                :key="role"
+                class="flex items-center gap-2 rounded-md border px-3 py-1.5 text-small transition-default"
+                :class="[
+                  form.targetRoles.includes(role) ? 'border-primary bg-primary-subtle text-primary' : 'border-border-strong text-ink-muted hover:bg-surface-2',
+                  auth.hasPermission('course:update') ? 'cursor-pointer' : 'opacity-50',
+                ]"
+              >
+                <input
+                  type="checkbox"
+                  class="sr-only"
+                  :checked="form.targetRoles.includes(role)"
+                  :disabled="!auth.hasPermission('course:update')"
+                  @change="toggleRole(role)"
+                />
+                {{ role }}
+              </label>
+            </div>
+          </div>
+          <AppInput
+            v-model="form.department"
+            :label="t('courses.targeting.departmentLabel')"
+            :placeholder="t('courses.targeting.departmentPlaceholder')"
+            :disabled="!auth.hasPermission('course:update')"
+          />
+          <p class="col-span-2 -mt-2 text-caption text-ink-faint">{{ t('courses.targeting.noRestrictionHint') }}</p>
+          <label v-if="hasTargeting" class="col-span-2 flex items-center gap-2 text-small text-ink">
+            <input v-model="form.autoAssign" type="checkbox" class="h-4 w-4 rounded border-border-strong text-primary" :disabled="!auth.hasPermission('course:update')" />
+            {{ t('courses.targeting.autoAssignLabel') }}
+          </label>
+          <p v-if="hasTargeting" class="col-span-2 -mt-2 text-caption text-ink-faint">{{ t('courses.targeting.autoAssignHint') }}</p>
+
           <p v-if="errorMessage" class="col-span-2 text-small text-danger">{{ errorMessage }}</p>
 
           <div v-if="auth.hasPermission('course:update')" class="col-span-2 flex gap-3 pt-1">
             <AppButton type="submit" :loading="saving">{{ saving ? t('courses.saving') : t('courses.save') }}</AppButton>
-            <AppButton v-if="auth.hasPermission('course:delete')" type="button" variant="danger" @click="onArchive">{{ t('courses.archive') }}</AppButton>
           </div>
         </form>
       </AppCard>
@@ -179,7 +251,7 @@ onMounted(load)
       <div class="mt-8">
         <div class="flex items-center justify-between">
           <h2 class="text-h3 text-ink">{{ t('courses.topics.title') }}</h2>
-          <AppButton v-if="auth.hasPermission('course:update')" variant="outline" size="sm" :icon="showAddTopic ? '' : 'plus'" @click="showAddTopic = !showAddTopic">
+          <AppButton v-if="auth.hasPermission('course:update')" variant="outline" size="sm" :icon="showAddTopic ? '' : 'plus'" @click="toggleAddTopic">
             {{ showAddTopic ? t('courses.cancel') : t('courses.topics.add') }}
           </AppButton>
         </div>
@@ -220,8 +292,8 @@ onMounted(load)
                   <Badge :variant="statusBadge[topic.status]" size="sm" class="mt-1">{{ topic.status }}</Badge>
                 </div>
                 <div class="flex items-center gap-1">
-                  <AppButton variant="ghost" size="sm" :icon="expandedVideosTopicId === topic.id ? 'chevron-up' : 'video'" @click="expandedVideosTopicId = expandedVideosTopicId === topic.id ? null : topic.id">
-                    {{ expandedVideosTopicId === topic.id ? t('videos.hide') : t('videos.manage') }}
+                  <AppButton variant="ghost" size="sm" :icon="expandedVideosTopicId === topic.id ? 'chevron-up' : 'layers'" @click="expandedVideosTopicId = expandedVideosTopicId === topic.id ? null : topic.id">
+                    {{ expandedVideosTopicId === topic.id ? t('content.hide') : t('content.manage') }}
                   </AppButton>
                   <template v-if="auth.hasPermission('course:update')">
                     <AppButton variant="ghost" size="sm" icon="pencil" @click="startEditTopic(topic)" />
@@ -229,7 +301,7 @@ onMounted(load)
                   </template>
                 </div>
               </div>
-              <TopicVideosPanel v-if="expandedVideosTopicId === topic.id" :topic-id="topic.id" />
+              <TopicContentPanel v-if="expandedVideosTopicId === topic.id" :topic-id="topic.id" />
             </template>
           </AppCard>
 
@@ -240,6 +312,16 @@ onMounted(load)
       <div v-if="auth.hasPermission('course:assign')" class="mt-8">
         <h2 class="mb-3 text-h3 text-ink">{{ t('courses.access.assign') }}</h2>
         <AssignCoursePanel :course-id="course.id" />
+      </div>
+
+      <!-- Anything left untouched here keeps following the global policy in
+           Settings, so a course only stores what it genuinely differs on. -->
+      <div class="mt-8">
+        <h2 class="mb-1 text-h3 text-ink">{{ t('attention.admin.title') }}</h2>
+        <p class="mb-3 text-caption text-ink-faint">{{ t('attention.admin.courseHint') }}</p>
+        <AppCard>
+          <AttentionPolicyForm :course-id="course.id" :readonly="!auth.hasPermission('course:update')" />
+        </AppCard>
       </div>
     </template>
   </div>

@@ -9,6 +9,8 @@
     "news": "Yangiliklar",
     "tasks": "Vazifalar",
     "events": "Tadbirlar",
+    "leaderboard": "Reyting",
+    "chat": "Chat",
     "notifications": "Bildirishnomalar",
     "settings": "Sozlamalar",
     "profile": "Profil",
@@ -48,6 +50,7 @@
     "optional": "Ixtiyoriy",
     "today": "Bugun",
     "tomorrow": "Ertaga",
+    "clear": "Tozalash",
     "minRead": "daq. o'qish",
     "goToDashboard": "Bosh sahifaga",
     "goBack": "Orqaga"
@@ -134,6 +137,7 @@
     "empty": "Kurslar topilmadi",
     "assignedToYou": "Sizga biriktirilgan",
     "catalog": "Kurslar katalogi",
+    "join": "Qo'shilish",
     "noAssignments": "Sizga hali kurs biriktirilmagan",
     "mandatory": "Majburiy",
     "optional": "Ixtiyoriy",
@@ -186,6 +190,160 @@
       "PACKAGING": "Video paketlanmoqda",
       "READY": "Tayyor",
       "FAILED": "Videoni qayta ishlashda xatolik yuz berdi"
+    },
+    "lockedHint": "Avvalgi darsni to'liq ko'rganingizdan keyin ochiladi.",
+    "lockedTitle": "Bu dars hali ochilmagan"
+  },
+  "quiz": {
+    "title": "Test",
+    "submit": "Yuborish",
+    "passed": "Test muvaffaqiyatli topshirildi!",
+    "failed": "Test topshirilmadi",
+    "score": "Natija",
+    "passScoreShort": "o'tish balli",
+    "retry": "Qayta urinish",
+    "open": "Testni ochish",
+    "readyHint": "Video ko'rildi — endi testni yechishingiz mumkin.",
+    "watchFirstHint": "Test videoni to'liq ko'rganingizdan keyin ochiladi.",
+    "backToVideo": "Videoga qaytish",
+    "notFound": "Test topilmadi"
+  },
+  "gamification": {
+    "points": "ball",
+    "myPoints": "Mening ballarim",
+    "noBadgesYet": "Hali yutuqlar yo'q",
+    "empty": "Reytingda hali hech kim yo'q",
+    "badges": {
+      "FIRST_STEP": {
+        "title": "Birinchi qadam"
+      },
+      "QUIZ_TAKER": {
+        "title": "Test ishtirokchisi"
+      },
+      "QUIZ_MASTER": {
+        "title": "Test ustasi"
+      },
+      "POINTS_100": {
+        "title": "100 ball"
+      },
+      "POINTS_500": {
+        "title": "500 ball"
+      }
+    }
+  },
+  "chat": {
+    "title": "Chat",
+    "subtitle": "Hamkasblar bilan to'g'ridan-to'g'ri yozishing.",
+    "summary": "{chats} suhbat · {people} xodim",
+    "placeholder": "Xabar yozing...",
+    "send": "Yuborish",
+    "empty": "Hali xabar yo'q",
+    "emptyHint": "Birinchi xabarni yozib, suhbatni boshlang.",
+    "actions": {
+      "edit": "Tahrirlash",
+      "delete": "O'chirish",
+      "remove": "Olib tashlash"
+    },
+    "inbox": {
+      "empty": "Hali suhbatlar yo'q",
+      "emptyHint": "«Xodimlar» bo'limidan kerakli odamni tanlab, yozishni boshlang.",
+      "noMessages": "Xabar yo'q",
+      "noMatches": "Hech narsa topilmadi",
+      "noPeople": "Xodimlar topilmadi",
+      "newBadge": "Yangi",
+      "selectPrompt": "Xabarlarni ko'rish uchun suhbatni tanlang",
+      "selectHint": "Yoki «Xodimlar» ro'yxatidan yangi suhbat boshlang.",
+      "searchChats": "Suhbatlardan qidirish",
+      "searchPeople": "Ism, bo'lim yoki lavozim",
+      "tabs": {
+        "chats": "Suhbatlar",
+        "people": "Xodimlar"
+      },
+      "groups": {
+        "new": "Yangi qo'shilganlar",
+        "all": "Barcha xodimlar"
+      }
+    },
+    "header": {
+      "online": "Onlayn",
+      "offline": "Oflayn",
+      "typing": "yozmoqda...",
+      "searchInChat": "Suhbatdan qidirish",
+      "searchPlaceholder": "Xabarlardan qidirish...",
+      "noResults": "Natija topilmadi",
+      "details": "Ma'lumotlar"
+    },
+    "compose": {
+      "bold": "Qalin",
+      "italic": "Kursiv",
+      "code": "Kod",
+      "quote": "Iqtibos",
+      "list": "Ro'yxat",
+      "link": "Havola",
+      "preview": "Ko'rish",
+      "write": "Yozish",
+      "markdownHint": "Markdown qo'llab-quvvatlanadi",
+      "attachImage": "Rasm biriktirish",
+      "attachFile": "Fayl biriktirish",
+      "recordVoice": "Ovozli xabar yozish"
+    },
+    "voice": {
+      "unsupported": "Brauzeringiz ovoz yozishni qo'llab-quvvatlamaydi",
+      "permissionDenied": "Mikrofonga ruxsat berilmadi",
+      "send": "Ovozli xabarni yuborish"
+    },
+    "attachment": {
+      "image": "Rasm",
+      "file": "Fayl",
+      "voice": "Ovozli xabar",
+      "download": "Yuklab olish"
+    },
+    "message": {
+      "edited": "tahrirlangan",
+      "editedAt": "{value} da tahrirlangan",
+      "deleted": "Xabar o'chirilgan"
+    },
+    "system": {
+      "label": {
+        "TASK_ASSIGNED": "Yangi vazifa",
+        "TASK_COMPLETED": "Vazifa bajarildi",
+        "TASK_STATUS_CHANGED": "Vazifa holati o'zgardi",
+        "DEFAULT": "Tizim xabari"
+      },
+      "text": {
+        "TASK_ASSIGNED": "«{title}» vazifasi biriktirildi",
+        "TASK_COMPLETED": "«{title}» vazifasi bajarildi",
+        "TASK_STATUS_CHANGED": "«{title}» vazifasi holati: {status}",
+        "DEFAULT": "{title}"
+      }
+    },
+    "info": {
+      "title": "Suhbat ma'lumotlari",
+      "close": "Yopish",
+      "person": "Xodim",
+      "thread": "Suhbat",
+      "position": "Lavozim",
+      "department": "Bo'lim",
+      "role": "Rol",
+      "username": "Login",
+      "email": "Email",
+      "joinedAt": "Ro'yxatdan o'tgan",
+      "createdAt": "Yaratilgan",
+      "updatedAt": "Yangilangan",
+      "lastMessageAt": "Oxirgi xabar",
+      "messageCount": "Xabarlar soni",
+      "peerReadAt": "O'qilgan vaqti",
+      "notReadYet": "Hali o'qilmagan",
+      "media": "Rasmlar",
+      "files": "Fayllar"
+    },
+    "time": {
+      "today": "Bugun",
+      "yesterday": "Kecha",
+      "justNow": "hozir",
+      "minutesAgo": "{value} daqiqa oldin",
+      "hoursAgo": "{value} soat oldin",
+      "daysAgo": "{value} kun oldin"
     }
   },
   "aiChat": {
@@ -268,12 +426,23 @@
   },
   "settings": {
     "title": "Sozlamalar",
+    "tabs": {
+      "profile": "Profil",
+      "activity": "Faollik",
+      "preferences": "Ko'rinish"
+    },
     "sections": {
       "profile": "Profil",
       "security": "Xavfsizlik",
+      "activity": "Faollik",
+      "badges": "Yutuqlar",
       "appearance": "Ko'rinish",
       "language": "Til",
       "notifications": "Bildirishnomalar"
+    },
+    "activity": {
+      "videosCompleted": "Ko'rilgan videolar",
+      "quizzesPassed": "Topshirilgan testlar"
     },
     "appearance": {
       "theme": "Mavzu",
@@ -303,5 +472,69 @@
     "answerPlaceholder": "Javob yozing...",
     "answer": "Javob berish",
     "answers": "{count} ta javob"
+  },
+  "assessment": {
+    "notFound": "Test topilmadi",
+    "questionCount": "{count} ta savol",
+    "passScore": "O'tish balli: {value}%",
+    "answered": "{answered} / {total} javob berildi",
+    "submit": "Testni topshirish",
+    "startButton": "Testni boshlash",
+    "passed": "Test topshirildi",
+    "failed": "Test topshirilmadi",
+    "score": "Natija",
+    "retry": "Qayta urinish",
+    "backToCourse": "Kursga qaytish",
+    "timeUp": "Vaqt tugadi — belgilangan javoblar hisobga olindi.",
+    "rules": {
+      "title": "Test qoidalari",
+      "minutes": "daqiqa",
+      "questions": "savol",
+      "passScore": "o'tish balli",
+      "timer": "Boshlanganidan keyin {value} daqiqa vaqt beriladi. Vaqt tugasa, belgilangan javoblar avtomatik topshiriladi.",
+      "tabs": "Boshqa tab yoki oynaga o'tmang. Birinchi marta ogohlantirish beriladi, ikkinchi marta test tugatiladi.",
+      "singleSitting": "Test bir o'tirishda yechiladi. Sahifani yangilasangiz vaqt qaytadan boshlanmaydi — davom etadi.",
+      "noCopy": "Savollarni nusxalash va belgilash o'chirilgan."
+    },
+    "focus": {
+      "counter": "Chiqish: {count}/{limit}",
+      "warningTitle": "Ogohlantirish",
+      "warningBody": "Siz test oynasidan chiqdingiz ({count}/{limit}). Yana bir marta chiqsangiz, test avtomatik tugatiladi va shu paytgacha belgilangan javoblar hisoblanadi.",
+      "warningAck": "Tushunarli, davom etaman",
+      "terminated": "Test oynasidan chiqib ketganingiz uchun urinish tugatildi."
+    }
+  },
+  "attention": {
+    "badge": "Kamera yoniq",
+    "loading": "Kamera tayyorlanmoqda...",
+    "calibrating": "Sozlanmoqda — ekranga qarab turing",
+    "consent": {
+      "title": "Bu dars kamera bilan kuzatiladi",
+      "body": "Video davomida diqqatingiz kamera orqali tekshiriladi. Ekrandan uzoq vaqt chalg'isangiz ogohlantirish chiqadi va video to'xtaydi.",
+      "privacy": "Kamera tasviri shu qurilmadan chiqmaydi: barcha tahlil brauzeringizda bajariladi va kadrlar saqlanmaydi ham, yuborilmaydi ham. Hisobotga faqat 'qaradi / chalg'idi' belgisi yoziladi.",
+      "accept": "Kameraga ruxsat berish",
+      "requiredHint": "Bu darsni kamerasiz ko'rib bo'lmaydi."
+    },
+    "warning": {
+      "title": "Diqqatingiz bo'lindi",
+      "lookingAway": "Ekrandan boshqa tomonga qarayapsiz.",
+      "noFace": "Kamerada yuzingiz ko'rinmayapti.",
+      "resumeHint": "Ekranga qayting — video avtomatik davom etadi."
+    },
+    "lockout": {
+      "title": "Video vaqtincha bloklandi",
+      "body": "Bir necha marta chalg'idingiz. Kutib turing va darsga qayting.",
+      "seconds": "soniya"
+    },
+    "denied": {
+      "title": "Kameraga ruxsat berilmadi",
+      "body": "Bu darsni kuzatuv bilan ko'rish uchun brauzer sozlamalaridan kameraga ruxsat bering.",
+      "retry": "Qayta urinish",
+      "noBypass": "Bu darsni kamerasiz ko'rib bo'lmaydi."
+    },
+    "error": {
+      "title": "Kamera ishga tushmadi",
+      "body": "Kamerani ishga tushirib bo'lmadi. Boshqa dastur uni band qilgan bo'lishi mumkin."
+    }
   }
 }

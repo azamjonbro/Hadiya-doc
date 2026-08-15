@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia'
 import { http, csrfHeader } from '@/services/http'
+import { useChatStore } from './chat'
 
 export const useAuthStore = defineStore('auth', {
   state: () => ({
@@ -21,11 +22,13 @@ export const useAuthStore = defineStore('auth', {
     setSession({ accessToken, user }) {
       this.accessToken = accessToken
       this.user = user
+      useChatStore().init(accessToken, user.id)
     },
 
     clearSession() {
       this.accessToken = null
       this.user = null
+      useChatStore().reset()
     },
 
     async login(identifier, password, captchaToken) {

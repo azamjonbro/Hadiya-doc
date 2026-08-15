@@ -11,7 +11,8 @@ const taskSchema = new Schema(
     attachments: { type: [String], default: [] },
     status: { type: String, enum: ['TODO', 'IN_PROGRESS', 'COMPLETED', 'CANCELLED'], default: 'TODO' },
     completedAt: { type: Date, default: null },
-    // Dedup marker for the scheduled reminder job.
+    // Dedup markers for the scheduled reminder job.
+    deadlineReminderSentAt: { type: Date, default: null },
     overdueReminderSentAt: { type: Date, default: null },
   },
   { timestamps: true }

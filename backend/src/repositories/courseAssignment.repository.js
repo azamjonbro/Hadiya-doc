@@ -17,8 +17,34 @@ export const courseAssignmentRepository = {
     return CourseAssignment.find({ courseId }).sort({ assignedAt: -1 })
   },
 
+  listByUsersAndCourses(userIds, courseIds) {
+    return CourseAssignment.find({ userId: { $in: userIds }, courseId: { $in: courseIds } })
+  },
+
   create(data) {
     return CourseAssignment.create(data)
+  },
+
+  insertManyIgnoringDuplicates(rows) {
+    // ordered:false so one already-enrolled user doesn't abort the rest of
+    // the batch; the unique {userId, courseId} index is what makes the
+    // whole operation safely repeatable. Only duplicate-key failures are
+    // swallowed — anything else still has to surface.
+    return CourseAssignment.insertMany(rows, { ordered: false }).catch((error) => {
+      const writeErrors = error.writeErrors ?? (error.code === 11000 ? [error] : [])
+      if (writeErrors.length && writeErrors.every((e) => (e.code ?? e.err?.code) === 11000)) {
+        return error.insertedDocs ?? []
+      }
+      throw error
+    })
+  },
+
+  // Only rows this group created — see the groupId comment on the model.
+  deleteByGroup({ groupId, userIds, courseIds }) {
+    const filter = { groupId }
+    if (userIds) filter.userId = { $in: userIds }
+    if (courseIds) filter.courseId = { $in: courseIds }
+    return CourseAssignment.deleteMany(filter)
   },
 
   updateById(id, data) {

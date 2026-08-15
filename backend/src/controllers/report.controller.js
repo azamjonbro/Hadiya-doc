@@ -14,9 +14,9 @@ export const reportController = {
 
   export: asyncHandler(async (req, res) => {
     const { type } = req.params
-    const { format } = req.validatedQuery
+    const { format, ...filters } = req.validatedQuery
 
-    const { columns, rows } = await reportDataService.build(type)
+    const { columns, rows } = await reportDataService.build(type, filters)
     const filename = filenameFor(type, format)
     res.setHeader('Content-Disposition', `attachment; filename="${filename}"`)
 

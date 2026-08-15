@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia'
 import { http, csrfHeader } from '@/services/http'
+import { useChatStore } from './chat'
 
 const ADMIN_APP_ROLES = ['SUPERADMIN', 'ADMIN', 'MANAGER']
 
@@ -14,6 +15,9 @@ export const useAuthStore = defineStore('auth', {
     isAuthenticated: (state) => Boolean(state.accessToken && state.user),
     permissions: (state) => state.user?.permissions ?? [],
     canUseAdminApp: (state) => ADMIN_APP_ROLES.includes(state.user?.role),
+    // Gate for the few irreversible actions that stay with SUPERADMIN even
+    // when the matching permission has been granted more widely.
+    isSuperAdmin: (state) => state.user?.role === 'SUPERADMIN',
   },
 
   actions: {
@@ -24,11 +28,13 @@ export const useAuthStore = defineStore('auth', {
     setSession({ accessToken, user }) {
       this.accessToken = accessToken
       this.user = user
+      if (ADMIN_APP_ROLES.includes(user.role)) useChatStore().init(accessToken, user.id)
     },
 
     clearSession() {
       this.accessToken = null
       this.user = null
+      useChatStore().reset()
     },
 
     async login(identifier, password, captchaToken) {

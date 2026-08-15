@@ -24,11 +24,11 @@ const assignments = ref([])
 const catalog = ref([])
 const search = ref('')
 const activeTab = ref('all')
+const enrollingId = ref(null)
+const progressByCourseId = ref({})
 
-function seededPercent(id, min = 18, max = 96) {
-  let hash = 0
-  for (const ch of String(id)) hash = (hash * 31 + ch.charCodeAt(0)) >>> 0
-  return min + (hash % (max - min))
+function courseProgress(courseId) {
+  return progressByCourseId.value[courseId]?.completionPercent ?? 0
 }
 
 function badgeVariant(a) {
@@ -88,10 +88,28 @@ async function load() {
     const courses = await Promise.all(myAssignments.map((a) => coursesApi.getById(a.courseId)))
     assignments.value = myAssignments.map((a, i) => ({ ...a, course: courses[i] }))
     catalog.value = catalogResult.items
+
+    const progressEntries = await Promise.all(
+      myAssignments.map((a) => coursesApi.getMyProgress(a.courseId).then((p) => [a.courseId, p]))
+    )
+    progressByCourseId.value = Object.fromEntries(progressEntries)
   } catch (error) {
     errorMessage.value = error.response?.data?.message ?? String(error)
   } finally {
     loading.value = false
+  }
+}
+
+async function enroll(course) {
+  enrollingId.value = course.id
+  try {
+    const assignment = await coursesApi.enroll(course.id)
+    assignments.value = [...assignments.value, { ...assignment, course }]
+    router.push(`/courses/${course.id}`)
+  } catch (error) {
+    errorMessage.value = error.response?.data?.message ?? String(error)
+  } finally {
+    enrollingId.value = null
   }
 }
 
@@ -135,7 +153,7 @@ onMounted(load)
               <p v-if="featured.course?.description" class="mt-1.5 line-clamp-2 text-small text-ink-muted">{{ featured.course.description }}</p>
             </div>
             <div class="mt-4">
-              <ProgressBar :value="seededPercent(featured.id)" />
+              <ProgressBar :value="courseProgress(featured.courseId)" />
               <AppButton class="mt-4" icon="arrow-right" icon-position="right">{{ t('courses.continue') }}</AppButton>
             </div>
           </div>
@@ -171,10 +189,10 @@ onMounted(load)
             <p v-if="a.course?.description" class="mt-1 line-clamp-2 text-caption text-ink-faint">{{ a.course.description }}</p>
             <div class="mt-auto pt-3.5">
               <div class="mb-1.5 flex items-center justify-between text-caption text-ink-faint">
-                <span>{{ seededPercent(a.id) }}%</span>
+                <span>{{ courseProgress(a.courseId) }}%</span>
                 <span v-if="a.deadline">{{ t('courses.deadline') }}: {{ new Date(a.deadline).toLocaleDateString(locale) }}</span>
               </div>
-              <ProgressBar :value="a.status === 'COMPLETED' ? 100 : seededPercent(a.id)" size="sm" />
+              <ProgressBar :value="a.status === 'COMPLETED' ? 100 : courseProgress(a.courseId)" size="sm" />
             </div>
           </div>
         </AppCard>
@@ -199,9 +217,18 @@ onMounted(load)
             >
               <Icon v-if="!course.cover" name="book-open" size="24" />
             </div>
-            <div class="p-4">
+            <div class="flex flex-col p-4">
               <h3 class="line-clamp-2 text-small font-semibold text-ink">{{ course.title }}</h3>
               <p v-if="course.description" class="mt-1 line-clamp-2 text-caption text-ink-faint">{{ course.description }}</p>
+              <AppButton
+                class="mt-3.5"
+                size="sm"
+                icon="plus"
+                :loading="enrollingId === course.id"
+                @click.stop="enroll(course)"
+              >
+                {{ t('courses.join') }}
+              </AppButton>
             </div>
           </AppCard>
         </div>

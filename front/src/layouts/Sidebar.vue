@@ -4,6 +4,7 @@ import { useI18n } from 'vue-i18n'
 import { useRoute } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { useUiStore } from '@/stores/ui'
+import { useChatStore } from '@/stores/chat'
 import { workspaceNav, systemNav } from './nav'
 import Icon from '@/components/ui/Icon.vue'
 import Avatar from '@/components/ui/Avatar.vue'
@@ -12,6 +13,7 @@ const { t } = useI18n()
 const route = useRoute()
 const auth = useAuthStore()
 const ui = useUiStore()
+const chat = useChatStore()
 
 const workspace = computed(() => workspaceNav.filter((i) => !i.permission || auth.hasPermission(i.permission)))
 const system = computed(() => systemNav)
@@ -47,7 +49,15 @@ function isActive(path) {
         class="group mb-0.5 flex items-center gap-3 rounded-md px-2.5 py-2 text-small font-medium transition-default"
         :class="isActive(item.path) ? 'bg-primary-subtle text-primary' : 'text-ink-muted hover:bg-surface-2 hover:text-ink'"
       >
-        <Icon :name="item.icon" size="18" />
+        <span class="relative shrink-0">
+          <Icon :name="item.icon" size="18" />
+          <span
+            v-if="item.name === 'chat' && chat.unreadTotal > 0"
+            class="absolute -right-1.5 -top-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-danger px-1 text-[10px] font-semibold leading-none text-white"
+          >
+            {{ chat.unreadTotal > 99 ? '99+' : chat.unreadTotal }}
+          </span>
+        </span>
         <span v-if="!ui.sidebarCollapsed" class="truncate">{{ t(item.labelKey) }}</span>
       </router-link>
 

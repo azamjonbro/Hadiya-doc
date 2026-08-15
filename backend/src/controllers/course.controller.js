@@ -12,6 +12,14 @@ export const courseController = {
     sendSuccess(res, await courseService.getById(req.user, req.params.id))
   }),
 
+  getMyProgress: asyncHandler(async (req, res) => {
+    sendSuccess(res, await courseService.getMyProgress(req.user, req.params.id))
+  }),
+
+  getProgressForUser: asyncHandler(async (req, res) => {
+    sendSuccess(res, await courseService.getProgressForUser(req.user, req.params.id, req.params.userId))
+  }),
+
   create: asyncHandler(async (req, res) => {
     sendSuccess(res, await courseService.create(req.user, req.body), 'Course created', 201)
   }),
@@ -22,6 +30,10 @@ export const courseController = {
 
   archive: asyncHandler(async (req, res) => {
     sendSuccess(res, await courseService.archive(req.user, req.params.id), 'Course archived')
+  }),
+
+  destroy: asyncHandler(async (req, res) => {
+    sendSuccess(res, await courseService.destroy(req.user, req.params.id), 'Course permanently deleted')
   }),
 
   listTopics: asyncHandler(async (req, res) => {

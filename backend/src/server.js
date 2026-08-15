@@ -3,6 +3,7 @@ import { logger } from './config/logger.js'
 import { connectDatabase } from './config/db.js'
 import { seedRolesAndSuperAdmin } from './seed/seedRolesAndSuperAdmin.js'
 import { createApp } from './app.js'
+import { initSocketServer } from './realtime/socket.js'
 
 async function main() {
   await connectDatabase()
@@ -12,6 +13,7 @@ async function main() {
   const server = app.listen(env.PORT, () => {
     logger.info(`Backend listening on port ${env.PORT}`, { env: env.NODE_ENV })
   })
+  initSocketServer(server)
 
   const shutdown = (signal) => {
     logger.info(`Received ${signal}, shutting down`)

@@ -49,6 +49,25 @@ export async function runDeadlineChecks() {
     await assignment.save()
   }
 
+  const approachingTasks = await Task.find({
+    status: { $in: ['TODO', 'IN_PROGRESS'] },
+    deadline: { $gte: now, $lte: soon },
+    deadlineReminderSentAt: null,
+  })
+  for (const task of approachingTasks) {
+    await notificationService.notify({
+      userId: task.assignedTo,
+      type: 'TASK_DEADLINE_APPROACHING',
+      title: `Task deadline approaching: ${task.title}`,
+      message: `Due ${task.deadline.toLocaleDateString()}`,
+      relatedEntityType: 'Task',
+      relatedEntityId: task._id.toString(),
+      severity: 'WARNING',
+    })
+    task.deadlineReminderSentAt = now
+    await task.save()
+  }
+
   const overdueTasks = await Task.find({
     status: { $in: ['TODO', 'IN_PROGRESS'] },
     deadline: { $lte: now },
@@ -70,8 +89,14 @@ export async function runDeadlineChecks() {
   logger.info('Deadline reminder check completed', {
     approaching: approaching.length,
     expired: expired.length,
+    approachingTasks: approachingTasks.length,
     overdueTasks: overdueTasks.length,
   })
 
-  return { approaching: approaching.length, expired: expired.length, overdueTasks: overdueTasks.length }
+  return {
+    approaching: approaching.length,
+    expired: expired.length,
+    approachingTasks: approachingTasks.length,
+    overdueTasks: overdueTasks.length,
+  }
 }

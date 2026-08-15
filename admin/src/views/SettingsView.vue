@@ -7,6 +7,7 @@ import { setLocale, availableLocales } from '@/i18n'
 import AppCard from '@/components/ui/AppCard.vue'
 import AppSelect from '@/components/ui/AppSelect.vue'
 import Avatar from '@/components/ui/Avatar.vue'
+import AttentionPolicyForm from '@/components/AttentionPolicyForm.vue'
 
 const { t, locale } = useI18n()
 const auth = useAuthStore()
@@ -65,6 +66,16 @@ function onLocaleChange(code) {
         <h2 class="text-small font-semibold text-ink">{{ t('settings.sections.language') }}</h2>
         <div class="mt-3">
           <AppSelect :model-value="locale" :options="languageOptions" @update:model-value="onLocaleChange" />
+        </div>
+      </AppCard>
+
+      <!-- Organisation-wide default. Individual courses can tighten or relax
+           it from their own page; this is what they inherit. -->
+      <AppCard v-if="auth.hasPermission('course:read')">
+        <h2 class="text-small font-semibold text-ink">{{ t('attention.admin.title') }}</h2>
+        <p class="mt-1 text-caption text-ink-faint">{{ t('attention.admin.globalHint') }}</p>
+        <div class="mt-4">
+          <AttentionPolicyForm :readonly="!auth.hasPermission('course:update')" />
         </div>
       </AppCard>
     </div>

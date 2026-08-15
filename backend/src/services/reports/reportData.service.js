@@ -1,3 +1,4 @@
+import mongoose from 'mongoose'
 import { User } from '../../models/user.model.js'
 import { Course } from '../../models/course.model.js'
 import { CourseAssignment } from '../../models/courseAssignment.model.js'
@@ -5,6 +6,7 @@ import { VideoProgress } from '../../models/videoProgress.model.js'
 import { News } from '../../models/news.model.js'
 import { NewsView } from '../../models/newsView.model.js'
 import { Task } from '../../models/task.model.js'
+import { roleRepository } from '../../repositories/role.repository.js'
 import { ApiError } from '../../utils/ApiError.js'
 
 // Hard cap on exported rows — an admin exporting the whole org is a
@@ -16,7 +18,46 @@ function round1(n) {
   return Math.round((n ?? 0) * 10) / 10
 }
 
-async function employeeProgress() {
+function toObjectId(id) {
+  return new mongoose.Types.ObjectId(id)
+}
+
+function toObjectIds(ids) {
+  return ids.map(toObjectId)
+}
+
+// Combines any number of id lists (each meaning "must be one of these") into
+// a single list. `null`/`undefined` entries mean "no constraint from this
+// filter" and are ignored. Returns `null` if none of the filters applied any
+// constraint at all, otherwise an array (possibly empty, meaning nothing
+// matches every constraint at once).
+function intersectIds(...idLists) {
+  const constraints = idLists.filter((list) => list !== null && list !== undefined)
+  if (constraints.length === 0) return null
+  const sets = constraints.map((list) => new Set(list.map((id) => id.toString())))
+  const [first, ...rest] = sets
+  let result = first
+  for (const set of rest) {
+    result = new Set([...result].filter((id) => set.has(id)))
+  }
+  return [...result]
+}
+
+function dateRangeMatch(field, filters) {
+  const range = {}
+  if (filters.dateFrom) range.$gte = filters.dateFrom
+  if (filters.dateTo) range.$lte = filters.dateTo
+  return Object.keys(range).length ? { [field]: range } : {}
+}
+
+async function resolveRoleUserIds(roleName) {
+  const role = await roleRepository.findByName(roleName)
+  if (!role) return []
+  const ids = await User.distinct('_id', { roleId: role._id })
+  return ids.map((id) => id.toString())
+}
+
+async function employeeProgress(filters) {
   const columns = [
     { key: 'fullName', header: 'Full name' },
     { key: 'username', header: 'Username' },
@@ -30,14 +71,27 @@ async function employeeProgress() {
   ]
 
   const now = new Date()
-  const users = await User.find({}, { fullName: 1, username: 1, department: 1, isActive: 1 })
+
+  const courseUserIds = filters.courseId
+    ? (await CourseAssignment.distinct('userId', { courseId: filters.courseId })).map((id) => id.toString())
+    : null
+
+  const idFilter = intersectIds(filters.roleUserIds, filters.userId ? [filters.userId] : null, courseUserIds)
+  if (idFilter && idFilter.length === 0) return { columns, rows: [] }
+
+  const users = await User.find(
+    idFilter ? { _id: { $in: idFilter } } : {},
+    { fullName: 1, username: 1, department: 1, isActive: 1 }
+  )
     .sort({ fullName: 1 })
     .limit(MAX_ROWS)
   const userIds = users.map((u) => u._id)
 
+  const courseScope = filters.courseId ? { courseId: toObjectId(filters.courseId) } : {}
+
   const [assignmentStats, progressStats] = await Promise.all([
     CourseAssignment.aggregate([
-      { $match: { userId: { $in: userIds } } },
+      { $match: { userId: { $in: userIds }, ...courseScope, ...dateRangeMatch('assignedAt', filters) } },
       {
         $group: {
           _id: '$userId',
@@ -63,7 +117,7 @@ async function employeeProgress() {
       },
     ]),
     VideoProgress.aggregate([
-      { $match: { userId: { $in: userIds } } },
+      { $match: { userId: { $in: userIds }, ...courseScope, ...dateRangeMatch('lastWatchedAt', filters) } },
       {
         $group: {
           _id: '$userId',
@@ -96,7 +150,7 @@ async function employeeProgress() {
   return { columns, rows }
 }
 
-async function courseProgress() {
+async function courseProgress(filters) {
   const columns = [
     { key: 'title', header: 'Course' },
     { key: 'status', header: 'Status' },
@@ -105,12 +159,18 @@ async function courseProgress() {
     { key: 'avgCompletionPercent', header: 'Avg completion %' },
   ]
 
-  const courses = await Course.find({}, { title: 1, status: 1 }).sort({ title: 1 }).limit(MAX_ROWS)
+  const userIdFilter = intersectIds(filters.roleUserIds, filters.userId ? [filters.userId] : null)
+  if (userIdFilter && userIdFilter.length === 0) return { columns, rows: [] }
+  const userScope = userIdFilter ? { userId: { $in: toObjectIds(userIdFilter) } } : {}
+
+  const courses = await Course.find(filters.courseId ? { _id: filters.courseId } : {}, { title: 1, status: 1 })
+    .sort({ title: 1 })
+    .limit(MAX_ROWS)
   const courseIds = courses.map((c) => c._id)
 
   const [assignmentStats, progressStats] = await Promise.all([
     CourseAssignment.aggregate([
-      { $match: { courseId: { $in: courseIds } } },
+      { $match: { courseId: { $in: courseIds }, ...userScope, ...dateRangeMatch('assignedAt', filters) } },
       {
         $group: {
           _id: '$courseId',
@@ -120,7 +180,7 @@ async function courseProgress() {
       },
     ]),
     VideoProgress.aggregate([
-      { $match: { courseId: { $in: courseIds } } },
+      { $match: { courseId: { $in: courseIds }, ...userScope } },
       { $group: { _id: '$courseId', avgCompletionPercent: { $avg: '$completionPercent' } } },
     ]),
   ])
@@ -143,7 +203,7 @@ async function courseProgress() {
   return { columns, rows }
 }
 
-async function videoAnalytics() {
+async function videoAnalytics(filters) {
   const columns = [
     { key: 'title', header: 'Video' },
     { key: 'viewers', header: 'Viewers' },
@@ -152,7 +212,12 @@ async function videoAnalytics() {
     { key: 'avgForwardSeekSeconds', header: 'Avg skipped (sec)' },
   ]
 
+  const userIdFilter = intersectIds(filters.roleUserIds, filters.userId ? [filters.userId] : null)
+  if (userIdFilter && userIdFilter.length === 0) return { columns, rows: [] }
+  const userScope = userIdFilter ? { userId: { $in: toObjectIds(userIdFilter) } } : {}
+
   const rows = await VideoProgress.aggregate([
+    { $match: { ...userScope, ...dateRangeMatch('lastWatchedAt', filters) } },
     {
       $group: {
         _id: '$videoId',
@@ -164,6 +229,7 @@ async function videoAnalytics() {
     },
     { $lookup: { from: 'videos', localField: '_id', foreignField: '_id', as: 'video' } },
     { $unwind: '$video' },
+    ...(filters.courseId ? [{ $match: { 'video.courseId': toObjectId(filters.courseId) } }] : []),
     { $sort: { viewers: -1 } },
     { $limit: MAX_ROWS },
     {
@@ -181,7 +247,7 @@ async function videoAnalytics() {
   return { columns, rows }
 }
 
-async function newsAnalytics() {
+async function newsAnalytics(filters) {
   const columns = [
     { key: 'title', header: 'Article' },
     { key: 'publishAt', header: 'Published' },
@@ -190,11 +256,17 @@ async function newsAnalytics() {
     { key: 'avgTimeSpentSeconds', header: 'Avg time spent (sec)' },
   ]
 
-  const articles = await News.find({}, { title: 1, publishAt: 1 }).sort({ publishAt: -1 }).limit(MAX_ROWS)
+  const userIdFilter = intersectIds(filters.roleUserIds, filters.userId ? [filters.userId] : null)
+  if (userIdFilter && userIdFilter.length === 0) return { columns, rows: [] }
+  const userScope = userIdFilter ? { userId: { $in: toObjectIds(userIdFilter) } } : {}
+
+  const articles = await News.find({ ...dateRangeMatch('publishAt', filters) }, { title: 1, publishAt: 1 })
+    .sort({ publishAt: -1 })
+    .limit(MAX_ROWS)
   const newsIds = articles.map((n) => n._id)
 
   const viewStats = await NewsView.aggregate([
-    { $match: { newsId: { $in: newsIds } } },
+    { $match: { newsId: { $in: newsIds }, ...userScope } },
     {
       $group: {
         _id: '$newsId',
@@ -220,7 +292,7 @@ async function newsAnalytics() {
   return { columns, rows }
 }
 
-async function taskAnalytics() {
+async function taskAnalytics(filters) {
   const columns = [
     { key: 'title', header: 'Task' },
     { key: 'assignedTo', header: 'Assigned to' },
@@ -231,7 +303,12 @@ async function taskAnalytics() {
     { key: 'completedAt', header: 'Completed at' },
   ]
 
+  const userIdFilter = intersectIds(filters.roleUserIds, filters.userId ? [filters.userId] : null)
+  if (userIdFilter && userIdFilter.length === 0) return { columns, rows: [] }
+  const assigneeScope = userIdFilter ? { assignedTo: { $in: toObjectIds(userIdFilter) } } : {}
+
   const rows = await Task.aggregate([
+    { $match: { ...assigneeScope, ...dateRangeMatch('deadline', filters) } },
     { $sort: { createdAt: -1 } },
     { $limit: MAX_ROWS },
     { $lookup: { from: 'users', localField: 'assignedTo', foreignField: '_id', as: 'assignee' } },
@@ -273,9 +350,10 @@ const REPORT_BUILDERS = {
 export const REPORT_TYPES = Object.keys(REPORT_BUILDERS)
 
 export const reportDataService = {
-  async build(type) {
+  async build(type, filters = {}) {
     const builder = REPORT_BUILDERS[type]
     if (!builder) throw ApiError.badRequest('Unknown report type', 'UNKNOWN_REPORT_TYPE')
-    return builder()
+    const roleUserIds = filters.role ? await resolveRoleUserIds(filters.role) : null
+    return builder({ ...filters, roleUserIds })
   },
 }

@@ -17,9 +17,16 @@ async function seedRoles() {
   const roleIdsByName = {}
   for (const name of Object.values(ROLES)) {
     const permissions = DEFAULT_ROLE_PERMISSIONS[name]
+    // $addToSet rather than $setOnInsert: a role seeded by an older build
+    // used to keep that build's permission list forever, so every
+    // permission added afterwards — and every route gated on one — answered
+    // 403 on existing installs until someone edited the collection by hand.
+    // Union rather than overwrite, because the `roles` collection is the
+    // runtime source of truth (see permissions.js): permissions an admin
+    // granted a system role by hand must survive a restart.
     const role = await Role.findOneAndUpdate(
       { name },
-      { $setOnInsert: { name, permissions, isSystem: true } },
+      { $setOnInsert: { name, isSystem: true }, $addToSet: { permissions: { $each: permissions } } },
       { upsert: true, new: true }
     )
     roleIdsByName[name] = role._id

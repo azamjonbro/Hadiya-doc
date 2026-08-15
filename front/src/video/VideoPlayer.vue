@@ -1,14 +1,25 @@
 <script setup>
-import { onBeforeUnmount, onMounted, ref } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 import Hls from 'hls.js'
+import { ATTENTION_EVENTS } from '@lms/shared'
 import { useAuthStore } from '@/stores/auth'
 import { videoAccessApi } from '@/services/videoAccess'
+import { coursesApi } from '@/services/courses'
 import { useVideoAnalytics } from '@/composables/useVideoAnalytics'
+import { useAttentionMonitor } from '@/composables/useAttentionMonitor'
+import AttentionOverlay from './AttentionOverlay.vue'
 import Icon from '@/components/ui/Icon.vue'
 
-const props = defineProps({ videoId: { type: String, required: true } })
-const emit = defineEmits(['timeupdate', 'ready'])
+const props = defineProps({
+  videoId: { type: String, required: true },
+  // Needed only to resolve the attention policy; playback itself is
+  // authorized per-video by the streaming token.
+  courseId: { type: String, default: '' },
+})
+const emit = defineEmits(['timeupdate', 'ready', 'ended'])
 
+const { t } = useI18n()
 const auth = useAuthStore()
 const videoEl = ref(null)
 const errorMessage = ref('')
@@ -23,6 +34,116 @@ const WATERMARK_POSITIONS = ['bottom-2 right-2', 'top-2 left-2', 'bottom-2 left-
 const positionIndex = ref(0)
 
 const analytics = useVideoAnalytics(props.videoId)
+
+// ---------------------------------------------------------------------------
+// Camera attention monitoring
+//
+// The player owns every decision here; useAttentionMonitor only reports
+// "attentive / not", and AttentionOverlay only draws what it is told. The
+// policy comes from the server so a learner cannot soften their own rules by
+// editing anything in this file's reach.
+// ---------------------------------------------------------------------------
+const monitor = useAttentionMonitor()
+const policy = ref(null)
+const consented = ref(false)
+const pausedByPolicy = ref(false)
+const warningCount = ref(0)
+const lockoutRemaining = ref(0)
+let lockoutTimer = null
+
+const monitoringOn = computed(() => Boolean(policy.value?.enabled))
+
+const overlayState = computed(() => {
+  if (!monitoringOn.value) return null
+  if (!consented.value) return 'consent'
+  if (monitor.status.value === 'denied') return 'denied'
+  if (monitor.status.value === 'error') return 'error'
+  if (lockoutRemaining.value > 0) return 'lockout'
+  if (monitor.status.value === 'loading') return 'loading'
+  if (monitor.status.value === 'calibrating') return 'calibrating'
+  if (!monitor.attentive.value) return 'warning'
+  return null
+})
+
+// Playback is held while the learner has not consented yet, while the camera
+// is being set up, and for the whole lockout — anything the overlay covers
+// completely.
+const playbackBlocked = computed(() => ['consent', 'denied', 'error', 'lockout'].includes(overlayState.value))
+
+function startLockout() {
+  const seconds = policy.value?.lockoutSeconds ?? 20
+  lockoutRemaining.value = seconds
+  analytics.track(ATTENTION_EVENTS.LOCKOUT, {
+    position: videoEl.value?.currentTime ?? null,
+    duration: seconds,
+  })
+  videoEl.value?.pause()
+  clearInterval(lockoutTimer)
+  lockoutTimer = setInterval(() => {
+    lockoutRemaining.value -= 1
+    if (lockoutRemaining.value > 0) return
+    clearInterval(lockoutTimer)
+    lockoutTimer = null
+    // The counter resets so the next lockout needs a fresh run of warnings
+    // rather than triggering on every single lapse from here on.
+    warningCount.value = 0
+  }, 1000)
+}
+
+function onAttentionLost({ reason, position }) {
+  analytics.track(ATTENTION_EVENTS.LOST, { position, metadata: { reason } })
+  analytics.track(ATTENTION_EVENTS.WARNING_SHOWN, { position, metadata: { reason } })
+  warningCount.value += 1
+
+  if (policy.value?.pauseOnWarning && videoEl.value && !videoEl.value.paused) {
+    pausedByPolicy.value = true
+    videoEl.value.pause()
+  }
+
+  const limit = policy.value?.lockoutAfterWarnings ?? 0
+  if (limit > 0 && warningCount.value >= limit) startLockout()
+}
+
+function onAttentionRegained({ seconds, fromPosition, toPosition }) {
+  analytics.track(ATTENTION_EVENTS.REGAINED, {
+    position: toPosition,
+    duration: seconds,
+    // The server cuts exactly this range back out of the watched segments.
+    metadata: { fromPosition, toPosition },
+  })
+  // A lockout has to run its course; attention coming back does not end it.
+  if (pausedByPolicy.value && lockoutRemaining.value === 0) {
+    pausedByPolicy.value = false
+    videoEl.value?.play().catch(() => {})
+  }
+}
+
+async function startMonitoring() {
+  const started = await monitor.start({
+    videoEl: videoEl.value,
+    graceSeconds: policy.value?.graceSeconds ?? 4,
+    // Keep sampling through a policy-imposed pause, or the learner coming
+    // back would never be noticed; stay quiet through a pause they chose.
+    isActive: () => Boolean(videoEl.value && (!videoEl.value.paused || pausedByPolicy.value)),
+    on: {
+      lost: onAttentionLost,
+      regained: onAttentionRegained,
+      denied: () => analytics.track(ATTENTION_EVENTS.CAMERA_DENIED),
+      error: ({ message }) => analytics.track(ATTENTION_EVENTS.CAMERA_ERROR, { metadata: { message } }),
+    },
+  })
+  return started
+}
+
+async function onConsent() {
+  consented.value = true
+  await startMonitoring()
+}
+
+async function onRetryCamera() {
+  consented.value = true
+  await startMonitoring()
+}
 
 let hls = null
 let currentToken = null
@@ -78,6 +199,12 @@ async function setup() {
     }, 120_000)
 
     analytics.attach(videoEl.value)
+    // Last line of defence for the blocking states: the overlay covers the
+    // controls, but a keyboard shortcut or the media keys can still reach the
+    // element, so any play that slips through is undone here.
+    videoEl.value.addEventListener('play', () => {
+      if (playbackBlocked.value) videoEl.value.pause()
+    })
     videoEl.value.addEventListener('loadeddata', () => {
       ready.value = true
       emit('ready')
@@ -85,13 +212,33 @@ async function setup() {
     videoEl.value.addEventListener('timeupdate', () => {
       emit('timeupdate', { currentTime: videoEl.value.currentTime, duration: videoEl.value.duration || 0 })
     })
+    videoEl.value.addEventListener('ended', () => emit('ended'))
   } catch (error) {
     errorMessage.value = error.response?.data?.message ?? String(error)
   }
 }
 
+async function loadPolicy() {
+  if (!props.courseId) {
+    console.warn('[attention] no courseId passed to VideoPlayer — monitoring cannot be resolved')
+    return
+  }
+  try {
+    policy.value = await coursesApi.attentionPolicy(props.courseId)
+    console.info('[attention] policy loaded', policy.value)
+  } catch (error) {
+    // A policy that cannot be read is not a reason to withhold the lesson —
+    // the video plays unmonitored and the failure stays out of the learner's
+    // way. It is still logged, because "monitoring silently never started" is
+    // otherwise indistinguishable from "monitoring found nothing wrong".
+    console.warn('[attention] policy could not be loaded, playing unmonitored', error)
+    policy.value = null
+  }
+}
+
 onMounted(() => {
   setup()
+  loadPolicy()
   clockTimer = setInterval(() => {
     now.value = new Date()
   }, 1000)
@@ -101,6 +248,17 @@ onMounted(() => {
 })
 
 onBeforeUnmount(() => {
+  // Before analytics.detach(), which does the final flush — a pending
+  // inattentive stretch has to be on the buffer by then or it is lost.
+  if (!monitor.attentive.value) {
+    analytics.track(ATTENTION_EVENTS.REGAINED, {
+      position: videoEl.value?.currentTime ?? null,
+      duration: 0,
+      metadata: { fromPosition: videoEl.value?.currentTime ?? null, toPosition: videoEl.value?.currentTime ?? null, partial: true },
+    })
+  }
+  monitor.stop()
+  clearInterval(lockoutTimer)
   analytics.detach()
   hls?.destroy()
   clearInterval(tokenRefreshTimer)
@@ -121,6 +279,27 @@ onBeforeUnmount(() => {
     >
       {{ auth.user?.fullName }} · {{ auth.user?.id?.slice(-6) }} · Corporate LMS · {{ now.toLocaleString() }}
     </div>
+
+    <!-- Persistent, non-dismissable badge whenever the camera is live. A
+         learner should never have to wonder whether they are being monitored
+         right now. -->
+    <div
+      v-if="monitor.status.value === 'watching' || monitor.status.value === 'calibrating'"
+      class="pointer-events-none absolute left-2 top-2 flex items-center gap-1.5 rounded-full bg-black/55 px-2.5 py-1 text-[10px] font-medium text-white/85 backdrop-blur-sm"
+    >
+      <span class="h-1.5 w-1.5 rounded-full bg-danger" :class="monitor.attentive.value ? '' : 'animate-pulse'" />
+      {{ t('attention.badge') }}
+    </div>
+
+    <AttentionOverlay
+      v-if="overlayState"
+      :state="overlayState"
+      :reason="monitor.reason.value"
+      :lockout-remaining="lockoutRemaining"
+      :error-message="monitor.errorMessage.value"
+      @accept="onConsent"
+      @retry="onRetryCamera"
+    />
     <p v-if="errorMessage" class="p-2 text-sm text-red-400">{{ errorMessage }}</p>
   </div>
 </template>
