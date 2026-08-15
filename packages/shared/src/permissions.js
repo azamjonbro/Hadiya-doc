@@ -49,6 +49,13 @@ export const PERMISSIONS = Object.freeze({
   // the shared admin/manager inbox and replying in any of them.
   CHAT_SUPPORT: 'chat:support',
 
+  // Group threads are the one part of chat that is not symmetric: a DM is
+  // opened by either side writing to the other, but a group decides who is
+  // in the room, so creating one and changing its roster is gated. Writing
+  // *in* a group needs no permission — membership is the rule, exactly as
+  // participation is for a DM.
+  CHAT_GROUP_MANAGE: 'chat:group:manage',
+
   AUDIT_READ: 'audit:read',
 })
 
@@ -79,6 +86,7 @@ const MANAGER_PERMISSIONS = [
   PERMISSIONS.TASK_MANAGE_ALL,
   PERMISSIONS.EVENT_CREATE,
   PERMISSIONS.CHAT_SUPPORT,
+  PERMISSIONS.CHAT_GROUP_MANAGE,
 ]
 
 const ADMIN_PERMISSIONS = [

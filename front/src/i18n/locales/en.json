@@ -66,6 +66,10 @@
       "submit": "Sign in",
       "submitting": "Signing in...",
       "error": "Invalid email/username or password",
+      "rateLimited": "Too many attempts. Please try again in a few minutes.",
+      "accountLocked": "Account temporarily locked. Please try again in a few minutes.",
+      "networkError": "Could not reach the server. Check your connection.",
+      "serverError": "Something went wrong on the server. Please try again later.",
       "securityNotice": "Protected by company security policy. Access is logged and monitored.",
       "brandTitle": "Where the whole company learns, together.",
       "brandSubtitle": "Track your mandatory training, catch up on company news, and see how you're growing — all in one place.",
@@ -147,7 +151,6 @@
     "creating": "Creating...",
     "loadMore": "Load more",
     "searchPlaceholder": "Search courses...",
-    "featured": "Continue where you left off",
     "modules": "modules",
     "videos": "videos",
     "duration": "duration",
@@ -156,9 +159,8 @@
     "instructor": "Instructor",
     "curriculum": "Curriculum",
     "tabs": {
-      "all": "All",
+      "catalog": "Catalog",
       "required": "Required",
-      "inProgress": "In progress",
       "completed": "Completed",
       "expired": "Expired"
     },
@@ -193,6 +195,16 @@
     },
     "lockedHint": "Opens once you have watched the previous lesson through.",
     "lockedTitle": "This lesson is not open yet"
+  },
+  "materials": {
+    "title": "Materials",
+    "open": "Open",
+    "download": "Download",
+    "loading": "Opening...",
+    "error": "Could not open this file",
+    "unsupported": "This file type cannot be shown in the browser — download it instead.",
+    "tooLarge": "This file is too large to preview (up to {size} MB). Download it instead.",
+    "truncated": "Showing the first {rows} rows — the full sheet is in the file."
   },
   "quiz": {
     "title": "Quiz",
@@ -257,12 +269,17 @@
       "searchPeople": "Name, department or position",
       "tabs": {
         "chats": "Chats",
-        "people": "People"
+        "people": "People",
+        "groups": "Groups"
       },
       "groups": {
         "new": "Recently joined",
         "all": "All employees"
-      }
+      },
+      "searchGroups": "Search groups",
+      "noGroups": "No groups yet",
+      "noGroupsHint": "Create one with the + button above.",
+      "noGroupsHintMember": "A group will appear here once you are added to one."
     },
     "header": {
       "online": "Online",
@@ -271,7 +288,8 @@
       "searchInChat": "Search in conversation",
       "searchPlaceholder": "Search messages...",
       "noResults": "No results",
-      "details": "Details"
+      "details": "Details",
+      "typingBy": "{name} is typing..."
     },
     "compose": {
       "bold": "Bold",
@@ -308,13 +326,23 @@
         "TASK_ASSIGNED": "New task",
         "TASK_COMPLETED": "Task completed",
         "TASK_STATUS_CHANGED": "Task status changed",
-        "DEFAULT": "System message"
+        "DEFAULT": "System message",
+        "GROUP_CREATED": "Group created",
+        "GROUP_RENAMED": "Group renamed",
+        "MEMBER_ADDED": "Member added",
+        "MEMBER_REMOVED": "Member removed",
+        "MEMBER_LEFT": "Member left"
       },
       "text": {
         "TASK_ASSIGNED": "Task “{title}” was assigned",
         "TASK_COMPLETED": "Task “{title}” was completed",
         "TASK_STATUS_CHANGED": "Task “{title}” — status: {status}",
-        "DEFAULT": "{title}"
+        "DEFAULT": "{title}",
+        "GROUP_CREATED": "{actor} created the group \"{title}\"",
+        "GROUP_RENAMED": "{actor} renamed the group from \"{previousTitle}\" to \"{title}\"",
+        "MEMBER_ADDED": "{actor} added {member} to the group",
+        "MEMBER_REMOVED": "{actor} removed {member} from the group",
+        "MEMBER_LEFT": "{member} left the group"
       }
     },
     "info": {
@@ -344,6 +372,40 @@
       "minutesAgo": "{value}m ago",
       "hoursAgo": "{value}h ago",
       "daysAgo": "{value}d ago"
+    },
+    "group": {
+      "createTitle": "New group",
+      "createHint": "Name the group and pick who is in it.",
+      "create": "Create group",
+      "name": "Group name",
+      "namePlaceholder": "For example: Sales team",
+      "fromExisting": "Fill from an existing group",
+      "members": "Members",
+      "selected": "Selected: {count}",
+      "memberCount": "{count} members",
+      "addMember": "Add",
+      "removeMember": "Remove from group",
+      "everyoneAdded": "Everyone is already a member",
+      "rename": "Rename",
+      "leave": "Leave group",
+      "you": "you",
+      "openInfo": "Group details",
+      "renameHint": "Click to edit the name",
+      "saveName": "Save",
+      "tabs": {
+        "members": "Members",
+        "history": "History",
+        "security": "Security"
+      },
+      "addMembers": "Add a member",
+      "owner": "Created by",
+      "ownerLeft": "Left the group",
+      "yourAccess": "Your access",
+      "accessManager": "Manager — can add and remove members and rename the group",
+      "accessMember": "Member — read and post only",
+      "manageRule": "Only a member of this group who also holds the chat-group management permission can change its roster.",
+      "auditRule": "Adding and removing members is written into the thread as a system message — who changed what, and when, stays visible.",
+      "noAttachments": "No files or images have been shared in this group yet"
     }
   },
   "aiChat": {
@@ -536,5 +598,11 @@
       "title": "Camera failed to start",
       "body": "The camera could not be started. Another application may be using it."
     }
+  },
+  "confirm": {
+    "title": "Are you sure?",
+    "confirm": "Yes, continue",
+    "removeMember": "Remove {name} from the group? They will lose access to this conversation.",
+    "leaveGroup": "Leave this group? Someone will have to add you back to return."
   }
 }

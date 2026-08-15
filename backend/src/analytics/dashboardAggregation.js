@@ -183,7 +183,7 @@ async function cards() {
   ] = await Promise.all([
     User.countDocuments({}),
     User.countDocuments({ isActive: true }),
-    Course.countDocuments({ status: { $ne: 'ARCHIVED' } }),
+    Course.countDocuments({ status: { $ne: 'ARCHIVED' }, deletedAt: null }),
     CourseAssignment.countDocuments({ status: 'ACTIVE', mandatory: true }),
     CourseAssignment.countDocuments({ status: 'COMPLETED' }),
     CourseAssignment.countDocuments({

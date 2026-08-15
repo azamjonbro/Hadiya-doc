@@ -1,4 +1,5 @@
 import rateLimit from 'express-rate-limit'
+import { rateLimitHandler } from './rateLimit.middleware.js'
 
 // Distinct from uploadRateLimit.middleware.js (video/tus, much larger and
 // rarer) — image uploads are small and frequent (avatar, course cover,
@@ -8,4 +9,5 @@ export const imageUploadRateLimiter = rateLimit({
   limit: 30,
   standardHeaders: true,
   legacyHeaders: false,
+  handler: rateLimitHandler('Image upload limit reached, please try again in a few minutes'),
 })

@@ -12,7 +12,7 @@ import AppSelect from '@/components/ui/AppSelect.vue'
 import AppDatePicker from '@/components/ui/AppDatePicker.vue'
 import Icon from '@/components/ui/Icon.vue'
 
-const { t } = useI18n()
+const { t, locale } = useI18n()
 
 const REPORT_TYPES = ['employee-progress', 'course-progress', 'video-analytics', 'news-analytics', 'task-analytics']
 const FORMATS = ['csv', 'xlsx', 'pdf']
@@ -87,6 +87,9 @@ async function onDownload(type, format) {
   errors[key] = ''
   try {
     await reportsApi.download(type, format, {
+      // The file is written in whatever language the admin is reading, so a
+      // report handed to a colleague needs no explaining.
+      lang: locale.value,
       role: filters.role,
       userId: filters.userId,
       courseId: filters.courseId,

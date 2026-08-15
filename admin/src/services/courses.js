@@ -13,11 +13,23 @@ export const coursesApi = {
   update(id, payload) {
     return http.patch(`/courses/${id}`, payload).then((r) => r.data.data)
   },
+  // Retired but still listed — a milder state than the trash below.
   archive(id) {
+    return http.post(`/courses/${id}/archive`).then((r) => r.data.data)
+  },
+  // What the delete button does: the course leaves every listing and waits on
+  // the trash page until it is restored or destroyed.
+  remove(id) {
     return http.delete(`/courses/${id}`).then((r) => r.data.data)
   },
-  // Irreversible, and SUPERADMIN-only server-side — archive() above is the
-  // reversible one every other admin gets.
+  listTrash() {
+    return http.get('/courses/trash').then((r) => r.data.data)
+  },
+  restore(id) {
+    return http.post(`/courses/${id}/restore`).then((r) => r.data.data)
+  },
+  // Emptying the bin: irreversible, SUPERADMIN-only server-side, and it takes
+  // the course's topics, videos and analytics with it.
   destroy(id) {
     return http.delete(`/courses/${id}/permanent`).then((r) => r.data.data)
   },

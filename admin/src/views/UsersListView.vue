@@ -1,6 +1,7 @@
 <script setup>
 import { computed, onMounted, reactive, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
+import { useConfirm } from '@/composables/useConfirm'
 import { useRouter } from 'vue-router'
 import { ROLES } from '@lms/shared'
 import { useAuthStore } from '@/stores/auth'
@@ -21,6 +22,7 @@ import EmptyState from '@/components/ui/EmptyState.vue'
 import Icon from '@/components/ui/Icon.vue'
 
 const { t, locale } = useI18n()
+const confirm = useConfirm()
 const auth = useAuthStore()
 const router = useRouter()
 const toast = useToast()
@@ -192,6 +194,7 @@ async function onCreateSubmit() {
 
 async function bulkDeactivate() {
   const ids = [...selected.value]
+  if (!(await confirm.ask({ message: t('confirm.deactivateUsers', { count: ids.length }) }))) return
   await Promise.all(ids.map((id) => usersApi.deactivate(id)))
   toast.success(t('users.bulkDeactivated', { count: ids.length }))
   // Stay where the user was working. If a status filter emptied the last

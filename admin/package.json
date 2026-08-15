@@ -11,7 +11,10 @@
   "dependencies": {
     "@lms/shared": "*",
     "axios": "^1.7.7",
+    "exceljs": "^4.4.0",
+    "mammoth": "^1.12.1",
     "pinia": "^2.2.6",
+    "pptx-preview": "^1.0.7",
     "socket.io-client": "^4.8.3",
     "tus-js-client": "^4.3.1",
     "vue": "^3.5.12",

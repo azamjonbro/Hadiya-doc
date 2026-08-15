@@ -15,7 +15,8 @@
     "groupSystem": "System",
     "groups": "Groups",
     "leaderboard": "Leaderboard",
-    "chat": "Chat"
+    "chat": "Chat",
+    "trash": "Trash"
   },
   "locales": {
     "uz": "O'zbekcha",
@@ -138,6 +139,10 @@
       "submit": "Sign in",
       "submitting": "Signing in...",
       "error": "Invalid email/username or password",
+      "rateLimited": "Too many attempts. Please try again in a few minutes.",
+      "accountLocked": "Account temporarily locked. Please try again in a few minutes.",
+      "networkError": "Could not reach the server. Check your connection.",
+      "serverError": "Something went wrong on the server. Please try again later.",
       "securityNotice": "Protected by company security policy. Access is logged and monitored.",
       "brandTitle": "Run training operations with confidence.",
       "brandSubtitle": "Track completion, manage courses, and keep the whole company on top of mandatory training.",
@@ -241,13 +246,13 @@
     },
     "delete": "Delete permanently",
     "deleteConfirm": {
-      "title": "Delete course permanently",
-      "body": "\"{title}\" and everything belonging to it — topics, videos, assignments, progress, quizzes, reviews and questions — will be deleted for good. This cannot be undone.",
+      "title": "Delete course",
+      "body": "The course \"{title}\" will disappear from every listing and land in the Trash. You can restore it from there; deleting for good is a separate action.",
       "prompt": "Type the course title to confirm:",
       "mismatch": "The title you typed does not match",
-      "confirm": "Delete permanently",
+      "confirm": "Move to trash",
       "deleting": "Deleting...",
-      "done": "Course permanently deleted",
+      "done": "Course moved to the trash",
       "superadminOnly": "Only a SUPERADMIN can do this"
     },
     "mandatory": "Mandatory",
@@ -364,6 +369,12 @@
     "upload": "Upload",
     "uploading": "Uploading...",
     "download": "Download",
+    "open": "View",
+    "loading": "Opening...",
+    "error": "Could not open this file",
+    "unsupported": "This file type cannot be shown in the browser — download it instead.",
+    "tooLarge": "This file is too large to preview (up to {size} MB). Download it instead.",
+    "truncated": "Showing the first {rows} rows — the full sheet is in the file.",
     "publish": "Publish",
     "unpublish": "Unpublish",
     "remove": "Remove",
@@ -430,6 +441,19 @@
     "pickAssignee": "Please pick a user",
     "priorityLabel": "Priority",
     "deadline": "Deadline",
+    "audienceLabel": "Assign to",
+    "audience": {
+      "USER": "A single employee",
+      "POSITION": "By position",
+      "ALL": "Everyone"
+    },
+    "positionLabel": "Position",
+    "pickPosition": "Please pick a position",
+    "positionPlaceholder": "Select a position",
+    "positionsEmpty": "No positions are set on any employee",
+    "allHint": "The task is assigned to every active employee separately. Each of them tracks their own status.",
+    "positionHint": "The task is assigned to every active employee holding this position.",
+    "createdForCount": "Task assigned to {count} employees",
     "priority": {
       "LOW": "Low",
       "MEDIUM": "Medium",
@@ -441,7 +465,10 @@
       "COMPLETED": "Completed",
       "CANCELLED": "Cancelled",
       "OVERDUE": "Overdue"
-    }
+    },
+    "batchDeleteTitle": "Delete task",
+    "batchDeleteBody": "This task is assigned to {count} people. Deleting removes it from all of them.",
+    "confirmDelete": "Delete"
   },
   "notifications": {
     "title": "Notifications",
@@ -479,12 +506,17 @@
       "searchPeople": "Name, department or position",
       "tabs": {
         "chats": "Chats",
-        "people": "People"
+        "people": "People",
+        "groups": "Groups"
       },
       "groups": {
         "new": "Recently joined",
         "all": "All employees"
-      }
+      },
+      "searchGroups": "Search groups",
+      "noGroups": "No groups yet",
+      "noGroupsHint": "Create one with the + button above.",
+      "noGroupsHintMember": "A group will appear here once you are added to one."
     },
     "header": {
       "online": "Online",
@@ -493,7 +525,8 @@
       "searchInChat": "Search in conversation",
       "searchPlaceholder": "Search messages...",
       "noResults": "No results",
-      "details": "Details"
+      "details": "Details",
+      "typingBy": "{name} is typing..."
     },
     "compose": {
       "bold": "Bold",
@@ -530,13 +563,23 @@
         "TASK_ASSIGNED": "New task",
         "TASK_COMPLETED": "Task completed",
         "TASK_STATUS_CHANGED": "Task status changed",
-        "DEFAULT": "System message"
+        "DEFAULT": "System message",
+        "GROUP_CREATED": "Group created",
+        "GROUP_RENAMED": "Group renamed",
+        "MEMBER_ADDED": "Member added",
+        "MEMBER_REMOVED": "Member removed",
+        "MEMBER_LEFT": "Member left"
       },
       "text": {
         "TASK_ASSIGNED": "Task “{title}” was assigned",
         "TASK_COMPLETED": "Task “{title}” was completed",
         "TASK_STATUS_CHANGED": "Task “{title}” — status: {status}",
-        "DEFAULT": "{title}"
+        "DEFAULT": "{title}",
+        "GROUP_CREATED": "{actor} created the group \"{title}\"",
+        "GROUP_RENAMED": "{actor} renamed the group from \"{previousTitle}\" to \"{title}\"",
+        "MEMBER_ADDED": "{actor} added {member} to the group",
+        "MEMBER_REMOVED": "{actor} removed {member} from the group",
+        "MEMBER_LEFT": "{member} left the group"
       }
     },
     "info": {
@@ -566,6 +609,40 @@
       "minutesAgo": "{value}m ago",
       "hoursAgo": "{value}h ago",
       "daysAgo": "{value}d ago"
+    },
+    "group": {
+      "createTitle": "New group",
+      "createHint": "Name the group and pick who is in it.",
+      "create": "Create group",
+      "name": "Group name",
+      "namePlaceholder": "For example: Sales team",
+      "fromExisting": "Fill from an existing group",
+      "members": "Members",
+      "selected": "Selected: {count}",
+      "memberCount": "{count} members",
+      "addMember": "Add",
+      "removeMember": "Remove from group",
+      "everyoneAdded": "Everyone is already a member",
+      "rename": "Rename",
+      "leave": "Leave group",
+      "you": "you",
+      "openInfo": "Group details",
+      "renameHint": "Click to edit the name",
+      "saveName": "Save",
+      "tabs": {
+        "members": "Members",
+        "history": "History",
+        "security": "Security"
+      },
+      "addMembers": "Add a member",
+      "owner": "Created by",
+      "ownerLeft": "Left the group",
+      "yourAccess": "Your access",
+      "accessManager": "Manager — can add and remove members and rename the group",
+      "accessMember": "Member — read and post only",
+      "manageRule": "Only a member of this group who also holds the chat-group management permission can change its roster.",
+      "auditRule": "Adding and removing members is written into the thread as a system message — who changed what, and when, stays visible.",
+      "noAttachments": "No files or images have been shared in this group yet"
     }
   },
   "employeeProgress": {
@@ -813,6 +890,40 @@
       "lockouts": "Lockouts",
       "cameraBlocked": "Camera was not running — these figures are incomplete",
       "times": "times"
+    }
+  },
+  "confirm": {
+    "title": "Are you sure?",
+    "confirm": "Yes, continue",
+    "removeMember": "Remove {name} from the group? They will lose access to this conversation.",
+    "leaveGroup": "Leave this group? Someone will have to add you back to return.",
+    "deactivateUser": "Deactivate {name}'s account? They will not be able to sign in.",
+    "deactivateUsers": "{count} employee accounts will be deactivated. Continue?",
+    "deleteTask": "This task will be deleted. Continue?",
+    "deleteTaskBatch": "This task will be deleted for {count} employees. Continue?",
+    "deleteMaterial": "The file \"{title}\" will be deleted. Continue?",
+    "deleteVideo": "The video \"{title}\" will be deleted. Continue?",
+    "deleteTopic": "This module and everything in it will be deleted. Continue?",
+    "deleteNews": "This article will be deleted. Continue?",
+    "deleteAssessment": "This test and its questions will be deleted. Continue?",
+    "deleteGroup": "The group \"{title}\" will be deleted. Employee accounts are not affected.",
+    "removeGroupMember": "{name} will be removed from the group. Continue?"
+  },
+  "trash": {
+    "title": "Trash",
+    "subtitle": "Deleted items are kept here for {days} days — restore them within that window. After it, they are removed automatically.",
+    "deletedAt": "Deleted",
+    "restore": "Restore",
+    "destroy": "Delete permanently",
+    "restored": "\"{title}\" restored",
+    "destroyed": "\"{title}\" permanently deleted",
+    "destroyConfirm": "\"{title}\" and everything attached to it will be deleted permanently. This cannot be undone.",
+    "empty": "The trash is empty",
+    "emptyHint": "Deleted courses and articles show up here.",
+    "daysLeft": "{days} days left",
+    "types": {
+      "COURSE": "Course",
+      "NEWS": "Article"
     }
   }
 }

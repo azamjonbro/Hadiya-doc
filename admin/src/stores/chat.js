@@ -29,7 +29,8 @@ export const useChatStore = defineStore('chat', {
     contactsLoading: false,
     // userId -> true, mirrored from the server's presence broadcast.
     online: {},
-    // conversationId -> epoch ms when the peer's "typing" last arrived.
+    // conversationId -> { at, userId } for the last "typing" received. In a
+    // group the id is what turns the indicator into a name.
     typingAt: {},
     initialized: false,
   }),
@@ -38,11 +39,17 @@ export const useChatStore = defineStore('chat', {
     selected: (state) => state.conversations.find((c) => c.id === state.selectedId) ?? null,
     unreadTotal: (state) => state.conversations.reduce((sum, c) => sum + (c.unreadCount ?? 0), 0),
     isOnline: (state) => (userId) => Boolean(state.online[userId]),
+    directConversations: (state) => state.conversations.filter((c) => !c.isGroup),
+    groupConversations: (state) => state.conversations.filter((c) => c.isGroup),
     // Recomputed on every tick of the caller's timer, so an expired
     // indicator disappears without needing its own scheduled cleanup.
     peerTyping: (state) => (conversationId) => {
-      const at = state.typingAt[conversationId]
-      return Boolean(at && Date.now() - at < TYPING_TTL_MS)
+      const entry = state.typingAt[conversationId]
+      return Boolean(entry && Date.now() - entry.at < TYPING_TTL_MS)
+    },
+    typingUserId: (state) => (conversationId) => {
+      const entry = state.typingAt[conversationId]
+      return entry && Date.now() - entry.at < TYPING_TTL_MS ? entry.userId : null
     },
   },
 
@@ -103,6 +110,17 @@ export const useChatStore = defineStore('chat', {
         }
       })
 
+      // Removed from a group (or left it elsewhere): drop the thread rather
+      // than leave a row that 403s when clicked. No further summary for it
+      // will ever arrive, since the server only broadcasts to members.
+      onSocket('chat:conversationRemoved', ({ conversationId }) => {
+        this.conversations = this.conversations.filter((c) => c.id !== conversationId)
+        if (this.selectedId === conversationId) {
+          this.selectedId = null
+          this.messages = []
+        }
+      })
+
       onSocket('chat:read', ({ conversationId, userId, readAt }) => {
         const conversation = this.conversations.find((c) => c.id === conversationId)
         if (!conversation) return
@@ -110,8 +128,8 @@ export const useChatStore = defineStore('chat', {
         else conversation.peerReadAt = readAt
       })
 
-      onSocket('chat:typing', ({ conversationId, typing }) => {
-        if (typing) this.typingAt[conversationId] = Date.now()
+      onSocket('chat:typing', ({ conversationId, userId, typing }) => {
+        if (typing) this.typingAt[conversationId] = { at: Date.now(), userId }
         else delete this.typingAt[conversationId]
       })
 
@@ -222,14 +240,54 @@ export const useChatStore = defineStore('chat', {
       }
     },
 
+    // Recipients come from the roster the client already holds — one user
+    // for a DM, everyone but you for a group. The server caps the fan-out.
     sendTyping(typing) {
       const conversation = this.selected
-      if (!conversation?.peer) return
-      emitSocket('chat:typing', {
-        conversationId: conversation.id,
-        toUserId: conversation.peer.id,
-        typing,
-      })
+      if (!conversation) return
+      const toUserIds = conversation.isGroup
+        ? conversation.members.map((m) => m.id).filter((id) => id !== this.myId)
+        : [conversation.peer?.id].filter(Boolean)
+      if (!toUserIds.length) return
+      emitSocket('chat:typing', { conversationId: conversation.id, toUserIds, typing })
+    },
+
+    // --- group threads ---
+
+    upsertConversation(conversation) {
+      const index = this.conversations.findIndex((c) => c.id === conversation.id)
+      if (index === -1) this.conversations = sortConversations([conversation, ...this.conversations])
+      else this.conversations.splice(index, 1, conversation)
+      return conversation
+    },
+
+    async createGroup(payload) {
+      const conversation = this.upsertConversation(await chatApi.createGroup(payload))
+      await this.openConversation(conversation.id)
+      return conversation
+    },
+
+    async renameGroup(conversationId, title) {
+      return this.upsertConversation(await chatApi.renameGroup(conversationId, title))
+    },
+
+    async addGroupMembers(conversationId, memberIds) {
+      return this.upsertConversation(await chatApi.addGroupMembers(conversationId, memberIds))
+    },
+
+    async removeGroupMember(conversationId, userId) {
+      return this.upsertConversation(await chatApi.removeGroupMember(conversationId, userId))
+    },
+
+    // The socket's conversationRemoved echo also fires, but the list is
+    // cleared here too so the thread disappears even if the socket is down.
+    async leaveGroup(conversationId) {
+      await chatApi.leaveGroup(conversationId)
+      this.conversations = this.conversations.filter((c) => c.id !== conversationId)
+      if (this.selectedId === conversationId) {
+        this.selectedId = null
+        this.messages = []
+      }
     },
 
     async uploadAttachment(payload) {

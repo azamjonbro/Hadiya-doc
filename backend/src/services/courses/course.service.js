@@ -251,16 +251,63 @@ export const courseService = {
     return toPublicCourse(updated)
   },
 
-  // Permanent counterpart to archive(): the course and everything hanging
-  // off it are gone for good. Restricted to SUPERADMIN at the route layer —
-  // course:delete alone only ever buys you the reversible archive.
+  // "Delete" from the admin's point of view: the course leaves every listing
+  // at once, but nothing is dropped yet. It sits on the trash page until it
+  // is restored or destroyed for good — deleting a course cascades into its
+  // topics, videos, assignments and analytics, which is far too much to hang
+  // on one confirmation dialog being clicked correctly.
+  async moveToTrash(actor, id) {
+    const existing = await courseRepository.findById(id)
+    if (!existing) throw ApiError.notFound('Course not found')
+
+    const trashed = await courseRepository.softDelete(id, actor.id)
+    await cacheDel(courseCacheKey(id))
+    await cacheDel(topicListCacheKey(id))
+    await auditLogRepository.record({
+      actor: actor.id,
+      action: 'COURSE_TRASHED',
+      entity: 'Course',
+      entityId: id,
+      metadata: { title: existing.title, slug: existing.slug },
+    })
+    return toPublicCourse(trashed)
+  },
+
+  // The trash page itself. Capped rather than paginated: a bin that needs a
+  // pager is a bin nobody is emptying.
+  async listTrash() {
+    const rows = await courseRepository.listTrashed()
+    return { items: rows.map((course) => ({ ...toPublicCourse(course), deletedAt: course.deletedAt })) }
+  },
+
+  async restore(actor, id) {
+    const existing = await courseRepository.findAnyById(id)
+    if (!existing) throw ApiError.notFound('Course not found')
+    if (!existing.deletedAt) throw ApiError.badRequest('Course is not in the trash', 'COURSE_NOT_TRASHED')
+
+    const restored = await courseRepository.restore(id)
+    await cacheDel(courseCacheKey(id))
+    await auditLogRepository.record({
+      actor: actor.id,
+      action: 'COURSE_RESTORED',
+      entity: 'Course',
+      entityId: id,
+      metadata: { title: existing.title },
+    })
+    return toPublicCourse(restored)
+  },
+
+  // Permanent counterpart to moveToTrash(): the course and everything hanging
+  // off it are gone for good. Restricted to SUPERADMIN at the route layer,
+  // and reachable only from the trash — course:delete alone buys you the
+  // reversible step.
   //
   // Note this deletes database rows only. Uploaded video objects (originals
   // and HLS segments) stay in S3, since removing them means walking a whole
   // key prefix per video and is not something a half-finished pass should
   // be left in the middle of.
   async destroy(actor, id) {
-    const existing = await courseRepository.findById(id)
+    const existing = await courseRepository.findAnyById(id)
     if (!existing) throw ApiError.notFound('Course not found')
 
     // Read the video ids up front — VideoAnalyticsEvent rows only carry a

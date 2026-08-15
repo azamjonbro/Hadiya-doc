@@ -2,6 +2,7 @@
 import { onMounted, reactive, ref, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
+import { useConfirm } from '@/composables/useConfirm'
 import { ROLES } from '@lms/shared'
 import { useAuthStore } from '@/stores/auth'
 import { coursesApi } from '@/services/courses'
@@ -20,6 +21,7 @@ import EmptyState from '@/components/ui/EmptyState.vue'
 import Icon from '@/components/ui/Icon.vue'
 
 const { t } = useI18n()
+const confirm = useConfirm()
 const route = useRoute()
 const router = useRouter()
 const auth = useAuthStore()
@@ -142,6 +144,7 @@ async function saveTopicEdit(topicId) {
 }
 
 async function removeTopic(topicId) {
+  if (!(await confirm.ask({ message: t('confirm.deleteTopic') }))) return
   try {
     await topicsApi.remove(topicId)
     topics.value = topics.value.filter((tp) => tp.id !== topicId)

@@ -11,6 +11,10 @@ export const taskController = {
     sendSuccess(res, await taskService.listAssignedByMe(req.user, req.validatedQuery))
   }),
 
+  board: asyncHandler(async (req, res) => {
+    sendSuccess(res, await taskService.listBoard(req.user))
+  }),
+
   getById: asyncHandler(async (req, res) => {
     sendSuccess(res, await taskService.getById(req.user, req.params.id))
   }),
@@ -26,5 +30,17 @@ export const taskController = {
   remove: asyncHandler(async (req, res) => {
     await taskService.remove(req.user, req.params.id)
     sendSuccess(res, null, 'Task deleted')
+  }),
+
+  updateBatch: asyncHandler(async (req, res) => {
+    sendSuccess(res, await taskService.updateBatch(req.user, req.params.batchId, req.body), 'Task batch updated')
+  }),
+
+  removeBatch: asyncHandler(async (req, res) => {
+    sendSuccess(
+      res,
+      await taskService.removeBatch(req.user, req.params.batchId, req.validatedQuery),
+      'Task batch deleted'
+    )
   }),
 }

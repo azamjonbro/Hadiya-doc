@@ -32,6 +32,18 @@ export const courseController = {
     sendSuccess(res, await courseService.archive(req.user, req.params.id), 'Course archived')
   }),
 
+  moveToTrash: asyncHandler(async (req, res) => {
+    sendSuccess(res, await courseService.moveToTrash(req.user, req.params.id), 'Course moved to trash')
+  }),
+
+  listTrash: asyncHandler(async (req, res) => {
+    sendSuccess(res, await courseService.listTrash())
+  }),
+
+  restore: asyncHandler(async (req, res) => {
+    sendSuccess(res, await courseService.restore(req.user, req.params.id), 'Course restored')
+  }),
+
   destroy: asyncHandler(async (req, res) => {
     sendSuccess(res, await courseService.destroy(req.user, req.params.id), 'Course permanently deleted')
   }),

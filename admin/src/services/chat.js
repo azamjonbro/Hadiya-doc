@@ -47,6 +47,34 @@ export const chatApi = {
     return http.get('/chat/search', { params }).then((r) => r.data.data)
   },
 
+  // --- group threads (chat:group:manage) ---
+
+  // Org groups ("Sotuv jamoasi") offered as a starting roster — served by
+  // the chat API rather than /groups so this app needs no user:read.
+  listSourceGroups() {
+    return http.get('/chat/source-groups').then((r) => r.data.data)
+  },
+
+  createGroup(payload) {
+    return http.post('/chat/groups', payload).then((r) => r.data.data)
+  },
+
+  renameGroup(conversationId, title) {
+    return http.patch(`/chat/groups/${conversationId}`, { title }).then((r) => r.data.data)
+  },
+
+  addGroupMembers(conversationId, memberIds) {
+    return http.post(`/chat/groups/${conversationId}/members`, { memberIds }).then((r) => r.data.data)
+  },
+
+  removeGroupMember(conversationId, userId) {
+    return http.delete(`/chat/groups/${conversationId}/members/${userId}`).then((r) => r.data.data)
+  },
+
+  leaveGroup(conversationId) {
+    return http.post(`/chat/groups/${conversationId}/leave`).then((r) => r.data.data)
+  },
+
   // Two-step by design (see chat.routes.js): upload returns a storage key,
   // which the caller then references when sending the message. `onProgress`
   // drives the composer's upload bar.

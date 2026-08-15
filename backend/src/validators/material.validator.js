@@ -9,6 +9,12 @@ export const createMaterialMetaSchema = z.object({
   order: z.coerce.number().int().optional(),
 })
 
+// `inline` is what the in-app viewer asks for; `attachment` is the download
+// button. Anything else is a typo, not a third mode.
+export const materialUrlQuerySchema = z.object({
+  disposition: z.enum(['attachment', 'inline']).optional().default('attachment'),
+})
+
 export const updateMaterialSchema = z
   .object({
     title: z.string().min(1).optional(),

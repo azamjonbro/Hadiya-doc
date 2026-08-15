@@ -7,6 +7,9 @@ export const usersApi = {
   departments() {
     return http.get('/users/departments').then((r) => r.data.data)
   },
+  positions() {
+    return http.get('/users/positions').then((r) => r.data.data)
+  },
   getById(id) {
     return http.get(`/users/${id}`).then((r) => r.data.data)
   },

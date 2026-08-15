@@ -10,6 +10,7 @@ import { videosRouter } from './videos.routes.js'
 import { videoAccessRouter } from './videoAccess.routes.js'
 import { videoStreamRouter } from './videoStream.routes.js'
 import { materialsRouter } from './materials.routes.js'
+import { trashRouter } from './trash.routes.js'
 import { assessmentsRouter } from './assessments.routes.js'
 import { analyticsRouter } from './analytics.routes.js'
 import { videoAnalyticsRouter } from './videoAnalytics.routes.js'
@@ -39,6 +40,7 @@ v1Router.use('/videos', videosRouter)
 v1Router.use('/video-access', videoAccessRouter)
 v1Router.use('/video-stream', videoStreamRouter)
 v1Router.use('/materials', materialsRouter)
+v1Router.use('/trash', trashRouter)
 v1Router.use('/assessments', assessmentsRouter)
 v1Router.use('/analytics', analyticsRouter)
 v1Router.use('/video-analytics', videoAnalyticsRouter)

@@ -2,6 +2,7 @@
 import { onMounted, reactive, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
+import { useConfirm } from '@/composables/useConfirm'
 import { ROLES } from '@lms/shared'
 import { useAuthStore } from '@/stores/auth'
 import { newsApi } from '@/services/news'
@@ -14,6 +15,7 @@ import Skeleton from '@/components/ui/Skeleton.vue'
 import Icon from '@/components/ui/Icon.vue'
 
 const { t } = useI18n()
+const confirm = useConfirm()
 const route = useRoute()
 const router = useRouter()
 const auth = useAuthStore()
@@ -76,6 +78,7 @@ async function onSave() {
 }
 
 async function onDelete() {
+  if (!(await confirm.ask({ message: t('confirm.deleteNews') }))) return
   try {
     await newsApi.remove(route.params.id)
     router.push('/admin/news')

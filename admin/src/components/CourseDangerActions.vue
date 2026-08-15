@@ -28,11 +28,11 @@ const { t } = useI18n()
 const auth = useAuthStore()
 const toast = useToast()
 
-// Archiving is reversible, so it rides on the ordinary permission. A
-// permanent delete is not, so it stays with SUPERADMIN — the same rule the
-// server enforces on DELETE /courses/:id/permanent.
+// Both steps are reversible now — archiving retires the course, deleting
+// moves it to the trash — so both ride on the ordinary permission. Emptying
+// the trash is the SUPERADMIN-only step, and it lives on the trash page.
 const canArchive = computed(() => auth.hasPermission('course:delete') && props.course.status !== 'ARCHIVED')
-const canDelete = computed(() => auth.isSuperAdmin)
+const canDelete = computed(() => auth.hasPermission('course:delete'))
 
 const showArchive = ref(false)
 const archiving = ref(false)
@@ -68,7 +68,7 @@ async function onDelete() {
   if (!titleMatches.value) return
   deleting.value = true
   try {
-    await coursesApi.destroy(props.course.id)
+    await coursesApi.remove(props.course.id)
     toast.success(t('courses.deleteConfirm.done'))
     showDelete.value = false
     emit('deleted', props.course.id)

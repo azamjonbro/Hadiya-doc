@@ -5,7 +5,9 @@ import { useI18n } from 'vue-i18n'
 import { coursesApi } from '@/services/courses'
 import { videosApi } from '@/services/videos'
 import { assessmentsApi } from '@/services/assessments'
+import { materialsApi } from '@/services/materials'
 import AiChatPanel from '@/components/AiChatPanel.vue'
+import MaterialViewer from '@/components/MaterialViewer.vue'
 import ReviewsPanel from '@/components/ReviewsPanel.vue'
 import QAPanel from '@/components/QAPanel.vue'
 import AppCard from '@/components/ui/AppCard.vue'
@@ -29,6 +31,10 @@ const videosByTopic = ref({})
 // A module's closing test lives alongside its videos in the curriculum —
 // it is part of the module, not a separate thing to hunt for.
 const assessmentsByTopic = ref({})
+// Slides, documents and audio attached to the module. They open in a reader
+// inside the app rather than as a download.
+const materialsByTopic = ref({})
+const openMaterial = ref(null)
 const openTopics = ref(new Set())
 const progress = ref(null)
 const activeTab = ref('content')
@@ -64,10 +70,26 @@ function isVideoOpen(video) {
 
 const totalVideos = () => Object.values(videosByTopic.value).reduce((sum, list) => sum + (list?.length ?? 0), 0)
 
-// Videos plus the module test — the collapsed row's number should match
-// what actually appears when it is expanded.
+// Videos, materials and the module test — the collapsed row's number should
+// match what actually appears when it is expanded.
 function topicItemCount(topicId) {
-  return (videosByTopic.value[topicId]?.length ?? 0) + (assessmentsByTopic.value[topicId]?.length ?? 0)
+  return (
+    (videosByTopic.value[topicId]?.length ?? 0) +
+    (materialsByTopic.value[topicId]?.length ?? 0) +
+    (assessmentsByTopic.value[topicId]?.length ?? 0)
+  )
+}
+
+const MATERIAL_ICONS = {
+  'application/pdf': 'file-text',
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document': 'file-text',
+  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': 'grid',
+  'application/vnd.openxmlformats-officedocument.presentationml.presentation': 'layers',
+}
+
+function materialIcon(material) {
+  if (material.mimeType?.startsWith('audio/')) return 'mic'
+  return MATERIAL_ICONS[material.mimeType] ?? 'file-text'
 }
 
 function videoProgress(video) {
@@ -94,13 +116,16 @@ async function load() {
   try {
     course.value = await coursesApi.getById(route.params.id)
     topics.value = await coursesApi.listTopics(route.params.id)
-    const [videoLists, assessmentLists] = await Promise.all([
+    const [videoLists, materialLists, assessmentLists] = await Promise.all([
       Promise.all(topics.value.map((topic) => videosApi.listByTopic(topic.id))),
-      // A module without a test is normal, so a failure here degrades to
-      // "no test shown" rather than breaking the whole curriculum.
+      // A module without materials is normal, so a failure here degrades to
+      // "no materials shown" rather than breaking the whole curriculum — same
+      // reasoning as the tests below.
+      Promise.all(topics.value.map((topic) => materialsApi.listByTopic(topic.id).catch(() => []))),
       Promise.all(topics.value.map((topic) => assessmentsApi.listByTopic(topic.id).catch(() => []))),
     ])
     videosByTopic.value = Object.fromEntries(topics.value.map((topic, i) => [topic.id, videoLists[i]]))
+    materialsByTopic.value = Object.fromEntries(topics.value.map((topic, i) => [topic.id, materialLists[i]]))
     assessmentsByTopic.value = Object.fromEntries(topics.value.map((topic, i) => [topic.id, assessmentLists[i]]))
     openTopics.value = new Set(topics.value.slice(0, 1).map((tp) => tp.id))
     progress.value = await coursesApi.getMyProgress(route.params.id)
@@ -214,6 +239,21 @@ onMounted(load)
                   </button>
                 </template>
 
+                <!-- Slides, documents and audio: opened in the in-app reader -->
+                <button
+                  v-for="material in materialsByTopic[topic.id]"
+                  :key="material.id"
+                  type="button"
+                  class="flex w-full items-center gap-3 px-4 py-3 text-left transition-default hover:bg-surface-2"
+                  @click="openMaterial = material"
+                >
+                  <span class="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-surface-2 text-ink-muted">
+                    <Icon :name="materialIcon(material)" size="13" />
+                  </span>
+                  <span class="min-w-0 flex-1 truncate text-small text-ink">{{ material.title }}</span>
+                  <Icon name="eye" size="13" class="shrink-0 text-ink-faint" />
+                </button>
+
                 <!-- The module's closing test, listed after its videos -->
                 <button
                   v-for="assessment in assessmentsByTopic[topic.id]"
@@ -232,7 +272,7 @@ onMounted(load)
                 </button>
 
                 <p
-                  v-if="!videosByTopic[topic.id]?.length && !assessmentsByTopic[topic.id]?.length"
+                  v-if="!videosByTopic[topic.id]?.length && !materialsByTopic[topic.id]?.length && !assessmentsByTopic[topic.id]?.length"
                   class="px-4 py-4 text-center text-small text-ink-faint"
                 >
                   {{ t('videos.empty') }}
@@ -268,5 +308,7 @@ onMounted(load)
         </div>
       </div>
     </template>
+
+    <MaterialViewer :material="openMaterial" @close="openMaterial = null" />
   </div>
 </template>

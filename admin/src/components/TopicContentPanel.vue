@@ -1,6 +1,7 @@
 <script setup>
 import { computed, onMounted, reactive, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
+import { useConfirm } from '@/composables/useConfirm'
 import { useAuthStore } from '@/stores/auth'
 import { topicsApi } from '@/services/topics'
 import { videosApi } from '@/services/videos'
@@ -8,6 +9,7 @@ import { materialsApi } from '@/services/materials'
 import { assessmentsApi } from '@/services/assessments'
 import { useVideoUpload } from '@/composables/useVideoUpload'
 import MaterialUploadForm from '@/components/MaterialUploadForm.vue'
+import MaterialViewer from '@/components/MaterialViewer.vue'
 import AssessmentEditor from '@/components/AssessmentEditor.vue'
 import VideoReportPanel from '@/components/VideoReportPanel.vue'
 import VideoQuizEditor from '@/components/VideoQuizEditor.vue'
@@ -21,6 +23,7 @@ const props = defineProps({ topicId: { type: String, required: true } })
 
 const { t } = useI18n()
 const auth = useAuthStore()
+const confirm = useConfirm()
 const canManage = computed(() => auth.hasPermission('video:manage'))
 const canUpload = computed(() => auth.hasPermission('video:upload'))
 
@@ -147,6 +150,7 @@ async function saveVideoPoints(item) {
   }
 }
 async function removeVideo(item) {
+  if (!(await confirm.ask({ message: t('confirm.deleteVideo', { title: item.title }) }))) return
   await videosApi.remove(item.id)
   load()
 }
@@ -158,9 +162,14 @@ async function toggleMaterialStatus(item) {
   load()
 }
 async function removeMaterial(item) {
+  if (!(await confirm.ask({ message: t('confirm.deleteMaterial', { title: item.title }) }))) return
   await materialsApi.remove(item.id)
   load()
 }
+// Opening an upload in the same reader the learners get is how a manager
+// checks a file before publishing it.
+const openMaterial = ref(null)
+
 async function downloadMaterial(item) {
   const { url } = await materialsApi.getDownloadUrl(item.id)
   window.open(url, '_blank', 'noopener')
@@ -285,6 +294,9 @@ onMounted(load)
               <Badge :variant="item.status === 'PUBLISHED' ? 'success' : 'neutral'" size="sm">
                 {{ item.status === 'PUBLISHED' ? t('courses.status.published') : t('courses.status.draft') }}
               </Badge>
+              <AppButton variant="ghost" size="sm" icon="eye" @click="openMaterial = item">
+                {{ t('materials.open') }}
+              </AppButton>
               <AppButton variant="ghost" size="sm" icon="download" @click="downloadMaterial(item)">
                 {{ t('materials.download') }}
               </AppButton>
@@ -421,5 +433,7 @@ onMounted(load)
         />
       </div>
     </div>
+
+    <MaterialViewer :material="openMaterial" @close="openMaterial = null" />
   </div>
 </template>

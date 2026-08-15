@@ -38,6 +38,15 @@ CRUD; `GET /courses/:id/topics`.
 CRUD, `POST /:id/upload` (tus protocol endpoint), `GET /:id/status`
 (processing status polling), `POST /:id/retry-processing`.
 
+## `/materials`
+`GET /topics/:id/materials` + `POST` (multipart upload), `GET|PATCH|DELETE
+/materials/:id`. Two ways to read the file, both behind the same course-access
+check: `GET /:id/download-url?disposition=attachment|inline` returns a signed,
+short-lived S3 URL (`inline` is what the in-app viewer hands to a PDF frame or
+an audio player), and `GET /:id/content` streams the raw bytes through the API
+for the formats the browser has to parse itself (docx/xlsx/pptx), so the viewer
+does not depend on CORS rules on the storage bucket.
+
 ## `/video-access`
 `POST /:videoId/token` — validates the caller's `courseAssignment`
 (assigned, not expired, deadline not passed) and issues a short-lived signed
@@ -63,7 +72,33 @@ window). `/news-analytics`: `POST /:id/events` (scroll/read events),
 `GET /:id/report`.
 
 ## `/tasks`
-CRUD, `GET /my`, `GET /assigned-by-me`.
+CRUD, `GET /my`, `GET /assigned-by-me`. `POST /` takes an
+`assigneeType` of `USER` (with `assignedTo`), `POSITION` (with `position`)
+or `ALL`; the last two fan out to one task document per active recipient
+(managers stay scoped to their own department) and respond with
+`{ audienceType, audienceValue, batchId, count, items }`.
+
+`GET /board` is the assigner's kanban feed: every copy of every task they
+wrote, hydrated with assignee names and **unpaginated** (capped server
+side). The admin board groups the fan-outs by `batchId` into one card each,
+which is why it cannot use the 20-row `assigned-by-me` page — a single
+company-wide assignment can exceed it on its own.
+
+Batch operations act on a whole fan-out, so the board can move or delete a
+grouped card in one request instead of one per recipient. Both are limited
+to the assigner (or `task:manage:all`), and an unknown or foreign `batchId`
+answers 404 alike.
+
+- `PATCH /batch/:batchId` — body `{ status, fromStatus? }`. `fromStatus`
+  scopes the change to the copies in the column the card was dragged out
+  of, so finished recipients are never dragged backwards. Copies already in
+  the target status are skipped (no `completedAt` reset, no notification).
+  Every affected assignee still gets the same bell + chat system message a
+  single-task change sends. Responds `{ batchId, status, affected }`.
+- `DELETE /batch/:batchId?fromStatus=` — deletes the whole fan-out by
+  default; the board deliberately omits `fromStatus` here, since a scoped
+  delete would strip one status and leave the card sitting in the next.
+  Responds `{ batchId, affected }`.
 
 ## `/events`
 CRUD, `GET /calendar`.
@@ -74,6 +109,12 @@ CRUD, `GET /calendar`.
 ## `/ai`
 `POST /chat` — scoped strictly to a `courseId`/`topicId`/`videoId` the
 caller is actually assigned to; `GET /history`.
+
+## `/reports`
+`GET /` (available types), `GET /:type/export?format=csv|xlsx|pdf`.
+`lang=uz|ru|en` (default `uz`) writes every header, enum value and document
+title in that language — the admin sends whatever locale it is displaying.
+Dates stay ISO and the download filename stays the ASCII slug.
 
 ## `/audit`
 `GET /` (SUPERADMIN/ADMIN, filterable by actor/entity/date range).

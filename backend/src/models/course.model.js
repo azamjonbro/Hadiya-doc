@@ -15,6 +15,14 @@ const courseSchema = new Schema(
     department: { type: String, default: '' },
     createdBy: { type: Schema.Types.ObjectId, ref: 'User', required: true },
     updatedBy: { type: Schema.Types.ObjectId, ref: 'User', default: null },
+    // Trash, not archive. ARCHIVED is a retired-but-real course that still
+    // appears in listings and reports; a course with `deletedAt` set is gone
+    // from every one of them and only exists on the trash page, where it is
+    // either restored or destroyed for good. Deleting a course cascades into
+    // topics, videos and analytics, so making the destructive step reversible
+    // is worth one nullable field on every query.
+    deletedAt: { type: Date, default: null },
+    deletedBy: { type: Schema.Types.ObjectId, ref: 'User', default: null },
   },
   { timestamps: true }
 )

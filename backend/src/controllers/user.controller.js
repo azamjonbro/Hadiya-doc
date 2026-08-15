@@ -43,6 +43,10 @@ export const userController = {
     sendSuccess(res, await userService.listDepartments(req.user))
   }),
 
+  listPositions: asyncHandler(async (req, res) => {
+    sendSuccess(res, await userService.listPositions(req.user))
+  }),
+
   getById: asyncHandler(async (req, res) => {
     const user = await userService.getById(req.user, req.params.id)
     sendSuccess(res, user)

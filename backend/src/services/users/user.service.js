@@ -113,6 +113,17 @@ export const userService = {
     return userRepository.listDepartments()
   },
 
+  // Options for "assign this task to a whole position". A manager may only
+  // assign inside their own department, so they are offered the job titles
+  // that exist there — anything else would resolve to zero recipients.
+  async listPositions(actor) {
+    if (actor.roleName === ROLES.MANAGER) {
+      const actorUser = await userRepository.findById(actor.id)
+      return actorUser?.department ? userRepository.listPositions({ department: actorUser.department }) : []
+    }
+    return userRepository.listPositions()
+  },
+
   async getById(actor, id) {
     const user = await userRepository.findById(id)
     if (!user) throw ApiError.notFound('User not found')

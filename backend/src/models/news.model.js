@@ -16,6 +16,10 @@ const newsSchema = new Schema(
     publishAt: { type: Date, default: Date.now },
     expiryAt: { type: Date, default: null },
     status: { type: String, enum: ['DRAFT', 'PUBLISHED'], default: 'DRAFT' },
+    // Soft delete — see course.model.js. Deleted articles wait in the trash
+    // for the retention window instead of disappearing on one click.
+    deletedAt: { type: Date, default: null },
+    deletedBy: { type: Schema.Types.ObjectId, ref: 'User', default: null },
     createdBy: { type: Schema.Types.ObjectId, ref: 'User', required: true },
     updatedBy: { type: Schema.Types.ObjectId, ref: 'User', default: null },
   },

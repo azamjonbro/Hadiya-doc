@@ -98,6 +98,18 @@ body {
 }
 
 @layer utilities {
+  /* For short horizontal strips (tab rows, chip rails) that scroll on
+     overflow. The global scrollbar above is 10px tall — under a 32px tab
+     row that reads as a broken layout rather than an affordance, and the
+     row's own edge already signals that it continues. */
+  .scrollbar-none {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+  .scrollbar-none::-webkit-scrollbar {
+    display: none;
+  }
+
   .transition-default {
     transition-property: color, background-color, border-color, box-shadow, transform, opacity;
     transition-duration: 180ms;

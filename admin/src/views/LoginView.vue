@@ -18,6 +18,20 @@ const rememberMe = ref(true)
 const submitting = ref(false)
 const errorMessage = ref('')
 
+// Everything that isn't "these credentials are wrong" needs to say so.
+// Falling straight through to auth.login.error told a rate-limited user —
+// or one hitting a dead API — that their perfectly correct password was
+// invalid, so they retried, burned more of the budget and stayed locked out.
+function loginErrorMessage(error) {
+  if (!error.response) return t('auth.login.networkError')
+
+  const { status, data } = error.response
+  if (status === 429) return t(data?.code === 'ACCOUNT_LOCKED' ? 'auth.login.accountLocked' : 'auth.login.rateLimited')
+  if (status >= 500) return t('auth.login.serverError')
+  if (status === 401) return t('auth.login.error')
+  return data?.message ?? t('auth.login.error')
+}
+
 async function onSubmit() {
   submitting.value = true
   errorMessage.value = ''
@@ -31,7 +45,7 @@ async function onSubmit() {
     const redirect = typeof route.query.redirect === 'string' ? route.query.redirect : '/'
     router.push(redirect)
   } catch (error) {
-    errorMessage.value = error.response?.data?.message ?? t('auth.login.error')
+    errorMessage.value = loginErrorMessage(error)
   } finally {
     submitting.value = false
   }

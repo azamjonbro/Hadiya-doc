@@ -1,4 +1,5 @@
 import rateLimit from 'express-rate-limit'
+import { rateLimitHandler } from './rateLimit.middleware.js'
 
 // Spec §20/§26 explicitly calls for the AI endpoint to be protected from
 // abuse — each Claude call has real cost, unlike the rest of the API.
@@ -10,4 +11,5 @@ export const aiChatRateLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   keyGenerator: (req) => req.user?.id ?? req.ip,
+  handler: rateLimitHandler('AI chat limit reached, please try again in a few minutes'),
 })

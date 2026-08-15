@@ -1,5 +1,5 @@
 import mongoose from 'mongoose'
-import { Conversation, participantsKeyFor } from '../models/conversation.model.js'
+import { Conversation, groupParticipantsKey, participantsKeyFor } from '../models/conversation.model.js'
 
 function toObjectId(value) {
   return value instanceof mongoose.Types.ObjectId ? value : new mongoose.Types.ObjectId(String(value))
@@ -35,6 +35,55 @@ export const conversationRepository = {
       },
       { upsert: true, new: true, setDefaultsOnInsert: true }
     )
+  },
+
+  // No getOrCreate counterpart: a group is not identified by its roster, so
+  // creating the "same" group twice is a legitimate thing to do (two rooms
+  // with the same people). The caller has already deduplicated and
+  // validated `participantIds`.
+  createGroup({ title, participantIds, createdBy, sourceGroupId = null }) {
+    return Conversation.create({
+      type: 'GROUP',
+      participantsKey: groupParticipantsKey(),
+      title,
+      participants: participantIds,
+      createdBy,
+      sourceGroupId,
+      reads: participantIds.map((userId) => ({ userId, readAt: null })),
+    })
+  },
+
+  // $addToSet on both arrays so re-adding somebody who is already in the
+  // room is a no-op rather than a duplicate row in `reads` (which would
+  // make markRead update only one of the two and leave a phantom unread).
+  addParticipants(id, userIds) {
+    return Conversation.findByIdAndUpdate(
+      id,
+      {
+        $addToSet: {
+          participants: { $each: userIds.map(toObjectId) },
+          reads: { $each: userIds.map((userId) => ({ userId: toObjectId(userId), readAt: null })) },
+        },
+      },
+      { new: true }
+    )
+  },
+
+  removeParticipant(id, userId) {
+    return Conversation.findByIdAndUpdate(
+      id,
+      {
+        $pull: {
+          participants: toObjectId(userId),
+          reads: { userId: toObjectId(userId) },
+        },
+      },
+      { new: true }
+    )
+  },
+
+  updateGroup(id, { title }) {
+    return Conversation.findByIdAndUpdate(id, { $set: { title } }, { new: true })
   },
 
   // Every thread the user is part of, including ones with no messages yet
@@ -95,4 +144,4 @@ export const conversationRepository = {
   },
 }
 
-export { participantsKeyFor }
+export { groupParticipantsKey, participantsKeyFor }

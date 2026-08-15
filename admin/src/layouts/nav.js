@@ -15,6 +15,7 @@ export const managementNav = [
   { name: 'tasks', path: '/admin/tasks', icon: 'check-square', labelKey: 'nav.tasks', permission: 'task:create' },
   { name: 'reports', path: '/admin/reports', icon: 'bar-chart', labelKey: 'nav.reports', permission: 'report:export' },
   { name: 'chat', path: '/admin/chat', icon: 'message-square', labelKey: 'nav.chat', permission: 'chat:support' },
+  { name: 'trash', path: '/admin/trash', icon: 'trash', labelKey: 'nav.trash', permission: 'course:delete' },
 ]
 
 export const systemNav = [

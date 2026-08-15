@@ -6,6 +6,8 @@ import Icon from '@/components/ui/Icon.vue'
 import Skeleton from '@/components/ui/Skeleton.vue'
 import { formatBytes, formatDateTime, formatRelative } from '@/utils/chatFormat'
 
+// Direct threads only — a group's roster, history and access rules live in
+// GroupInfoDialog, which has the room to show them.
 const props = defineProps({
   details: { type: Object, default: null },
   loading: { type: Boolean, default: false },
@@ -31,23 +33,27 @@ const personRows = computed(() => [
 
 // The thread's own audit trail — this is the "created / updated" data the
 // info panel exists to surface, not just a message list.
-const threadRows = computed(() => [
-  { icon: 'plus', label: t('chat.info.createdAt'), value: formatDateTime(props.details?.createdAt, locale.value) },
-  { icon: 'refresh', label: t('chat.info.updatedAt'), value: formatDateTime(props.details?.updatedAt, locale.value) },
-  {
-    icon: 'message-square',
-    label: t('chat.info.lastMessageAt'),
-    value: props.details?.lastMessageAt
-      ? `${formatDateTime(props.details.lastMessageAt, locale.value)} · ${formatRelative(props.details.lastMessageAt, locale.value, t)}`
-      : t('chat.inbox.noMessages'),
-  },
-  { icon: 'list', label: t('chat.info.messageCount'), value: String(props.details?.messageCount ?? 0) },
-  {
-    icon: 'check-check',
-    label: t('chat.info.peerReadAt'),
-    value: props.details?.peerReadAt ? formatDateTime(props.details.peerReadAt, locale.value) : t('chat.info.notReadYet'),
-  },
-])
+const threadRows = computed(() =>
+  [
+    { icon: 'plus', label: t('chat.info.createdAt'), value: formatDateTime(props.details?.createdAt, locale.value) },
+    { icon: 'refresh', label: t('chat.info.updatedAt'), value: formatDateTime(props.details?.updatedAt, locale.value) },
+    {
+      icon: 'message-square',
+      label: t('chat.info.lastMessageAt'),
+      value: props.details?.lastMessageAt
+        ? `${formatDateTime(props.details.lastMessageAt, locale.value)} · ${formatRelative(props.details.lastMessageAt, locale.value, t)}`
+        : t('chat.inbox.noMessages'),
+    },
+    { icon: 'list', label: t('chat.info.messageCount'), value: String(props.details?.messageCount ?? 0) },
+    {
+      icon: 'check-check',
+      label: t('chat.info.peerReadAt'),
+      value: props.details?.peerReadAt
+        ? formatDateTime(props.details.peerReadAt, locale.value)
+        : t('chat.info.notReadYet'),
+    },
+  ].filter(Boolean)
+)
 
 const images = computed(() => (props.details?.attachments ?? []).filter((m) => m.kind === 'IMAGE'))
 const files = computed(() => (props.details?.attachments ?? []).filter((m) => m.kind !== 'IMAGE'))

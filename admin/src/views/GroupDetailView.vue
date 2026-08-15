@@ -2,6 +2,7 @@
 import { computed, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
+import { useConfirm } from '@/composables/useConfirm'
 import { useAuthStore } from '@/stores/auth'
 import { groupsApi } from '@/services/groups'
 import { usersApi } from '@/services/users'
@@ -19,6 +20,7 @@ import EmptyState from '@/components/ui/EmptyState.vue'
 import Icon from '@/components/ui/Icon.vue'
 
 const { t } = useI18n()
+const confirm = useConfirm()
 const route = useRoute()
 const router = useRouter()
 const auth = useAuthStore()
@@ -115,6 +117,8 @@ async function onAddMembers() {
 }
 
 async function onRemoveMember(userId) {
+  const member = group.value?.members?.find((m) => m.id === userId)
+  if (!(await confirm.ask({ message: t('confirm.removeGroupMember', { name: member?.fullName ?? '' }) }))) return
   busy.value = true
   try {
     group.value = await groupsApi.removeMember(route.params.id, userId)
@@ -189,6 +193,7 @@ async function onEdit() {
 }
 
 async function onDelete() {
+  if (!(await confirm.ask({ message: t('confirm.deleteGroup', { title: group.value?.title ?? '' }) }))) return
   busy.value = true
   try {
     await groupsApi.remove(route.params.id)

@@ -1,6 +1,7 @@
 <script setup>
 import { onMounted, reactive, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
+import { useConfirm } from '@/composables/useConfirm'
 import { assessmentsApi } from '@/services/assessments'
 import AppButton from '@/components/ui/AppButton.vue'
 import AppInput from '@/components/ui/AppInput.vue'
@@ -10,6 +11,7 @@ const props = defineProps({ assessmentId: { type: String, required: true } })
 const emit = defineEmits(['updated', 'removed'])
 
 const { t } = useI18n()
+const confirm = useConfirm()
 
 const loading = ref(true)
 const saving = ref(false)
@@ -115,6 +117,7 @@ async function togglePublish() {
 }
 
 async function removeAssessment() {
+  if (!(await confirm.ask({ message: t('confirm.deleteAssessment') }))) return
   removing.value = true
   errorMessage.value = ''
   try {

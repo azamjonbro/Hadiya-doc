@@ -15,6 +15,11 @@ function userRoom(userId) {
   return `user:${userId}`
 }
 
+// Ceiling on how many user rooms one typing event may touch — comfortably
+// above any real group roster, low enough that the relay cannot be turned
+// into an all-users broadcast.
+const TYPING_FANOUT_LIMIT = 200
+
 // userId -> number of live sockets. A user with a phone and a laptop open
 // is one presence, and closing one tab must not flip them offline.
 const connectionsByUser = new Map()
@@ -71,16 +76,20 @@ export function initSocketServer(httpServer) {
     if (markOnline(userId)) io.emit('presence:update', { userId, online: true })
     socket.emit('presence:snapshot', onlineUserIds())
 
-    // Typing indicators are relayed, never persisted — the peer id comes
-    // from the client, so this can only ever reach one specific user room
-    // and cannot be used to broadcast.
-    socket.on('chat:typing', ({ conversationId, toUserId, typing } = {}) => {
-      if (typeof conversationId !== 'string' || typeof toUserId !== 'string') return
-      io.to(userRoom(toUserId)).emit('chat:typing', {
-        conversationId,
-        userId,
-        typing: Boolean(typing),
-      })
+    // Typing indicators are relayed, never persisted. The recipients come
+    // from the client — it already holds the thread's roster — so this is
+    // capped at a group's worth of user rooms rather than left unbounded:
+    // it must stay a fan-out to one conversation, not a broadcast primitive.
+    socket.on('chat:typing', ({ conversationId, toUserIds, typing } = {}) => {
+      if (typeof conversationId !== 'string' || !Array.isArray(toUserIds)) return
+      const recipients = toUserIds.filter((id) => typeof id === 'string' && id !== userId).slice(0, TYPING_FANOUT_LIMIT)
+      for (const recipient of recipients) {
+        io.to(userRoom(recipient)).emit('chat:typing', {
+          conversationId,
+          userId,
+          typing: Boolean(typing),
+        })
+      }
     })
 
     socket.on('disconnect', () => {
@@ -116,6 +125,14 @@ export function emitConversationUpdated(conversationByUserId) {
   for (const [userId, conversation] of Object.entries(conversationByUserId)) {
     emitToUsers([userId], 'chat:conversationUpdated', conversation)
   }
+}
+
+// The counterpart to the above for someone who is no longer a member: they
+// are not in the roster any more, so no summary will ever reach them again
+// and the thread would otherwise sit in their sidebar until a reload — still
+// clickable, answering 403.
+export function emitConversationRemoved(userIds, conversationId) {
+  emitToUsers(userIds, 'chat:conversationRemoved', { conversationId })
 }
 
 export function emitChatRead(participantIds, { conversationId, userId, readAt }) {

@@ -1,22 +1,27 @@
-# Deploying front + backend to qollanma.techinfo.uz
+# Deploying front + admin + backend to qollanma.techinfo.uz
 
-Single-origin layout: the employee SPA is served as static files at `/`, the
-API is reverse-proxied at `/api`, and socket.io at `/socket.io`. Everything
-is same-origin, so the `SameSite=Strict` refresh cookie is always attached
-and there is no CORS preflight anywhere.
+Both SPAs are served from this box, each single-origin with the API. The
+static files sit at `/`, the API is reverse-proxied at `/api`, and
+socket.io at `/socket.io` — so the `SameSite=Strict` refresh cookie is
+always attached and there is no CORS preflight anywhere.
 
-| Path | Serves |
-| --- | --- |
-| `/` | `front/dist` (static, SPA fallback) |
-| `/api/` | backend on `127.0.0.1:4000` |
-| `/socket.io/` | backend, WebSocket upgrade |
+| Host | `/` serves | `/api/`, `/socket.io/` |
+| --- | --- | --- |
+| `qollanma.techinfo.uz` | `front/dist` → `/var/www/qollanma/front` | `127.0.0.1:4000` |
+| `admin.qollanma.techinfo.uz` | `admin/dist` → `/var/www/qollanma/admin` | `127.0.0.1:4000` |
 
-The admin app is not part of this host. Add it later at
-`admin.qollanma.techinfo.uz` — still same-site (the registrable domain is
-`techinfo.uz`), so `COOKIE_SAMESITE=strict` keeps working, but set
-`COOKIE_DOMAIN=.qollanma.techinfo.uz` at that point so the cookie is shared
-with the subdomain. Do **not** widen it to `.techinfo.uz`: that would hand
-the refresh cookie to the six unrelated sites on this box.
+One backend process serves both; the admin host simply proxies to it too,
+which is why the admin app is same-origin rather than merely same-site.
+
+Cookies: the refresh cookie is issued with `Domain=qollanma.techinfo.uz`,
+and an explicit `Domain` attribute covers subdomains, so the admin host
+receives it with `COOKIE_DOMAIN` unchanged. Do **not** widen it to
+`.techinfo.uz`: that would hand the refresh cookie to the six unrelated
+sites on this box.
+
+DNS: `qollanma.techinfo.uz` already resolves to `94.241.173.19`. Add an A
+record for `admin.qollanma.techinfo.uz` pointing at the same IP **before**
+running certbot for it.
 
 ## Server constraints
 
@@ -54,18 +59,31 @@ a second runtime that could shadow theirs.
 
 ```sh
 npm ci
-VITE_API_BASE_URL=https://qollanma.techinfo.uz/api/v1 npm run build --workspace front
+npm run build --workspace front
+npm run build --workspace admin
 ```
 
-`VITE_API_BASE_URL` is baked in at build time, not read at runtime — a
-change means a rebuild. Use the absolute URL rather than a bare `/api/v1`:
-`front/src/services/socket.js` derives the socket origin by stripping the
-`/api/v1` suffix, and a relative value would leave it empty.
+No env vars needed on the command line: `front/.env.production` and
+`admin/.env.production` are committed and each already points at its own
+host. `VITE_API_BASE_URL` is baked in at build time, not read at runtime —
+a change means a rebuild. Both use an absolute URL rather than a bare
+`/api/v1`: `src/services/socket.js` derives the socket origin by stripping
+the `/api/v1` suffix, and a relative value would leave it empty.
+
+Verify what actually landed in the bundle before shipping:
+
+```sh
+grep -o 'https://[a-z.]*qollanma\.techinfo\.uz/api/v1' front/dist/assets/*.js admin/dist/assets/*.js
+```
+
+(The `http://localhost:4000/api/v1` string also present in both bundles is
+the dead fallback in `src/services/apiBase.js`, not the configured value.)
 
 ### 3. Ship
 
 ```sh
 rsync -az --delete front/dist/ root@94.241.173.19:/var/www/qollanma/front/
+rsync -az --delete admin/dist/ root@94.241.173.19:/var/www/qollanma/admin/
 rsync -az --delete --exclude node_modules --exclude .env \
   backend/ packages/ package.json package-lock.json \
   root@94.241.173.19:/root/apps/qollanma/
@@ -79,13 +97,20 @@ transcoding and reminder jobs, and nothing works without it).
 ### 4. nginx + TLS
 
 ```sh
-cp nginx.conf /etc/nginx/sites-available/qollanma.techinfo.uz
-ln -s ../sites-available/qollanma.techinfo.uz /etc/nginx/sites-enabled/
-certbot --nginx -d qollanma.techinfo.uz
+cp nginx.conf       /etc/nginx/sites-available/qollanma.techinfo.uz
+cp nginx-admin.conf /etc/nginx/sites-available/admin.qollanma.techinfo.uz
+ln -s ../sites-available/qollanma.techinfo.uz       /etc/nginx/sites-enabled/
+ln -s ../sites-available/admin.qollanma.techinfo.uz /etc/nginx/sites-enabled/
+certbot --nginx -d qollanma.techinfo.uz -d admin.qollanma.techinfo.uz
 nginx -t && systemctl reload nginx
 ```
 
-DNS already resolves `qollanma.techinfo.uz` to `94.241.173.19`.
+Two standalone site files — leave every other site on this nginx untouched.
+Both certs come from one certbot run; the admin A record must already exist
+or that half of the challenge fails and neither cert is issued.
+
+Run `nginx -t` before the reload every time: a syntax error here takes down
+all seven sites, not just this one.
 
 ### 5. Data migration
 
@@ -117,7 +142,9 @@ done
 ## Verify
 
 - `https://qollanma.techinfo.uz/login` typed directly → app boots (SPA fallback works)
+- `https://admin.qollanma.techinfo.uz/login` typed directly → same
 - `https://qollanma.techinfo.uz/api/v1/health` → `{"success":true,...}`
-- Log in, wait past the 15-minute access TTL, reload → still signed in (refresh cookie works)
-- Open chat → messages arrive live (socket.io upgrade works)
+- `https://admin.qollanma.techinfo.uz/api/v1/health` → same (admin host proxies too)
+- Log in on both, wait past the 15-minute access TTL, reload → still signed in (refresh cookie reaches the subdomain)
+- Open chat → messages arrive live (socket.io upgrade works, admin origin is in `ALLOWED_ORIGINS`)
 - Play a lesson past 3 minutes → no interruption (playback token refresh works)

@@ -51,4 +51,28 @@ export const chatController = {
   uploadAttachment: asyncHandler(async (req, res) => {
     sendSuccess(res, await chatService.uploadAttachment(req.user, req.body.kind, req.file), 'Attachment uploaded', 201)
   }),
+
+  listSourceGroups: asyncHandler(async (req, res) => {
+    sendSuccess(res, await chatService.listSourceGroups(req.user))
+  }),
+
+  createGroup: asyncHandler(async (req, res) => {
+    sendSuccess(res, await chatService.createGroup(req.user, req.body), 'Group created', 201)
+  }),
+
+  renameGroup: asyncHandler(async (req, res) => {
+    sendSuccess(res, await chatService.renameGroup(req.user, req.params.id, req.body.title), 'Group renamed')
+  }),
+
+  addGroupMembers: asyncHandler(async (req, res) => {
+    sendSuccess(res, await chatService.addGroupMembers(req.user, req.params.id, req.body.memberIds), 'Members added')
+  }),
+
+  removeGroupMember: asyncHandler(async (req, res) => {
+    sendSuccess(res, await chatService.removeGroupMember(req.user, req.params.id, req.params.userId), 'Member removed')
+  }),
+
+  leaveGroup: asyncHandler(async (req, res) => {
+    sendSuccess(res, await chatService.leaveGroup(req.user, req.params.id), 'Left the group')
+  }),
 }

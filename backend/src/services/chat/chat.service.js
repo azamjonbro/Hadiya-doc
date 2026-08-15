@@ -1,12 +1,15 @@
+import { PERMISSIONS } from '@lms/shared'
 import { conversationRepository } from '../../repositories/conversation.repository.js'
 import { chatMessageRepository } from '../../repositories/chatMessage.repository.js'
 import { userRepository } from '../../repositories/user.repository.js'
 import { roleRepository } from '../../repositories/role.repository.js'
+import { groupRepository } from '../../repositories/group.repository.js'
 import { chatUploadService } from '../uploads/chatUpload.service.js'
 import {
   emitChatMessage,
   emitChatMessageUpdated,
   emitChatRead,
+  emitConversationRemoved,
   emitConversationUpdated,
   isUserOnline,
 } from '../../realtime/socket.js'
@@ -46,12 +49,35 @@ function toPublicUser(user, roleName) {
   }
 }
 
-async function serializeMessage(message) {
+// Who wrote it, denormalised onto the message itself rather than looked up
+// client-side from the member list. In a group the author has to be legible
+// on every bubble, and a member who has since been removed — or a message
+// forwarded into search results — would otherwise lose its attribution the
+// moment they left the roster.
+function toMessageSender(user) {
+  if (!user) return null
+  return {
+    id: user._id.toString(),
+    fullName: user.fullName,
+    username: user.username,
+    avatar: user.avatar,
+  }
+}
+
+async function loadSendersFor(messages) {
+  const senderIds = [...new Set(messages.map((m) => m.senderId.toString()))]
+  if (!senderIds.length) return new Map()
+  const users = await userRepository.findByIds(senderIds)
+  return new Map(users.map((user) => [user._id.toString(), toMessageSender(user)]))
+}
+
+async function serializeMessage(message, senderById = null) {
   const attachment = message.attachment
   return {
     id: message._id.toString(),
     conversationId: message.conversationId.toString(),
     senderId: message.senderId.toString(),
+    sender: senderById?.get(message.senderId.toString()) ?? null,
     kind: message.kind,
     // A soft-deleted message keeps its place in the thread but never ships
     // its content — not even to the sender.
@@ -85,12 +111,23 @@ async function serializeMessage(message) {
   }
 }
 
-function serializeMessages(messages) {
-  return Promise.all(messages.map(serializeMessage))
+// One sender lookup for the whole page rather than one per bubble.
+async function serializeMessages(messages) {
+  const senderById = await loadSendersFor(messages)
+  return Promise.all(messages.map((message) => serializeMessage(message, senderById)))
+}
+
+async function serializeOneMessage(message) {
+  const [serialized] = await serializeMessages([message])
+  return serialized
 }
 
 function readAtFor(conversation, userId) {
   return conversation.reads?.find((r) => r.userId.toString() === String(userId))?.readAt ?? null
+}
+
+function isGroup(conversation) {
+  return conversation.type === 'GROUP'
 }
 
 function otherParticipantId(conversation, userId) {
@@ -99,18 +136,30 @@ function otherParticipantId(conversation, userId) {
 
 // Per-viewer view of a thread: "the other person" and "unread for me" only
 // mean anything relative to who is asking.
-function toPublicConversation(conversation, { viewerId, peer, unreadCount = 0 }) {
+function toPublicConversation(conversation, { viewerId, peer, members = [], unreadCount = 0 }) {
+  const group = isGroup(conversation)
   return {
     id: conversation._id.toString(),
     type: conversation.type,
-    peer,
+    isGroup: group,
+    // A DM is named by the other person, a group by its own title — the
+    // client renders one field either way instead of branching on type in
+    // every list row and header.
+    title: group ? conversation.title : peer?.fullName ?? '',
+    peer: group ? null : peer,
+    members,
+    memberCount: members.length,
+    createdBy: conversation.createdBy?.toString() ?? null,
+    sourceGroupId: conversation.sourceGroupId?.toString() ?? null,
     lastMessageAt: conversation.lastMessageAt,
     lastMessagePreview: conversation.lastMessagePreview,
     lastMessageKind: conversation.lastMessageKind,
     lastSenderId: conversation.lastSenderId?.toString() ?? null,
     // Whether the *other* side has caught up with what you sent — drives
-    // the read ticks on your own messages.
-    peerReadAt: readAtFor(conversation, otherParticipantId(conversation, viewerId)),
+    // the read ticks on your own messages. Meaningless in a group, where
+    // "read" is a different state per member, so it stays null there and
+    // the client shows a single tick.
+    peerReadAt: group ? null : readAtFor(conversation, otherParticipantId(conversation, viewerId)),
     myReadAt: readAtFor(conversation, viewerId),
     unreadCount,
     createdAt: conversation.createdAt,
@@ -136,13 +185,87 @@ async function loadConversationForActor(actorId, conversationId) {
   return conversation
 }
 
-async function hydrateConversations(conversations, viewerId) {
+function requireGroupManager(actor) {
+  if (!actor.permissions?.includes(PERMISSIONS.CHAT_GROUP_MANAGE)) {
+    throw ApiError.forbidden('You are not allowed to manage chat groups', 'CHAT_GROUP_FORBIDDEN')
+  }
+}
+
+// Managing a group's roster needs both the permission *and* membership.
+// There is deliberately no "any manager can edit any group" path: the same
+// rule that stops staff reading a DM they are not in stops them rewriting
+// the membership of a room they were never added to.
+async function loadGroupForManager(actor, conversationId) {
+  requireGroupManager(actor)
+  const conversation = await loadConversationForActor(actor.id, conversationId)
+  if (!isGroup(conversation)) throw ApiError.badRequest('Not a group conversation', 'NOT_A_GROUP')
+  return conversation
+}
+
+// Ids in, verified active user ids out. Silently dropping unknown ids would
+// mean a group quietly missing the person the creator thought they added.
+async function resolveGroupMembers(memberIds, alwaysIncludeId = null) {
+  const wanted = [...new Set([...memberIds.map(String), ...(alwaysIncludeId ? [String(alwaysIncludeId)] : [])])]
+  const users = await userRepository.findByIds(wanted)
+  const active = users.filter((user) => user.isActive)
+  if (active.length !== wanted.length) {
+    throw ApiError.badRequest('One or more selected users could not be found', 'INVALID_MEMBERS')
+  }
+  return active.map((user) => user._id.toString())
+}
+
+// Roster changes are written into the thread as SYSTEM messages, the same
+// way task events already are. That is what makes a group auditable after
+// the fact: who created it, who added whom, and when — read in place,
+// rather than inferred from a members list that only shows the end state.
+async function postGroupEvent(conversation, actorId, event, params = {}) {
+  const message = await chatMessageRepository.create({
+    conversationId: conversation._id,
+    senderId: actorId,
+    kind: 'SYSTEM',
+    body: '',
+    system: {
+      event,
+      entityType: 'Conversation',
+      entityId: conversation._id.toString(),
+      params,
+    },
+  })
+
+  const updated = await conversationRepository.recordNewMessage(conversation._id, {
+    senderId: actorId,
+    preview: '',
+    kind: 'SYSTEM',
+  })
+
+  const publicMessage = await serializeOneMessage(message)
+  emitChatMessage(updated.participants.map(String), publicMessage)
+  await broadcastConversation(updated)
+  return publicMessage
+}
+
+// Every user referenced by a batch of threads, loaded once. A group carries
+// its whole roster (the info panel lists it and the bubbles are attributed
+// from it), so the old "just fetch the peers" query would have been one
+// lookup per member per thread.
+async function loadParticipants(conversations) {
+  const userIds = [...new Set(conversations.flatMap((c) => c.participants.map(String)))]
+  const users = await userRepository.findByIds(userIds)
+  const roleByUserId = await roleNamesByUserId(users)
+  return {
+    publicUserById: new Map(
+      users.map((user) => [user._id.toString(), toPublicUser(user, roleByUserId.get(user._id.toString()))])
+    ),
+  }
+}
+
+// `context` lets a caller that already loaded the roster (broadcasting the
+// same thread to every member, one payload each) avoid re-fetching it per
+// viewer.
+async function hydrateConversations(conversations, viewerId, context = null) {
   if (!conversations.length) return []
 
-  const peerIds = conversations.map((c) => otherParticipantId(c, viewerId)).filter(Boolean)
-  const peers = await userRepository.findByIds(peerIds)
-  const roleByUserId = await roleNamesByUserId(peers)
-  const peerById = new Map(peers.map((u) => [u._id.toString(), u]))
+  const { publicUserById } = context ?? (await loadParticipants(conversations))
 
   const unreadByConversation = await chatMessageRepository.countUnreadByConversation({
     userId: viewerId,
@@ -154,22 +277,27 @@ async function hydrateConversations(conversations, viewerId) {
 
   return conversations.map((conversation) => {
     const peerId = otherParticipantId(conversation, viewerId)
-    const peer = peerById.get(peerId)
     return toPublicConversation(conversation, {
       viewerId,
-      peer: toPublicUser(peer, roleByUserId.get(peerId)),
+      peer: publicUserById.get(peerId) ?? null,
+      members: conversation.participants
+        .map((id) => publicUserById.get(id.toString()))
+        .filter(Boolean),
       unreadCount: unreadByConversation.get(conversation._id.toString()) ?? 0,
     })
   })
 }
 
-// Broadcasts the thread summary to both sides, each with their own unread
-// count — see emitConversationUpdated's contract.
+// Broadcasts the thread summary to every member, each with their own unread
+// count — see emitConversationUpdated's contract. The roster is loaded once
+// up front, which is what keeps this from being O(members²) queries on a
+// group message.
 async function broadcastConversation(conversation) {
+  const context = await loadParticipants([conversation])
   const payloadByUserId = {}
   for (const participant of conversation.participants) {
     const userId = participant.toString()
-    const [summary] = await hydrateConversations([conversation], userId)
+    const [summary] = await hydrateConversations([conversation], userId, context)
     payloadByUserId[userId] = summary
   }
   emitConversationUpdated(payloadByUserId)
@@ -189,8 +317,11 @@ export const chatService = {
     const roleByUserId = await roleNamesByUserId(users)
 
     // One lookup for every existing thread, then matched in memory — a
-    // findByPair per directory row would be a query per contact.
-    const myConversations = await conversationRepository.listForUser(actor.id)
+    // findByPair per directory row would be a query per contact. Groups are
+    // excluded: "the other participant" is not a thing in a room of five,
+    // and mapping one would attach a group thread to whichever member
+    // happened to be listed first.
+    const myConversations = (await conversationRepository.listForUser(actor.id)).filter((c) => !isGroup(c))
     const conversationByPeerId = new Map(
       myConversations.map((c) => [otherParticipantId(c, actor.id), c]).filter(([peerId]) => peerId)
     )
@@ -289,7 +420,7 @@ export const chatService = {
       kind,
     })
 
-    const publicMessage = await serializeMessage(message)
+    const publicMessage = await serializeOneMessage(message)
     emitChatMessage(conversation.participants.map(String), publicMessage)
     await broadcastConversation(updated)
 
@@ -306,7 +437,7 @@ export const chatService = {
     const conversation = await loadConversationForActor(actor.id, message.conversationId)
     const updated = await chatMessageRepository.update(messageId, { body: body.trim(), editedAt: new Date() })
 
-    const publicMessage = await serializeMessage(updated)
+    const publicMessage = await serializeOneMessage(updated)
     emitChatMessageUpdated(conversation.participants.map(String), publicMessage)
 
     // Keep the sidebar honest when the edited message is the latest one.
@@ -332,7 +463,7 @@ export const chatService = {
     const conversation = await loadConversationForActor(actor.id, message.conversationId)
     const updated = await chatMessageRepository.update(messageId, { deletedAt: new Date() })
 
-    const publicMessage = await serializeMessage(updated)
+    const publicMessage = await serializeOneMessage(updated)
     emitChatMessageUpdated(conversation.participants.map(String), publicMessage)
 
     const latest = await chatMessageRepository.findLatest(message.conversationId)
@@ -358,20 +489,25 @@ export const chatService = {
     })
 
     const conversationById = new Map(conversations.map((c) => [c._id.toString(), c]))
-    const peerIds = [...new Set(conversations.map((c) => otherParticipantId(c, actor.id)).filter(Boolean))]
+    const peerIds = [...new Set(conversations.filter((c) => !isGroup(c)).map((c) => otherParticipantId(c, actor.id)).filter(Boolean))]
     const peers = await userRepository.findByIds(peerIds)
     const peerById = new Map(peers.map((u) => [u._id.toString(), u]))
 
-    return Promise.all(
-      rows.map(async (row) => {
-        const conversation = conversationById.get(row.conversationId.toString())
-        const peer = peerById.get(otherParticipantId(conversation, actor.id))
-        return {
-          ...(await serializeMessage(row)),
-          peer: toPublicUser(peer),
-        }
-      })
-    )
+    const serialized = await serializeMessages(rows)
+
+    return serialized.map((message) => {
+      const conversation = conversationById.get(message.conversationId)
+      const group = conversation && isGroup(conversation)
+      return {
+        ...message,
+        // A hit needs to say where it came from. For a DM that is the other
+        // person; for a group it is the room's name, and `sender` on the
+        // message itself already says who wrote it.
+        peer: group ? null : toPublicUser(peerById.get(otherParticipantId(conversation, actor.id))),
+        conversationTitle: group ? conversation.title : '',
+        isGroup: Boolean(group),
+      }
+    })
   },
 
   // Everything the info panel shows about a thread in one call: who it is
@@ -418,10 +554,126 @@ export const chatService = {
       kind: 'SYSTEM',
     })
 
-    const publicMessage = await serializeMessage(message)
+    const publicMessage = await serializeOneMessage(message)
     emitChatMessage(conversation.participants.map(String), publicMessage)
     await broadcastConversation(updated)
 
     return publicMessage
+  },
+
+  // ---------------------------------------------------------------------
+  // Group threads
+  // ---------------------------------------------------------------------
+
+  // The org groups ("Sotuv jamoasi") offered as a starting roster when
+  // creating a chat group. Served from here rather than from /groups so the
+  // employee app needs no user:read — the whole feature rides on one
+  // permission, and this only ever returns names and member ids.
+  async listSourceGroups(actor) {
+    requireGroupManager(actor)
+    const groups = await groupRepository.listAll({})
+    return groups.map((group) => ({
+      id: group._id.toString(),
+      name: group.name,
+      department: group.department,
+      memberIds: group.memberIds.map(String),
+      memberCount: group.memberIds.length,
+    }))
+  },
+
+  async createGroup(actor, { title, memberIds = [], sourceGroupId = null }) {
+    requireGroupManager(actor)
+
+    // The creator is always in the room: a group you cannot open is not a
+    // group you created, it is one you fired into the void.
+    const participantIds = await resolveGroupMembers(memberIds, actor.id)
+    if (participantIds.length < 2) {
+      throw ApiError.badRequest('A group needs at least one other member', 'GROUP_TOO_SMALL')
+    }
+
+    const conversation = await conversationRepository.createGroup({
+      title: title.trim(),
+      participantIds,
+      createdBy: actor.id,
+      sourceGroupId,
+    })
+
+    await postGroupEvent(conversation, actor.id, 'GROUP_CREATED', { title: conversation.title })
+
+    const [summary] = await hydrateConversations([conversation], actor.id)
+    return summary
+  },
+
+  async renameGroup(actor, conversationId, title) {
+    const conversation = await loadGroupForManager(actor, conversationId)
+
+    // A rename to the name it already has is a no-op, not an event. Without
+    // this a repeated call — a double-submit, a retry — writes a second
+    // "renamed from X to X" card into the thread's history.
+    if (title.trim() === conversation.title) {
+      const [unchanged] = await hydrateConversations([conversation], actor.id)
+      return unchanged
+    }
+
+    const updated = await conversationRepository.updateGroup(conversationId, { title: title.trim() })
+    await postGroupEvent(updated, actor.id, 'GROUP_RENAMED', {
+      title: updated.title,
+      previousTitle: conversation.title,
+    })
+    const [summary] = await hydrateConversations([updated], actor.id)
+    return summary
+  },
+
+  async addGroupMembers(actor, conversationId, memberIds) {
+    const conversation = await loadGroupForManager(actor, conversationId)
+
+    const existing = new Set(conversation.participants.map(String))
+    const toAdd = (await resolveGroupMembers(memberIds)).filter((id) => !existing.has(id))
+    if (!toAdd.length) throw ApiError.badRequest('Those users are already members', 'ALREADY_MEMBERS')
+
+    const updated = await conversationRepository.addParticipants(conversationId, toAdd)
+
+    // One event per person rather than one listing everybody: the thread is
+    // read as a timeline, and "X added Y" at the point it happened is what
+    // makes the roster's history reconstructable.
+    const added = await userRepository.findByIds(toAdd)
+    for (const user of added) {
+      await postGroupEvent(updated, actor.id, 'MEMBER_ADDED', { name: user.fullName })
+    }
+
+    const [summary] = await hydrateConversations([updated], actor.id)
+    return summary
+  },
+
+  async removeGroupMember(actor, conversationId, userId) {
+    const conversation = await loadGroupForManager(actor, conversationId)
+    if (!conversation.participants.some((p) => p.toString() === String(userId))) {
+      throw ApiError.notFound('That user is not a member of this group')
+    }
+
+    const removed = await userRepository.findById(userId)
+    const updated = await conversationRepository.removeParticipant(conversationId, userId)
+
+    // Posted after the removal, so it reaches the remaining members but not
+    // the person who just left — their sidebar drops the thread instead.
+    await postGroupEvent(updated, actor.id, 'MEMBER_REMOVED', { name: removed?.fullName ?? '' })
+    emitConversationRemoved([String(userId)], String(conversationId))
+
+    const [summary] = await hydrateConversations([updated], actor.id)
+    return summary
+  },
+
+  // Leaving is not a roster edit anyone needs permission for — it is the
+  // one group action a plain member can always take.
+  async leaveGroup(actor, conversationId) {
+    const conversation = await loadConversationForActor(actor.id, conversationId)
+    if (!isGroup(conversation)) throw ApiError.badRequest('Not a group conversation', 'NOT_A_GROUP')
+
+    const me = await userRepository.findById(actor.id)
+    const updated = await conversationRepository.removeParticipant(conversationId, actor.id)
+    await postGroupEvent(updated, actor.id, 'MEMBER_LEFT', { name: me?.fullName ?? '' })
+    emitConversationRemoved([actor.id], String(conversationId))
+
+    return { conversationId: String(conversationId), left: true }
   },
 }

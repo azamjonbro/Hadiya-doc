@@ -1,6 +1,7 @@
 <script setup>
 import { reactive, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
+import { useConfirm } from '@/composables/useConfirm'
 import { ROLES } from '@lms/shared'
 import { useAuthStore } from '@/stores/auth'
 import { usersApi } from '@/services/users'
@@ -18,6 +19,7 @@ const props = defineProps({
 const emit = defineEmits(['updated', 'deactivated'])
 
 const { t } = useI18n()
+const confirm = useConfirm()
 const auth = useAuthStore()
 const toast = useToast()
 
@@ -72,6 +74,7 @@ async function onSave() {
 }
 
 async function onDeactivate() {
+  if (!(await confirm.ask({ message: t('confirm.deactivateUser', { name: props.user.fullName }) }))) return
   deactivating.value = true
   errorMessage.value = ''
   try {

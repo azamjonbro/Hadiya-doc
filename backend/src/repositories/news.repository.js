@@ -2,7 +2,27 @@ import { News } from '../models/news.model.js'
 
 export const newsRepository = {
   findById(id) {
+    return News.findOne({ _id: id, deletedAt: null })
+  },
+
+  findAnyById(id) {
     return News.findById(id)
+  },
+
+  listTrashed() {
+    return News.find({ deletedAt: { $ne: null } }).sort({ deletedAt: -1 }).limit(200)
+  },
+
+  softDelete(id, actorId) {
+    return News.findByIdAndUpdate(id, { $set: { deletedAt: new Date(), deletedBy: actorId } }, { new: true })
+  },
+
+  restore(id) {
+    return News.findByIdAndUpdate(id, { $set: { deletedAt: null, deletedBy: null } }, { new: true })
+  },
+
+  deleteExpired(before) {
+    return News.deleteMany({ deletedAt: { $ne: null, $lte: before } })
   },
 
   create(data) {
@@ -18,7 +38,7 @@ export const newsRepository = {
   },
 
   listPage({ search, status, cursor, limit }) {
-    const filter = {}
+    const filter = { deletedAt: null }
     if (search) filter.title = new RegExp(search.trim(), 'i')
     if (status) filter.status = status
     if (cursor) filter._id = { $gt: cursor }
@@ -32,6 +52,7 @@ export const newsRepository = {
     const now = new Date()
     const filter = {
       status: 'PUBLISHED',
+      deletedAt: null,
       publishAt: { $lte: now },
       $and: [
         { $or: [{ expiryAt: null }, { expiryAt: { $gte: now } }] },

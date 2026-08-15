@@ -11,7 +11,7 @@ import { s3Client } from '../config/storage.js'
  * StorageProvider shape (see docs/video-streaming.md):
  *   putObject(key, body, contentType)
  *   getObject(key) -> Readable
- *   getSignedUrl(key, expiresInSeconds, responseFilename?) -> string
+ *   getSignedUrl(key, expiresInSeconds, responseFilename?, { disposition?, contentType? }) -> string
  *   deleteObject(key)
  *   headObject(key) -> { size, contentType }
  *
@@ -52,15 +52,22 @@ export class S3StorageProvider {
   // responseFilename is optional — when set, the browser saves the download
   // as this name instead of the opaque storage key's basename (e.g.
   // "Syllabus.pdf" instead of a UUID).
-  getSignedUrl(key, expiresInSeconds, responseFilename) {
+  //
+  // `disposition: 'inline'` is what the in-app material viewer asks for: the
+  // same object, but rendered in the page (a PDF in a frame) instead of
+  // being pushed straight into the downloads folder. Its Content-Type has to
+  // be pinned too, since some S3-compatible backends serve a stored object
+  // as application/octet-stream, which no browser will render.
+  getSignedUrl(key, expiresInSeconds, responseFilename, { disposition = 'attachment', contentType } = {}) {
     return getSignedUrl(
       s3Client,
       new GetObjectCommand({
         Bucket: this.bucket,
         Key: key,
         ...(responseFilename
-          ? { ResponseContentDisposition: `attachment; filename="${responseFilename.replace(/"/g, '')}"` }
+          ? { ResponseContentDisposition: `${disposition}; filename="${responseFilename.replace(/"/g, '')}"` }
           : {}),
+        ...(contentType ? { ResponseContentType: contentType } : {}),
       }),
       { expiresIn: expiresInSeconds }
     )

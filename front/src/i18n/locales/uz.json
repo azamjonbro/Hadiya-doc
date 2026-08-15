@@ -66,6 +66,10 @@
       "submit": "Kirish",
       "submitting": "Kirilmoqda...",
       "error": "Email/username yoki parol noto'g'ri",
+      "rateLimited": "Juda ko'p urinish. Iltimos, bir necha daqiqadan so'ng qayta urinib ko'ring.",
+      "accountLocked": "Hisob vaqtincha bloklandi. Bir necha daqiqadan so'ng qayta urinib ko'ring.",
+      "networkError": "Serverga ulanib bo'lmadi. Internet aloqangizni tekshiring.",
+      "serverError": "Serverda xatolik yuz berdi. Keyinroq qayta urinib ko'ring.",
       "securityNotice": "Kompaniya xavfsizlik siyosati bilan himoyalangan. Kirishlar qayd etiladi va kuzatiladi.",
       "brandTitle": "Butun kompaniya birga o'rganadigan joy.",
       "brandSubtitle": "Majburiy o'quvlaringizni kuzating, kompaniya yangiliklaridan xabardor bo'ling va o'sishingizni ko'ring — barchasi bir joyda.",
@@ -147,7 +151,6 @@
     "creating": "Yaratilmoqda...",
     "loadMore": "Yana yuklash",
     "searchPlaceholder": "Kurslarni qidirish...",
-    "featured": "To'xtagan joyingizdan davom eting",
     "modules": "modul",
     "videos": "video",
     "duration": "davomiyligi",
@@ -156,9 +159,8 @@
     "instructor": "O'qituvchi",
     "curriculum": "Kurs dasturi",
     "tabs": {
-      "all": "Barchasi",
+      "catalog": "Katalog",
       "required": "Majburiy",
-      "inProgress": "Jarayonda",
       "completed": "Tugallangan",
       "expired": "Muddati tugagan"
     },
@@ -193,6 +195,16 @@
     },
     "lockedHint": "Avvalgi darsni to'liq ko'rganingizdan keyin ochiladi.",
     "lockedTitle": "Bu dars hali ochilmagan"
+  },
+  "materials": {
+    "title": "Materiallar",
+    "open": "Ochish",
+    "download": "Yuklab olish",
+    "loading": "Ochilmoqda...",
+    "error": "Faylni ochib bo'lmadi",
+    "unsupported": "Bu fayl turini brauzerda ko'rsatib bo'lmaydi — yuklab oling.",
+    "tooLarge": "Fayl juda katta (ko'rish uchun {size} MB gacha). Yuklab oling.",
+    "truncated": "Faqat dastlabki {rows} qator ko'rsatildi — to'liq varaq faylda."
   },
   "quiz": {
     "title": "Test",
@@ -257,12 +269,17 @@
       "searchPeople": "Ism, bo'lim yoki lavozim",
       "tabs": {
         "chats": "Suhbatlar",
-        "people": "Xodimlar"
+        "people": "Xodimlar",
+        "groups": "Guruhlar"
       },
       "groups": {
         "new": "Yangi qo'shilganlar",
         "all": "Barcha xodimlar"
-      }
+      },
+      "searchGroups": "Guruhlardan qidirish",
+      "noGroups": "Hali guruh yo'q",
+      "noGroupsHint": "Yuqoridagi + tugmasi orqali yangi guruh yarating.",
+      "noGroupsHintMember": "Sizni guruhga qo'shishganda u shu yerda ko'rinadi."
     },
     "header": {
       "online": "Onlayn",
@@ -271,7 +288,8 @@
       "searchInChat": "Suhbatdan qidirish",
       "searchPlaceholder": "Xabarlardan qidirish...",
       "noResults": "Natija topilmadi",
-      "details": "Ma'lumotlar"
+      "details": "Ma'lumotlar",
+      "typingBy": "{name} yozmoqda..."
     },
     "compose": {
       "bold": "Qalin",
@@ -308,13 +326,23 @@
         "TASK_ASSIGNED": "Yangi vazifa",
         "TASK_COMPLETED": "Vazifa bajarildi",
         "TASK_STATUS_CHANGED": "Vazifa holati o'zgardi",
-        "DEFAULT": "Tizim xabari"
+        "DEFAULT": "Tizim xabari",
+        "GROUP_CREATED": "Guruh yaratildi",
+        "GROUP_RENAMED": "Nomi o'zgartirildi",
+        "MEMBER_ADDED": "Yangi a'zo",
+        "MEMBER_REMOVED": "A'zo chiqarildi",
+        "MEMBER_LEFT": "A'zo chiqdi"
       },
       "text": {
         "TASK_ASSIGNED": "«{title}» vazifasi biriktirildi",
         "TASK_COMPLETED": "«{title}» vazifasi bajarildi",
         "TASK_STATUS_CHANGED": "«{title}» vazifasi holati: {status}",
-        "DEFAULT": "{title}"
+        "DEFAULT": "{title}",
+        "GROUP_CREATED": "{actor} «{title}» guruhini yaratdi",
+        "GROUP_RENAMED": "{actor} guruh nomini «{previousTitle}» dan «{title}» ga o'zgartirdi",
+        "MEMBER_ADDED": "{actor} — {member} ni guruhga qo'shdi",
+        "MEMBER_REMOVED": "{actor} — {member} ni guruhdan chiqardi",
+        "MEMBER_LEFT": "{member} guruhdan chiqdi"
       }
     },
     "info": {
@@ -344,6 +372,40 @@
       "minutesAgo": "{value} daqiqa oldin",
       "hoursAgo": "{value} soat oldin",
       "daysAgo": "{value} kun oldin"
+    },
+    "group": {
+      "createTitle": "Yangi guruh",
+      "createHint": "Guruhga nom bering va xodimlarni tanlang.",
+      "create": "Guruh yaratish",
+      "name": "Guruh nomi",
+      "namePlaceholder": "Masalan: Sotuv jamoasi",
+      "fromExisting": "Mavjud guruhdan to'ldirish",
+      "members": "A'zolar",
+      "selected": "Tanlandi: {count}",
+      "memberCount": "{count} a'zo",
+      "addMember": "Qo'shish",
+      "removeMember": "Guruhdan chiqarish",
+      "everyoneAdded": "Barcha xodimlar allaqachon a'zo",
+      "rename": "Nomini o'zgartirish",
+      "leave": "Guruhdan chiqish",
+      "you": "siz",
+      "openInfo": "Guruh ma'lumotlari",
+      "renameHint": "Nomni tahrirlash uchun bosing",
+      "saveName": "Saqlash",
+      "tabs": {
+        "members": "A'zolar",
+        "history": "Tarix",
+        "security": "Xavfsizlik"
+      },
+      "addMembers": "Yangi a'zo qo'shish",
+      "owner": "Yaratgan",
+      "ownerLeft": "Guruhni tark etgan",
+      "yourAccess": "Sizning huquqingiz",
+      "accessManager": "Boshqaruvchi — a'zolarni qo'shish, chiqarish va nomni o'zgartirish mumkin",
+      "accessMember": "A'zo — faqat o'qish va yozish",
+      "manageRule": "Guruh tarkibini faqat guruh a'zosi bo'lgan va chat guruhlarini boshqarish huquqiga ega xodim o'zgartira oladi.",
+      "auditRule": "A'zo qo'shilishi yoki chiqarilishi suhbatga tizim xabari sifatida yoziladi — kim, kimni va qachon o'zgartirgani ko'rinib turadi.",
+      "noAttachments": "Bu guruhda hali fayl yoki rasm yuborilmagan"
     }
   },
   "aiChat": {
@@ -536,5 +598,11 @@
       "title": "Kamera ishga tushmadi",
       "body": "Kamerani ishga tushirib bo'lmadi. Boshqa dastur uni band qilgan bo'lishi mumkin."
     }
+  },
+  "confirm": {
+    "title": "Tasdiqlaysizmi?",
+    "confirm": "Ha, davom etaman",
+    "removeMember": "{name}ni guruhdan chiqarasizmi? U bundan keyin suhbatni ko'ra olmaydi.",
+    "leaveGroup": "Guruhdan chiqasizmi? Qaytib kirish uchun sizni yana qo'shishlari kerak."
   }
 }

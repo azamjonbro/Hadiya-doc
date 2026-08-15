@@ -1,5 +1,6 @@
 import { REPORT_TYPES, reportDataService } from '../services/reports/reportData.service.js'
 import { reportExportService } from '../services/reports/reportExport.service.js'
+import { reportTranslator } from '../services/reports/reportI18n.js'
 import { asyncHandler } from '../utils/asyncHandler.js'
 import { sendSuccess } from '../utils/apiResponse.js'
 
@@ -14,9 +15,14 @@ export const reportController = {
 
   export: asyncHandler(async (req, res) => {
     const { type } = req.params
-    const { format, ...filters } = req.validatedQuery
+    const { format, lang, ...filters } = req.validatedQuery
+    const t = reportTranslator(lang)
+    // The sheet/document title is localised, but the download filename stays
+    // the ASCII slug — non-ASCII in Content-Disposition is where downloads
+    // start arriving with mangled names.
+    const title = t(`type.${type}`, type)
 
-    const { columns, rows } = await reportDataService.build(type, filters)
+    const { columns, rows } = await reportDataService.build(type, filters, lang)
     const filename = filenameFor(type, format)
     res.setHeader('Content-Disposition', `attachment; filename="${filename}"`)
 
@@ -27,13 +33,13 @@ export const reportController = {
     }
 
     if (format === 'xlsx') {
-      const buffer = await reportExportService.toXlsxBuffer({ columns, rows }, type)
+      const buffer = await reportExportService.toXlsxBuffer({ columns, rows }, title)
       res.setHeader('Content-Type', reportExportService.contentType('xlsx'))
       res.send(buffer)
       return
     }
 
     res.setHeader('Content-Type', reportExportService.contentType('pdf'))
-    reportExportService.streamPdf({ columns, rows }, type, res)
+    reportExportService.streamPdf({ columns, rows }, title, res, { generatedAtLabel: t('pdf.generatedAt') })
   }),
 }

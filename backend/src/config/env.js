@@ -4,6 +4,10 @@ import { z } from 'zod'
 const envSchema = z.object({
   NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
   PORT: z.coerce.number().int().positive().default(4000),
+  // Behind nginx in production the process must not be reachable from the
+  // internet directly — binding loopback is what keeps TLS, rate limiting and
+  // the security headers from being bypassable on :4000.
+  HOST: z.string().default('0.0.0.0'),
   MONGO_URI: z.string().min(1, 'MONGO_URI is required'),
   ALLOWED_ORIGINS: z.string().min(1, 'ALLOWED_ORIGINS is required'),
   LOG_LEVEL: z.enum(['error', 'warn', 'info', 'http', 'debug']).default('info'),

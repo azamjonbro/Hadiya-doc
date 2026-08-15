@@ -52,3 +52,20 @@ export const chatSearchQuerySchema = z.object({
 export const chatUploadKindSchema = z.object({
   kind: z.enum(['IMAGE', 'FILE', 'VOICE']),
 })
+
+// The creator is added server-side, so `memberIds` is "everyone else" and
+// may legitimately be sent without them in it. The 200 ceiling matches the
+// typing relay's fan-out limit in realtime/socket.js.
+export const createChatGroupSchema = z.object({
+  title: z.string().trim().min(1, 'Group name is required').max(120),
+  memberIds: z.array(objectId).min(1, 'Pick at least one member').max(200),
+  sourceGroupId: objectId.nullish().default(null),
+})
+
+export const renameChatGroupSchema = z.object({
+  title: z.string().trim().min(1, 'Group name is required').max(120),
+})
+
+export const chatGroupMembersSchema = z.object({
+  memberIds: z.array(objectId).min(1, 'Pick at least one member').max(200),
+})

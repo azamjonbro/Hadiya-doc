@@ -27,11 +27,24 @@ export const userRepository = {
     return values.sort((a, b) => a.localeCompare(b))
   },
 
-  // Leaderboard candidates: active accounts only, capped so a large tenant
-  // can't turn one ranking request into an unbounded scan.
-  listActive({ department, limit = 500 } = {}) {
+  // Distinct job titles actually in use — the task assignment picker offers
+  // these so "assign to a position" is an exact match against real values
+  // rather than a free-text guess. Scoped by department when a manager may
+  // only see their own part of the org.
+  async listPositions({ department } = {}) {
+    const filter = { position: { $nin: ['', null] } }
+    if (department) filter.department = department
+    const values = await User.distinct('position', filter)
+    return values.sort((a, b) => a.localeCompare(b))
+  },
+
+  // Leaderboard candidates and bulk task recipients: active accounts only,
+  // capped so a large tenant can't turn one ranking request into an
+  // unbounded scan.
+  listActive({ department, position, limit = 500 } = {}) {
     const filter = { isActive: true }
     if (department) filter.department = department
+    if (position) filter.position = position
     return User.find(filter).sort({ fullName: 1 }).limit(limit)
   },
 

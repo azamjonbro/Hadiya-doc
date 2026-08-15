@@ -18,6 +18,7 @@ import NewsListView from '@/views/NewsListView.vue'
 import NewsDetailView from '@/views/NewsDetailView.vue'
 import TasksListView from '@/views/TasksListView.vue'
 import ReportsView from '@/views/ReportsView.vue'
+import TrashView from '@/views/TrashView.vue'
 import ChatInboxView from '@/views/ChatInboxView.vue'
 import NotificationsView from '@/views/NotificationsView.vue'
 import SettingsView from '@/views/SettingsView.vue'
@@ -110,6 +111,12 @@ export const router = createRouter({
           name: 'chat-inbox',
           component: ChatInboxView,
           meta: { permission: 'chat:support', titleKey: 'nav.chat' },
+        },
+        {
+          path: 'admin/trash',
+          name: 'trash',
+          component: TrashView,
+          meta: { permission: 'course:delete', titleKey: 'nav.trash' },
         },
         { path: 'notifications', name: 'notifications', component: NotificationsView, meta: { titleKey: 'nav.notifications' } },
         { path: 'settings', name: 'settings', component: SettingsView, meta: { titleKey: 'nav.settings' } },

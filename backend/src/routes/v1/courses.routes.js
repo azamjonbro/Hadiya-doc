@@ -39,6 +39,8 @@ coursesRouter.post(
   validateBody(createCourseSchema),
   courseController.create
 )
+// Before '/:id' — Express matches in order and 'trash' is not a course id.
+coursesRouter.get('/trash', requirePermission(PERMISSIONS.COURSE_DELETE), courseController.listTrash)
 coursesRouter.get('/:id', requirePermission(PERMISSIONS.COURSE_READ), courseController.getById)
 coursesRouter.get('/:id/progress', requirePermission(PERMISSIONS.COURSE_READ), courseController.getMyProgress)
 coursesRouter.get(
@@ -52,8 +54,14 @@ coursesRouter.patch(
   validateBody(updateCourseSchema),
   courseController.update
 )
-coursesRouter.delete('/:id', requirePermission(PERMISSIONS.COURSE_DELETE), courseController.archive)
-// Hard delete, as opposed to the reversible archive above — SUPERADMIN only.
+// Deleting a course moves it to the trash — reversible, and the only route
+// the admin's delete button calls. `/archive` stays a separate, milder state
+// (retired but still listed).
+coursesRouter.delete('/:id', requirePermission(PERMISSIONS.COURSE_DELETE), courseController.moveToTrash)
+coursesRouter.post('/:id/archive', requirePermission(PERMISSIONS.COURSE_DELETE), courseController.archive)
+coursesRouter.post('/:id/restore', requirePermission(PERMISSIONS.COURSE_DELETE), courseController.restore)
+// Emptying the bin, as opposed to filling it — SUPERADMIN only, and it takes
+// the course's topics, videos and analytics with it.
 coursesRouter.delete(
   '/:id/permanent',
   requirePermission(PERMISSIONS.COURSE_DELETE),

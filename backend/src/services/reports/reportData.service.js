@@ -8,6 +8,7 @@ import { NewsView } from '../../models/newsView.model.js'
 import { Task } from '../../models/task.model.js'
 import { roleRepository } from '../../repositories/role.repository.js'
 import { ApiError } from '../../utils/ApiError.js'
+import { DEFAULT_REPORT_LANG, reportTranslator } from './reportI18n.js'
 
 // Hard cap on exported rows — an admin exporting the whole org is a
 // legitimate, expected use, but an unbounded export is still a resource-
@@ -57,17 +58,17 @@ async function resolveRoleUserIds(roleName) {
   return ids.map((id) => id.toString())
 }
 
-async function employeeProgress(filters) {
+async function employeeProgress(filters, t) {
   const columns = [
-    { key: 'fullName', header: 'Full name' },
-    { key: 'username', header: 'Username' },
-    { key: 'department', header: 'Department' },
-    { key: 'isActive', header: 'Active' },
-    { key: 'assignedCourses', header: 'Assigned courses' },
-    { key: 'completedCourses', header: 'Completed courses' },
-    { key: 'overdueCourses', header: 'Overdue courses' },
-    { key: 'avgCompletionPercent', header: 'Avg completion %' },
-    { key: 'totalWatchedMinutes', header: 'Total watched (min)' },
+    { key: 'fullName', header: t('col.fullName') },
+    { key: 'username', header: t('col.username') },
+    { key: 'department', header: t('col.department') },
+    { key: 'isActive', header: t('col.isActive') },
+    { key: 'assignedCourses', header: t('col.assignedCourses') },
+    { key: 'completedCourses', header: t('col.completedCourses') },
+    { key: 'overdueCourses', header: t('col.overdueCourses') },
+    { key: 'avgCompletionPercent', header: t('col.avgCompletionPercent') },
+    { key: 'totalWatchedMinutes', header: t('col.totalWatchedMinutes') },
   ]
 
   const now = new Date()
@@ -138,7 +139,7 @@ async function employeeProgress(filters) {
       fullName: u.fullName,
       username: u.username,
       department: u.department,
-      isActive: u.isActive ? 'Yes' : 'No',
+      isActive: u.isActive ? t('value.yes') : t('value.no'),
       assignedCourses: a.assignedCourses,
       completedCourses: a.completedCourses,
       overdueCourses: a.overdueCourses,
@@ -150,20 +151,25 @@ async function employeeProgress(filters) {
   return { columns, rows }
 }
 
-async function courseProgress(filters) {
+async function courseProgress(filters, t) {
   const columns = [
-    { key: 'title', header: 'Course' },
-    { key: 'status', header: 'Status' },
-    { key: 'assignedCount', header: 'Assigned' },
-    { key: 'completedCount', header: 'Completed' },
-    { key: 'avgCompletionPercent', header: 'Avg completion %' },
+    { key: 'title', header: t('col.course') },
+    { key: 'status', header: t('col.status') },
+    { key: 'assignedCount', header: t('col.assignedCount') },
+    { key: 'completedCount', header: t('col.completedCount') },
+    { key: 'avgCompletionPercent', header: t('col.avgCompletionPercent') },
   ]
 
   const userIdFilter = intersectIds(filters.roleUserIds, filters.userId ? [filters.userId] : null)
   if (userIdFilter && userIdFilter.length === 0) return { columns, rows: [] }
   const userScope = userIdFilter ? { userId: { $in: toObjectIds(userIdFilter) } } : {}
 
-  const courses = await Course.find(filters.courseId ? { _id: filters.courseId } : {}, { title: 1, status: 1 })
+  // Trashed courses are gone from every listing, so they must not resurface
+  // in an export either.
+  const courses = await Course.find(
+    filters.courseId ? { _id: filters.courseId, deletedAt: null } : { deletedAt: null },
+    { title: 1, status: 1 }
+  )
     .sort({ title: 1 })
     .limit(MAX_ROWS)
   const courseIds = courses.map((c) => c._id)
@@ -193,7 +199,7 @@ async function courseProgress(filters) {
     const p = byCourseProgress.get(c._id.toString()) ?? { avgCompletionPercent: 0 }
     return {
       title: c.title,
-      status: c.status,
+      status: t(`courseStatus.${c.status}`, c.status),
       assignedCount: a.assignedCount,
       completedCount: a.completedCount,
       avgCompletionPercent: round1(p.avgCompletionPercent),
@@ -203,13 +209,13 @@ async function courseProgress(filters) {
   return { columns, rows }
 }
 
-async function videoAnalytics(filters) {
+async function videoAnalytics(filters, t) {
   const columns = [
-    { key: 'title', header: 'Video' },
-    { key: 'viewers', header: 'Viewers' },
-    { key: 'avgCompletionPercent', header: 'Avg completion %' },
-    { key: 'avgPausesCount', header: 'Avg pauses' },
-    { key: 'avgForwardSeekSeconds', header: 'Avg skipped (sec)' },
+    { key: 'title', header: t('col.video') },
+    { key: 'viewers', header: t('col.viewers') },
+    { key: 'avgCompletionPercent', header: t('col.avgCompletionPercent') },
+    { key: 'avgPausesCount', header: t('col.avgPauses') },
+    { key: 'avgForwardSeekSeconds', header: t('col.avgSkippedSeconds') },
   ]
 
   const userIdFilter = intersectIds(filters.roleUserIds, filters.userId ? [filters.userId] : null)
@@ -247,13 +253,13 @@ async function videoAnalytics(filters) {
   return { columns, rows }
 }
 
-async function newsAnalytics(filters) {
+async function newsAnalytics(filters, t) {
   const columns = [
-    { key: 'title', header: 'Article' },
-    { key: 'publishAt', header: 'Published' },
-    { key: 'opens', header: 'Opens' },
-    { key: 'avgReadPercent', header: 'Avg read %' },
-    { key: 'avgTimeSpentSeconds', header: 'Avg time spent (sec)' },
+    { key: 'title', header: t('col.article') },
+    { key: 'publishAt', header: t('col.published') },
+    { key: 'opens', header: t('col.opens') },
+    { key: 'avgReadPercent', header: t('col.avgReadPercent') },
+    { key: 'avgTimeSpentSeconds', header: t('col.avgTimeSpentSeconds') },
   ]
 
   const userIdFilter = intersectIds(filters.roleUserIds, filters.userId ? [filters.userId] : null)
@@ -292,15 +298,15 @@ async function newsAnalytics(filters) {
   return { columns, rows }
 }
 
-async function taskAnalytics(filters) {
+async function taskAnalytics(filters, t) {
   const columns = [
-    { key: 'title', header: 'Task' },
-    { key: 'assignedTo', header: 'Assigned to' },
-    { key: 'assignedBy', header: 'Assigned by' },
-    { key: 'priority', header: 'Priority' },
-    { key: 'status', header: 'Status' },
-    { key: 'deadline', header: 'Deadline' },
-    { key: 'completedAt', header: 'Completed at' },
+    { key: 'title', header: t('col.task') },
+    { key: 'assignedTo', header: t('col.assignedTo') },
+    { key: 'assignedBy', header: t('col.assignedBy') },
+    { key: 'priority', header: t('col.priority') },
+    { key: 'status', header: t('col.status') },
+    { key: 'deadline', header: t('col.deadline') },
+    { key: 'completedAt', header: t('col.completedAt') },
   ]
 
   const userIdFilter = intersectIds(filters.roleUserIds, filters.userId ? [filters.userId] : null)
@@ -333,6 +339,8 @@ async function taskAnalytics(filters) {
     columns,
     rows: rows.map((r) => ({
       ...r,
+      priority: t(`priority.${r.priority}`, r.priority),
+      status: t(`taskStatus.${r.status}`, r.status),
       deadline: r.deadline ? new Date(r.deadline).toISOString().slice(0, 10) : '',
       completedAt: r.completedAt ? new Date(r.completedAt).toISOString().slice(0, 10) : '',
     })),
@@ -350,10 +358,12 @@ const REPORT_BUILDERS = {
 export const REPORT_TYPES = Object.keys(REPORT_BUILDERS)
 
 export const reportDataService = {
-  async build(type, filters = {}) {
+  // `lang` decides the language of every header and enum value in the file;
+  // the data itself (names, course titles) is whatever was typed into it.
+  async build(type, filters = {}, lang = DEFAULT_REPORT_LANG) {
     const builder = REPORT_BUILDERS[type]
     if (!builder) throw ApiError.badRequest('Unknown report type', 'UNKNOWN_REPORT_TYPE')
     const roleUserIds = filters.role ? await resolveRoleUserIds(filters.role) : null
-    return builder({ ...filters, roleUserIds })
+    return builder({ ...filters, roleUserIds }, reportTranslator(lang))
   },
 }

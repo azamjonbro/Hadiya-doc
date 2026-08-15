@@ -1,4 +1,5 @@
 import rateLimit from 'express-rate-limit'
+import { rateLimitHandler } from './rateLimit.middleware.js'
 
 // Chat is the chattiest endpoint in the product by design, so this is much
 // higher than the material/image limiters — it exists to stop a scripted
@@ -8,6 +9,7 @@ export const chatSendRateLimiter = rateLimit({
   limit: 60,
   standardHeaders: true,
   legacyHeaders: false,
+  handler: rateLimitHandler('You are sending messages too quickly, please slow down'),
 })
 
 // Attachments are heavier: a voice note per message is plausible, a
@@ -17,4 +19,5 @@ export const chatUploadRateLimiter = rateLimit({
   limit: 60,
   standardHeaders: true,
   legacyHeaders: false,
+  handler: rateLimitHandler('Too many chat attachments, please try again in a few minutes'),
 })

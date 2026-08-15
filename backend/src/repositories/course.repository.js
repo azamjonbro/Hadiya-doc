@@ -1,22 +1,47 @@
 import { Course } from '../models/course.model.js'
 
 export const courseRepository = {
+  // Trashed courses are invisible to every normal read. The trash page uses
+  // findAnyById/listTrashed below, which are the only two ways back to them.
   findById(id) {
+    return Course.findOne({ _id: id, deletedAt: null })
+  },
+
+  findAnyById(id) {
     return Course.findById(id)
   },
 
+  // Deliberately unfiltered: a trashed course still owns its slug (the index
+  // is unique), so the create path has to see it or it would mint a duplicate
+  // that fails on insert.
   findBySlug(slug) {
     return Course.findOne({ slug })
   },
 
   findByIds(ids) {
-    return Course.find({ _id: { $in: ids } })
+    return Course.find({ _id: { $in: ids }, deletedAt: null })
+  },
+
+  listExpired(before) {
+    return Course.find({ deletedAt: { $ne: null, $lte: before } })
+  },
+
+  listTrashed() {
+    return Course.find({ deletedAt: { $ne: null } }).sort({ deletedAt: -1 }).limit(200)
+  },
+
+  softDelete(id, actorId) {
+    return Course.findByIdAndUpdate(id, { $set: { deletedAt: new Date(), deletedBy: actorId } }, { new: true })
+  },
+
+  restore(id) {
+    return Course.findByIdAndUpdate(id, { $set: { deletedAt: null, deletedBy: null } }, { new: true })
   },
 
   // Ids only — used for cache invalidation fan-out, where pulling whole
   // course documents would be wasted work.
   async listAllIds() {
-    const rows = await Course.find({}, { _id: 1 }).lean()
+    const rows = await Course.find({ deletedAt: null }, { _id: 1 }).lean()
     return rows.map((row) => row._id.toString())
   },
 
@@ -46,7 +71,7 @@ export const courseRepository = {
   // Shared by listPage and count so a page and its total can never be
   // computed from two subtly different filters.
   buildFilter({ search, status, visibleToRoleName, visibleToDepartment }) {
-    const filter = {}
+    const filter = { deletedAt: null }
     if (search) filter.title = new RegExp(search.trim(), 'i')
     if (status) filter.status = status
     if (visibleToRoleName !== undefined) {

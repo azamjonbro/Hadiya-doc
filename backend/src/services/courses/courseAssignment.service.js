@@ -146,7 +146,14 @@ export const courseAssignmentService = {
       await assertManagerScopeForUser(actor, targetUserId)
     }
     const rows = await courseAssignmentRepository.listByUser(targetUserId)
-    return rows.map(toPublicAssignment)
+
+    // An assignment whose course is in the trash points at something the
+    // reader can no longer open — the course endpoints answer 404 for it. The
+    // assignment row is kept (restoring the course brings it back intact) but
+    // it stays out of the list until then.
+    const courses = await courseRepository.findByIds(rows.map((row) => row.courseId))
+    const liveCourseIds = new Set(courses.map((course) => course._id.toString()))
+    return rows.filter((row) => liveCourseIds.has(row.courseId.toString())).map(toPublicAssignment)
   },
 
   async update(actor, assignmentId, payload) {

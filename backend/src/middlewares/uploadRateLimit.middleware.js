@@ -1,4 +1,5 @@
 import rateLimit from 'express-rate-limit'
+import { rateLimitHandler } from './rateLimit.middleware.js'
 
 // A single large video is many chunked PATCH requests (tus-js-client splits
 // into ~5-50MB pieces), so this needs a much higher ceiling than the base
@@ -9,4 +10,5 @@ export const uploadRateLimiter = rateLimit({
   limit: 3000,
   standardHeaders: true,
   legacyHeaders: false,
+  handler: rateLimitHandler('Upload limit reached, please try again in a few minutes'),
 })

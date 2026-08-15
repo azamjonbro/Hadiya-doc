@@ -109,7 +109,15 @@ export const newsService = {
     const existing = await newsRepository.findById(id)
     if (!existing) throw ApiError.notFound('News not found')
     await cacheDel(newsCacheKey(id))
-    await newsRepository.deleteById(id)
-    await auditLogRepository.record({ actor: actor.id, action: 'NEWS_DELETED', entity: 'News', entityId: id })
+    // Trash, not a drop: the article leaves the feed and every listing, and
+    // waits out the retention window on the trash page.
+    await newsRepository.softDelete(id, actor.id)
+    await auditLogRepository.record({
+      actor: actor.id,
+      action: 'NEWS_TRASHED',
+      entity: 'News',
+      entityId: id,
+      metadata: { title: existing.title },
+    })
   },
 }

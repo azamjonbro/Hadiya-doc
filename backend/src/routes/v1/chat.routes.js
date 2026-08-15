@@ -8,11 +8,14 @@ import { env } from '../../config/env.js'
 import { ApiError } from '../../utils/ApiError.js'
 import {
   chatContactsQuerySchema,
+  chatGroupMembersSchema,
   chatMessagesQuerySchema,
   chatSearchQuerySchema,
   chatUploadKindSchema,
+  createChatGroupSchema,
   editChatMessageSchema,
   openDirectSchema,
+  renameChatGroupSchema,
   sendChatMessageSchema,
 } from '../../validators/chat.validator.js'
 
@@ -38,6 +41,18 @@ chatRouter.post(
   chatController.sendMessage
 )
 chatRouter.post('/conversations/:id/read', chatController.markRead)
+
+// Group threads. Unlike the routes above these are not open to everyone —
+// creating a room and editing its roster is gated on chat:group:manage,
+// checked inside chatService (which also enforces membership) rather than
+// by requirePermission here, so the permission and the membership rule stay
+// in one place and cannot disagree.
+chatRouter.get('/source-groups', chatController.listSourceGroups)
+chatRouter.post('/groups', validateBody(createChatGroupSchema), chatController.createGroup)
+chatRouter.patch('/groups/:id', validateBody(renameChatGroupSchema), chatController.renameGroup)
+chatRouter.post('/groups/:id/members', validateBody(chatGroupMembersSchema), chatController.addGroupMembers)
+chatRouter.delete('/groups/:id/members/:userId', chatController.removeGroupMember)
+chatRouter.post('/groups/:id/leave', chatController.leaveGroup)
 chatRouter.patch('/messages/:messageId', validateBody(editChatMessageSchema), chatController.editMessage)
 chatRouter.delete('/messages/:messageId', chatController.deleteMessage)
 

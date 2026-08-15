@@ -1,10 +1,12 @@
 import rateLimit from 'express-rate-limit'
+import { rateLimitHandler } from './rateLimit.middleware.js'
 
 export const videoTokenRateLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   limit: 120,
   standardHeaders: true,
   legacyHeaders: false,
+  handler: rateLimitHandler('Too many video access requests, please try again in a few minutes'),
 })
 
 // Generous — a single playback session legitimately issues many segment
@@ -14,4 +16,5 @@ export const videoStreamRateLimiter = rateLimit({
   limit: 4000,
   standardHeaders: true,
   legacyHeaders: false,
+  handler: rateLimitHandler('Too many video stream requests, please try again in a few minutes'),
 })

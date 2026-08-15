@@ -1,6 +1,7 @@
 <script setup>
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
+import { useConfirm } from '@/composables/useConfirm'
 import { useAuthStore } from '@/stores/auth'
 import { useChatStore } from '@/stores/chat'
 import { chatApi } from '@/services/chat'
@@ -15,6 +16,9 @@ import ChatHeader from './ChatHeader.vue'
 import MessageBubble from './MessageBubble.vue'
 import MessageComposer from './MessageComposer.vue'
 import ConversationInfoPanel from './ConversationInfoPanel.vue'
+import GroupInfoDialog from './GroupInfoDialog.vue'
+import GroupCreateDialog from './GroupCreateDialog.vue'
+import { PERMISSIONS } from '@lms/shared'
 import { formatDayLabel, formatClock } from '@/utils/chatFormat'
 import { markdownToPlainText } from '@/utils/markdown'
 
@@ -22,6 +26,7 @@ const { t, locale } = useI18n()
 const auth = useAuthStore()
 const chat = useChatStore()
 const toast = useToast()
+const confirm = useConfirm()
 
 const loading = ref(true)
 const sending = ref(false)
@@ -46,21 +51,39 @@ const typingTick = ref(0)
 let typingTimer = null
 
 const selected = computed(() => chat.selected)
+const isGroupThread = computed(() => Boolean(selected.value?.isGroup))
+const canManageGroups = computed(() => auth.hasPermission(PERMISSIONS.CHAT_GROUP_MANAGE))
 const peerTyping = computed(() => {
   typingTick.value
   return selected.value ? chat.peerTyping(selected.value.id) : false
 })
+const typingName = computed(() => {
+  const userId = selected.value ? chat.typingUserId(selected.value.id) : null
+  return selected.value?.members?.find((m) => m.id === userId)?.fullName ?? ''
+})
 const peerOnline = computed(() => Boolean(selected.value?.peer && chat.isOnline(selected.value.peer.id)))
 
+const groupDialogOpen = ref(false)
+const creatingGroup = ref(false)
+const groupError = ref('')
+
 // Messages grouped under a day heading, so a long thread stays navigable
-// without every bubble repeating its date.
+// without every bubble repeating its date. In a group each message also
+// learns whether it opens a run from a new author, which is what decides
+// where an avatar and a name are drawn.
 const grouped = computed(() => {
   const groups = []
+  let previousSenderId = null
   for (const message of chat.messages) {
     const day = new Date(message.createdAt).toDateString()
     const last = groups[groups.length - 1]
-    if (last?.day === day) last.messages.push(message)
-    else groups.push({ day, at: message.createdAt, messages: [message] })
+    // A system card breaks a run: the next message needs its author again.
+    const startsRun = message.kind === 'SYSTEM' || message.senderId !== previousSenderId || last?.day !== day
+    previousSenderId = message.kind === 'SYSTEM' ? null : message.senderId
+
+    const entry = { ...message, startsRun }
+    if (last?.day === day) last.messages.push(entry)
+    else groups.push({ day, at: message.createdAt, messages: [entry] })
   }
   return groups
 })
@@ -179,6 +202,62 @@ async function onDelete(messageId) {
   }
 }
 
+// --- group actions ---
+
+async function onCreateGroup(payload) {
+  creatingGroup.value = true
+  groupError.value = ''
+  try {
+    await chat.createGroup(payload)
+    groupDialogOpen.value = false
+    await scrollToBottom()
+    composer.value?.focus()
+  } catch (error) {
+    groupError.value = error.response?.data?.message ?? String(error)
+  } finally {
+    creatingGroup.value = false
+  }
+}
+
+async function onRenameGroup(title) {
+  try {
+    await chat.renameGroup(selected.value.id, title)
+    await loadDetails()
+  } catch (error) {
+    toast.error(error.response?.data?.message ?? String(error))
+  }
+}
+
+async function onAddMembers(memberIds) {
+  try {
+    await chat.addGroupMembers(selected.value.id, memberIds)
+    await loadDetails()
+  } catch (error) {
+    toast.error(error.response?.data?.message ?? String(error))
+  }
+}
+
+async function onRemoveMember(userId) {
+  const member = details.value?.members?.find((m) => m.id === userId)
+  if (!(await confirm.ask({ message: t('confirm.removeMember', { name: member?.fullName ?? '' }) }))) return
+  try {
+    await chat.removeGroupMember(selected.value.id, userId)
+    await loadDetails()
+  } catch (error) {
+    toast.error(error.response?.data?.message ?? String(error))
+  }
+}
+
+async function onLeaveGroup() {
+  if (!(await confirm.ask({ message: t('confirm.leaveGroup') }))) return
+  try {
+    await chat.leaveGroup(selected.value.id)
+    infoOpen.value = false
+  } catch (error) {
+    toast.error(error.response?.data?.message ?? String(error))
+  }
+}
+
 async function loadDetails() {
   if (!selected.value) return
   detailsLoading.value = true
@@ -193,6 +272,11 @@ async function toggleInfo() {
   infoOpen.value = !infoOpen.value
   if (infoOpen.value) await loadDetails()
 }
+
+// One flag, two presentations: a person's details fit the narrow side column,
+// a group's roster and access rules need the room a dialog gives them.
+const groupInfoOpen = computed(() => infoOpen.value && Boolean(selected.value?.isGroup))
+const sidePanelOpen = computed(() => infoOpen.value && Boolean(selected.value) && !selected.value.isGroup)
 
 let searchTimer = null
 watch(searchQuery, (value) => {
@@ -253,7 +337,7 @@ onBeforeUnmount(() => clearInterval(typingTimer))
 
     <div
       class="mt-4 grid min-h-0 flex-1 grid-cols-1 gap-3"
-      :class="infoOpen ? 'md:grid-cols-[19rem_1fr_20rem]' : 'md:grid-cols-[19rem_1fr]'"
+      :class="sidePanelOpen ? 'md:grid-cols-[19rem_1fr_20rem]' : 'md:grid-cols-[19rem_1fr]'"
     >
       <!-- On a phone the list and the thread share one column: the list is
            the page until a thread is opened, and the header's back button
@@ -270,9 +354,11 @@ onBeforeUnmount(() => clearInterval(typingTimer))
           :loading="loading"
           :contacts-loading="chat.contactsLoading"
           :online="chat.online"
+          :can-manage-groups="canManageGroups"
           @select="openConversation"
           @start-with="startWith"
           @search-contacts="chat.loadContacts"
+          @new-group="groupDialogOpen = true"
         />
       </AppCard>
 
@@ -282,6 +368,7 @@ onBeforeUnmount(() => clearInterval(typingTimer))
             :conversation="selected"
             :online="peerOnline"
             :typing="peerTyping"
+            :typing-name="typingName"
             :info-open="infoOpen"
             @toggle-info="toggleInfo"
             @toggle-search="toggleSearch"
@@ -310,7 +397,10 @@ onBeforeUnmount(() => clearInterval(typingTimer))
                 class="rounded-md bg-surface px-2.5 py-2"
               >
                 <div class="flex items-center justify-between gap-2">
-                  <span class="truncate text-caption font-medium text-ink-muted">{{ result.peer?.fullName }}</span>
+                  <!-- A group hit needs both: which room, and who wrote it. -->
+                  <span class="truncate text-caption font-medium text-ink-muted">
+                    {{ result.isGroup ? `${result.conversationTitle} · ${result.sender?.fullName ?? ''}` : result.peer?.fullName }}
+                  </span>
                   <span class="shrink-0 text-caption text-ink-faint">{{ formatClock(result.createdAt, locale) }}</span>
                 </div>
                 <p class="mt-0.5 line-clamp-2 text-small text-ink">
@@ -351,6 +441,8 @@ onBeforeUnmount(() => clearInterval(typingTimer))
                   :mine="message.senderId === auth.user?.id"
                   :peer-read-at="selected.peerReadAt"
                   :sender-name="message.senderId === auth.user?.id ? auth.user?.fullName : selected.peer?.fullName"
+                  :in-group="isGroupThread"
+                  :show-sender="isGroupThread && message.startsRun"
                   @edit="onEdit"
                   @delete="onDelete"
                   @preview-image="lightbox = $event"
@@ -358,7 +450,7 @@ onBeforeUnmount(() => clearInterval(typingTimer))
               </div>
 
               <div v-if="peerTyping" class="flex items-center gap-2 pt-1">
-                <Avatar :name="selected.peer?.fullName ?? '?'" :src="selected.peer?.avatar" size="xs" />
+                <Avatar :name="(isGroupThread ? typingName : selected.peer?.fullName) || '?'" :src="isGroupThread ? '' : selected.peer?.avatar" size="xs" />
                 <span class="flex items-center gap-1 rounded-2xl bg-surface-2 px-3 py-2">
                   <span
                     v-for="i in 3"
@@ -393,7 +485,7 @@ onBeforeUnmount(() => clearInterval(typingTimer))
         />
       </AppCard>
 
-      <AppCard v-if="infoOpen && selected" padding="none" class="hidden min-h-0 overflow-hidden md:flex md:flex-col">
+      <AppCard v-if="sidePanelOpen" padding="none" class="hidden min-h-0 overflow-hidden md:flex md:flex-col">
         <ConversationInfoPanel
           :details="details"
           :loading="detailsLoading"
@@ -403,6 +495,32 @@ onBeforeUnmount(() => clearInterval(typingTimer))
         />
       </AppCard>
     </div>
+
+    <!-- A group's roster, history and access rules — opened by clicking the
+         group name in the header. -->
+    <GroupInfoDialog
+      :open="groupInfoOpen"
+      :details="details"
+      :loading="detailsLoading"
+      :online-map="chat.online"
+      :can-manage-groups="canManageGroups"
+      :my-id="auth.user?.id ?? ''"
+      :contacts="chat.contacts"
+      @close="infoOpen = false"
+      @rename="onRenameGroup"
+      @add-members="onAddMembers"
+      @remove-member="onRemoveMember"
+      @leave-group="onLeaveGroup"
+      @preview-image="lightbox = $event"
+    />
+
+    <GroupCreateDialog
+      v-model="groupDialogOpen"
+      :contacts="chat.contacts"
+      :submitting="creatingGroup"
+      :error="groupError"
+      @create="onCreateGroup"
+    />
 
     <!-- Image lightbox -->
     <Teleport to="body">

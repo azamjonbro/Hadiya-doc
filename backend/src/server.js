@@ -10,8 +10,8 @@ async function main() {
   await seedRolesAndSuperAdmin()
 
   const app = createApp()
-  const server = app.listen(env.PORT, () => {
-    logger.info(`Backend listening on port ${env.PORT}`, { env: env.NODE_ENV })
+  const server = app.listen(env.PORT, env.HOST, () => {
+    logger.info(`Backend listening on ${env.HOST}:${env.PORT}`, { env: env.NODE_ENV })
   })
   initSocketServer(server)
 

@@ -1,6 +1,7 @@
 <script setup>
 import { computed, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
+import Avatar from '@/components/ui/Avatar.vue'
 import Icon from '@/components/ui/Icon.vue'
 import MarkdownBody from './MarkdownBody.vue'
 import VoicePlayer from './VoicePlayer.vue'
@@ -10,8 +11,13 @@ const props = defineProps({
   message: { type: Object, required: true },
   mine: { type: Boolean, default: false },
   // Whether the peer has read up to this message — drives the double tick.
+  // Null in a group, where "read" is a different state per member.
   peerReadAt: { type: [String, Date], default: null },
   senderName: { type: String, default: '' },
+  // In a group every incoming bubble is labelled with its author, and
+  // consecutive messages from the same person only label the first.
+  showSender: { type: Boolean, default: false },
+  inGroup: { type: Boolean, default: false },
 })
 
 const emit = defineEmits(['edit', 'delete', 'preview-image'])
@@ -40,11 +46,33 @@ const timestampTitle = computed(() => {
 
 // Unknown future events must not render a raw i18n key at the user, so
 // both lookups fall back to something readable.
-const KNOWN_SYSTEM_EVENTS = new Set(['TASK_ASSIGNED', 'TASK_COMPLETED', 'TASK_STATUS_CHANGED'])
+const KNOWN_SYSTEM_EVENTS = new Set([
+  'TASK_ASSIGNED',
+  'TASK_COMPLETED',
+  'TASK_STATUS_CHANGED',
+  'GROUP_CREATED',
+  'GROUP_RENAMED',
+  'MEMBER_ADDED',
+  'MEMBER_REMOVED',
+  'MEMBER_LEFT',
+])
+
+// Group roster events are the thread's audit trail, so they get their own
+// icon — a task card and "X added Y to the group" are different kinds of
+// event and reading them as one blurs both.
+const GROUP_EVENT_ICONS = {
+  GROUP_CREATED: 'users',
+  GROUP_RENAMED: 'pencil',
+  MEMBER_ADDED: 'user-plus',
+  MEMBER_REMOVED: 'close',
+  MEMBER_LEFT: 'arrow-left',
+}
 
 const systemEvent = computed(() =>
   KNOWN_SYSTEM_EVENTS.has(props.message.system?.event) ? props.message.system.event : 'DEFAULT'
 )
+
+const systemIcon = computed(() => GROUP_EVENT_ICONS[systemEvent.value] ?? 'check-square')
 
 const systemHeading = computed(() => t(`chat.system.label.${systemEvent.value}`))
 
@@ -53,6 +81,12 @@ const systemLabel = computed(() => {
   if (!system) return ''
   return t(`chat.system.text.${systemEvent.value}`, {
     title: system.params?.title ?? '',
+    // The message carries its own author, so a roster event stays
+    // attributable even after that person has left the group.
+    actor: props.message.sender?.fullName ?? props.senderName,
+    // The person the event happened *to*, which is not the author.
+    member: system.params?.name ?? '',
+    previousTitle: system.params?.previousTitle ?? '',
     name: props.senderName,
     status: system.params?.status ?? '',
   })
@@ -81,7 +115,7 @@ function confirmEdit() {
   <div v-if="isSystem" class="flex justify-center py-1">
     <div class="flex max-w-[85%] items-start gap-2.5 rounded-lg border border-border bg-surface-2 px-3.5 py-2.5">
       <span class="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary-subtle text-primary">
-        <Icon name="check-square" size="13" />
+        <Icon :name="systemIcon" size="13" />
       </span>
       <div class="min-w-0">
         <p class="text-caption font-semibold uppercase tracking-wide text-ink-faint">{{ systemHeading }}</p>
@@ -121,6 +155,20 @@ function confirmEdit() {
       </button>
     </div>
 
+    <!-- Group author: the avatar sits beside the bubble and only on the
+         first message of a run, with a spacer keeping the rest of the run
+         flush with it rather than stepping in and out. -->
+    <template v-if="inGroup && !mine">
+      <Avatar
+        v-if="showSender"
+        :name="message.sender?.fullName ?? '?'"
+        :src="message.sender?.avatar"
+        size="xs"
+        class="shrink-0"
+      />
+      <span v-else class="w-6 shrink-0" aria-hidden="true" />
+    </template>
+
     <div
       class="max-w-[min(32rem,78%)] rounded-2xl px-3.5 py-2.5 text-small shadow-sm"
       :class="[
@@ -128,6 +176,10 @@ function confirmEdit() {
         isDeleted ? 'opacity-70' : '',
       ]"
     >
+      <p v-if="inGroup && !mine && showSender" class="mb-1 truncate text-caption font-semibold text-primary">
+        {{ message.sender?.fullName ?? senderName }}
+      </p>
+
       <p v-if="isDeleted" class="flex items-center gap-1.5 italic opacity-80">
         <Icon name="trash" size="13" />
         {{ t('chat.message.deleted') }}

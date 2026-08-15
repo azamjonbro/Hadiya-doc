@@ -23,7 +23,7 @@ const errorMessage = ref('')
 const assignments = ref([])
 const catalog = ref([])
 const search = ref('')
-const activeTab = ref('all')
+const activeTab = ref('required')
 const enrollingId = ref(null)
 const progressByCourseId = ref({})
 
@@ -45,9 +45,8 @@ function badgeLabel(a) {
 }
 
 const tabs = computed(() => [
-  { value: 'all', label: t('courses.tabs.all'), count: assignments.value.length },
   { value: 'required', label: t('courses.tabs.required'), count: assignments.value.filter((a) => a.mandatory).length },
-  { value: 'inProgress', label: t('courses.tabs.inProgress'), count: assignments.value.filter((a) => a.status === 'ACTIVE' && !a.isExpired).length },
+  { value: 'all', label: t('courses.tabs.catalog'), count: assignments.value.length },
   { value: 'completed', label: t('courses.tabs.completed'), count: assignments.value.filter((a) => a.status === 'COMPLETED').length },
   { value: 'expired', label: t('courses.tabs.expired'), count: assignments.value.filter((a) => a.isExpired).length },
 ])
@@ -55,7 +54,6 @@ const tabs = computed(() => [
 const filteredAssignments = computed(() => {
   let list = assignments.value
   if (activeTab.value === 'required') list = list.filter((a) => a.mandatory)
-  else if (activeTab.value === 'inProgress') list = list.filter((a) => a.status === 'ACTIVE' && !a.isExpired)
   else if (activeTab.value === 'completed') list = list.filter((a) => a.status === 'COMPLETED')
   else if (activeTab.value === 'expired') list = list.filter((a) => a.isExpired)
 
@@ -64,11 +62,6 @@ const filteredAssignments = computed(() => {
     list = list.filter((a) => a.course?.title?.toLowerCase().includes(q))
   }
   return list
-})
-
-const featured = computed(() => {
-  const active = assignments.value.filter((a) => a.status === 'ACTIVE')
-  return [...active].sort((a, b) => new Date(a.deadline ?? 8640000000000000) - new Date(b.deadline ?? 8640000000000000))[0] ?? null
 })
 
 const discoverCatalog = computed(() => {
@@ -130,36 +123,12 @@ onMounted(load)
     <p v-if="errorMessage" class="mt-4 text-small text-danger">{{ errorMessage }}</p>
 
     <template v-if="loading">
-      <Skeleton class="mt-6 h-48 w-full" />
       <div class="mt-8 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
         <Skeleton v-for="i in 6" :key="i" class="h-64 w-full" />
       </div>
     </template>
 
     <template v-else>
-      <!-- Featured -->
-      <AppCard v-if="featured" padding="none" hover class="mt-6 cursor-pointer overflow-hidden" @click="router.push(`/courses/${featured.courseId}`)">
-        <div class="flex flex-col sm:flex-row">
-          <div
-            class="flex h-40 shrink-0 items-center justify-center bg-primary sm:h-auto sm:w-72"
-            :style="featured.course?.cover ? `background-image:url(${featured.course.cover});background-size:cover;background-position:center` : ''"
-          >
-            <Icon v-if="!featured.course?.cover" name="graduation-cap" size="34" class="text-primary-foreground/80" />
-          </div>
-          <div class="flex flex-1 flex-col justify-between p-6">
-            <div>
-              <p class="text-caption font-semibold uppercase tracking-widest text-primary">{{ t('courses.featured') }}</p>
-              <h2 class="mt-1.5 text-h2 text-ink">{{ featured.course?.title }}</h2>
-              <p v-if="featured.course?.description" class="mt-1.5 line-clamp-2 text-small text-ink-muted">{{ featured.course.description }}</p>
-            </div>
-            <div class="mt-4">
-              <ProgressBar :value="courseProgress(featured.courseId)" />
-              <AppButton class="mt-4" icon="arrow-right" icon-position="right">{{ t('courses.continue') }}</AppButton>
-            </div>
-          </div>
-        </div>
-      </AppCard>
-
       <!-- Tabs -->
       <div class="mt-8">
         <Tabs v-model="activeTab" :tabs="tabs" />
