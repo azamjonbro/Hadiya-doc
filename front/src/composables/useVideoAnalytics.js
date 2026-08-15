@@ -1,9 +1,10 @@
 import { useAuthStore } from '@/stores/auth'
+import { API_BASE_URL } from '@/services/apiBase'
 
 const FLUSH_INTERVAL_MS = 10_000
 
 function apiBase() {
-  return import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:4000/api/v1'
+  return API_BASE_URL
 }
 
 export function useVideoAnalytics(videoId) {

@@ -1,11 +1,5 @@
 import { io } from 'socket.io-client'
-
-// Same origin as the REST API, minus the /api/v1 suffix — sockets connect
-// at the server root, not under the versioned API path.
-function apiOrigin() {
-  const base = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:4000/api/v1'
-  return base.replace(/\/api\/v1\/?$/, '')
-}
+import { API_ORIGIN } from './apiBase'
 
 let socket = null
 
@@ -20,7 +14,7 @@ export function connectSocket(token) {
     if (!socket.connected) socket.connect()
     return socket
   }
-  socket = io(apiOrigin(), { auth: { token } })
+  socket = io(API_ORIGIN, { auth: { token } })
   for (const [event, handler] of pendingHandlers) socket.on(event, handler)
   pendingHandlers.length = 0
   return socket

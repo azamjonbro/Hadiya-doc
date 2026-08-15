@@ -5,6 +5,7 @@ import Hls from 'hls.js'
 import { ATTENTION_EVENTS } from '@lms/shared'
 import { useAuthStore } from '@/stores/auth'
 import { videoAccessApi } from '@/services/videoAccess'
+import { API_BASE_URL } from '@/services/apiBase'
 import { coursesApi } from '@/services/courses'
 import { useVideoAnalytics } from '@/composables/useVideoAnalytics'
 import { useAttentionMonitor } from '@/composables/useAttentionMonitor'
@@ -152,7 +153,7 @@ let clockTimer = null
 let positionTimer = null
 
 function apiBase() {
-  return import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:4000/api/v1'
+  return API_BASE_URL
 }
 
 function manifestUrl(token) {

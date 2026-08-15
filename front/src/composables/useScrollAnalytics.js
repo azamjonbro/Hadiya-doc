@@ -1,10 +1,11 @@
 import { useAuthStore } from '@/stores/auth'
+import { API_BASE_URL } from '@/services/apiBase'
 
 const FLUSH_INTERVAL_MS = 10_000
 const MIN_DEPTH_DELTA = 4
 
 function apiBase() {
-  return import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:4000/api/v1'
+  return API_BASE_URL
 }
 
 export function useScrollAnalytics(newsId) {

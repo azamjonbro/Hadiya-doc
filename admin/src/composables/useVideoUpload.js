@@ -1,8 +1,9 @@
 import { ref } from 'vue'
 import * as tus from 'tus-js-client'
 import { useAuthStore } from '@/stores/auth'
+import { API_BASE_URL } from '@/services/apiBase'
 
-const UPLOAD_ENDPOINT = `${import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:4000/api/v1'}/videos/upload`
+const UPLOAD_ENDPOINT = `${API_BASE_URL}/videos/upload`
 
 export function useVideoUpload() {
   const auth = useAuthStore()
