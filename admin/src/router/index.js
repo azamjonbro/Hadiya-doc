@@ -122,7 +122,10 @@ export const router = createRouter({
         { path: 'settings', name: 'settings', component: SettingsView, meta: { titleKey: 'nav.settings' } },
       ],
     },
-    { path: '/:pathMatch(.*)*', name: 'not-found', component: NotFoundView, meta: { public: true } },
+    // Deliberately NOT public. A signed-in admin who mistypes a URL should see
+    // the 404; a signed-out visitor should see the login form, not a dead end
+    // with nothing to click. The guard below tells the two apart.
+    { path: '/:pathMatch(.*)*', name: 'not-found', component: NotFoundView },
   ],
 })
 
@@ -137,6 +140,9 @@ router.beforeEach((to) => {
   }
 
   if (!auth.isAuthenticated) {
+    // No `redirect` for a URL that matches nothing: carrying it would send the
+    // admin straight back to the 404 the moment they finish signing in.
+    if (to.name === 'not-found') return { name: 'login' }
     return { name: 'login', query: { redirect: to.fullPath } }
   }
 
