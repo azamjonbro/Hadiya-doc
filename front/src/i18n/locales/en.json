@@ -1307,6 +1307,14 @@
       "branches": "{count} branches",
       "employees": "{count} employees"
     },
-    "errorTitle": "Could not load"
+    "errorTitle": "Could not load",
+    "create": "Add branch",
+    "createHint": "Name the branch. You then attach employees and courses to it.",
+    "rename": "Rename",
+    "renameHint": "The new name is applied to every attached employee and course.",
+    "delete": "Delete",
+    "name": "Branch name",
+    "renamed": "Renamed — moved {users} employee(s) and {courses} course(s)",
+    "confirmDelete": "Delete the branch “{name}”?"
   }
 }

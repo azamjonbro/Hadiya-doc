@@ -7,10 +7,14 @@
 // form lets you type one. Renaming would have to rewrite every tagged record in
 // step, or the courses targeted at the old name would quietly stop reaching
 // anyone, so it is deliberately not offered from this page.
-import { computed, onMounted, ref } from 'vue'
+import { computed, onMounted, reactive, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
-import { usersApi } from '@/services/users'
+import { branchesApi } from '@/services/branches'
+import { useConfirm } from '@/composables/useConfirm'
+import { useToast } from '@/composables/useToast'
+import AppInput from '@/components/ui/AppInput.vue'
+import Modal from '@/components/ui/Modal.vue'
 import AppCard from '@/components/ui/AppCard.vue'
 import Badge from '@/components/ui/Badge.vue'
 import AppButton from '@/components/ui/AppButton.vue'
@@ -21,6 +25,8 @@ import Icon from '@/components/ui/Icon.vue'
 
 const { t } = useI18n()
 const router = useRouter()
+const confirm = useConfirm()
+const toast = useToast()
 
 const items = ref([])
 const loading = ref(true)
@@ -36,7 +42,7 @@ async function load() {
   loading.value = true
   errorMessage.value = ''
   try {
-    items.value = await usersApi.branchOverview()
+    items.value = await branchesApi.overview()
   } catch (error) {
     errorMessage.value = error.response?.data?.message ?? String(error)
   } finally {
@@ -54,6 +60,53 @@ function openCourses(branch) {
   router.push({ name: 'admin-courses-list', query: { branch: branch.name } })
 }
 
+// One dialog for create and rename: the fields are the same, and `editing`
+// holds the branch being renamed (null when creating).
+const dialog = reactive({ open: false, editing: null, name: '', submitting: false, error: '' })
+
+function openCreate() {
+  Object.assign(dialog, { open: true, editing: null, name: '', error: '' })
+}
+
+function openRename(branch) {
+  Object.assign(dialog, { open: true, editing: branch, name: branch.name, error: '' })
+}
+
+async function submitDialog() {
+  const name = dialog.name.trim()
+  if (!name) return
+  dialog.submitting = true
+  dialog.error = ''
+  try {
+    if (dialog.editing) {
+      const result = await branchesApi.rename(dialog.editing.id, name)
+      // Renaming rewrites the tagged records, so say how many moved — silently
+      // touching dozens of employees is not something to leave unremarked.
+      toast.success(t('branchesPage.renamed', { users: result.movedUsers, courses: result.movedCourses }))
+    } else {
+      await branchesApi.create(name)
+    }
+    dialog.open = false
+    await load()
+  } catch (error) {
+    dialog.error = error.response?.data?.message ?? String(error)
+  } finally {
+    dialog.submitting = false
+  }
+}
+
+async function removeBranch(branch) {
+  if (!(await confirm({ message: t('branchesPage.confirmDelete', { name: branch.name }) }))) return
+  try {
+    await branchesApi.remove(branch.id)
+    await load()
+  } catch (error) {
+    // The server refuses a branch that is still in use and says how much is
+    // attached; that message is the useful part, so pass it straight through.
+    toast.error(error.response?.data?.message ?? String(error))
+  }
+}
+
 onMounted(load)
 </script>
 
@@ -64,10 +117,13 @@ onMounted(load)
         <h1 class="text-h1 text-ink">{{ t('branchesPage.title') }}</h1>
         <p class="mt-1 text-small text-ink-faint">{{ t('branchesPage.subtitle') }}</p>
       </div>
-      <div v-if="!loading && items.length" class="flex gap-2 text-caption text-ink-faint">
-        <span>{{ t('branchesPage.totals.branches', { count: totals.branches }) }}</span>
-        <span>·</span>
-        <span>{{ t('branchesPage.totals.employees', { count: totals.employees }) }}</span>
+      <div class="flex items-center gap-3">
+        <div v-if="!loading && items.length" class="hidden gap-2 text-caption text-ink-faint sm:flex">
+          <span>{{ t('branchesPage.totals.branches', { count: totals.branches }) }}</span>
+          <span>·</span>
+          <span>{{ t('branchesPage.totals.employees', { count: totals.employees }) }}</span>
+        </div>
+        <AppButton icon="plus" @click="openCreate">{{ t('branchesPage.create') }}</AppButton>
       </div>
     </div>
 
@@ -87,7 +143,11 @@ onMounted(load)
       icon="building"
       :title="t('branchesPage.empty.title')"
       :description="t('branchesPage.empty.description')"
-    />
+    >
+      <template #action>
+        <AppButton icon="plus" @click="openCreate">{{ t('branchesPage.create') }}</AppButton>
+      </template>
+    </EmptyState>
 
     <div v-else class="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
       <AppCard v-for="branch in items" :key="branch.name" hover>
@@ -103,6 +163,28 @@ onMounted(load)
             <Badge v-if="!branch.employees" variant="warning" size="sm" class="mt-1">
               {{ t('branchesPage.noEmployees') }}
             </Badge>
+          </div>
+
+          <!-- Only branches that exist as a record can be renamed or removed.
+               A name that is merely in use on employee records has nothing to
+               act on — creating it here first is what gives it one. -->
+          <div v-if="branch.id" class="flex shrink-0 gap-1">
+            <button
+              type="button"
+              class="grid h-7 w-7 place-items-center rounded text-ink-faint transition-default hover:bg-surface-2 hover:text-ink"
+              :title="t('branchesPage.rename')"
+              @click="openRename(branch)"
+            >
+              <Icon name="pencil" size="14" />
+            </button>
+            <button
+              type="button"
+              class="grid h-7 w-7 place-items-center rounded text-ink-faint transition-default hover:bg-danger-subtle hover:text-danger"
+              :title="t('branchesPage.delete')"
+              @click="removeBranch(branch)"
+            >
+              <Icon name="trash" size="14" />
+            </button>
           </div>
         </div>
 
@@ -132,5 +214,21 @@ onMounted(load)
         </div>
       </AppCard>
     </div>
+    <Modal
+      v-model="dialog.open"
+      :title="dialog.editing ? t('branchesPage.rename') : t('branchesPage.create')"
+      :description="dialog.editing ? t('branchesPage.renameHint') : t('branchesPage.createHint')"
+      size="sm"
+    >
+      <AppInput v-model="dialog.name" :label="t('branchesPage.name')" @keyup.enter="submitDialog" />
+      <p v-if="dialog.error" class="mt-2 text-small text-danger">{{ dialog.error }}</p>
+
+      <template #footer>
+        <AppButton variant="ghost" @click="dialog.open = false">{{ t('common.cancel') }}</AppButton>
+        <AppButton :loading="dialog.submitting" :disabled="!dialog.name.trim()" @click="submitDialog">
+          {{ t('common.save') }}
+        </AppButton>
+      </template>
+    </Modal>
   </div>
 </template>

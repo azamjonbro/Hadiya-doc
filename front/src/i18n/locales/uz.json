@@ -1307,6 +1307,14 @@
       "branches": "{count} filial",
       "employees": "{count} xodim"
     },
-    "errorTitle": "Yuklab bo'lmadi"
+    "errorTitle": "Yuklab bo'lmadi",
+    "create": "Filial qo'shish",
+    "createHint": "Filial nomini yozing. Keyin uni xodimlarga va kurslarga biriktirasiz.",
+    "rename": "Nomini o'zgartirish",
+    "renameHint": "Yangi nom barcha bog'langan xodim va kurslarga ham qo'llanadi.",
+    "delete": "O'chirish",
+    "name": "Filial nomi",
+    "renamed": "Nomi o'zgartirildi: {users} xodim, {courses} kurs ko'chirildi",
+    "confirmDelete": "«{name}» filiali o'chirilsinmi?"
   }
 }
