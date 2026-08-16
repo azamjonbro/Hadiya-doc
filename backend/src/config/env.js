@@ -27,7 +27,14 @@ const envSchema = z.object({
   COOKIE_SAMESITE: z.enum(['strict', 'lax', 'none']).default('strict'),
 
   SUPERADMIN_EMAIL: z.string().email('SUPERADMIN_EMAIL must be a valid email'),
-  SUPERADMIN_USERNAME: z.string().min(1, 'SUPERADMIN_USERNAME is required'),
+  // Optional rather than required so an install that predates the JSHSHIR
+  // migration still boots — its SUPERADMIN already exists and the seed is
+  // skipped. A *fresh* install without it fails in seedRolesAndSuperAdmin.js
+  // with an actionable message instead of taking the whole process down here.
+  SUPERADMIN_JSHSHIR: z
+    .string()
+    .regex(/^\d{14}$/, 'SUPERADMIN_JSHSHIR must be exactly 14 digits')
+    .optional(),
   SUPERADMIN_PASSWORD: z.string().min(8, 'SUPERADMIN_PASSWORD must be at least 8 characters'),
 
   CAPTCHA_PROVIDER: z.enum(['hcaptcha']).default('hcaptcha'),

@@ -16,7 +16,7 @@ const MESSAGES = {
     'type.task-analytics': 'Vazifalar tahlili',
 
     'col.fullName': 'F.I.Sh.',
-    'col.username': 'Foydalanuvchi nomi',
+    'col.jshshir': 'JSHSHIR',
     'col.department': "Bo'lim",
     'col.isActive': 'Faol',
     'col.assignedCourses': 'Biriktirilgan kurslar',
@@ -75,7 +75,7 @@ const MESSAGES = {
     'type.task-analytics': 'Аналитика задач',
 
     'col.fullName': 'ФИО',
-    'col.username': 'Логин',
+    'col.jshshir': 'ЖШШИР',
     'col.department': 'Отдел',
     'col.isActive': 'Активен',
     'col.assignedCourses': 'Назначено курсов',
@@ -134,7 +134,7 @@ const MESSAGES = {
     'type.task-analytics': 'Task Analytics',
 
     'col.fullName': 'Full name',
-    'col.username': 'Username',
+    'col.jshshir': 'JSHSHIR',
     'col.department': 'Department',
     'col.isActive': 'Active',
     'col.assignedCourses': 'Assigned courses',

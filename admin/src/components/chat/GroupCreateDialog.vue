@@ -34,7 +34,7 @@ const filtered = computed(() => {
   const needle = search.value.trim().toLowerCase()
   if (!needle) return props.contacts
   return props.contacts.filter((c) =>
-    [c.fullName, c.department, c.position, c.username].some((v) => v?.toLowerCase().includes(needle))
+    [c.fullName, c.department, c.position, c.jshshir].some((v) => v?.toLowerCase().includes(needle))
   )
 })
 

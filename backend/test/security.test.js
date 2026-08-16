@@ -84,6 +84,16 @@ let tokenA, tokenB, tokenManager
 const suffix = `${Date.now()}${Math.floor(Math.random() * 1000)}`
 const cleanupUserIds = []
 
+// Accounts are keyed by JSHSHIR now, and it is unique and exactly 14 digits.
+// One counter per run, prefixed with the run's own digits, keeps concurrent
+// runs of this suite from colliding on it.
+let jshshirCounter = 0
+const runDigits = suffix.replace(/\D/g, '').slice(-9)
+function testJshshir() {
+  jshshirCounter += 1
+  return `9${runDigits}${String(jshshirCounter).padStart(4, '0')}`
+}
+
 before(async () => {
   await connectDatabase()
 
@@ -95,7 +105,7 @@ before(async () => {
 
   userA = await User.create({
     fullName: 'Security Test A',
-    username: `sectest_a_${suffix}`,
+    jshshir: testJshshir(),
     email: `sectest_a_${suffix}@example.com`,
     passwordHash,
     roleId: roleEmployee._id,
@@ -104,7 +114,7 @@ before(async () => {
   })
   userB = await User.create({
     fullName: 'Security Test B',
-    username: `sectest_b_${suffix}`,
+    jshshir: testJshshir(),
     email: `sectest_b_${suffix}@example.com`,
     passwordHash,
     roleId: roleEmployee._id,
@@ -113,7 +123,7 @@ before(async () => {
   })
   userManager = await User.create({
     fullName: 'Security Test Manager',
-    username: `sectest_mgr_${suffix}`,
+    jshshir: testJshshir(),
     email: `sectest_mgr_${suffix}@example.com`,
     passwordHash,
     roleId: roleManager._id,
@@ -172,9 +182,9 @@ before(async () => {
     status: 'ACTIVE',
   })
 
-  tokenA = await login(userA.username, TEST_PASSWORD)
-  tokenB = await login(userB.username, TEST_PASSWORD)
-  tokenManager = await login(userManager.username, TEST_PASSWORD)
+  tokenA = await login(userA.jshshir, TEST_PASSWORD)
+  tokenB = await login(userB.jshshir, TEST_PASSWORD)
+  tokenManager = await login(userManager.jshshir, TEST_PASSWORD)
 })
 
 after(async () => {
@@ -195,7 +205,7 @@ describe('Authentication', () => {
   test('wrong password is rejected', async () => {
     const { status, body } = await api('/auth/login', {
       method: 'POST',
-      body: JSON.stringify({ identifier: userA.username, password: 'wrong-password' }),
+      body: JSON.stringify({ identifier: userA.jshshir, password: 'wrong-password' }),
     })
     assert.equal(status, 401)
     assert.equal(body.code, 'INVALID_CREDENTIALS')
@@ -214,7 +224,7 @@ describe('Authentication', () => {
     const passwordHash = await hashPassword(TEST_PASSWORD)
     const victim = await User.create({
       fullName: 'Lockout Victim',
-      username: `sectest_lock_${suffix}`,
+      jshshir: testJshshir(),
       email: `sectest_lock_${suffix}@example.com`,
       passwordHash,
       roleId: roleEmployee._id,
@@ -225,12 +235,12 @@ describe('Authentication', () => {
         // eslint-disable-next-line no-await-in-loop
         await api('/auth/login', {
           method: 'POST',
-          body: JSON.stringify({ identifier: victim.username, password: 'wrong' }),
+          body: JSON.stringify({ identifier: victim.jshshir, password: 'wrong' }),
         })
       }
       const { status, body } = await api('/auth/login', {
         method: 'POST',
-        body: JSON.stringify({ identifier: victim.username, password: TEST_PASSWORD }),
+        body: JSON.stringify({ identifier: victim.jshshir, password: TEST_PASSWORD }),
       })
       assert.equal(status, 429)
       assert.equal(body.code, 'ACCOUNT_LOCKED')
@@ -431,7 +441,7 @@ describe('Rate limiting', () => {
     const res = await fetch(`${BASE_URL}/auth/login`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ identifier: userA.username, password: 'wrong' }),
+      body: JSON.stringify({ identifier: userA.jshshir, password: 'wrong' }),
     })
     assert.ok(res.headers.get('ratelimit-limit'), 'expected a RateLimit-Limit header on the login route')
   })
@@ -454,7 +464,7 @@ describe('Session security', () => {
     const loginRes = await fetch(`${BASE_URL}/auth/login`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ identifier: userA.username, password: TEST_PASSWORD }),
+      body: JSON.stringify({ identifier: userA.jshshir, password: TEST_PASSWORD }),
     })
     const jar = parseCookies(loginRes.headers.getSetCookie())
     const res = await fetch(`${BASE_URL}/auth/refresh`, { method: 'POST', headers: { Cookie: cookieHeader(jar) } })
@@ -465,7 +475,7 @@ describe('Session security', () => {
     const loginRes = await fetch(`${BASE_URL}/auth/login`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ identifier: userA.username, password: TEST_PASSWORD }),
+      body: JSON.stringify({ identifier: userA.jshshir, password: TEST_PASSWORD }),
     })
     const jar = parseCookies(loginRes.headers.getSetCookie())
     const res = await fetch(`${BASE_URL}/auth/refresh`, {
@@ -479,7 +489,7 @@ describe('Session security', () => {
     const loginRes = await fetch(`${BASE_URL}/auth/login`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ identifier: userB.username, password: TEST_PASSWORD }),
+      body: JSON.stringify({ identifier: userB.jshshir, password: TEST_PASSWORD }),
     })
     const originalJar = parseCookies(loginRes.headers.getSetCookie())
     const originalCookieHeader = cookieHeader(originalJar)
@@ -520,7 +530,7 @@ describe('Expired course access', () => {
     const passwordHash = await hashPassword(TEST_PASSWORD)
     const expiredUser = await User.create({
       fullName: 'Expired Access User',
-      username: `sectest_exp_${suffix}`,
+      jshshir: testJshshir(),
       email: `sectest_exp_${suffix}@example.com`,
       passwordHash,
       roleId: roleEmployee._id,
@@ -535,7 +545,7 @@ describe('Expired course access', () => {
         status: 'ACTIVE',
         expiresAt: new Date(Date.now() - 60_000),
       })
-      const expiredToken = await login(expiredUser.username, TEST_PASSWORD)
+      const expiredToken = await login(expiredUser.jshshir, TEST_PASSWORD)
       const { status, body } = await api(`/video-access/${video._id}/token`, {
         method: 'POST',
         headers: { Authorization: `Bearer ${expiredToken}` },

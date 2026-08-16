@@ -47,7 +47,7 @@ export const attentionReportService = {
             // Wording matches the other notification types, which are stored
             // in English and localised by the client from `type`.
             type: 'ATTENTION_ALERT',
-            title: `Low attention: ${user.fullName || user.username}`,
+            title: `Low attention: `,
             message: `${progress.attentionLostCount}× looked away during "${video.title}"${course?.title ? ` (${course.title})` : ''}`,
             relatedEntityType: 'Course',
             relatedEntityId: video.courseId.toString(),

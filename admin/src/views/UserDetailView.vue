@@ -78,7 +78,7 @@ onMounted(load)
           <Avatar :name="user.fullName" :src="user.avatar" size="xl" />
           <div>
             <h1 class="text-h1 text-ink">{{ user.fullName }}</h1>
-            <p class="mt-1 text-small text-ink-muted">{{ user.username }} · {{ user.email }}</p>
+            <p class="mt-1 text-small text-ink-muted">{{ user.jshshir }}<template v-if="user.email"> · {{ user.email }}</template></p>
             <div class="mt-2 flex flex-wrap items-center gap-2">
               <Badge variant="neutral">{{ user.role }}</Badge>
               <Badge :variant="user.isActive ? 'success' : 'danger'" dot>

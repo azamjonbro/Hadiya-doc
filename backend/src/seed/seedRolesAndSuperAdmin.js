@@ -38,10 +38,17 @@ async function seedSuperAdmin(superAdminRoleId) {
   const existing = await User.findOne({ roleId: superAdminRoleId })
   if (existing) return
 
+  if (!env.SUPERADMIN_JSHSHIR) {
+    throw new Error(
+      'No SUPERADMIN exists yet and SUPERADMIN_JSHSHIR is not set. ' +
+        'Add SUPERADMIN_JSHSHIR=<14 digits> to the backend .env and restart.'
+    )
+  }
+
   const passwordHash = await hashPassword(env.SUPERADMIN_PASSWORD)
   await User.create({
     fullName: 'Super Admin',
-    username: env.SUPERADMIN_USERNAME.toLowerCase(),
+    jshshir: env.SUPERADMIN_JSHSHIR,
     email: env.SUPERADMIN_EMAIL.toLowerCase(),
     passwordHash,
     roleId: superAdminRoleId,

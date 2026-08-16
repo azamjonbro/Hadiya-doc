@@ -26,7 +26,7 @@ const personRows = computed(() => [
   { icon: 'briefcase', label: t('chat.info.position'), value: peer.value.position },
   { icon: 'building', label: t('chat.info.department'), value: peer.value.department },
   { icon: 'shield', label: t('chat.info.role'), value: peer.value.role },
-  { icon: 'user', label: t('chat.info.username'), value: peer.value.username },
+  { icon: 'user', label: t('chat.info.jshshir'), value: peer.value.jshshir },
   { icon: 'link', label: t('chat.info.email'), value: peer.value.email },
   { icon: 'user-plus', label: t('chat.info.joinedAt'), value: formatDateTime(peer.value.joinedAt, locale.value) },
 ])

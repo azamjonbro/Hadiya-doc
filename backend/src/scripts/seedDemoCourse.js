@@ -1068,7 +1068,7 @@ async function cleanup() {
 
 async function seed() {
   const author = await resolveAuthor()
-  logger.info(`Seeding demo course as ${author.username}`)
+  logger.info(`Seeding demo course as ${author.jshshir}`)
 
   const course = await Course.findOneAndUpdate(
     { slug: COURSE_SLUG },

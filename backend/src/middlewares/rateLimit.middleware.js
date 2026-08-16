@@ -12,7 +12,7 @@ import { sendError } from '../utils/apiResponse.js'
 // please try again later."), which breaks the API's error envelope: the
 // clients read `error.response.data.message`, get `undefined` on a plain
 // string body, and fall back to their generic per-screen message. On the
-// login form that fallback reads "wrong username or password" — telling a
+// login form that fallback reads "wrong login or password" — telling a
 // rate-limited user their correct credentials are wrong. Every limiter below
 // (and in the sibling *RateLimit.middleware.js files) passes this handler so
 // a 429 is as readable as any other API error.

@@ -10,6 +10,7 @@
     "worker:start": "node src/worker.js",
     "test": "node --test test/security.test.js",
     "migrate:chat": "node src/scripts/migrateLegacyChat.js",
+    "migrate:jshshir": "node src/scripts/migrateUsernameToJshshir.js",
     "seed:demo-course": "node src/scripts/seedDemoCourse.js"
   },
   "dependencies": {

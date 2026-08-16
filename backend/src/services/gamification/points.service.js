@@ -105,7 +105,7 @@ export const pointsService = {
       return {
         userId: user._id.toString(),
         fullName: user.fullName,
-        username: user.username,
+        jshshir: user.jshshir,
         avatar: user.avatar,
         department: user.department,
         position: user.position,

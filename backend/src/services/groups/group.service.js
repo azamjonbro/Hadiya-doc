@@ -27,8 +27,8 @@ function toPublicMember(user) {
   return {
     id: user._id.toString(),
     fullName: user.fullName,
-    username: user.username,
-    email: user.email,
+    jshshir: user.jshshir,
+    email: user.email ?? '',
     avatar: user.avatar,
     department: user.department,
     position: user.position,

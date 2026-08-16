@@ -18,7 +18,7 @@ Reads follow the same chain minus `validate`.
 ## `/auth`
 | Method | Path | Notes |
 |---|---|---|
-| POST | `/login` | username/email + password + captcha token |
+| POST | `/login` | `identifier` (JSHSHIR / passport series / email) + password + captcha token |
 | POST | `/refresh` | httpOnly cookie in, rotated cookie out, CSRF double-submit checked |
 | POST | `/logout` | revokes current session |
 | POST | `/password-reset/request` | |

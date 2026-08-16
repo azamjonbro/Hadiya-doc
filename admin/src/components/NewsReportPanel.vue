@@ -66,7 +66,7 @@ const metrics = (r) => [
       <AppInput v-model="search" icon="search" :placeholder="t('videoReport.searchUser')" @input="onSearch" />
       <ul v-if="results.length > 0" class="absolute z-10 mt-1 w-full rounded-md border border-border bg-surface text-small shadow-md">
         <li v-for="user in results" :key="user.id" class="cursor-pointer px-3 py-2 transition-default hover:bg-surface-2" @click="selectUser(user)">
-          {{ user.fullName }} <span class="text-ink-faint">({{ user.username }})</span>
+          {{ user.fullName }} <span class="text-ink-faint">({{ user.jshshir }})</span>
         </li>
       </ul>
     </div>

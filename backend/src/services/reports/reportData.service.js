@@ -61,7 +61,7 @@ async function resolveRoleUserIds(roleName) {
 async function employeeProgress(filters, t) {
   const columns = [
     { key: 'fullName', header: t('col.fullName') },
-    { key: 'username', header: t('col.username') },
+    { key: 'jshshir', header: t('col.jshshir') },
     { key: 'department', header: t('col.department') },
     { key: 'isActive', header: t('col.isActive') },
     { key: 'assignedCourses', header: t('col.assignedCourses') },
@@ -82,7 +82,7 @@ async function employeeProgress(filters, t) {
 
   const users = await User.find(
     idFilter ? { _id: { $in: idFilter } } : {},
-    { fullName: 1, username: 1, department: 1, isActive: 1 }
+    { fullName: 1, jshshir: 1, department: 1, isActive: 1 }
   )
     .sort({ fullName: 1 })
     .limit(MAX_ROWS)
@@ -137,7 +137,7 @@ async function employeeProgress(filters, t) {
     const p = byUserProgress.get(u._id.toString()) ?? { avgCompletionPercent: 0, totalWatchedSeconds: 0 }
     return {
       fullName: u.fullName,
-      username: u.username,
+      jshshir: u.jshshir,
       department: u.department,
       isActive: u.isActive ? t('value.yes') : t('value.no'),
       assignedCourses: a.assignedCourses,

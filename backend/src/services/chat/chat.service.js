@@ -35,8 +35,8 @@ function toPublicUser(user, roleName) {
   return {
     id: user._id.toString(),
     fullName: user.fullName,
-    username: user.username,
-    email: user.email,
+    jshshir: user.jshshir,
+    email: user.email ?? '',
     avatar: user.avatar,
     department: user.department,
     position: user.position,
@@ -59,7 +59,7 @@ function toMessageSender(user) {
   return {
     id: user._id.toString(),
     fullName: user.fullName,
-    username: user.username,
+    jshshir: user.jshshir,
     avatar: user.avatar,
   }
 }

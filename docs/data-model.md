@@ -51,7 +51,10 @@ Indexes: `{key:1}` unique.
 
 | Field | Type | Notes |
 |---|---|---|
-| fullName, username, email, phone | string | |
+| fullName, phone | string | |
+| jshshir | string | 14 digits, required, the primary login handle |
+| passportSeries | string \| absent | e.g. `AA1234567`, optional alternative login handle |
+| email | string \| absent | optional |
 | passwordHash | string | argon2id |
 | roleId | ObjectId → roles | |
 | department, position | string | |
@@ -61,7 +64,10 @@ Indexes: `{key:1}` unique.
 | lockedUntil | Date \| null | account lockout |
 | createdAt/updatedAt | Date | |
 
-Indexes: `{email:1}` unique, `{username:1}` unique, `{roleId:1}`.
+Indexes: `{jshshir:1}` unique, `{roleId:1}`. `{passportSeries:1}` and `{email:1}` are
+unique *partial* indexes (`$type: 'string'`) — both fields are optional, and a plain
+sparse index still stores explicit nulls, so the second employee without one would
+collide with the first.
 
 ### `courses`
 

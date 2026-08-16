@@ -499,7 +499,7 @@ onMounted(() => {
           <AppInput v-model="userSearch" icon="search" :label="t('tasks.assignee')" @input="onUserSearch" />
           <ul v-if="userResults.length > 0" class="absolute z-10 mt-1 w-full rounded-md border border-border bg-surface text-small shadow-md">
             <li v-for="user in userResults" :key="user.id" class="cursor-pointer px-3 py-2 transition-default hover:bg-surface-2" @click="pickAssignee(user)">
-              {{ user.fullName }} <span class="text-ink-faint">({{ user.username }})</span>
+              {{ user.fullName }} <span class="text-ink-faint">({{ user.jshshir }})</span>
             </li>
           </ul>
         </div>

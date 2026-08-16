@@ -169,7 +169,7 @@ Faqat SuperAdmin userlarni yaratadi.
 
 Login:
 
-* username/email
+* JSHSHIR / passport seriyasi / email
 * password
 * CAPTCHA
 * rate limiting
@@ -247,8 +247,9 @@ SuperAdmin/Admin/Manager user yaratishi mumkin.
 User yaratishda:
 
 * full name
-* username
-* email
+* JSHSHIR (14 raqam)
+* passport seriyasi (ixtiyoriy)
+* email (ixtiyoriy)
 * phone
 * role
 * department

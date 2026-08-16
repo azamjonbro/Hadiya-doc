@@ -261,7 +261,7 @@ onMounted(load)
             >
               <p class="truncate text-small font-medium text-ink">{{ member.fullName }}</p>
               <p class="truncate text-caption text-ink-faint">
-                {{ member.username }}<template v-if="member.position"> · {{ member.position }}</template>
+                {{ member.jshshir }}<template v-if="member.position"> · {{ member.position }}</template>
               </p>
             </button>
             <Badge v-if="!member.isActive" variant="danger" size="sm">{{ t('users.filters.inactive') }}</Badge>
@@ -341,7 +341,7 @@ onMounted(load)
             <Avatar :name="user.fullName" :src="user.avatar" size="xs" />
             <span class="min-w-0 flex-1">
               <span class="block truncate text-small text-ink">{{ user.fullName }}</span>
-              <span class="block truncate text-caption text-ink-faint">{{ user.username }} · {{ user.role }}</span>
+              <span class="block truncate text-caption text-ink-faint">{{ user.jshshir }} · {{ user.role }}</span>
             </span>
           </label>
         </li>
