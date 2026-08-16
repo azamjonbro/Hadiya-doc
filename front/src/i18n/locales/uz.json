@@ -686,7 +686,9 @@
       "title": "Admin panel",
       "hint": "Boshqaruv paneliga o'tasiz. Tizimdan chiqmaysiz — o'sha sessiya davom etadi.",
       "open": "Admin panelga o'tish",
-      "backToUser": "User paneliga o'tish"
+      "backToUser": "User paneliga o'tish",
+      "userTitle": "Xodim paneli",
+      "userHint": "Oddiy foydalanuvchi ko'rinishiga qaytasiz — kurslar, vazifalar, yangiliklar. Sessiya o'zgarmaydi."
     }
   },
   "reviews": {

@@ -5,6 +5,7 @@ import { useAuthStore } from '@/stores/auth'
 import { useThemeStore } from '@/stores/theme'
 import { setLocale, availableLocales } from '@/i18n'
 import AppCard from '@/components/ui/AppCard.vue'
+import PanelSwitchCard from '@/components/ui/PanelSwitchCard.vue'
 import AppSelect from '@/components/ui/AppSelect.vue'
 import Avatar from '@/components/ui/Avatar.vue'
 import AttentionPolicyForm from '@/admin/components/AttentionPolicyForm.vue'
@@ -23,6 +24,10 @@ function onLocaleChange(code) {
 <template>
   <div class="mx-auto max-w-2xl px-6 py-8">
     <h1 class="text-h1 text-ink">{{ t('settings.title') }}</h1>
+
+    <!-- Everyone who can reach this page came from the employee side and can
+         go back to it; no role check needed. -->
+    <PanelSwitchCard class="mt-6" direction="user" />
 
     <div class="mt-6 space-y-6">
       <AppCard>

@@ -686,7 +686,9 @@
       "title": "Admin panel",
       "hint": "Opens the management panel. You stay signed in — it is the same session.",
       "open": "Open admin panel",
-      "backToUser": "Back to user panel"
+      "backToUser": "Back to user panel",
+      "userTitle": "Employee panel",
+      "userHint": "Back to the ordinary view — courses, tasks, news. The session stays as it is."
     }
   },
   "reviews": {
