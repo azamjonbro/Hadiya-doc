@@ -205,7 +205,51 @@ Bu fayl faqat spring.techinfo.uz bilan bog'liq o'zgarishlarni yozib boradi.
     SUPERADMIN Settings -> tugma -> /bos -> / : qayta login so'ralmadi.
 
 
-9. OCHIQ QOLGAN MASALALAR
+9. MEDIA MANZILLARI (rasm va video) — 2026-08-16
+--------------------------------------------------------------------------------
+  MUAMMO 1: rasmlar ko'rinmasdi.
+    S3_PUBLIC_URL bo'sh edi, shuning uchun imageUpload.service.js:21 zaxira
+    yo'lga tushib, bazaga http://127.0.0.1:9000/... deb yozib qo'ygan. Bu
+    serverning loopback manzili — brauzer unga yeta olmaydi, ustiga https
+    sahifada http bo'lgani uchun Mixed Content deb bloklanadi.
+
+    Yechim:
+      nginx (qollanma.techinfo.uz):  location /media/ -> 127.0.0.1:9000
+                                     limit_except GET HEAD { deny all; }
+      MinIO:  mc anonymous set download lms/lms-images   (FAQAT shu bucket)
+      .env:   S3_PUBLIC_URL=https://qollanma.techinfo.uz/media/lms-images
+      bazada 2 ta eski manzil yangisiga ko'chirildi
+
+    Tekshirildi: rasm 200 (image/jpeg), lms-originals / lms-processed /
+    lms-materials / lms-chat -> 403, PUT -> 403.
+
+    Xavf: lms-images ichidagi faylni kalitini bilgan odam ocha oladi. Kalitlar
+    tasodifiy UUID, ichida kurs muqovasi va avatar bor. Boshqa bucket'lar
+    loopback'da yopiq qoldi.
+
+  MUAMMO 2: video "Video is not available for playback yet" berardi.
+    Bu NOSOZLIK EMAS edi. Video qayta ishlangan (READY, 360p/480p/720p), lekin
+    status DRAFT bo'lgan. videoAccess.service.js:19 ikkalasini ham talab qiladi:
+      status === 'PUBLISHED' && processingStatus === 'READY'
+    Aks holda 409 VIDEO_NOT_READY. telegram_video PUBLISHED qilindi.
+
+    Eslatma: xabar chalg'ituvchi — "...yet" qayta ishlanmagandek tuyuladi,
+    aslida e'lon qilinmagani.
+
+    Tekshirildi: token 200, master.m3u8 200, 360p va 480p segmentlari oqdi.
+
+  DIQQAT — hali tuzatilmagan: MATERIAL YUKLAB OLISH.
+    materialsApi.getUrl() presigned URL qaytaradi, u S3_ENDPOINT ustidan
+    imzolanadi, ya'ni http://127.0.0.1:9000/... bo'ladi va brauzerda ishlamaydi.
+    Hozir materiallar 0 ta, shuning uchun bilinmayapti. Birinchi material
+    yuklanganda chiqadi.
+    Buni /media/ prefiksi bilan tuzatib bo'lmaydi: imzo yo'lning o'zi ustidan
+    hisoblanadi, prefiksni kesib tashlash imzoni buzadi. To'g'ri yechim —
+    MinIO uchun alohida host (masalan media.techinfo.uz) va S3_ENDPOINT ni
+    o'shanga qo'yish. Yoki materiallarni ham API orqali uzatish.
+
+
+10. OCHIQ QOLGAN MASALALAR
 --------------------------------------------------------------------------------
   - repodagi admin/ papkasi ishlatilmaydi, lekin hali turibdi.
   - ops.techinfo.uz 502 beryapti. Sababi: 2026-08-15 kuni deploy paytida uning
@@ -219,3 +263,4 @@ Bu fayl faqat spring.techinfo.uz bilan bog'liq o'zgarishlarni yozib boradi.
   - Bundle 1.44 MB (gzip 432 KB). Kod bo'linishi (code splitting) qilinmagan.
   - ADMIN/MANAGER rollarining API ruxsatlari qisqartirilmagan (yuqoriga qarang).
   - Serverda zaxira: /var/www/spring/front.backup-20260816-153023
+  - Material yuklab olish presigned URL'lari hali buzuq (9-bandga qarang).

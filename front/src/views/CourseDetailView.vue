@@ -6,7 +6,8 @@ import { coursesApi } from '@/services/courses'
 import { videosApi } from '@/services/videos'
 import { assessmentsApi } from '@/services/assessments'
 import { materialsApi } from '@/services/materials'
-import AiChatPanel from '@/components/AiChatPanel.vue'
+// AI o'quv yordamchisi vaqtincha o'chirilgan — pastdagi shablonga qarang.
+// import AiChatPanel from '@/components/AiChatPanel.vue'
 import MaterialViewer from '@/components/MaterialViewer.vue'
 import ReviewsPanel from '@/components/ReviewsPanel.vue'
 import QAPanel from '@/components/QAPanel.vue'
@@ -304,7 +305,10 @@ onMounted(load)
             <AppButton block class="mt-4" :disabled="!continueVideo()" @click="onContinue">{{ t('courses.continue') }}</AppButton>
           </AppCard>
 
-          <AiChatPanel :course-id="course.id" />
+          <!-- AI o'quv yordamchisi vaqtincha yashirilgan — komponent, servis va
+               tarjimalari joyida turibdi, keyinroq rivojlantirilgandan so'ng
+               shu qatorni qayta ochish kifoya.
+          <AiChatPanel :course-id="course.id" /> -->
         </div>
       </div>
     </template>

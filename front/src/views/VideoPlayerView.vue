@@ -5,7 +5,8 @@ import { useI18n } from 'vue-i18n'
 import { coursesApi } from '@/services/courses'
 import { videosApi } from '@/services/videos'
 import VideoPlayer from '@/video/VideoPlayer.vue'
-import AiChatPanel from '@/components/AiChatPanel.vue'
+// AI o'quv yordamchisi vaqtincha o'chirilgan — pastdagi shablonga qarang.
+// import AiChatPanel from '@/components/AiChatPanel.vue'
 import AppCard from '@/components/ui/AppCard.vue'
 import AppButton from '@/components/ui/AppButton.vue'
 import ProgressBar from '@/components/ui/ProgressBar.vue'
@@ -218,9 +219,12 @@ watch(() => route.params.id, load)
               </AppButton>
             </AppCard>
 
+            <!-- AI o'quv yordamchisi vaqtincha yashirilgan — komponent, servis va
+                 tarjimalari joyida turibdi, keyinroq rivojlantirilgandan so'ng
+                 shu blokni qayta ochish kifoya.
             <div class="mt-6">
               <AiChatPanel :course-id="video.courseId" :topic-id="video.topicId" :video-id="video.id" />
-            </div>
+            </div> -->
           </div>
         </template>
       </div>
