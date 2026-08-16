@@ -73,6 +73,17 @@ export const courseRepository = {
   // are not scoped by visibility, so it is a plain "show me this branch's
   // courses" facet for them.
   //
+  // Courses targeted at each branch. Unrestricted courses are deliberately
+  // not counted here — they reach every branch, so attributing them to one
+  // would make every row look the same and mean nothing.
+  async countsByBranch() {
+    return Course.aggregate([
+      { $match: { deletedAt: null, branches: { $exists: true, $ne: [] } } },
+      { $unwind: '$branches' },
+      { $group: { _id: '$branches', courses: { $sum: 1 } } },
+    ])
+  },
+
   // Shared by listPage and count so a page and its total can never be
   // computed from two subtly different filters.
   buildFilter({ search, status, branch, visibleToRoleName, visibleToBranch, visibleToDepartment, assignedCourseIds }) {

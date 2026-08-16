@@ -2,7 +2,7 @@
 import { computed, onMounted, reactive, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useConfirm } from '@/composables/useConfirm'
-import { useRouter } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { ROLES, isJshshir, isPassportSeries, normalizeJshshir, normalizePassportSeries } from '@lms/shared'
 import { useAuthStore } from '@/stores/auth'
 import { usersApi } from '@/services/users'
@@ -27,6 +27,7 @@ const { t, locale } = useI18n()
 const confirm = useConfirm()
 const auth = useAuthStore()
 const router = useRouter()
+const route = useRoute()
 const toast = useToast()
 
 const roleOptions = Object.values(ROLES).map((r) => ({ value: r, label: r }))
@@ -38,7 +39,7 @@ const roleOptions = Object.values(ROLES).map((r) => ({ value: r, label: r }))
 const departmentOptions = ref([])
 const branchOptions = ref([])
 
-const filters = reactive({ search: '', role: '', branch: '', department: '', status: '' })
+const filters = reactive({ search: '', role: '', branch: route.query.branch ?? '', department: '', status: '' })
 
 const hasActiveFilters = computed(() =>
   Boolean(filters.search || filters.role || filters.branch || filters.department || filters.status)

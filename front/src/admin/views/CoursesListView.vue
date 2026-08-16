@@ -1,6 +1,6 @@
 <script setup>
 import { computed, onMounted, reactive, ref } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useAuthStore } from '@/stores/auth'
 import { coursesApi } from '@/services/courses'
@@ -20,8 +20,9 @@ import CourseDangerActions from '@/admin/components/CourseDangerActions.vue'
 const { t, locale } = useI18n()
 const auth = useAuthStore()
 const router = useRouter()
+const route = useRoute()
 
-const filters = reactive({ search: '', status: '', branch: '' })
+const filters = reactive({ search: '', status: '', branch: route.query.branch ?? '' })
 
 // Admins see every course regardless of branch (visibility scoping applies to
 // employees only), so this is a plain facet: "show me what Toshkent runs".

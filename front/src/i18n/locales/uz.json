@@ -20,7 +20,8 @@
     "reports": "Hisobotlar",
     "groupManagement": "Boshqaruv",
     "groups": "Guruhlar",
-    "trash": "Karzinka"
+    "trash": "Karzinka",
+    "branches": "Filiallar"
   },
   "shell": {
     "searchPlaceholder": "Kurslar, yangiliklar, vazifalarni qidirish..."
@@ -1290,5 +1291,22 @@
     "review": "Ko'rib chiqildi deb belgilash",
     "reviewed": "Ko'rib chiqilgan",
     "capturedAt": "Olingan vaqt"
+  },
+  "branchesPage": {
+    "title": "Filiallar",
+    "subtitle": "Har bir filialda nechta xodim va unga qancha kurs mo'ljallangani.",
+    "employees": "xodim",
+    "courses": "kurs",
+    "activeOf": "{active} faol",
+    "noEmployees": "Xodim yo'q",
+    "empty": {
+      "title": "Hali filial yo'q",
+      "description": "Xodim sahifasida filial nomini yozib qo'shsangiz, u shu yerda paydo bo'ladi."
+    },
+    "totals": {
+      "branches": "{count} filial",
+      "employees": "{count} xodim"
+    },
+    "errorTitle": "Yuklab bo'lmadi"
   }
 }

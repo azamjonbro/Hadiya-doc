@@ -1,5 +1,6 @@
 import { ROLES } from '@lms/shared'
 import { userRepository } from '../../repositories/user.repository.js'
+import { courseRepository } from '../../repositories/course.repository.js'
 import { roleRepository } from '../../repositories/role.repository.js'
 import { auditLogRepository } from '../../repositories/auditLog.repository.js'
 import { hashPassword } from '../../utils/hash.js'
@@ -141,6 +142,30 @@ export const userService = {
   // this is the same list for everyone who can read users.
   async listBranches() {
     return userRepository.listBranches()
+  },
+
+  // The admin branches page: every branch name in use, with what is attached
+  // to it. Built from the user and course records rather than from a branches
+  // collection, because there isn't one — a branch is a value people are
+  // tagged with, not an entity.
+  async branchOverview() {
+    const [people, courses] = await Promise.all([
+      userRepository.branchStats(),
+      courseRepository.countsByBranch(),
+    ])
+    const byName = new Map()
+    for (const row of people) {
+      byName.set(row._id, { name: row._id, employees: row.total, activeEmployees: row.active, courses: 0 })
+    }
+    for (const row of courses) {
+      const existing = byName.get(row._id)
+      if (existing) existing.courses = row.courses
+      // A branch that only a course mentions still belongs on the page —
+      // usually it means a course was targeted at an office before anyone
+      // was moved into it, which is exactly the mistake worth seeing.
+      else byName.set(row._id, { name: row._id, employees: 0, activeEmployees: 0, courses: row.courses })
+    }
+    return [...byName.values()].sort((a, b) => a.name.localeCompare(b.name))
   },
 
   // Options for "assign this task to a whole position". A manager may only

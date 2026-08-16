@@ -2,6 +2,7 @@ export const workspaceNav = [{ name: 'dashboard', path: '/bos', icon: 'home', la
 
 export const managementNav = [
   { name: 'users', path: '/bos/users', icon: 'users', labelKey: 'nav.employees', permission: 'user:read' },
+  { name: 'branches', path: '/bos/branches', icon: 'building', labelKey: 'nav.branches', permission: 'user:read' },
   { name: 'groups', path: '/bos/groups', icon: 'layers', labelKey: 'nav.groups', permission: 'user:read' },
   { name: 'courses', path: '/bos/courses', icon: 'book-open', labelKey: 'admin.nav.courses', permission: 'course:read' },
   {

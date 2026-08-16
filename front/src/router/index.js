@@ -71,6 +71,12 @@ export const router = createRouter({
           meta: { permission: 'user:read', titleKey: 'nav.employees' },
         },
         {
+          path: 'branches',
+          name: 'admin-branches-list',
+          component: () => import('@/admin/views/BranchesListView.vue'),
+          meta: { permission: 'user:read', titleKey: 'branchesPage.title' },
+        },
+        {
           path: 'groups',
           name: 'admin-groups-list',
           component: () => import('@/admin/views/GroupsListView.vue'),

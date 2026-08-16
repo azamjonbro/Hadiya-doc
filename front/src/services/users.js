@@ -14,6 +14,10 @@ export const usersApi = {
   branches() {
     return http.get('/users/branches').then((r) => r.data.data)
   },
+  // Same branches, with what is attached to each — the admin branches page.
+  branchOverview() {
+    return http.get('/users/branches/overview').then((r) => r.data.data)
+  },
   positions() {
     return http.get('/users/positions').then((r) => r.data.data)
   },

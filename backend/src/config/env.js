@@ -60,6 +60,13 @@ const envSchema = z.object({
   // Optional — lets a production deploy serve images from a CDN/public
   // domain that differs from the internal S3_ENDPOINT. Defaults to
   // constructing the URL from S3_ENDPOINT directly (fine for local dev).
+  // Host the browser will use for presigned links. Separate from S3_ENDPOINT
+  // on purpose: a presigned URL's signature covers the host and path, so it
+  // has to be signed for the address the browser actually calls — while every
+  // server-side read and write keeps going over loopback. Pointing
+  // S3_ENDPOINT itself at the public name would send video segments out to
+  // the internet and back for no reason. Empty = sign with S3_ENDPOINT.
+  S3_SIGNING_ENDPOINT: z.string().optional().default(''),
   S3_PUBLIC_URL: z.string().optional().default(''),
 
   // Private bucket — course materials (files/presentations/multimedia) are

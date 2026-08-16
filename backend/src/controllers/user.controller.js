@@ -48,6 +48,10 @@ export const userController = {
     sendSuccess(res, await userService.listBranches(req.user))
   }),
 
+  branchOverview: asyncHandler(async (req, res) => {
+    sendSuccess(res, await userService.branchOverview(req.user))
+  }),
+
   listPositions: asyncHandler(async (req, res) => {
     sendSuccess(res, await userService.listPositions(req.user))
   }),

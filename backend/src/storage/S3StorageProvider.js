@@ -5,7 +5,7 @@ import {
   HeadObjectCommand,
 } from '@aws-sdk/client-s3'
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner'
-import { s3Client } from '../config/storage.js'
+import { s3Client, s3SigningClient } from '../config/storage.js'
 
 /**
  * StorageProvider shape (see docs/video-streaming.md):
@@ -60,7 +60,7 @@ export class S3StorageProvider {
   // as application/octet-stream, which no browser will render.
   getSignedUrl(key, expiresInSeconds, responseFilename, { disposition = 'attachment', contentType } = {}) {
     return getSignedUrl(
-      s3Client,
+      s3SigningClient,
       new GetObjectCommand({
         Bucket: this.bucket,
         Key: key,

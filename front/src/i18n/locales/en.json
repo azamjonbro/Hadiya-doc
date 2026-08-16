@@ -20,7 +20,8 @@
     "reports": "Reports",
     "groupManagement": "Management",
     "groups": "Groups",
-    "trash": "Trash"
+    "trash": "Trash",
+    "branches": "Branches"
   },
   "shell": {
     "searchPlaceholder": "Search courses, news, tasks..."
@@ -1290,5 +1291,22 @@
     "review": "Mark reviewed",
     "reviewed": "Reviewed",
     "capturedAt": "Captured"
+  },
+  "branchesPage": {
+    "title": "Branches",
+    "subtitle": "How many people each branch has, and how many courses target it.",
+    "employees": "employees",
+    "courses": "courses",
+    "activeOf": "{active} active",
+    "noEmployees": "No employees",
+    "empty": {
+      "title": "No branches yet",
+      "description": "Name a branch on an employee's record and it will appear here."
+    },
+    "totals": {
+      "branches": "{count} branches",
+      "employees": "{count} employees"
+    },
+    "errorTitle": "Could not load"
   }
 }

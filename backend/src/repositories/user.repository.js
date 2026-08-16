@@ -43,10 +43,27 @@ export const userRepository = {
     return values.sort((a, b) => a.localeCompare(b))
   },
 
-  // Same idea for branches: the course targeting picker and the admin filters
-  // offer real values rather than a free-text box, so "Toshkent" and
-  // "toshkent" can't quietly become two different branches that each hide
-  // courses from the other.
+  // Headcount per branch for the admin branches page. Inactive accounts are
+  // counted separately rather than dropped: a branch whose people have all
+  // been deactivated should still be visible, not silently disappear.
+  async branchStats() {
+    return User.aggregate([
+      { $match: { branch: { $nin: ['', null] } } },
+      {
+        $group: {
+          _id: '$branch',
+          total: { $sum: 1 },
+          active: { $sum: { $cond: ['$isActive', 1, 0] } },
+        },
+      },
+      { $sort: { _id: 1 } },
+    ])
+  },
+
+  // Same idea for branches as departments above: the course targeting picker
+  // and the admin filters offer real values rather than a free-text box, so
+  // "Toshkent" and "toshkent" can't quietly become two different branches
+  // that each hide courses from the other.
   async listBranches() {
     const values = await User.distinct('branch', { branch: { $nin: ['', null] } })
     return values.sort((a, b) => a.localeCompare(b))
