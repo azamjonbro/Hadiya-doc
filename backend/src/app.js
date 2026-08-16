@@ -35,6 +35,11 @@ export function createApp() {
     cors({
       origin: env.allowedOrigins,
       credentials: true,
+      // The SPA talks to this API cross-origin, so any request with an
+      // Authorization or x-csrf-token header is preceded by a preflight.
+      // Without this the browser repeats that round trip constantly; a day is
+      // the practical ceiling Chrome honours anyway.
+      maxAge: 86400,
     })
   )
   app.use(express.json({ limit: '1mb' }))

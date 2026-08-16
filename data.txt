@@ -325,6 +325,50 @@ Bu fayl faqat spring.techinfo.uz bilan bog'liq o'zgarishlarni yozib boradi.
   qiymat saqlanmasdi.
 
 
+12. YUKLANISH TEZLIGI — 2026-08-16
+--------------------------------------------------------------------------------
+  Uchta mustaqil sabab topildi. Eng kattasi kodda emas, nginx'da edi.
+
+  a) nginx JS/CSS ni UMUMAN SIQMAYOTGAN edi.   <-- eng katta ta'sir
+     /etc/nginx/nginx.conf da `gzip on;` bor, lekin `gzip_types` izohga
+     olingan. nginx'ning bu direktiva uchun standart qiymati faqat text/html,
+     ya'ni .js, .css va API JSON javoblari siqilmasdan ketardi.
+     gzip_types faqat spring va qollanma server bloklariga qo'shildi —
+     nginx.conf ga TEGILMADI, chunki uni 6 ta begona sayt ham ishlatadi.
+       index.js  438385 -> 151266 bayt  (65% kam)
+       index.css  51381 ->   9573 bayt  (81% kam)
+     DIQQAT: direktivalar TLS blokiga qo'yilishi shart. Birinchi urinishda
+     80-portdagi redirect blokiga tushib qolgan va hech qanday ta'sir
+     qilmagan edi.
+
+  b) Kod bo'linishi yo'q edi.
+     Router'da 38 ta statik import — barcha sahifalar, admin ham xodim ham,
+     bitta chunk'da. Oddiy xodim o'z panelini ko'rishdan oldin 18 ta admin
+     sahifasini yuklab olardi.
+     35 ta route komponenti dinamik import'ga o'tkazildi (layout'lar tezkor
+     qoldi — ular har bir sahifani o'raydi, ularni kechiktirish faqat
+     qo'shimcha kutish qo'shadi).
+       entry chunk  1445 KB -> 438 KB (xom), 77 ta chunk
+     VideoPlayerView alohida 549 KB bo'lib chiqdi — faqat video ochilganda.
+
+  c) Ilova mount bo'lishdan oldin /auth/refresh javobini kutardi.
+     main.js da `await authStore.restoreSession()` mount'dan oldin turgan.
+     Natijada JS yuklangach ham ekran oq turardi, ustiga route chunk'i ham
+     shu so'rov tugagunicha yuklana olmasdi (ketma-ket).
+     Endi main.js kutmaydi, router guard'i esa o'sha memoizatsiya qilingan
+     promise'ni kutadi — qaror baribir sessiya ma'lum bo'lgach qabul qilinadi,
+     lekin qobiq darrov chiziladi.
+
+  Qo'shimcha: CORS preflight keshi (Access-Control-Max-Age: 86400). SPA API'ni
+  cross-origin chaqirgani uchun har bir maxsus header'li so'rov oldidan
+  preflight ketardi.
+
+  Natija (jonli o'lchov, 3 marta):
+    birinchi mazmunli bo'yash  ~3036 ms -> ~1800 ms
+    entry bundle simda         1445 KB (siqilmagan) -> 151 KB
+  25/25 sahifa testi o'tdi.
+
+
 11. OCHIQ QOLGAN MASALALAR
 --------------------------------------------------------------------------------
   - repodagi admin/ papkasi ishlatilmaydi, lekin hali turibdi.

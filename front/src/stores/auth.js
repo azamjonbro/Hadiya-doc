@@ -7,6 +7,10 @@ import { useChatStore } from './chat'
 // per-page checks agree on one definition.
 const ADMIN_APP_ROLES = ['SUPERADMIN', 'ADMIN', 'MANAGER']
 
+// Module-level, not store state: it is a promise, not something any component
+// should be reading or that ought to end up in devtools' state tree.
+let restorePromise = null
+
 export const useAuthStore = defineStore('auth', {
   state: () => ({
     accessToken: null,
@@ -53,6 +57,16 @@ export const useAuthStore = defineStore('auth', {
       } finally {
         this.clearSession()
       }
+    },
+
+    // Awaited by the router guard, and kicked off by main.js without being
+    // awaited, so the app can mount while the refresh is still in flight.
+    // Memoised because both callers race on boot and a second /auth/refresh
+    // would rotate the token the first one is still waiting for.
+    ensureSession() {
+      if (!this.initializing) return Promise.resolve()
+      restorePromise ??= this.restoreSession()
+      return restorePromise
     },
 
     // Silent session restore on app boot, using the httpOnly refresh cookie

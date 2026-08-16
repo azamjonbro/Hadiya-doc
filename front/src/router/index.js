@@ -1,82 +1,52 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import AppShell from '@/layouts/AppShell.vue'
-import HomeView from '@/views/HomeView.vue'
-import LoginView from '@/views/LoginView.vue'
-import ForbiddenView from '@/views/ForbiddenView.vue'
-import UnauthorizedView from '@/views/UnauthorizedView.vue'
-import NotFoundView from '@/views/NotFoundView.vue'
-import CoursesView from '@/views/CoursesView.vue'
-import CourseDetailView from '@/views/CourseDetailView.vue'
-import VideoPlayerView from '@/views/VideoPlayerView.vue'
-import AssessmentView from '@/views/AssessmentView.vue'
-import VideoQuizView from '@/views/VideoQuizView.vue'
-import NewsView from '@/views/NewsView.vue'
-import NewsDetailView from '@/views/NewsDetailView.vue'
-import TasksView from '@/views/TasksView.vue'
-import EventsView from '@/views/EventsView.vue'
-import LeaderboardView from '@/views/LeaderboardView.vue'
-import ChatView from '@/views/ChatView.vue'
-import NotificationsView from '@/views/NotificationsView.vue'
-import SettingsView from '@/views/SettingsView.vue'
 
 // The admin area, formerly its own SPA on its own hostname. Same bundle now,
 // kept in its own folder and behind its own shell so the two sets of pages
 // don't blur into each other. Route names carry an `admin-` prefix because a
 // dozen of them (dashboard, courses-list, settings, ...) exist on both sides.
 import AdminShell from '@/admin/layouts/AppShell.vue'
-import AdminHomeView from '@/admin/views/HomeView.vue'
-import AdminUsersListView from '@/admin/views/UsersListView.vue'
-import AdminUserDetailView from '@/admin/views/UserDetailView.vue'
-import AdminGroupsListView from '@/admin/views/GroupsListView.vue'
-import AdminGroupDetailView from '@/admin/views/GroupDetailView.vue'
-import AdminLeaderboardView from '@/admin/views/LeaderboardView.vue'
-import AdminCoursesListView from '@/admin/views/CoursesListView.vue'
-import AdminCourseBuilderView from '@/admin/views/CourseBuilderView.vue'
-import AdminCourseDetailView from '@/admin/views/CourseDetailView.vue'
-import AdminNewsListView from '@/admin/views/NewsListView.vue'
-import AdminNewsDetailView from '@/admin/views/NewsDetailView.vue'
-import AdminTasksListView from '@/admin/views/TasksListView.vue'
-import AdminReportsView from '@/admin/views/ReportsView.vue'
-import AdminChatInboxView from '@/admin/views/ChatInboxView.vue'
-import AdminTrashView from '@/admin/views/TrashView.vue'
-import AdminNotificationsView from '@/admin/views/NotificationsView.vue'
-import AdminSettingsView from '@/admin/views/SettingsView.vue'
 
+// Route components are loaded on demand. Everything used to sit in one chunk:
+// an employee downloaded all eighteen admin pages before their dashboard could
+// paint, and the entry bundle was 1.4MB. The two layout shells stay eager —
+// they wrap every page in their tree, so deferring them would only put a round
+// trip in front of the first render.
 export const router = createRouter({
   history: createWebHistory(),
   routes: [
-    { path: '/login', name: 'login', component: LoginView, meta: { public: true } },
-    { path: '/403', name: 'forbidden', component: ForbiddenView, meta: { public: true } },
-    { path: '/401', name: 'unauthorized', component: UnauthorizedView, meta: { public: true } },
+    { path: '/login', name: 'login', component: () => import('@/views/LoginView.vue'), meta: { public: true } },
+    { path: '/403', name: 'forbidden', component: () => import('@/views/ForbiddenView.vue'), meta: { public: true } },
+    { path: '/401', name: 'unauthorized', component: () => import('@/views/UnauthorizedView.vue'), meta: { public: true } },
     {
       path: '/',
       component: AppShell,
       children: [
-        { path: '', name: 'dashboard', component: HomeView, meta: { titleKey: 'nav.dashboard' } },
-        { path: 'courses', name: 'courses-list', component: CoursesView, meta: { titleKey: 'nav.courses' } },
-        { path: 'courses/:id', name: 'course-detail', component: CourseDetailView, meta: { titleKey: 'courses.title' } },
-        { path: 'videos/:id', name: 'video-detail', component: VideoPlayerView, meta: { titleKey: 'nav.courses' } },
+        { path: '', name: 'dashboard', component: () => import('@/views/HomeView.vue'), meta: { titleKey: 'nav.dashboard' } },
+        { path: 'courses', name: 'courses-list', component: () => import('@/views/CoursesView.vue'), meta: { titleKey: 'nav.courses' } },
+        { path: 'courses/:id', name: 'course-detail', component: () => import('@/views/CourseDetailView.vue'), meta: { titleKey: 'courses.title' } },
+        { path: 'videos/:id', name: 'video-detail', component: () => import('@/views/VideoPlayerView.vue'), meta: { titleKey: 'nav.courses' } },
         {
           path: 'videos/:id/quiz',
           name: 'video-quiz',
-          component: VideoQuizView,
+          component: () => import('@/views/VideoQuizView.vue'),
           meta: { titleKey: 'nav.courses' },
         },
         {
           path: 'assessments/:id',
           name: 'assessment-detail',
-          component: AssessmentView,
+          component: () => import('@/views/AssessmentView.vue'),
           meta: { titleKey: 'nav.courses' },
         },
-        { path: 'news', name: 'news-list', component: NewsView, meta: { titleKey: 'nav.news' } },
-        { path: 'news/:id', name: 'news-detail', component: NewsDetailView, meta: { titleKey: 'nav.news' } },
-        { path: 'tasks', name: 'tasks-list', component: TasksView, meta: { titleKey: 'nav.tasks', permission: 'task:read:own' } },
-        { path: 'events', name: 'events-list', component: EventsView, meta: { titleKey: 'nav.events', permission: 'event:read' } },
-        { path: 'leaderboard', name: 'leaderboard', component: LeaderboardView, meta: { titleKey: 'nav.leaderboard' } },
-        { path: 'chat', name: 'chat', component: ChatView, meta: { titleKey: 'nav.chat' } },
-        { path: 'notifications', name: 'notifications', component: NotificationsView, meta: { titleKey: 'nav.notifications' } },
-        { path: 'settings', name: 'settings', component: SettingsView, meta: { titleKey: 'nav.settings' } },
+        { path: 'news', name: 'news-list', component: () => import('@/views/NewsView.vue'), meta: { titleKey: 'nav.news' } },
+        { path: 'news/:id', name: 'news-detail', component: () => import('@/views/NewsDetailView.vue'), meta: { titleKey: 'nav.news' } },
+        { path: 'tasks', name: 'tasks-list', component: () => import('@/views/TasksView.vue'), meta: { titleKey: 'nav.tasks', permission: 'task:read:own' } },
+        { path: 'events', name: 'events-list', component: () => import('@/views/EventsView.vue'), meta: { titleKey: 'nav.events', permission: 'event:read' } },
+        { path: 'leaderboard', name: 'leaderboard', component: () => import('@/views/LeaderboardView.vue'), meta: { titleKey: 'nav.leaderboard' } },
+        { path: 'chat', name: 'chat', component: () => import('@/views/ChatView.vue'), meta: { titleKey: 'nav.chat' } },
+        { path: 'notifications', name: 'notifications', component: () => import('@/views/NotificationsView.vue'), meta: { titleKey: 'nav.notifications' } },
+        { path: 'settings', name: 'settings', component: () => import('@/views/SettingsView.vue'), meta: { titleKey: 'nav.settings' } },
       ],
     },
     {
@@ -87,98 +57,98 @@ export const router = createRouter({
       // and nobody else — see the guard.
       meta: { admin: true },
       children: [
-        { path: '', name: 'admin-dashboard', component: AdminHomeView, meta: { titleKey: 'nav.dashboard' } },
+        { path: '', name: 'admin-dashboard', component: () => import('@/admin/views/HomeView.vue'), meta: { titleKey: 'nav.dashboard' } },
         {
           path: 'users',
           name: 'admin-users-list',
-          component: AdminUsersListView,
+          component: () => import('@/admin/views/UsersListView.vue'),
           meta: { permission: 'user:read', titleKey: 'nav.employees' },
         },
         {
           path: 'users/:id',
           name: 'admin-user-detail',
-          component: AdminUserDetailView,
+          component: () => import('@/admin/views/UserDetailView.vue'),
           meta: { permission: 'user:read', titleKey: 'nav.employees' },
         },
         {
           path: 'groups',
           name: 'admin-groups-list',
-          component: AdminGroupsListView,
+          component: () => import('@/admin/views/GroupsListView.vue'),
           meta: { permission: 'user:read', titleKey: 'nav.groups' },
         },
         {
           path: 'groups/:id',
           name: 'admin-group-detail',
-          component: AdminGroupDetailView,
+          component: () => import('@/admin/views/GroupDetailView.vue'),
           meta: { permission: 'user:read', titleKey: 'nav.groups' },
         },
         {
           path: 'leaderboard',
           name: 'admin-leaderboard',
-          component: AdminLeaderboardView,
+          component: () => import('@/admin/views/LeaderboardView.vue'),
           meta: { permission: 'analytics:view:all', titleKey: 'nav.leaderboard' },
         },
         {
           path: 'courses',
           name: 'admin-courses-list',
-          component: AdminCoursesListView,
+          component: () => import('@/admin/views/CoursesListView.vue'),
           meta: { permission: 'course:read', titleKey: 'admin.nav.courses' },
         },
         {
           path: 'courses/new',
           name: 'admin-course-builder',
-          component: AdminCourseBuilderView,
+          component: () => import('@/admin/views/CourseBuilderView.vue'),
           meta: { permission: 'course:create', titleKey: 'courseBuilder.title' },
         },
         {
           path: 'courses/:id',
           name: 'admin-course-detail',
-          component: AdminCourseDetailView,
+          component: () => import('@/admin/views/CourseDetailView.vue'),
           meta: { permission: 'course:read', titleKey: 'admin.nav.courses' },
         },
         {
           path: 'news',
           name: 'admin-news-list',
-          component: AdminNewsListView,
+          component: () => import('@/admin/views/NewsListView.vue'),
           meta: { permission: 'news:read', titleKey: 'nav.news' },
         },
         {
           path: 'news/:id',
           name: 'admin-news-detail',
-          component: AdminNewsDetailView,
+          component: () => import('@/admin/views/NewsDetailView.vue'),
           meta: { permission: 'news:read', titleKey: 'nav.news' },
         },
         {
           path: 'tasks',
           name: 'admin-tasks-list',
-          component: AdminTasksListView,
+          component: () => import('@/admin/views/TasksListView.vue'),
           meta: { permission: 'task:create', titleKey: 'nav.tasks' },
         },
         {
           path: 'reports',
           name: 'admin-reports',
-          component: AdminReportsView,
+          component: () => import('@/admin/views/ReportsView.vue'),
           meta: { permission: 'report:export', titleKey: 'nav.reports' },
         },
         {
           path: 'chat',
           name: 'admin-chat-inbox',
-          component: AdminChatInboxView,
+          component: () => import('@/admin/views/ChatInboxView.vue'),
           meta: { permission: 'chat:support', titleKey: 'nav.chat' },
         },
         {
           path: 'trash',
           name: 'admin-trash',
-          component: AdminTrashView,
+          component: () => import('@/admin/views/TrashView.vue'),
           meta: { permission: 'course:delete', titleKey: 'nav.trash' },
         },
         {
           path: 'notifications',
           name: 'admin-notifications',
-          component: AdminNotificationsView,
+          component: () => import('@/admin/views/NotificationsView.vue'),
           meta: { titleKey: 'nav.notifications' },
         },
-        { path: 'settings', name: 'admin-settings', component: AdminSettingsView, meta: { titleKey: 'nav.settings' } },
+        { path: 'settings', name: 'admin-settings', component: () => import('@/admin/views/SettingsView.vue'), meta: { titleKey: 'nav.settings' } },
       ],
     },
     // The admin panel used to live here. Kept as a redirect rather than
@@ -193,7 +163,7 @@ export const router = createRouter({
     // Deliberately NOT public. A signed-in user should see
     // the 404; a signed-out visitor should see the login form, not a dead end
     // with nothing to click. The guard below tells the two apart.
-    { path: '/:pathMatch(.*)*', name: 'not-found', component: NotFoundView },
+    { path: '/:pathMatch(.*)*', name: 'not-found', component: () => import('@/views/NotFoundView.vue') },
   ],
 })
 
@@ -205,8 +175,11 @@ export function homeRouteFor(auth) {
   return auth.isSuperAdmin ? { name: 'admin-dashboard' } : { name: 'dashboard' }
 }
 
-router.beforeEach((to) => {
+router.beforeEach(async (to) => {
   const auth = useAuthStore()
+  // main.js starts this without waiting; the first navigation is where the
+  // answer is actually needed, so this is where it is waited for.
+  await auth.ensureSession()
 
   if (to.meta.public) {
     if (to.name === 'login' && auth.isAuthenticated) return homeRouteFor(auth)
