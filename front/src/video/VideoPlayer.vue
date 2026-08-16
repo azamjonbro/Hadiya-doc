@@ -3,6 +3,7 @@ import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import Hls from 'hls.js'
 import { ATTENTION_EVENTS } from '@lms/shared'
+import { proctorApi } from '@/services/proctor'
 import { useAuthStore } from '@/stores/auth'
 import { videoAccessApi } from '@/services/videoAccess'
 import { API_BASE_URL } from '@/services/apiBase'
@@ -119,6 +120,29 @@ function onAttentionRegained({ seconds, fromPosition, toPosition }) {
   }
 }
 
+// A second person on camera. Recorded either way; the photograph only exists
+// when the course asked for one, and a failed upload is swallowed on purpose —
+// losing a lesson because an alert could not be filed would be the worse
+// outcome, and the analytics event has already been queued regardless.
+async function onForeignFace({ reason, faceCount, snapshot }) {
+  const position = videoEl.value?.currentTime ?? null
+  analytics.track(ATTENTION_EVENTS.FOREIGN_FACE, { position, metadata: { reason, faceCount } })
+
+  const blob = await snapshot
+  if (!blob) return
+  try {
+    await proctorApi.captureSnapshot(props.videoId, {
+      blob,
+      reason,
+      sessionId: analytics.sessionId,
+      position,
+      faceCount,
+    })
+  } catch {
+    /* nothing the learner can do about it, and nothing worth interrupting for */
+  }
+}
+
 async function startMonitoring() {
   const started = await monitor.start({
     videoEl: videoEl.value,
@@ -126,9 +150,11 @@ async function startMonitoring() {
     // Keep sampling through a policy-imposed pause, or the learner coming
     // back would never be noticed; stay quiet through a pause they chose.
     isActive: () => Boolean(videoEl.value && (!videoEl.value.paused || pausedByPolicy.value)),
+    captureOnForeignFace: Boolean(policy.value?.captureOnForeignFace),
     on: {
       lost: onAttentionLost,
       regained: onAttentionRegained,
+      foreignFace: onForeignFace,
       denied: () => analytics.track(ATTENTION_EVENTS.CAMERA_DENIED),
       error: ({ message }) => analytics.track(ATTENTION_EVENTS.CAMERA_ERROR, { metadata: { message } }),
     },

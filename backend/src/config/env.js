@@ -74,6 +74,10 @@ const envSchema = z.object({
   // short-lived signed URL minted per message render. Defaulted (unlike
   // the buckets above) so an existing deployment does not fail boot when
   // it upgrades before touching its env file.
+  // Proctoring snapshots. Deliberately its own bucket: it is the only one
+  // holding photographs of people, and it must never pick up the public-read
+  // policy that the images bucket has.
+  S3_BUCKET_PROCTOR: z.string().default('lms-proctor'),
   S3_BUCKET_CHAT: z.string().min(1).default('lms-chat'),
   CHAT_MAX_FILE_SIZE_MB: z.coerce.number().int().positive().default(25),
   // Longer than the material TTL: an image sits rendered in a scrollback

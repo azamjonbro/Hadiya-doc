@@ -828,6 +828,10 @@
         "notifyManagerAfter": {
           "label": "Rahbarga xabar (necha martadan keyin)",
           "hint": "Bitta videoda shuncha marta chalg'isa, rahbarga bildirishnoma boradi. 0 = xabar bermaslik."
+        },
+        "captureOnForeignFace": {
+          "label": "Begona yuz aniqlansa surat olinsin",
+          "hint": "Kamerada ikkinchi yuz ko'rinsa, bitta kadr olinib serverga yuklanadi va admin xabardor qilinadi. Xodimni bundan oldindan ogohlantiring — bu shaxsiy biometrik ma'lumot."
         }
       }
     },
@@ -1274,5 +1278,15 @@
     "create": "«{name}» filialini qo'shish",
     "empty": "Filial topilmadi",
     "clear": "Tanlovni tozalash"
+  },
+  "proctor": {
+    "title": "Proctoring ogohlantirishlari",
+    "empty": "Ogohlantirish yo'q",
+    "multipleFaces": "Kadrda bir nechta yuz",
+    "unknownFace": "Yuz hisobga mos kelmadi",
+    "faces": "{count} ta yuz",
+    "review": "Ko'rib chiqildi deb belgilash",
+    "reviewed": "Ko'rib chiqilgan",
+    "capturedAt": "Olingan vaqt"
   }
 }

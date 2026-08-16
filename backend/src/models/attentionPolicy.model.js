@@ -17,6 +17,7 @@ const attentionPolicySchema = new Schema(
     lockoutSeconds: { type: Number, default: undefined, min: 5, max: 300 },
     requireRewatch: { type: Boolean, default: undefined },
     notifyManagerAfter: { type: Number, default: undefined, min: 0, max: 100 },
+    captureOnForeignFace: { type: Boolean, default: undefined },
 
     updatedBy: { type: Schema.Types.ObjectId, ref: 'User', default: null },
   },

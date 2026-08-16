@@ -1,15 +1,21 @@
 import { ref, shallowRef } from 'vue'
-import { ATTENTION_REASONS } from '@lms/shared'
+import { ATTENTION_REASONS, FOREIGN_FACE_COOLDOWN_MS } from '@lms/shared'
 
 /**
  * Camera-based attention monitoring for video playback.
  *
- * PRIVACY: every frame is analysed in this tab and immediately discarded.
- * No image data is drawn to a canvas for upload, stored, or sent anywhere —
- * the only thing that leaves the browser is "attentive / not attentive, and
- * why", as ordinary analytics events. The wasm runtime and the model are
- * served from this origin, so no frame-adjacent request reaches a third
- * party either.
+ * PRIVACY: attention analysis happens in this tab and every frame it looks at
+ * is discarded immediately. For attention, the only thing that leaves the
+ * browser is "attentive / not attentive, and why", as ordinary analytics
+ * events. The wasm runtime and the model are served from this origin, so no
+ * frame-adjacent request reaches a third party either.
+ *
+ * THE ONE EXCEPTION is the foreign-face check: when a course has
+ * `captureOnForeignFace` switched on AND a second face actually appears, one
+ * frame is drawn to a canvas and uploaded so an admin can see what happened.
+ * It is off by default, it is per-course, and it fires at most once per
+ * FOREIGN_FACE_COOLDOWN_MS — nothing is captured on an ordinary lapse of
+ * attention. The learner is told this is happening by the player's overlay.
  */
 
 // Assets are served from front/public — see scripts/fetch-mediapipe-assets.mjs.
@@ -94,6 +100,12 @@ export function useAttentionMonitor() {
   let graceMs = 4000
   let shouldMonitor = null
 
+  // Foreign-face state. `captureFrame` stays null unless the course asked for
+  // captures, which is what keeps the canvas out of the picture entirely for
+  // every other course.
+  let captureFrame = false
+  let lastForeignFaceAt = 0
+
   let baselineSamples = []
   let baseline = null
   let calibrationStartedAt = 0
@@ -116,7 +128,9 @@ export function useAttentionMonitor() {
     return FaceLandmarker.createFromOptions(fileset, {
       baseOptions: { modelAssetPath: MODEL_PATH, delegate: 'GPU' },
       runningMode: 'VIDEO',
-      numFaces: 1,
+      // Two, not one: a second face is the whole point of the foreign-face
+      // check, and with numFaces:1 the model simply never reports one.
+      numFaces: 2,
       outputFacialTransformationMatrixes: true,
       outputFaceBlendshapes: true,
     })
@@ -124,6 +138,13 @@ export function useAttentionMonitor() {
 
   function classify(result) {
     if (!result.faceLandmarks?.length) return { ok: false, why: ATTENTION_REASONS.NO_FACE }
+
+    // More than one face is not an attention problem — the learner may well
+    // be looking straight at the screen — so it is reported separately and
+    // does not by itself pause the video.
+    if (result.faceLandmarks.length > 1) {
+      reportForeignFace(ATTENTION_REASONS.MULTIPLE_FACES, result.faceLandmarks.length)
+    }
 
     const matrix = result.facialTransformationMatrixes?.[0]?.data
     if (!matrix) return { ok: true, why: null }
@@ -154,6 +175,46 @@ export function useAttentionMonitor() {
       return { ok: false, why: ATTENTION_REASONS.LOOKING_AWAY }
     }
     return { ok: true, why: null }
+  }
+
+  /**
+   * A face that should not be there. Rate-limited hard: the sample loop runs
+   * several times a second and a second person tends to stay in frame, so
+   * without the cooldown one visitor would produce a stream of identical
+   * alerts and identical photographs.
+   */
+  function reportForeignFace(why, faceCount) {
+    const now = performance.now()
+    if (now - lastForeignFaceAt < FOREIGN_FACE_COOLDOWN_MS) return
+    lastForeignFaceAt = now
+
+    emit('foreignFace', {
+      reason: why,
+      faceCount,
+      // Resolves to a Blob, or to null when the course did not ask for a
+      // capture. The caller decides what to do with it; this module never
+      // uploads anything itself.
+      snapshot: captureFrame ? grabFrame() : Promise.resolve(null),
+    })
+  }
+
+  // One JPEG of the current camera frame, at the capture resolution (320x240),
+  // quality 0.7 — enough to recognise a person, small enough that the upload
+  // never competes with the video for bandwidth.
+  function grabFrame() {
+    return new Promise((resolve) => {
+      try {
+        const canvas = document.createElement('canvas')
+        canvas.width = cameraEl.videoWidth || 320
+        canvas.height = cameraEl.videoHeight || 240
+        canvas.getContext('2d').drawImage(cameraEl, 0, 0, canvas.width, canvas.height)
+        canvas.toBlob((blob) => resolve(blob), 'image/jpeg', 0.7)
+      } catch {
+        // A capture that fails must not take the alert down with it — the
+        // event is still worth reporting without a picture.
+        resolve(null)
+      }
+    })
   }
 
   function sample(videoEl) {
@@ -246,7 +307,7 @@ export function useAttentionMonitor() {
    * what that means, since only the policy knows whether a refused camera
    * blocks playback or merely gets recorded.
    */
-  async function start({ videoEl, graceSeconds = 4, isActive = null, on = {} }) {
+  async function start({ videoEl, graceSeconds = 4, isActive = null, captureOnForeignFace = false, on = {} }) {
     // Retrying after a failure comes back through here, so release whatever
     // the previous attempt left holding the camera before asking for it again.
     stop()
@@ -254,6 +315,8 @@ export function useAttentionMonitor() {
     handlers = on
     graceMs = graceSeconds * 1000
     shouldMonitor = isActive
+    captureFrame = Boolean(captureOnForeignFace)
+    lastForeignFaceAt = 0
     status.value = 'loading'
     errorMessage.value = ''
 

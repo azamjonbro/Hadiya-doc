@@ -828,6 +828,10 @@
         "notifyManagerAfter": {
           "label": "Notify manager after this many",
           "hint": "If a learner looks away this many times on one video, their manager is notified. 0 = never."
+        },
+        "captureOnForeignFace": {
+          "label": "Photograph when a foreign face appears",
+          "hint": "If a second face appears on camera, one frame is captured, uploaded and an admin is notified. Tell the employee beforehand — this is biometric personal data."
         }
       }
     },
@@ -1274,5 +1278,15 @@
     "create": "Add branch “{name}”",
     "empty": "No branches found",
     "clear": "Clear selection"
+  },
+  "proctor": {
+    "title": "Proctoring alerts",
+    "empty": "No alerts",
+    "multipleFaces": "More than one face in frame",
+    "unknownFace": "Face did not match the account",
+    "faces": "{count} faces",
+    "review": "Mark reviewed",
+    "reviewed": "Reviewed",
+    "capturedAt": "Captured"
   }
 }

@@ -154,5 +154,5 @@ export function useVideoAnalytics(videoId) {
     videoEl = null
   }
 
-  return { attach, detach, track }
+  return { attach, detach, track, sessionId }
 }

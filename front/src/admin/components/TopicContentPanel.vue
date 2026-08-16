@@ -12,6 +12,7 @@ import MaterialUploadForm from '@/admin/components/MaterialUploadForm.vue'
 import MaterialViewer from '@/components/MaterialViewer.vue'
 import AssessmentEditor from '@/admin/components/AssessmentEditor.vue'
 import VideoReportPanel from '@/admin/components/VideoReportPanel.vue'
+import ProctorAlertsPanel from '@/admin/components/ProctorAlertsPanel.vue'
 import VideoQuizEditor from '@/admin/components/VideoQuizEditor.vue'
 import AppButton from '@/components/ui/AppButton.vue'
 import AppInput from '@/components/ui/AppInput.vue'
@@ -274,6 +275,7 @@ onMounted(load)
             @updated="(hasQuiz) => onQuizUpdated(item, hasQuiz)"
           />
           <VideoReportPanel v-if="expandedReportVideoId === item.id" :video-id="item.id" />
+          <ProctorAlertsPanel v-if="expandedReportVideoId === item.id" class="mt-3" :video-id="item.id" />
         </template>
 
         <!-- FILE / PRESENTATION / MULTIMEDIA row -->

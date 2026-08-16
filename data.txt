@@ -277,6 +277,54 @@ Bu fayl faqat spring.techinfo.uz bilan bog'liq o'zgarishlarni yozib boradi.
   o'zini to'xtatadi va o'lchov 0% chiqadi. Haqiqiy kamera bilan tekshirish kerak.
 
 
+11. PROCTORING: BEGONA YUZ ANIQLANSA SURATGA OLISH — 2026-08-16
+--------------------------------------------------------------------------------
+  1-BOSQICH BAJARILDI: kadrda ikkinchi yuz paydo bo'lsa.
+  2-bosqich (o'quvchi o'rniga boshqa odam — yuzni tanish) HALI QILINMADI.
+
+  Qanday ishlaydi:
+    Player numFaces: 2 bilan ishlaydi (ilgari 1 edi, shuning uchun
+    ATTENTION_REASONS.MULTIPLE_FACES e'lon qilingan bo'lsa ham hech qachon
+    ishlamasdi). Kadrda 1 dan ortiq yuz ko'rinsa:
+      - foreignFace hodisasi analitikaga yoziladi (har doim)
+      - agar kurs siyosatida captureOnForeignFace yoqilgan bo'lsa, bitta kadr
+        canvas'ga chizilib, JPEG (sifat 0.7) qilib serverga yuklanadi
+      - SUPERADMIN va xodimning bo'lim menejeriga bildirishnoma ketadi
+    Takroriy signal 30 soniyada bir martadan ko'p bo'lmaydi
+    (FOREIGN_FACE_COOLDOWN_MS) — bir odam kadrda turib qolsa, oqim hosil
+    bo'lmasligi uchun.
+
+  Saqlash:
+    Yangi lms-proctor bucket — YOPIQ. nginx orqali proxy qilinmaydi, anonim
+    ruxsat yo'q, presigned URL yo'q. Surat faqat
+    GET /api/v1/proctor/snapshots/:id/image orqali, analytics:view:all
+    ruxsati bilan uzatiladi va har bir ko'rish audit logga yoziladi.
+    ProctorSnapshot hujjatlari 180 kundan keyin o'chadi (TTL), hodisalar bilan
+    bir xil muddat. Ro'yxat javobida `key` (obyekt yo'li) YO'Q.
+
+  Yoqish: admin panel -> kurs -> diqqat siyosati -> "Begona yuz aniqlansa
+  surat olinsin". Standart holatda O'CHIQ va `enabled` dan alohida:
+  diqqatni kuzatish bir narsa, yuz suratini saqlash butunlay boshqa narsa.
+
+  MAXFIYLIK: yuz surati — biometrik shaxsiy ma'lumot. Xodimlar bundan
+  oldindan xabardor bo'lishi kerak. useAttentionMonitor.js sarlavhasidagi
+  maxfiylik izohi shunga qarab yangilandi (ilgari "hech qanday tasvir
+  yuklanmaydi" deb yozilgan edi — endi bu istisno bilan).
+
+  Tekshirildi (11/11, jonli API):
+    siyosat o'chiq -> capture 403 CAPTURE_NOT_ENABLED
+    siyosat yoqilgan -> capture 201
+    noto'g'ri sabab -> 400 UNSUPPORTED_REASON
+    admin: ro'yxat 200, surat oqimi 200, javobda `key` yo'q
+    oddiy xodim: ro'yxat 403, surat 403
+    tokensiz: 401
+  Test yozuvlari va fayllari o'chirildi.
+
+  Yo'l-yo'lakay tuzatilgan: AttentionPolicy mongoose schema'siga yangi maydon
+  qo'shilmaganda Mongoose uni jimgina tashlab yuborardi — API 200 qaytarib,
+  qiymat saqlanmasdi.
+
+
 11. OCHIQ QOLGAN MASALALAR
 --------------------------------------------------------------------------------
   - repodagi admin/ papkasi ishlatilmaydi, lekin hali turibdi.

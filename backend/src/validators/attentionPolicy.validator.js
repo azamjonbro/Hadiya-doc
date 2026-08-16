@@ -11,6 +11,7 @@ export const attentionPolicySchema = z
     enabled: nullable(z.boolean()),
     graceSeconds: nullable(z.number().int().min(1).max(60)),
     pauseOnWarning: nullable(z.boolean()),
+    captureOnForeignFace: nullable(z.boolean()),
     lockoutAfterWarnings: nullable(z.number().int().min(0).max(50)),
     lockoutSeconds: nullable(z.number().int().min(5).max(300)),
     requireRewatch: nullable(z.boolean()),

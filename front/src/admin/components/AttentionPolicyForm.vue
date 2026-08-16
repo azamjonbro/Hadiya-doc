@@ -36,7 +36,7 @@ const isCourseScope = computed(() => Boolean(props.courseId))
 // the reader rather than being duplicated as attributes here.
 const NUMERIC_FIELDS = ['graceSeconds', 'lockoutAfterWarnings', 'lockoutSeconds', 'notifyManagerAfter']
 
-const BOOLEAN_FIELDS = ['enabled', 'pauseOnWarning', 'requireRewatch']
+const BOOLEAN_FIELDS = ['enabled', 'pauseOnWarning', 'requireRewatch', 'captureOnForeignFace']
 
 function applyResponse(data) {
   for (const field of ATTENTION_POLICY_FIELDS) delete stored[field]
