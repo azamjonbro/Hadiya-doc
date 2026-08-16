@@ -132,13 +132,13 @@
     "login": {
       "title": "Admin console",
       "subtitle": "Sign in to manage training, employees and reporting.",
-      "identifier": "Email or username",
+      "identifier": "JSHSHIR, passport series or email",
       "password": "Password",
       "rememberMe": "Remember me",
       "forgotPassword": "Forgot password?",
       "submit": "Sign in",
       "submitting": "Signing in...",
-      "error": "Invalid email/username or password",
+      "error": "Invalid JSHSHIR/passport/email or password",
       "rateLimited": "Too many attempts. Please try again in a few minutes.",
       "accountLocked": "Account temporarily locked. Please try again in a few minutes.",
       "networkError": "Could not reach the server. Check your connection.",
@@ -200,16 +200,22 @@
     "status": "Status",
     "fields": {
       "fullName": "Full name",
-      "username": "Username",
+      "jshshir": "JSHSHIR",
       "email": "Email",
       "phone": "Phone",
       "department": "Department",
       "position": "Position",
       "password": "Password",
       "newPassword": "New password",
-      "newPasswordHint": "Leave blank to keep unchanged",
       "avatar": "Avatar",
-      "assignCourses": "Assign courses"
+      "assignCourses": "Assign courses",
+      "jshshirHint": "The 14-digit number from the passport",
+      "jshshirInvalid": "JSHSHIR must be exactly 14 digits",
+      "passportSeries": "Passport series",
+      "passportSeriesHint": "For example AA1234567 — optional, also works for signing in",
+      "passportSeriesInvalid": "Invalid format. For example: AA1234567",
+      "emailOptional": "Email (optional)",
+      "branch": "Branch"
     },
     "filters": {
       "search": "Search...",
@@ -219,10 +225,18 @@
       "inactive": "Inactive",
       "apply": "Apply",
       "allDepartments": "All departments",
-      "clear": "Clear"
+      "clear": "Clear",
+      "allBranches": "All branches"
     },
     "columns": {
       "progress": "Progress"
+    },
+    "password": {
+      "generate": "Generate",
+      "copy": "Copy",
+      "copied": "Password copied",
+      "copyFailed": "Could not copy — write the password down manually",
+      "hint": "{length}-character password. Ambiguous characters (0/O, 1/l/I) are never used."
     }
   },
   "courses": {
@@ -278,7 +292,8 @@
       "search": "Search...",
       "allStatuses": "All statuses",
       "apply": "Apply",
-      "clear": "Clear"
+      "clear": "Clear",
+      "allBranches": "All branches"
     },
     "topics": {
       "title": "Topics",
@@ -292,9 +307,11 @@
       "rolesLabel": "Roles",
       "departmentLabel": "Department",
       "departmentPlaceholder": "e.g. Marketing, SMM...",
-      "noRestrictionHint": "If you don't select a role or department, the course is open to every employee.",
+      "noRestrictionHint": "With no role, branch or department selected, the course is open to every employee.",
       "autoAssignLabel": "Automatically assign to matching employees on publish",
-      "autoAssignHint": "Every currently-matching active employee will be assigned the course right away."
+      "autoAssignHint": "Every currently-matching active employee will be assigned the course right away.",
+      "branchesLabel": "Branches",
+      "branchesPlaceholder": "All branches"
     }
   },
   "courseBuilder": {
@@ -590,7 +607,7 @@
       "position": "Position",
       "department": "Department",
       "role": "Role",
-      "username": "Username",
+      "jshshir": "JSHSHIR",
       "email": "Email",
       "joinedAt": "Joined",
       "createdAt": "Created",
@@ -925,5 +942,13 @@
       "COURSE": "Course",
       "NEWS": "Article"
     }
+  },
+  "branches": {
+    "selectPlaceholder": "Select a branch",
+    "search": "Search branches",
+    "searchOrCreate": "Search, or type a new branch name",
+    "create": "Add branch “{name}”",
+    "empty": "No branches found",
+    "clear": "Clear selection"
   }
 }

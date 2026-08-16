@@ -1,8 +1,8 @@
 <script setup>
-import { reactive, ref, watch } from 'vue'
+import { computed, reactive, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useConfirm } from '@/composables/useConfirm'
-import { ROLES } from '@lms/shared'
+import { ROLES, isJshshir, isPassportSeries, normalizeJshshir, normalizePassportSeries } from '@lms/shared'
 import { useAuthStore } from '@/stores/auth'
 import { usersApi } from '@/services/users'
 import { useToast } from '@/composables/useToast'
@@ -10,6 +10,8 @@ import AppCard from '@/components/ui/AppCard.vue'
 import AppButton from '@/components/ui/AppButton.vue'
 import AppInput from '@/components/ui/AppInput.vue'
 import AppSelect from '@/components/ui/AppSelect.vue'
+import BranchSelect from '@/components/ui/BranchSelect.vue'
+import GeneratedPasswordField from '@/components/ui/GeneratedPasswordField.vue'
 import ImageUploadField from '@/components/ui/ImageUploadField.vue'
 
 const props = defineProps({
@@ -30,9 +32,25 @@ const saving = ref(false)
 const deactivating = ref(false)
 const errorMessage = ref('')
 
+// Same list the users table filters by, so an admin moving someone between
+// offices picks an existing branch instead of coining a near-duplicate.
+const branchOptions = ref([])
+usersApi
+  .branches()
+  .then((names) => {
+    branchOptions.value = names
+  })
+  .catch(() => {
+    branchOptions.value = []
+  })
+
 const form = reactive({
   fullName: '',
+  jshshir: '',
+  passportSeries: '',
+  email: '',
   phone: '',
+  branch: '',
   department: '',
   position: '',
   roleName: '',
@@ -41,9 +59,21 @@ const form = reactive({
   avatar: '',
 })
 
+// Editable here, not just at creation: the JSHSHIR migration gave every
+// pre-existing account a placeholder starting with `9`, and this tab is where
+// an admin replaces it with the employee's real number.
+const jshshirError = computed(() => (form.jshshir && !isJshshir(form.jshshir) ? t('users.fields.jshshirInvalid') : ''))
+const passportSeriesError = computed(() =>
+  form.passportSeries && !isPassportSeries(form.passportSeries) ? t('users.fields.passportSeriesInvalid') : ''
+)
+
 function resetFrom(user) {
   form.fullName = user.fullName ?? ''
+  form.jshshir = user.jshshir ?? ''
+  form.passportSeries = user.passportSeries ?? ''
+  form.email = user.email ?? ''
   form.phone = user.phone ?? ''
+  form.branch = user.branch ?? ''
   form.department = user.department ?? ''
   form.position = user.position ?? ''
   form.roleName = user.role ?? ''
@@ -57,10 +87,16 @@ function resetFrom(user) {
 watch(() => props.user.id, () => resetFrom(props.user), { immediate: true })
 
 async function onSave() {
+  if (jshshirError.value || passportSeriesError.value) return
+
   saving.value = true
   errorMessage.value = ''
   try {
-    const payload = { ...form }
+    const payload = {
+      ...form,
+      jshshir: normalizeJshshir(form.jshshir),
+      passportSeries: normalizePassportSeries(form.passportSeries),
+    }
     if (!payload.password) delete payload.password
     const updated = await usersApi.update(props.user.id, payload)
     form.password = ''
@@ -105,7 +141,29 @@ async function onDeactivate() {
       <div class="col-span-2">
         <AppInput v-model="form.fullName" :label="t('users.fields.fullName')" :disabled="!canEdit" />
       </div>
+      <AppInput
+        v-model="form.jshshir"
+        :label="t('users.fields.jshshir')"
+        :hint="t('users.fields.jshshirHint')"
+        :error="jshshirError"
+        :disabled="!canEdit"
+      />
+      <AppInput
+        v-model="form.passportSeries"
+        :label="t('users.fields.passportSeries')"
+        :hint="t('users.fields.passportSeriesHint')"
+        :error="passportSeriesError"
+        :disabled="!canEdit"
+      />
+      <AppInput v-model="form.email" type="email" :label="t('users.fields.emailOptional')" :disabled="!canEdit" />
       <AppInput v-model="form.phone" :label="t('users.fields.phone')" :disabled="!canEdit" />
+      <BranchSelect
+        v-model="form.branch"
+        :options="branchOptions"
+        allow-create
+        :label="t('users.fields.branch')"
+        :disabled="!canEdit"
+      />
       <AppInput v-model="form.department" :label="t('users.fields.department')" :disabled="!canEdit" />
       <AppInput v-model="form.position" :label="t('users.fields.position')" :disabled="!canEdit" />
       <AppSelect v-model="form.roleName" :label="t('users.role')" :options="roleOptions" :disabled="!canEdit" />
@@ -114,13 +172,7 @@ async function onDeactivate() {
         {{ t('users.filters.active') }}
       </label>
       <div class="col-span-2">
-        <AppInput
-          v-model="form.password"
-          type="password"
-          :label="t('users.fields.newPassword')"
-          :hint="t('users.fields.newPasswordHint')"
-          :disabled="!canEdit"
-        />
+        <GeneratedPasswordField v-model="form.password" :label="t('users.fields.newPassword')" :disabled="!canEdit" />
       </div>
 
       <p v-if="errorMessage" class="col-span-2 text-small text-danger">{{ errorMessage }}</p>

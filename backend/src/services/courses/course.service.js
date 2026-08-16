@@ -79,6 +79,7 @@ function toPublicCourse(course) {
     banner: course.banner,
     status: course.status,
     targetRoles: course.targetRoles ?? [],
+    branches: course.branches ?? [],
     department: course.department ?? '',
     createdAt: course.createdAt,
     updatedAt: course.updatedAt,
@@ -86,18 +87,20 @@ function toPublicCourse(course) {
 }
 
 // No-op unless explicitly requested and the course actually has a
-// role/department restriction to auto-assign against — never mass-assigns
-// literally every active user just because `autoAssign` was checked. Reads
-// targeting from the persisted `course` doc, not the raw payload, so a
-// partial update that omits targetRoles/department still uses the real
-// (previously saved) restriction rather than treating it as unset.
+// role/branch/department restriction to auto-assign against — never
+// mass-assigns literally every active user just because `autoAssign` was
+// checked. Reads targeting from the persisted `course` doc, not the raw
+// payload, so a partial update that omits targetRoles/branches/department
+// still uses the real (previously saved) restriction rather than treating it
+// as unset.
 async function autoAssignIfNeeded(actor, course, autoAssign) {
   if (!autoAssign) return
   const roleNames = course.targetRoles ?? []
+  const branches = course.branches ?? []
   const department = course.department ?? ''
-  if (!roleNames.length && !department) return
+  if (!roleNames.length && !branches.length && !department) return
 
-  const users = await userRepository.listActiveByRolesAndDepartment({ roleNames, department })
+  const users = await userRepository.listActiveByRolesAndDepartment({ roleNames, branches, department })
   const userIds = users.map((u) => u._id.toString())
   if (!userIds.length) return
 
@@ -141,12 +144,21 @@ export const courseService = {
   async list(actor, query) {
     let effectiveQuery = query
     if (!canManageCourses(actor)) {
-      const actorUser = await userRepository.findById(actor.id)
+      const [actorUser, assignments] = await Promise.all([
+        userRepository.findById(actor.id),
+        // Assigned courses are visible regardless of targeting, so the catalog
+        // has to know about them here too — otherwise a course an admin
+        // deliberately assigned across branches would open by direct link but
+        // never appear in the list it was assigned into.
+        courseAssignmentRepository.listByUser(actor.id),
+      ])
       effectiveQuery = {
         ...query,
         status: 'PUBLISHED',
         visibleToRoleName: actor.roleName,
+        visibleToBranch: actorUser?.branch ?? '',
         visibleToDepartment: actorUser?.department ?? '',
+        assignedCourseIds: assignments.map((a) => a.courseId),
       }
     }
     // Numbered pagination: the client needs a total to render "page 3 of 7",

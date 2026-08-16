@@ -3,7 +3,7 @@ import { computed, onMounted, reactive, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useConfirm } from '@/composables/useConfirm'
 import { useRouter } from 'vue-router'
-import { ROLES } from '@lms/shared'
+import { ROLES, isJshshir, isPassportSeries, normalizeJshshir, normalizePassportSeries } from '@lms/shared'
 import { useAuthStore } from '@/stores/auth'
 import { usersApi } from '@/services/users'
 import { coursesApi } from '@/services/courses'
@@ -12,6 +12,8 @@ import AppCard from '@/components/ui/AppCard.vue'
 import AppButton from '@/components/ui/AppButton.vue'
 import AppInput from '@/components/ui/AppInput.vue'
 import AppSelect from '@/components/ui/AppSelect.vue'
+import BranchSelect from '@/components/ui/BranchSelect.vue'
+import GeneratedPasswordField from '@/components/ui/GeneratedPasswordField.vue'
 import Modal from '@/components/ui/Modal.vue'
 import Avatar from '@/components/ui/Avatar.vue'
 import Badge from '@/components/ui/Badge.vue'
@@ -34,15 +36,16 @@ const roleOptions = Object.values(ROLES).map((r) => ({ value: r, label: r }))
 // turned any typo (or "manage" for "management") into an empty result with
 // no hint as to why.
 const departmentOptions = ref([])
+const branchOptions = ref([])
 
-const filters = reactive({ search: '', role: '', department: '', status: '' })
+const filters = reactive({ search: '', role: '', branch: '', department: '', status: '' })
 
 const hasActiveFilters = computed(() =>
-  Boolean(filters.search || filters.role || filters.department || filters.status)
+  Boolean(filters.search || filters.role || filters.branch || filters.department || filters.status)
 )
 
 function clearFilters() {
-  Object.assign(filters, { search: '', role: '', department: '', status: '' })
+  Object.assign(filters, { search: '', role: '', branch: '', department: '', status: '' })
   loadFirstPage()
 }
 const PAGE_SIZE = 15
@@ -65,10 +68,12 @@ const createSubmitting = ref(false)
 const createError = ref('')
 const createForm = reactive({
   fullName: '',
-  username: '',
+  jshshir: '',
+  passportSeries: '',
   email: '',
   phone: '',
   roleName: ROLES.EMPLOYEE,
+  branch: '',
   department: '',
   position: '',
   password: '',
@@ -76,6 +81,18 @@ const createForm = reactive({
   courseIds: [],
 })
 const assignableCourses = ref([])
+
+// Checked as the admin types, but only once the field is non-empty — a red
+// error on a field nobody has filled in yet reads as a failure, not a hint.
+// The same rules run again server-side (user.validator.js).
+const jshshirError = computed(() =>
+  createForm.jshshir && !isJshshir(createForm.jshshir) ? t('users.fields.jshshirInvalid') : ''
+)
+const passportSeriesError = computed(() =>
+  createForm.passportSeries && !isPassportSeries(createForm.passportSeries)
+    ? t('users.fields.passportSeriesInvalid')
+    : ''
+)
 
 const progressByUserId = ref({})
 
@@ -114,6 +131,7 @@ function buildParams() {
   const params = { page: page.value, limit: PAGE_SIZE }
   if (filters.search) params.search = filters.search
   if (filters.role) params.role = filters.role
+  if (filters.branch) params.branch = filters.branch
   if (filters.department) params.department = filters.department
   if (filters.status) params.status = filters.status
   return params
@@ -159,6 +177,14 @@ async function loadDepartments() {
   }
 }
 
+async function loadBranches() {
+  try {
+    branchOptions.value = await usersApi.branches()
+  } catch {
+    branchOptions.value = []
+  }
+}
+
 async function loadAssignableCourses() {
   try {
     const result = await coursesApi.list({ status: 'PUBLISHED', limit: 100 })
@@ -175,13 +201,21 @@ function toggleCourse(courseId) {
 }
 
 async function onCreateSubmit() {
+  if (jshshirError.value || passportSeriesError.value) return
+
   createSubmitting.value = true
   createError.value = ''
   try {
-    await usersApi.create({ ...createForm })
+    // Normalised here as well as on the server, so the value the admin sees in
+    // the table is the one they typed minus the spaces they read it out with.
+    await usersApi.create({
+      ...createForm,
+      jshshir: normalizeJshshir(createForm.jshshir),
+      passportSeries: normalizePassportSeries(createForm.passportSeries),
+    })
     showCreateModal.value = false
     Object.assign(createForm, {
-      fullName: '', username: '', email: '', phone: '', roleName: ROLES.EMPLOYEE, department: '', position: '', password: '', isActive: true, courseIds: [],
+      fullName: '', jshshir: '', passportSeries: '', email: '', phone: '', roleName: ROLES.EMPLOYEE, branch: '', department: '', position: '', password: '', isActive: true, courseIds: [],
     })
     await loadFirstPage()
     toast.success(t('users.created'))
@@ -206,6 +240,7 @@ async function bulkDeactivate() {
 onMounted(() => {
   load()
   loadDepartments()
+  loadBranches()
   loadAssignableCourses()
 })
 </script>
@@ -226,6 +261,14 @@ onMounted(() => {
       </div>
       <div class="w-44">
         <AppSelect v-model="filters.role" :placeholder="t('users.filters.allRoles')" :options="roleOptions" @update:model-value="loadFirstPage" />
+      </div>
+      <div class="w-44">
+        <BranchSelect
+          v-model="filters.branch"
+          :options="branchOptions"
+          :placeholder="t('users.filters.allBranches')"
+          @update:model-value="loadFirstPage"
+        />
       </div>
       <div class="w-44">
         <AppSelect
@@ -265,6 +308,7 @@ onMounted(() => {
             <th class="w-10 px-4 py-3"><input type="checkbox" :checked="allSelected" class="h-4 w-4 rounded border-border-strong" @change="toggleAll" /></th>
             <th class="px-2 py-3">{{ t('users.fields.fullName') }}</th>
             <th class="px-4 py-3">{{ t('users.role') }}</th>
+            <th class="px-4 py-3">{{ t('users.fields.branch') }}</th>
             <th class="px-4 py-3">{{ t('users.fields.department') }}</th>
             <th class="px-4 py-3">{{ t('users.columns.progress') }}</th>
             <th class="px-4 py-3">{{ t('users.status') }}</th>
@@ -297,11 +341,12 @@ onMounted(() => {
                 <Avatar :name="user.fullName" :src="user.avatar" size="sm" />
                 <div class="min-w-0">
                   <p class="truncate font-medium text-ink">{{ user.fullName }}</p>
-                  <p class="truncate text-caption text-ink-faint">{{ user.username }}</p>
+                  <p class="truncate text-caption text-ink-faint">{{ user.jshshir }}</p>
                 </div>
               </div>
             </td>
             <td class="px-4 py-3"><Badge variant="neutral" size="sm">{{ user.role }}</Badge></td>
+            <td class="px-4 py-3 text-ink-muted">{{ user.branch || '—' }}</td>
             <td class="px-4 py-3 text-ink-muted">{{ user.department || '—' }}</td>
             <td class="px-4 py-3">
               <div class="flex items-center gap-2">
@@ -333,13 +378,33 @@ onMounted(() => {
     <Modal v-model="showCreateModal" :title="t('users.newUser')" size="lg">
       <form class="grid grid-cols-2 gap-4" @submit.prevent="onCreateSubmit">
         <AppInput v-model="createForm.fullName" required :label="t('users.fields.fullName')" />
-        <AppInput v-model="createForm.username" required :label="t('users.fields.username')" />
-        <AppInput v-model="createForm.email" type="email" required :label="t('users.fields.email')" />
+        <AppInput
+          v-model="createForm.jshshir"
+          required
+          :label="t('users.fields.jshshir')"
+          :hint="t('users.fields.jshshirHint')"
+          :error="jshshirError"
+        />
+        <AppInput
+          v-model="createForm.passportSeries"
+          :label="t('users.fields.passportSeries')"
+          :hint="t('users.fields.passportSeriesHint')"
+          :error="passportSeriesError"
+        />
+        <AppInput v-model="createForm.email" type="email" :label="t('users.fields.emailOptional')" />
         <AppInput v-model="createForm.phone" :label="t('users.fields.phone')" />
         <AppSelect v-model="createForm.roleName" :label="t('users.role')" :options="roleOptions" />
+        <BranchSelect
+          v-model="createForm.branch"
+          :options="branchOptions"
+          allow-create
+          :label="t('users.fields.branch')"
+        />
         <AppInput v-model="createForm.department" :label="t('users.fields.department')" />
         <AppInput v-model="createForm.position" :label="t('users.fields.position')" />
-        <AppInput v-model="createForm.password" type="password" required :label="t('users.fields.password')" />
+        <div class="col-span-2">
+          <GeneratedPasswordField v-model="createForm.password" required :label="t('users.fields.password')" />
+        </div>
 
         <div class="col-span-2">
           <p class="mb-1.5 text-small font-medium text-ink">{{ t('users.fields.assignCourses') }}</p>

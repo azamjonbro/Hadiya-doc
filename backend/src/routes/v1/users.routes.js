@@ -22,6 +22,7 @@ usersRouter.post('/', requirePermission(PERMISSIONS.USER_CREATE), validateBody(c
 // Declared before '/:id' — Express matches in order, so a literal segment
 // that could also be read as an id has to come first.
 usersRouter.get('/departments', requirePermission(PERMISSIONS.USER_READ), userController.listDepartments)
+usersRouter.get('/branches', requirePermission(PERMISSIONS.USER_READ), userController.listBranches)
 usersRouter.get('/positions', requirePermission(PERMISSIONS.USER_READ), userController.listPositions)
 usersRouter.get('/:id', requirePermission(PERMISSIONS.USER_READ), userController.getById)
 usersRouter.patch('/:id', requirePermission(PERMISSIONS.USER_UPDATE), validateBody(updateUserSchema), userController.update)

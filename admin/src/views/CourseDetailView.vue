@@ -15,6 +15,8 @@ import AppCard from '@/components/ui/AppCard.vue'
 import AppButton from '@/components/ui/AppButton.vue'
 import AppInput from '@/components/ui/AppInput.vue'
 import AppSelect from '@/components/ui/AppSelect.vue'
+import BranchSelect from '@/components/ui/BranchSelect.vue'
+import { usersApi } from '@/services/users'
 import Badge from '@/components/ui/Badge.vue'
 import Skeleton from '@/components/ui/Skeleton.vue'
 import EmptyState from '@/components/ui/EmptyState.vue'
@@ -30,10 +32,23 @@ const loading = ref(true)
 const errorMessage = ref('')
 const saving = ref(false)
 const course = ref(null)
+
+// The branches an admin can target are the ones employees are actually in —
+// targeting a branch nobody belongs to just hides the course from everyone.
+// `allow-create` still lets a new office be named here before its first hire.
+const branchOptions = ref([])
+usersApi
+  .branches()
+  .then((names) => {
+    branchOptions.value = names
+  })
+  .catch(() => {
+    branchOptions.value = []
+  })
 const topics = ref([])
 const expandedVideosTopicId = ref(null)
 
-const form = reactive({ title: '', description: '', status: 'DRAFT', targetRoles: [], department: '', autoAssign: false })
+const form = reactive({ title: '', description: '', status: 'DRAFT', targetRoles: [], branches: [], department: '', autoAssign: false })
 const showEditForm = ref(false)
 
 const roleList = Object.values(ROLES)
@@ -42,7 +57,9 @@ function toggleRole(role) {
   if (idx === -1) form.targetRoles.push(role)
   else form.targetRoles.splice(idx, 1)
 }
-const hasTargeting = computed(() => form.targetRoles.length > 0 || form.department.trim().length > 0)
+const hasTargeting = computed(
+  () => form.targetRoles.length > 0 || form.branches.length > 0 || form.department.trim().length > 0
+)
 
 const showAddTopic = ref(false)
 const addTopicSubmitting = ref(false)
@@ -76,7 +93,8 @@ async function load() {
     form.description = course.value.description
     form.status = course.value.status
     form.targetRoles = [...(course.value.targetRoles ?? [])]
-    form.department = course.value.department ?? ''
+    form.branches = [...(course.value.branches ?? [])]
+  form.department = course.value.department ?? ''
     form.autoAssign = false
     topics.value = await coursesApi.listTopics(route.params.id)
   } catch (error) {
@@ -230,6 +248,15 @@ onMounted(load)
               </label>
             </div>
           </div>
+          <BranchSelect
+            v-model="form.branches"
+            :options="branchOptions"
+            multiple
+            allow-create
+            :label="t('courses.targeting.branchesLabel')"
+            :placeholder="t('courses.targeting.branchesPlaceholder')"
+            :disabled="!auth.hasPermission('course:update')"
+          />
           <AppInput
             v-model="form.department"
             :label="t('courses.targeting.departmentLabel')"

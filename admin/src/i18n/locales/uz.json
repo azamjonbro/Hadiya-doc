@@ -132,13 +132,13 @@
     "login": {
       "title": "Admin panel",
       "subtitle": "O'quv, xodimlar va hisobotlarni boshqarish uchun tizimga kiring.",
-      "identifier": "Email yoki foydalanuvchi nomi",
+      "identifier": "JSHSHIR, passport seriyasi yoki email",
       "password": "Parol",
       "rememberMe": "Meni eslab qol",
       "forgotPassword": "Parolni unutdingizmi?",
       "submit": "Kirish",
       "submitting": "Kirilmoqda...",
-      "error": "Email/username yoki parol noto'g'ri",
+      "error": "JSHSHIR/passport/email yoki parol noto'g'ri",
       "rateLimited": "Juda ko'p urinish. Iltimos, bir necha daqiqadan so'ng qayta urinib ko'ring.",
       "accountLocked": "Hisob vaqtincha bloklandi. Bir necha daqiqadan so'ng qayta urinib ko'ring.",
       "networkError": "Serverga ulanib bo'lmadi. Internet aloqangizni tekshiring.",
@@ -200,16 +200,22 @@
     "status": "Holat",
     "fields": {
       "fullName": "To'liq ism",
-      "username": "Foydalanuvchi nomi",
+      "jshshir": "JSHSHIR",
       "email": "Email",
       "phone": "Telefon",
       "department": "Bo'lim",
       "position": "Lavozim",
       "password": "Parol",
       "newPassword": "Yangi parol",
-      "newPasswordHint": "O'zgartirmaslik uchun bo'sh qoldiring",
       "avatar": "Avatar",
-      "assignCourses": "Kurslarni biriktirish"
+      "assignCourses": "Kurslarni biriktirish",
+      "jshshirHint": "Passportdagi 14 xonali raqam",
+      "jshshirInvalid": "JSHSHIR aynan 14 ta raqamdan iborat bo'lishi kerak",
+      "passportSeries": "Passport seriya raqami",
+      "passportSeriesHint": "Masalan AA1234567 — ixtiyoriy, u bilan ham kirish mumkin",
+      "passportSeriesInvalid": "Format noto'g'ri. Masalan: AA1234567",
+      "emailOptional": "Email (ixtiyoriy)",
+      "branch": "Filial"
     },
     "filters": {
       "search": "Qidirish...",
@@ -219,10 +225,18 @@
       "inactive": "Faol emas",
       "apply": "Filtrlash",
       "allDepartments": "Barcha bo'limlar",
-      "clear": "Tozalash"
+      "clear": "Tozalash",
+      "allBranches": "Barcha filiallar"
     },
     "columns": {
       "progress": "Progress"
+    },
+    "password": {
+      "generate": "Generatsiya",
+      "copy": "Nusxa olish",
+      "copied": "Parol nusxalandi",
+      "copyFailed": "Nusxalab bo'lmadi — parolni qo'lda yozib oling",
+      "hint": "{length} belgili parol. Chalkash belgilar (0/O, 1/l/I) ishlatilmaydi."
     }
   },
   "courses": {
@@ -278,7 +292,8 @@
       "search": "Qidirish...",
       "allStatuses": "Barcha holatlar",
       "apply": "Filtrlash",
-      "clear": "Tozalash"
+      "clear": "Tozalash",
+      "allBranches": "Barcha filiallar"
     },
     "topics": {
       "title": "Mavzular",
@@ -292,9 +307,11 @@
       "rolesLabel": "Rollar",
       "departmentLabel": "Bo'lim",
       "departmentPlaceholder": "Masalan: Marketing, SMM...",
-      "noRestrictionHint": "Hech qanday rol yoki bo'lim tanlamasangiz, kurs barcha xodimlarga ochiq bo'ladi.",
+      "noRestrictionHint": "Hech qanday rol, filial yoki bo'lim tanlamasangiz, kurs barcha xodimlarga ochiq bo'ladi.",
       "autoAssignLabel": "E'lon qilinganda mos xodimlarga avtomatik biriktirilsin",
-      "autoAssignHint": "Hozirda mos keladigan barcha faol xodimlarga darhol kurs tayinlanadi."
+      "autoAssignHint": "Hozirda mos keladigan barcha faol xodimlarga darhol kurs tayinlanadi.",
+      "branchesLabel": "Filiallar",
+      "branchesPlaceholder": "Barcha filiallar"
     }
   },
   "courseBuilder": {
@@ -590,7 +607,7 @@
       "position": "Lavozim",
       "department": "Bo'lim",
       "role": "Rol",
-      "username": "Login",
+      "jshshir": "JSHSHIR",
       "email": "Email",
       "joinedAt": "Ro'yxatdan o'tgan",
       "createdAt": "Yaratilgan",
@@ -925,5 +942,13 @@
       "COURSE": "Kurs",
       "NEWS": "Yangilik"
     }
+  },
+  "branches": {
+    "selectPlaceholder": "Filial tanlang",
+    "search": "Filial qidirish",
+    "searchOrCreate": "Qidiring yoki yangi filial nomini yozing",
+    "create": "«{name}» filialini qo'shish",
+    "empty": "Filial topilmadi",
+    "clear": "Tanlovni tozalash"
   }
 }

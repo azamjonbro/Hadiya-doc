@@ -63,27 +63,39 @@ export const courseRepository = {
     return Course.findByIdAndDelete(id)
   },
 
-  // `visibleToRoleName`/`visibleToDepartment` scope the page to courses an
-  // employee is actually allowed to see: unrestricted courses (empty
-  // targetRoles/department) plus courses matching both of their own
-  // role and department where those constraints are set.
+  // `visibleTo*` scope the page to courses an employee is actually allowed to
+  // see: unrestricted courses (empty targetRoles/branches/department) plus
+  // courses matching their own role, branch and department wherever those
+  // constraints are set — plus anything explicitly assigned to them, which
+  // overrides targeting entirely (see courseVisibility.js).
+  //
+  // `branch` filters the admin catalog instead when passed on its own: admins
+  // are not scoped by visibility, so it is a plain "show me this branch's
+  // courses" facet for them.
   //
   // Shared by listPage and count so a page and its total can never be
   // computed from two subtly different filters.
-  buildFilter({ search, status, visibleToRoleName, visibleToDepartment }) {
+  buildFilter({ search, status, branch, visibleToRoleName, visibleToBranch, visibleToDepartment, assignedCourseIds }) {
     const filter = { deletedAt: null }
     if (search) filter.title = new RegExp(search.trim(), 'i')
     if (status) filter.status = status
+    if (branch) filter.branches = branch
     if (visibleToRoleName !== undefined) {
-      // Courses created before targetRoles/department existed have neither
-      // field stored at all (Mongoose schema defaults don't backfill old
-      // documents) — $exists:false must count as "unrestricted" alongside
-      // an explicit empty array/string, or every pre-existing course would
-      // wrongly disappear from non-admin catalogs.
-      filter.$and = [
-        { $or: [{ targetRoles: { $exists: false } }, { targetRoles: { $size: 0 } }, { targetRoles: visibleToRoleName }] },
-        { $or: [{ department: { $exists: false } }, { department: '' }, { department: visibleToDepartment ?? '' }] },
-      ]
+      // Courses created before targetRoles/branches/department existed have
+      // none of those fields stored at all (Mongoose schema defaults don't
+      // backfill old documents) — $exists:false must count as "unrestricted"
+      // alongside an explicit empty array/string, or every pre-existing
+      // course would wrongly disappear from non-admin catalogs.
+      const matchesTargeting = {
+        $and: [
+          { $or: [{ targetRoles: { $exists: false } }, { targetRoles: { $size: 0 } }, { targetRoles: visibleToRoleName }] },
+          { $or: [{ branches: { $exists: false } }, { branches: { $size: 0 } }, { branches: visibleToBranch ?? '' }] },
+          { $or: [{ department: { $exists: false } }, { department: '' }, { department: visibleToDepartment ?? '' }] },
+        ],
+      }
+      filter.$and = assignedCourseIds?.length
+        ? [{ $or: [matchesTargeting, { _id: { $in: assignedCourseIds } }] }]
+        : [matchesTargeting]
     }
     return filter
   },

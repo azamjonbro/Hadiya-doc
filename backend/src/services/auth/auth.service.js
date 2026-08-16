@@ -18,8 +18,10 @@ function toPublicUser(user, role) {
   return {
     id: user._id.toString(),
     fullName: user.fullName,
-    username: user.username,
-    email: user.email,
+    jshshir: user.jshshir,
+    passportSeries: user.passportSeries ?? '',
+    email: user.email ?? '',
+    branch: user.branch ?? '',
     department: user.department,
     position: user.position,
     avatar: user.avatar,
@@ -47,7 +49,7 @@ export const authService = {
   async login({ identifier, password, captchaToken }, meta) {
     await verifyCaptcha(captchaToken)
 
-    const user = await userRepository.findByEmailOrUsername(identifier)
+    const user = await userRepository.findByIdentifier(identifier)
 
     if (!user || !user.isActive) {
       await auditLogRepository.record({
@@ -151,9 +153,9 @@ export const authService = {
   },
 
   async requestPasswordReset(identifier) {
-    const user = await userRepository.findByEmailOrUsername(identifier)
+    const user = await userRepository.findByIdentifier(identifier)
     // Always behave the same whether or not the account exists, so this
-    // endpoint can't be used to enumerate valid usernames/emails.
+    // endpoint can't be used to enumerate valid JSHSHIRs/emails.
     if (!user) return
 
     const rawToken = generateOpaqueToken()

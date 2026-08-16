@@ -7,6 +7,7 @@ export const createCourseSchema = z.object({
   banner: z.string().optional().default(''),
   status: z.enum(['DRAFT', 'PUBLISHED', 'ARCHIVED']).optional().default('DRAFT'),
   targetRoles: z.array(z.string()).optional().default([]),
+  branches: z.array(z.string()).optional().default([]),
   department: z.string().optional().default(''),
   // One-time trigger, not a model field: when true and the course is being
   // published, matching active users get auto-assigned. See course.service.js.
@@ -21,6 +22,7 @@ export const updateCourseSchema = z
     banner: z.string().optional(),
     status: z.enum(['DRAFT', 'PUBLISHED', 'ARCHIVED']).optional(),
     targetRoles: z.array(z.string()).optional(),
+    branches: z.array(z.string()).optional(),
     department: z.string().optional(),
     autoAssign: z.boolean().optional(),
   })
@@ -29,6 +31,10 @@ export const updateCourseSchema = z
 export const listCoursesQuerySchema = z.object({
   search: z.string().optional(),
   status: z.enum(['DRAFT', 'PUBLISHED', 'ARCHIVED']).optional(),
+  // Admin-side facet only. Employees are scoped by their own branch already
+  // (course.service.js), so this narrows the admin catalog rather than
+  // widening anyone's access.
+  branch: z.string().optional(),
   // `page` opts into numbered pagination (response carries total/totalPages);
   // `cursor` keeps the original "load more" behaviour. Sending both is
   // meaningless, so page wins — see course.service.js.

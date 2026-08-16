@@ -8,10 +8,15 @@ const courseSchema = new Schema(
     cover: { type: String, default: '' },
     banner: { type: String, default: '' },
     status: { type: String, enum: ['DRAFT', 'PUBLISHED', 'ARCHIVED'], default: 'DRAFT' },
-    // Empty targetRoles + empty department means "no restriction" (visible
-    // to everyone) — the default, backward-compatible with every existing
-    // course. When set, both constraints must match (role AND department).
+    // Empty targetRoles + empty branches + empty department means "no
+    // restriction" (visible to everyone) — the default, backward-compatible
+    // with every existing course. When set, every constraint that is set must
+    // match (role AND branch AND department).
     targetRoles: { type: [String], default: [] },
+    // A list, not a single value: one course routinely runs in several offices
+    // ("Toshkent va Samarqand, Buxoroga emas"), which a lone string cannot
+    // express. Empty = every branch.
+    branches: { type: [String], default: [] },
     department: { type: String, default: '' },
     createdBy: { type: Schema.Types.ObjectId, ref: 'User', required: true },
     updatedBy: { type: Schema.Types.ObjectId, ref: 'User', default: null },

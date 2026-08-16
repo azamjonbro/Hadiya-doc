@@ -1,10 +1,26 @@
+import { isJshshir, isPassportSeries, normalizeJshshir, normalizePassportSeries } from '@lms/shared'
 import { User } from '../models/user.model.js'
 import { Role } from '../models/role.model.js'
 
 export const userRepository = {
-  findByEmailOrUsername(identifier) {
-    const normalized = identifier.trim().toLowerCase()
-    return User.findOne({ $or: [{ email: normalized }, { username: normalized }] })
+  // One login box, three accepted handles: JSHSHIR, passport series, or email.
+  // The candidate fields are narrowed by shape first, so `12345678901234` is
+  // only ever looked up as a JSHSHIR — matching every field against every
+  // input would let one employee's passport series shadow another's email.
+  // Email stays a valid handle so accounts created before JSHSHIR existed —
+  // the seeded SUPERADMIN above all — can still sign in.
+  findByIdentifier(identifier) {
+    const raw = String(identifier ?? '').trim()
+    const or = []
+
+    if (isJshshir(raw)) or.push({ jshshir: normalizeJshshir(raw) })
+    if (isPassportSeries(raw)) or.push({ passportSeries: normalizePassportSeries(raw) })
+    if (raw.includes('@')) or.push({ email: raw.toLowerCase() })
+
+    // Nothing that could match any column — skip the query rather than send
+    // `{ $or: [] }`, which Mongo rejects.
+    if (!or.length) return Promise.resolve(null)
+    return User.findOne({ $or: or })
   },
 
   findById(id) {
@@ -24,6 +40,15 @@ export const userRepository = {
   // filter is an exact match and a typo silently returned an empty list.
   async listDepartments() {
     const values = await User.distinct('department', { department: { $nin: ['', null] } })
+    return values.sort((a, b) => a.localeCompare(b))
+  },
+
+  // Same idea for branches: the course targeting picker and the admin filters
+  // offer real values rather than a free-text box, so "Toshkent" and
+  // "toshkent" can't quietly become two different branches that each hide
+  // courses from the other.
+  async listBranches() {
+    const values = await User.distinct('branch', { branch: { $nin: ['', null] } })
     return values.sort((a, b) => a.localeCompare(b))
   },
 
@@ -57,7 +82,14 @@ export const userRepository = {
     if (excludeId) filter._id = { $ne: excludeId }
     if (search.trim()) {
       const regex = new RegExp(search.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i')
-      filter.$or = [{ fullName: regex }, { username: regex }, { email: regex }, { department: regex }, { position: regex }]
+      filter.$or = [
+        { fullName: regex },
+        { jshshir: regex },
+        { passportSeries: regex },
+        { email: regex },
+        { department: regex },
+        { position: regex },
+      ]
     }
     return User.find(filter)
       .sort({ createdAt: -1 })
@@ -72,9 +104,10 @@ export const userRepository = {
   // (roleNames empty = no role constraint) and/or department (empty = no
   // department constraint). Role names are resolved to Role ids since
   // User.roleId is a reference, not a string.
-  async listActiveByRolesAndDepartment({ roleNames = [], department = '' } = {}) {
+  async listActiveByRolesAndDepartment({ roleNames = [], branches = [], department = '' } = {}) {
     const filter = { isActive: true }
     if (department) filter.department = department
+    if (branches.length) filter.branch = { $in: branches }
     if (roleNames.length) {
       const roles = await Role.find({ name: { $in: roleNames.map((name) => name.toUpperCase()) } }, { _id: 1 })
       filter.roleId = { $in: roles.map((role) => role._id) }
@@ -84,13 +117,14 @@ export const userRepository = {
 
   // Shared by listPage and count so a page and its total can never be
   // computed from two subtly different filters.
-  buildFilter({ search, roleId, department, isActive }) {
+  buildFilter({ search, roleId, branch, department, isActive }) {
     const filter = {}
     if (search) {
       const regex = new RegExp(search.trim(), 'i')
-      filter.$or = [{ fullName: regex }, { username: regex }, { email: regex }]
+      filter.$or = [{ fullName: regex }, { jshshir: regex }, { passportSeries: regex }, { email: regex }]
     }
     if (roleId) filter.roleId = roleId
+    if (branch) filter.branch = branch
     if (department) filter.department = department
     if (isActive !== undefined) filter.isActive = isActive
     return filter
@@ -116,8 +150,13 @@ export const userRepository = {
     return User.countDocuments(this.buildFilter(params))
   },
 
-  updateById(id, data) {
-    return User.findByIdAndUpdate(id, { $set: data }, { new: true, runValidators: true })
+  // `unset` clears optional identity fields off the document rather than
+  // blanking them — see the partial unique indexes in user.model.js.
+  updateById(id, data, unset = {}) {
+    const update = {}
+    if (Object.keys(data).length) update.$set = data
+    if (Object.keys(unset).length) update.$unset = unset
+    return User.findByIdAndUpdate(id, update, { new: true, runValidators: true })
   },
 
   setActive(id, isActive) {

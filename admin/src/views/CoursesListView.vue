@@ -8,6 +8,8 @@ import AppCard from '@/components/ui/AppCard.vue'
 import AppButton from '@/components/ui/AppButton.vue'
 import AppInput from '@/components/ui/AppInput.vue'
 import AppSelect from '@/components/ui/AppSelect.vue'
+import BranchSelect from '@/components/ui/BranchSelect.vue'
+import { usersApi } from '@/services/users'
 import Badge from '@/components/ui/Badge.vue'
 import Pagination from '@/components/ui/Pagination.vue'
 import Skeleton from '@/components/ui/Skeleton.vue'
@@ -19,12 +21,24 @@ const { t, locale } = useI18n()
 const auth = useAuthStore()
 const router = useRouter()
 
-const filters = reactive({ search: '', status: '' })
+const filters = reactive({ search: '', status: '', branch: '' })
 
-const hasActiveFilters = computed(() => Boolean(filters.search || filters.status))
+// Admins see every course regardless of branch (visibility scoping applies to
+// employees only), so this is a plain facet: "show me what Toshkent runs".
+const branchOptions = ref([])
+usersApi
+  .branches()
+  .then((names) => {
+    branchOptions.value = names
+  })
+  .catch(() => {
+    branchOptions.value = []
+  })
+
+const hasActiveFilters = computed(() => Boolean(filters.search || filters.status || filters.branch))
 
 function clearFilters() {
-  Object.assign(filters, { search: '', status: '' })
+  Object.assign(filters, { search: '', status: '', branch: '' })
   loadFirstPage()
 }
 
@@ -46,6 +60,7 @@ function buildParams() {
   const params = { page: page.value, limit: PAGE_SIZE }
   if (filters.search) params.search = filters.search
   if (filters.status) params.status = filters.status
+  if (filters.branch) params.branch = filters.branch
   return params
 }
 
@@ -121,6 +136,14 @@ onMounted(load)
           v-model="filters.status"
           :placeholder="t('courses.filters.allStatuses')"
           :options="[{ value: 'DRAFT', label: t('courses.status.draft') }, { value: 'PUBLISHED', label: t('courses.status.published') }, { value: 'ARCHIVED', label: t('courses.status.archived') }]"
+          @update:model-value="loadFirstPage"
+        />
+      </div>
+      <div class="w-48">
+        <BranchSelect
+          v-model="filters.branch"
+          :options="branchOptions"
+          :placeholder="t('courses.filters.allBranches')"
           @update:model-value="loadFirstPage"
         />
       </div>

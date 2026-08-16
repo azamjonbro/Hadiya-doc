@@ -23,8 +23,9 @@ export const userController = {
     sendSuccess(res, {
       id: user._id.toString(),
       fullName: user.fullName,
-      username: user.username,
-      email: user.email,
+      jshshir: user.jshshir,
+      passportSeries: user.passportSeries ?? '',
+      email: user.email ?? '',
       phone: user.phone,
       department: user.department,
       position: user.position,
@@ -41,6 +42,10 @@ export const userController = {
 
   listDepartments: asyncHandler(async (req, res) => {
     sendSuccess(res, await userService.listDepartments(req.user))
+  }),
+
+  listBranches: asyncHandler(async (req, res) => {
+    sendSuccess(res, await userService.listBranches(req.user))
   }),
 
   listPositions: asyncHandler(async (req, res) => {
