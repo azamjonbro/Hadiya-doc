@@ -26,4 +26,13 @@ export const assessmentsApi = {
   submit(id, answers) {
     return http.post(`/assessments/${id}/submit`, { answers }).then((r) => r.data.data)
   },
+  create(topicId, payload) {
+    return http.post(`/topics/${topicId}/assessments`, payload).then((r) => r.data.data)
+  },
+  update(id, payload) {
+    return http.put(`/assessments/${id}`, payload).then((r) => r.data.data)
+  },
+  remove(id) {
+    return http.delete(`/assessments/${id}`).then((r) => r.data.data)
+  },
 }

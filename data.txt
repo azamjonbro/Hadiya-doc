@@ -1,0 +1,178 @@
+================================================================================
+spring.techinfo.uz — NIMALAR QILINDI
+Sana: 2026-08-16 | Server: 94.241.173.19 (ssh alias: qollanma-server)
+================================================================================
+
+Bu fayl faqat spring.techinfo.uz bilan bog'liq o'zgarishlarni yozib boradi.
+
+
+1. HOZIRGI TUZILISH
+--------------------------------------------------------------------------------
+  https://spring.techinfo.uz/           -> xodimlar sahifalari (SPA)
+  https://spring.techinfo.uz/admin      -> admin panel (o'sha SPA ichida)
+  https://spring.techinfo.uz/api/v1/    -> backend (nginx proxy -> 127.0.0.1:4000)
+
+  https://springadmin.techinfo.uz/*     -> 301 -> spring.techinfo.uz/admin*
+  https://qollanma.techinfo.uz/api/v1/  -> API (SPA shu manzilni chaqiradi)
+
+  Fayllar serverda:
+    /var/www/spring/front            SPA build (front/dist dan)
+    /opt/spring-lms/backend          backend kodi
+    /opt/spring-lms/packages/shared  @lms/shared (backend bilan BIRGA yuklanadi)
+
+  Xizmatlar (systemd, PM2 emas):
+    spring-lms          src/server.js   log: /var/log/spring-lms.log
+    spring-lms-worker   src/worker.js   log: /var/log/spring-lms-worker.log
+  Ikkalasi ham MemoryMax=512M. Server 1.9 GB va unda yana 6 ta begona sayt bor.
+
+
+2. ADMIN PANEL FRONT ICHIGA KO'CHIRILDI
+--------------------------------------------------------------------------------
+  Ilgari: ikkita alohida Vue ilova, ikkita domen (spring + springadmin).
+  Endi:   bitta ilova, bitta bundle, admin sahifalari /admin/* yo'lida.
+
+  Kod qayerga tushdi:
+    front/src/admin/views/       18 ta admin sahifasi
+    front/src/admin/components/  24 ta admin komponenti
+    front/src/admin/layouts/     admin AppShell / Sidebar / Topbar / nav.js
+
+  Birlashtirilganlar:
+    - 42 ta fayl ikkala ilovada AYNAN bir xil edi (ui/ va chat/ komponentlari,
+      socket.js, apiBase.js) -> bitta nusxa qoldi.
+    - 9 ta API service birlashtirildi (courses, users, tasks, materials, ...),
+      jami 49 ta admin metodi xodim versiyasiga qo'shildi.
+    - auth store: canUseAdminApp va isSuperAdmin getterlari qo'shildi.
+    - i18n: 510 ta kalit qo'shildi. 25 ta kalit ikkala ilovada bir xil nomda,
+      lekin BOSHQA matnda edi (masalan nav.courses: "Mening kurslarim" / "Kurslar",
+      videos.processing.*: to'liq jumla / qisqa yorliq). Ular "admin." prefiksi
+      ostiga olindi, chaqiruv joylari shunga moslandi.
+
+  Route nomlari: admin tomonida "admin-" prefiksi bor (admin-dashboard,
+  admin-users-list, ...), chunki 12 tasi xodim tomoni bilan to'qnashardi.
+
+  Ruxsat:
+    - /admin/* -> meta.admin, guard canUseAdminApp ni tekshiradi
+      (SUPERADMIN / ADMIN / MANAGER).
+    - Xodim /admin ga kirsa 403 sahifasi. ILGARI: sessiyasi o'chirilardi —
+      bu bitta login bo'lgandan keyin mantiqsiz.
+    - Login bitta sahifa. Kirgandan keyin: admin-tier -> /admin, xodim -> /.
+
+  DIQQAT: repodagi admin/ papkasi hali turibdi va endi ISHLATILMAYDI.
+  U yerdagi faylni tahrirlash hech narsaga ta'sir qilmaydi. O'chirish yoki
+  qoldirish — hal qilinmagan.
+
+
+3. API MANZILI VA COOKIE
+--------------------------------------------------------------------------------
+  SPA API'ni o'z host'idan emas, qollanma.techinfo.uz dan chaqiradi:
+    front/.env.production  VITE_API_BASE_URL=https://qollanma.techinfo.uz/api/v1
+  Shu bitta o'zgaruvchidan axios, socket.io va tus (video yuklash) kelib chiqadi.
+
+  Shuning uchun so'rovlar cross-site. Backend .env da:
+    ALLOWED_ORIGINS=https://spring.techinfo.uz     (springadmin olib tashlandi)
+    COOKIE_SAMESITE=none
+    COOKIE_DOMAIN=qollanma.techinfo.uz
+
+  COOKIE_DOMAIN ni HECH QACHON .techinfo.uz qilmang — u refresh cookie'ni shu
+  serverdagi 6 ta begona saytga ham berib qo'yadi.
+
+  CSRF: token endi javob body'sida ham keladi va SPA uni localStorage'da
+  saqlaydi. Sababi — cookie qollanma.techinfo.uz ga tegishli, spring.techinfo.uz
+  dagi sahifa uni document.cookie orqali O'QIY OLMAYDI. Busiz har bir F5 da
+  /auth/refresh 403 berib, foydalanuvchi tizimdan chiqib ketardi.
+
+
+4. TUZATILGAN NARSALAR
+--------------------------------------------------------------------------------
+  a) Worker umuman deploy qilinmagan edi.
+     Admin dashboard bo'sh turardi (GET /api/v1/dashboard -> data: null), chunki
+     uni faqat src/worker.js to'ldiradi. O'sha worker yana video konvertatsiya va
+     muddat eslatmalarini ham boshqaradi — ikkalasi ham ishlamayotgan edi.
+     spring-lms-worker.service yaratildi, ffmpeg o'rnatildi.
+
+  b) users kolleksiyasidagi eskirgan indexlar.
+     username_1  — schema'da bunday maydon yo'q (JSHSHIR migratsiyasidan qolgan)
+     email_1     — unique, lekin partial filtrsiz
+     Natijada emailsiz IKKINCHI xodimni qo'shib bo'lmasdi (409). Ikkalasi
+     o'chirildi, email_1 partial filtr bilan qayta yaratildi.
+
+  c) nginx xavfsizlik header'lari.
+     location /assets/ va location = /index.html o'z add_header'ini e'lon
+     qilgani uchun server darajasidagi HSTS / nosniff / Referrer-Policy
+     HTML va JS javoblaridan tushib qolardi (nginx qoidasi). Qayta e'lon qilindi.
+
+  d) Noma'lum manzilda 404 tuzog'i.
+     Catch-all route public edi — kirmagan odam 404 sahifasida qolib ketardi,
+     u yerdagi yagona havola esa uni yana o'sha yerga qaytarardi. Endi kirmagan
+     odam login formasini ko'radi, kirgan odam 404 ni.
+
+  e) Kurs biriktirish teshigi.
+     assign() ko'rinish cheklovini tekshirmasdi, getById esa biriktirilganini
+     bilmasdi. Natijada admin boshqa filialdagi xodimga kurs biriktirsa, o'sha
+     xodim uni ocholmasdi (404). Endi biriktirish targeting'dan ustun turadi.
+
+
+5. FILIAL BO'YICHA KURS KO'RINISHI (yangi imkoniyat)
+--------------------------------------------------------------------------------
+  Filial (branch) — bo'limdan (department) ALOHIDA o'lcham:
+    Xodim: branch "Toshkent",     department "Marketing"
+    Kurs:  branches ["Toshkent"], department ""
+
+  Cheklovlar VA bilan birikadi; bo'sh cheklov = hammaga ochiq.
+  Kurs bir nechta filialga tegishli bo'la oladi (branches — ro'yxat).
+
+  Superadmin uchun uch yo'l:
+    1. Kursni boshqa filial xodimiga biriktirish (cheklovdan ustun turadi)
+    2. Kursga yana filial qo'shish
+    3. Admin-tier baribir hamma kursni ko'radi
+
+  Filial nomlari GET /users/branches dan keladi va tanlash oynasi orqali
+  qo'yiladi — "Toshkent" va "toshkent" ikki xil filialga aylanib ketmasligi
+  uchun. Yangi filial nomini o'sha oynada yozib qo'shsa bo'ladi.
+
+
+6. DEPLOY QANDAY QILINADI
+--------------------------------------------------------------------------------
+  cd "/Users/mac/Desktop/qo'llanma"
+  npm --prefix front run build
+  rsync -az --delete front/dist/          qollanma-server:/var/www/spring/front/
+  rsync -az --delete backend/src/         qollanma-server:/opt/spring-lms/backend/src/
+  rsync -az --delete packages/shared/src/ qollanma-server:/opt/spring-lms/packages/shared/src/
+  ssh qollanma-server 'systemctl restart spring-lms spring-lms-worker'
+
+  packages/shared HAR DOIM backend bilan birga ketishi kerak — aks holda
+  backend "does not provide an export named ..." deb ko'tarilmaydi.
+
+  Deploy tushganini bundle nomi bilan tekshiring, sahifani yangilash bilan emas:
+    curl -s https://spring.techinfo.uz/ | grep assets/index
+
+
+7. TEKSHIRUV NATIJALARI (2026-08-16)
+--------------------------------------------------------------------------------
+  Brauzerda 25/25 o'tdi:
+    - kirmagan holatda / va /admin/users -> login formasi
+    - superadmin kirgach -> /admin
+    - 13 ta admin sahifasi xatosiz ochildi
+    - 7 ta xodim sahifasi xatosiz ochildi
+    - noma'lum manzil: kirgan -> 404, kirmagan -> login
+
+  Filial testi 17/17 o'tdi:
+    - Samarqand xodimi Toshkent kursini ro'yxatda ko'rmaydi
+    - havola bilan ham ocholmaydi (404)
+    - superadmin biriktirgach — ochiladi va ro'yxatda ko'rinadi
+
+  Qo'shni 6 sayt tegilmagan (algoritm/dacha/oil/prava/soat javob beryapti).
+
+
+8. OCHIQ QOLGAN MASALALAR
+--------------------------------------------------------------------------------
+  - repodagi admin/ papkasi ishlatilmaydi, lekin hali turibdi.
+  - ops.techinfo.uz 502 beryapti. Sababi: 2026-08-15 kuni deploy paytida uning
+    PM2 jarayoni (ops-backend, port 4099) to'xtatilgan. Tuzatish:
+      export PATH=/root/.nvm/versions/node/v22.16.0/bin:$PATH && pm2 start ops-backend
+    Egasi o'zi hal qilishini aytgan.
+  - front/src/router/index.js dagi catch-all tuzatildi; admin/ dagi eski
+    routerda ham tuzatilgan, lekin u ilova endi ishlatilmaydi.
+  - Har sahifa ochilganda konsolda bitta 403 ko'rinadi: kirmagan mehmon uchun
+    /auth/refresh CSRF tekshiruvidan o'tmaydi. Zararsiz, ushlab olinadi.
+  - Bundle 1.44 MB (gzip 432 KB). Kod bo'linishi (code splitting) qilinmagan.

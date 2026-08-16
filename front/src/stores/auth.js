@@ -2,6 +2,11 @@ import { defineStore } from 'pinia'
 import { http, csrfHeader, setCsrfToken, clearCsrfToken } from '@/services/http'
 import { useChatStore } from './chat'
 
+// The admin area is for these three only; everyone else gets the employee
+// side. Kept next to the store rather than in the router so the guard and the
+// per-page checks agree on one definition.
+const ADMIN_APP_ROLES = ['SUPERADMIN', 'ADMIN', 'MANAGER']
+
 export const useAuthStore = defineStore('auth', {
   state: () => ({
     accessToken: null,
@@ -12,6 +17,10 @@ export const useAuthStore = defineStore('auth', {
   getters: {
     isAuthenticated: (state) => Boolean(state.accessToken && state.user),
     permissions: (state) => state.user?.permissions ?? [],
+    canUseAdminApp: (state) => ADMIN_APP_ROLES.includes(state.user?.role),
+    // Gate for the few irreversible actions that stay with SUPERADMIN even
+    // when the matching permission has been granted more widely.
+    isSuperAdmin: (state) => state.user?.role === 'SUPERADMIN',
   },
 
   actions: {

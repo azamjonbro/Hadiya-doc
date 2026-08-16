@@ -3,6 +3,7 @@ import { ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useAuthStore } from '@/stores/auth'
+import { homeRouteFor } from '@/router'
 import AppInput from '@/components/ui/AppInput.vue'
 import AppButton from '@/components/ui/AppButton.vue'
 import Icon from '@/components/ui/Icon.vue'
@@ -37,8 +38,12 @@ async function onSubmit() {
   errorMessage.value = ''
   try {
     await auth.login(identifier.value, password.value)
-    const redirect = typeof route.query.redirect === 'string' ? route.query.redirect : '/'
-    router.push(redirect)
+    // One login page for both sides now, so where "home" is depends on who
+    // signed in: admin-tier accounts land in the admin area, everyone else on
+    // their own dashboard. An explicit ?redirect= still wins — it is the page
+    // they were actually trying to reach.
+    const redirect = typeof route.query.redirect === 'string' ? route.query.redirect : null
+    router.push(redirect ?? homeRouteFor(auth))
   } catch (error) {
     errorMessage.value = loginErrorMessage(error)
   } finally {
