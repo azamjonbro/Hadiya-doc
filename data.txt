@@ -249,7 +249,35 @@ Bu fayl faqat spring.techinfo.uz bilan bog'liq o'zgarishlarni yozib boradi.
     o'shanga qo'yish. Yoki materiallarni ham API orqali uzatish.
 
 
-10. OCHIQ QOLGAN MASALALAR
+10. KAMERA / CPU (diqqat kuzatuvi) — 2026-08-16
+--------------------------------------------------------------------------------
+  front/src/composables/useAttentionMonitor.js
+
+  Muammo 1: pauzada ham CPU yonardi.
+    detectForVideo() pauza tekshiruvidan OLDIN turgan edi, ya'ni foydalanuvchi
+    videoni to'xtatsa ham yuz-nuqta modeli sekundiga ~7 marta ishlashda davom
+    etardi. Endi gate yuqoriga ko'chirildi: baseline tayyor bo'lgach, pauzada
+    inference umuman chaqirilmaydi.
+    Kalibratsiya paytida gate ataylab qo'llanmaydi — classify() baseline'ni
+    to'ldiradi va kalibratsiya oynasi tugmalarni to'sib turadi.
+
+  Muammo 2: kuzatuv paytida og'irlik.
+    Bitta 140ms interval o'rniga ikkita kadens:
+      CALIBRATION_INTERVAL_MS = 140   (~7 fps, bir martalik, tez tugaydi)
+      SAMPLE_INTERVAL_MS      = 300   (~3 fps, butun dars davomida)
+    setInterval o'rniga o'zini qayta rejalashtiradigan setTimeout — kadens
+    kalibratsiyadan kuzatuvga o'tganda o'zgaradi va sekin kadr keyingisining
+    ustiga chiqmaydi.
+    4 soniyalik grace period uchun ~13 ta namuna qoladi, RECOVERY_MS=600 uchun
+    2-3 ta. Aniqlikka ta'siri sezilarli emas.
+
+  TEKSHIRUV HOLATI: kod build'ga tushgani tasdiqlangan (bundle'da 140 va 300),
+  sahifa ishlayapti. LEKIN haqiqiy CPU o'lchovi QILINMADI — headless brauzerdagi
+  soxta kamerada yuz yo'q, shuning uchun kalibratsiya timeout bo'lib monitor
+  o'zini to'xtatadi va o'lchov 0% chiqadi. Haqiqiy kamera bilan tekshirish kerak.
+
+
+11. OCHIQ QOLGAN MASALALAR
 --------------------------------------------------------------------------------
   - repodagi admin/ papkasi ishlatilmaydi, lekin hali turibdi.
   - ops.techinfo.uz 502 beryapti. Sababi: 2026-08-15 kuni deploy paytida uning

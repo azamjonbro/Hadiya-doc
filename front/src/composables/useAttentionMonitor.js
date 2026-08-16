@@ -18,9 +18,15 @@ import { ATTENTION_REASONS } from '@lms/shared'
 const WASM_PATH = '/mediapipe/wasm'
 const MODEL_PATH = '/mediapipe/face_landmarker.task'
 
-// ~7 fps. Fast enough that a multi-second grace period is measured from a
-// real signal, cheap enough to leave the video decoder alone.
-const SAMPLE_INTERVAL_MS = 140
+// Two cadences, because the two phases want opposite things.
+//
+// Calibration is a one-off wait the learner sits through, so it runs fast
+// (~7 fps) and is over in a few seconds. Steady-state monitoring runs for the
+// whole lesson, and face landmark inference is the most expensive thing on the
+// page — at ~3 fps it costs less than half as much CPU while still measuring a
+// multi-second grace period from plenty of real samples.
+const CALIBRATION_INTERVAL_MS = 140
+const SAMPLE_INTERVAL_MS = 300
 
 // How far the head may turn from the learner's own baseline before it counts
 // as looking away, in radians (~28° / ~22°). Generous on purpose: this fires
@@ -153,6 +159,22 @@ export function useAttentionMonitor() {
   function sample(videoEl) {
     if (!landmarker || !cameraEl || cameraEl.readyState < 2) return
 
+    // Nobody should be warned for looking away from a video they deliberately
+    // paused — and once the baseline exists there is nothing left to learn
+    // from a frame nobody is being judged on, so the inference is skipped
+    // outright rather than run and discarded. That is the whole cost of this
+    // feature: it used to keep the model running for as long as the page was
+    // open, paused or not.
+    //
+    // The gate is deliberately not applied during calibration: classify() is
+    // what feeds the baseline, and the calibration overlay covers the
+    // controls, so the video cannot start until calibration finishes.
+    if (baseline && shouldMonitor && !shouldMonitor()) {
+      awaySince = null
+      backSince = null
+      return
+    }
+
     let result
     try {
       result = landmarker.detectForVideo(cameraEl, performance.now())
@@ -180,16 +202,6 @@ export function useAttentionMonitor() {
         // status alone so the overlay can still explain what happened.
         stop()
       }
-      return
-    }
-
-    // Nobody should be warned for looking away from a video they deliberately
-    // paused. The caller decides when that is — crucially it stays true while
-    // the policy holds playback itself, or the return to attention that ends
-    // the pause could never be observed.
-    if (shouldMonitor && !shouldMonitor()) {
-      awaySince = null
-      backSince = null
       return
     }
 
@@ -301,12 +313,22 @@ export function useAttentionMonitor() {
     status.value = 'calibrating'
     calibrationStartedAt = performance.now()
 
-    timer = setInterval(() => sample(videoEl), SAMPLE_INTERVAL_MS)
+    scheduleNext(videoEl)
     return true
   }
 
+  // A self-rescheduling timeout rather than one fixed interval, so the cadence
+  // can drop once calibration hands over to monitoring. It also means a slow
+  // sample can never stack up behind the next tick the way setInterval allows.
+  function scheduleNext(videoEl) {
+    timer = setTimeout(() => {
+      sample(videoEl)
+      if (timer !== null) scheduleNext(videoEl)
+    }, baseline ? SAMPLE_INTERVAL_MS : CALIBRATION_INTERVAL_MS)
+  }
+
   function stop() {
-    clearInterval(timer)
+    clearTimeout(timer)
     timer = null
     landmarker?.close?.()
     landmarker = null
