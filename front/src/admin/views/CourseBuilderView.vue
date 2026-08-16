@@ -65,7 +65,7 @@ async function onPublish(status) {
   try {
     const course = await coursesApi.create({ ...form, status })
     toast.success(t('courseBuilder.created'))
-    router.push(`/admin/courses/${course.id}`)
+    router.push(`/bos/courses/${course.id}`)
   } catch (error) {
     errorMessage.value = error.response?.data?.message ?? String(error)
   } finally {
@@ -76,7 +76,7 @@ async function onPublish(status) {
 
 <template>
   <div class="mx-auto max-w-3xl px-6 py-8">
-    <button type="button" class="flex items-center gap-1.5 text-small font-medium text-ink-muted transition-default hover:text-ink" @click="router.push('/admin/courses')">
+    <button type="button" class="flex items-center gap-1.5 text-small font-medium text-ink-muted transition-default hover:text-ink" @click="router.push('/bos/courses')">
       <Icon name="chevron-left" size="16" />
       {{ t('courses.title') }}
     </button>

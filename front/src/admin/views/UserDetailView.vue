@@ -63,7 +63,7 @@ onMounted(load)
     <button
       type="button"
       class="flex items-center gap-1.5 text-small font-medium text-ink-muted transition-default hover:text-ink"
-      @click="router.push('/admin/users')"
+      @click="router.push('/bos/users')"
     >
       <Icon name="chevron-left" size="16" />
       {{ t('users.title') }}
@@ -116,7 +116,7 @@ onMounted(load)
           v-else-if="activeTab === 'settings'"
           :user="user"
           @updated="user = $event"
-          @deactivated="router.push('/admin/users')"
+          @deactivated="router.push('/bos/users')"
         />
       </div>
     </template>

@@ -80,10 +80,11 @@ export const router = createRouter({
       ],
     },
     {
-      path: '/admin',
+      path: '/bos',
       component: AdminShell,
       // Inherited by every child: the guard checks it once, here, instead of
-      // being repeated on eighteen routes.
+      // being repeated on eighteen routes. `admin: true` now means SUPERADMIN
+      // and nobody else — see the guard.
       meta: { admin: true },
       children: [
         { path: '', name: 'admin-dashboard', component: AdminHomeView, meta: { titleKey: 'nav.dashboard' } },
@@ -180,7 +181,16 @@ export const router = createRouter({
         { path: 'settings', name: 'admin-settings', component: AdminSettingsView, meta: { titleKey: 'nav.settings' } },
       ],
     },
-    // Deliberately NOT public. A signed-in user who mistypes a URL should see
+    // The admin panel used to live here. Kept as a redirect rather than
+    // deleted: bookmarks, the springadmin.techinfo.uz redirect and anything
+    // else pointing at the old paths still arrive in the right place. The
+    // guard on /bos is what decides whether they may actually come in.
+    {
+      path: '/admin/:pathMatch(.*)*',
+      redirect: (to) => ({ path: '/bos/' + (to.params.pathMatch ?? []).join('/') }),
+    },
+
+    // Deliberately NOT public. A signed-in user should see
     // the 404; a signed-out visitor should see the login form, not a dead end
     // with nothing to click. The guard below tells the two apart.
     { path: '/:pathMatch(.*)*', name: 'not-found', component: NotFoundView },
@@ -188,8 +198,11 @@ export const router = createRouter({
 })
 
 // Where a signed-in user belongs when they land on /login or finish signing in.
+// ADMIN and MANAGER go to the employee side now: the admin panel is SUPERADMIN
+// only, so sending them to a page they would be bounced off is worse than
+// useless.
 export function homeRouteFor(auth) {
-  return auth.canUseAdminApp ? { name: 'admin-dashboard' } : { name: 'dashboard' }
+  return auth.isSuperAdmin ? { name: 'admin-dashboard' } : { name: 'dashboard' }
 }
 
 router.beforeEach((to) => {
@@ -207,10 +220,15 @@ router.beforeEach((to) => {
     return { name: 'login', query: { redirect: to.fullPath } }
   }
 
-  // An employee who follows an /admin link keeps their session and is told no,
-  // rather than being signed out — which is what the standalone admin app did,
-  // and which made no sense once the two share one login.
-  if (to.meta.admin && !auth.canUseAdminApp) {
+  // /bos is SUPERADMIN only. The path being unguessable is not a control, so
+  // this check is the control: ADMIN and MANAGER are refused here exactly like
+  // an ordinary employee. Their session survives — they are told no, not
+  // signed out.
+  //
+  // This guards the admin *UI*. It is not a substitute for the per-endpoint
+  // permission checks on the API, which still apply to every request the pages
+  // make (rbac.middleware.js).
+  if (to.meta.admin && !auth.isSuperAdmin) {
     return { name: 'forbidden' }
   }
 

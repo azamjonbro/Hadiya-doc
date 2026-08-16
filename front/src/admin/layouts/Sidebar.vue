@@ -105,7 +105,7 @@ function onNavigate() {
       >
         <Icon :name="ui.sidebarCollapsed ? 'chevron-right' : 'chevron-left'" size="16" />
       </button>
-      <router-link to="/admin/settings" class="flex items-center gap-2.5 rounded-md px-1.5 py-2 transition-default hover:bg-surface-2" :class="ui.sidebarCollapsed ? 'lg:justify-center' : ''">
+      <router-link to="/bos/settings" class="flex items-center gap-2.5 rounded-md px-1.5 py-2 transition-default hover:bg-surface-2" :class="ui.sidebarCollapsed ? 'lg:justify-center' : ''">
         <Avatar :name="auth.user?.fullName ?? ''" size="sm" />
         <div class="min-w-0 text-left" :class="ui.sidebarCollapsed ? 'lg:hidden' : ''">
           <p class="truncate text-small font-medium text-ink">{{ auth.user?.fullName }}</p>

@@ -111,7 +111,7 @@ onMounted(loadFirstPage)
     <div v-else-if="items.length" class="mt-6 space-y-3">
       <AppCard v-for="item in items" :key="item.id" padding="none">
         <div class="flex items-center justify-between gap-3 p-4">
-          <div class="min-w-0 cursor-pointer" @click="router.push(`/admin/news/${item.id}`)">
+          <div class="min-w-0 cursor-pointer" @click="router.push(`/bos/news/${item.id}`)">
             <p class="truncate text-small font-medium text-ink">{{ item.title }}</p>
             <p class="mt-1 flex items-center gap-2">
               <Badge :variant="statusBadge[item.status]" size="sm">{{ t(`courses.status.${item.status.toLowerCase()}`) }}</Badge>

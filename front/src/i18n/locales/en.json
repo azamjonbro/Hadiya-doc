@@ -681,6 +681,12 @@
       "theme": "Theme",
       "light": "Light",
       "dark": "Dark"
+    },
+    "adminPanel": {
+      "title": "Admin panel",
+      "hint": "Opens the management panel. You stay signed in — it is the same session.",
+      "open": "Open admin panel",
+      "backToUser": "Back to user panel"
     }
   },
   "reviews": {

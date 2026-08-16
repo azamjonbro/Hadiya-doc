@@ -56,16 +56,16 @@ const attentionItems = computed(() => {
   const notStartedCount = dashboard.value.charts.employeeProgress.find((b) => b.bucket === '0-25')?.count ?? 0
   const items = []
   if (c.overdueAssignments > 0) {
-    items.push({ icon: 'alert-triangle', tone: 'danger', text: t('dashboard.attention.overdue', { count: c.overdueAssignments }), to: '/admin/courses' })
+    items.push({ icon: 'alert-triangle', tone: 'danger', text: t('dashboard.attention.overdue', { count: c.overdueAssignments }), to: '/bos/courses' })
   }
   if (notStartedCount > 0) {
-    items.push({ icon: 'users', tone: 'warning', text: t('dashboard.attention.notStarted', { count: notStartedCount }), to: '/admin/users' })
+    items.push({ icon: 'users', tone: 'warning', text: t('dashboard.attention.notStarted', { count: notStartedCount }), to: '/bos/users' })
   }
   if (c.avgCompletionPercent < 50) {
-    items.push({ icon: 'trending-down', tone: 'warning', text: t('dashboard.attention.lowCompletion', { pct: c.avgCompletionPercent }), to: '/admin/courses' })
+    items.push({ icon: 'trending-down', tone: 'warning', text: t('dashboard.attention.lowCompletion', { pct: c.avgCompletionPercent }), to: '/bos/courses' })
   }
   if (c.newsEngagementPercent < 40) {
-    items.push({ icon: 'newspaper', tone: 'warning', text: t('dashboard.attention.lowNewsEngagement', { pct: c.newsEngagementPercent }), to: '/admin/news' })
+    items.push({ icon: 'newspaper', tone: 'warning', text: t('dashboard.attention.lowNewsEngagement', { pct: c.newsEngagementPercent }), to: '/bos/news' })
   }
   return items
 })

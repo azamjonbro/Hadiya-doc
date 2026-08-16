@@ -81,7 +81,7 @@ async function onDelete() {
   if (!(await confirm.ask({ message: t('confirm.deleteNews') }))) return
   try {
     await newsApi.remove(route.params.id)
-    router.push('/admin/news')
+    router.push('/bos/news')
   } catch (error) {
     errorMessage.value = error.response?.data?.message ?? String(error)
   }
@@ -92,7 +92,7 @@ onMounted(load)
 
 <template>
   <div class="mx-auto max-w-2xl px-6 py-8">
-    <button type="button" class="flex items-center gap-1.5 text-small font-medium text-ink-muted transition-default hover:text-ink" @click="router.push('/admin/news')">
+    <button type="button" class="flex items-center gap-1.5 text-small font-medium text-ink-muted transition-default hover:text-ink" @click="router.push('/bos/news')">
       <Icon name="chevron-left" size="16" />
       {{ t('news.title') }}
     </button>

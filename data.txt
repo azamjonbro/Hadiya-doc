@@ -9,10 +9,11 @@ Bu fayl faqat spring.techinfo.uz bilan bog'liq o'zgarishlarni yozib boradi.
 1. HOZIRGI TUZILISH
 --------------------------------------------------------------------------------
   https://spring.techinfo.uz/           -> xodimlar sahifalari (SPA)
-  https://spring.techinfo.uz/admin      -> admin panel (o'sha SPA ichida)
+  https://spring.techinfo.uz/bos        -> admin panel (FAQAT SUPERADMIN)
+  https://spring.techinfo.uz/admin/*    -> /bos/* ga yo'naltiriladi (eski havolalar)
   https://spring.techinfo.uz/api/v1/    -> backend (nginx proxy -> 127.0.0.1:4000)
 
-  https://springadmin.techinfo.uz/*     -> 301 -> spring.techinfo.uz/admin*
+  https://springadmin.techinfo.uz/*     -> 301 -> spring.techinfo.uz (u yerdan /bos ga)
   https://qollanma.techinfo.uz/api/v1/  -> API (SPA shu manzilni chaqiradi)
 
   Fayllar serverda:
@@ -29,7 +30,7 @@ Bu fayl faqat spring.techinfo.uz bilan bog'liq o'zgarishlarni yozib boradi.
 2. ADMIN PANEL FRONT ICHIGA KO'CHIRILDI
 --------------------------------------------------------------------------------
   Ilgari: ikkita alohida Vue ilova, ikkita domen (spring + springadmin).
-  Endi:   bitta ilova, bitta bundle, admin sahifalari /admin/* yo'lida.
+  Endi:   bitta ilova, bitta bundle, admin sahifalari /bos/* yo'lida (8-bandga qarang).
 
   Kod qayerga tushdi:
     front/src/admin/views/       18 ta admin sahifasi
@@ -51,11 +52,10 @@ Bu fayl faqat spring.techinfo.uz bilan bog'liq o'zgarishlarni yozib boradi.
   admin-users-list, ...), chunki 12 tasi xodim tomoni bilan to'qnashardi.
 
   Ruxsat:
-    - /admin/* -> meta.admin, guard canUseAdminApp ni tekshiradi
-      (SUPERADMIN / ADMIN / MANAGER).
-    - Xodim /admin ga kirsa 403 sahifasi. ILGARI: sessiyasi o'chirilardi —
-      bu bitta login bo'lgandan keyin mantiqsiz.
-    - Login bitta sahifa. Kirgandan keyin: admin-tier -> /admin, xodim -> /.
+    - Admin route'lari meta.admin bilan belgilangan, guard bitta joyda.
+    - Rad etilgan foydalanuvchi 403 sahifasini ko'radi, sessiyasi saqlanadi.
+      ILGARI: sessiyasi o'chirilardi — bitta login bo'lgandan keyin mantiqsiz.
+    - Login bitta sahifa. Kim qayerga tushishi 8-bandda.
 
   DIQQAT: repodagi admin/ papkasi hali turibdi va endi ISHLATILMAYDI.
   U yerdagi faylni tahrirlash hech narsaga ta'sir qilmaydi. O'chirish yoki
@@ -150,8 +150,8 @@ Bu fayl faqat spring.techinfo.uz bilan bog'liq o'zgarishlarni yozib boradi.
 7. TEKSHIRUV NATIJALARI (2026-08-16)
 --------------------------------------------------------------------------------
   Brauzerda 25/25 o'tdi:
-    - kirmagan holatda / va /admin/users -> login formasi
-    - superadmin kirgach -> /admin
+    - kirmagan holatda / va /bos/users -> login formasi
+    - superadmin kirgach -> /bos
     - 13 ta admin sahifasi xatosiz ochildi
     - 7 ta xodim sahifasi xatosiz ochildi
     - noma'lum manzil: kirgan -> 404, kirmagan -> login
@@ -164,7 +164,48 @@ Bu fayl faqat spring.techinfo.uz bilan bog'liq o'zgarishlarni yozib boradi.
   Qo'shni 6 sayt tegilmagan (algoritm/dacha/oil/prava/soat javob beryapti).
 
 
-8. OCHIQ QOLGAN MASALALAR
+8. ADMIN PANEL /bos GA KO'CHIRILDI, FAQAT SUPERADMIN
+--------------------------------------------------------------------------------
+  Yangi kirish nuqtasi:
+    /bos, /bos/users, /bos/courses, ...   (ilgari /admin/*)
+    /admin/* -> ichki redirect -> /bos/*  (o'chirilmadi, eski havolalar ishlaydi)
+
+  Kim kira oladi:
+    SUPERADMIN  -> kiradi
+    ADMIN       -> 403
+    MANAGER     -> 403
+    EMPLOYEE    -> 403
+  Guard: front/src/router/index.js, meta.admin -> auth.isSuperAdmin
+  (ilgari canUseAdminApp edi, ya'ni ADMIN va MANAGER ham kirardi)
+
+  DIQQAT: /bos yo'lining "yashirin" bo'lishi himoya EMAS. Himoya — guard.
+  Va guard faqat UI ni yopadi. ADMIN/MANAGER rollarining API ruxsatlari
+  (DEFAULT_ROLE_PERMISSIONS) TEGILMADI — ular hali ham API'ni to'g'ridan-to'g'ri
+  chaqira oladi. Rostdan "faqat SUPERADMIN boshqarsin" desangiz, rol
+  ruxsatlarini ham qisqartirish kerak. Bu ataylab qilinmadi.
+
+  O'tish yo'llari (login QAYTA SO'RALMAYDI):
+    User panel -> Settings -> "Admin panelga o'tish"  -> /bos
+    Admin panel -> profil menyusi -> "User paneliga o'tish" -> /
+  Tugma faqat isSuperAdmin bo'lganda ko'rinadi.
+
+  Token: yangi token YARATILMADI. Ilova bitta SPA bo'lgani uchun panellar
+  orasida o'tish oddiy router push — sahifa qayta yuklanmaydi, token xotirada
+  qoladi, URL'ga hech narsa yozilmaydi. ?token=... umuman ishlatilmaydi.
+
+  Login yo'nalishi: SUPERADMIN -> /bos, qolganlar -> /
+  (ilgari admin-tier -> /admin edi; ADMIN/MANAGER endi admin panelga kira
+  olmagani uchun ularni u yerga yuborish ma'nosiz)
+
+  Tekshirildi (haqiqiy hisoblar bilan, 23/23):
+    SUPERADMIN: login -> /bos, tugma bor, /bos va /bos/users ochiladi
+    ADMIN:      login -> /,   tugma yo'q, /bos rad etildi, /admin/users -> /403
+    EMPLOYEE:   login -> /,   tugma yo'q, /bos rad etildi, /admin/users -> /403
+    Uchalasida ham URL'da token yo'q.
+    SUPERADMIN Settings -> tugma -> /bos -> / : qayta login so'ralmadi.
+
+
+9. OCHIQ QOLGAN MASALALAR
 --------------------------------------------------------------------------------
   - repodagi admin/ papkasi ishlatilmaydi, lekin hali turibdi.
   - ops.techinfo.uz 502 beryapti. Sababi: 2026-08-15 kuni deploy paytida uning
@@ -176,3 +217,5 @@ Bu fayl faqat spring.techinfo.uz bilan bog'liq o'zgarishlarni yozib boradi.
   - Har sahifa ochilganda konsolda bitta 403 ko'rinadi: kirmagan mehmon uchun
     /auth/refresh CSRF tekshiruvidan o'tmaydi. Zararsiz, ushlab olinadi.
   - Bundle 1.44 MB (gzip 432 KB). Kod bo'linishi (code splitting) qilinmagan.
+  - ADMIN/MANAGER rollarining API ruxsatlari qisqartirilmagan (yuqoriga qarang).
+  - Serverda zaxira: /var/www/spring/front.backup-20260816-153023

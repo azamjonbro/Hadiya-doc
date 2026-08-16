@@ -58,7 +58,7 @@ async function onCreate() {
     const group = await groupsApi.create({ ...createForm })
     showCreate.value = false
     toast.success(t('groups.created'))
-    router.push(`/admin/groups/${group.id}`)
+    router.push(`/bos/groups/${group.id}`)
   } catch (error) {
     createError.value = error.response?.data?.message ?? String(error)
   } finally {
@@ -107,7 +107,7 @@ onMounted(load)
         hover
         as="button"
         class="text-left"
-        @click="router.push(`/admin/groups/${group.id}`)"
+        @click="router.push(`/bos/groups/${group.id}`)"
       >
         <div class="flex items-start justify-between gap-3">
           <div class="min-w-0">

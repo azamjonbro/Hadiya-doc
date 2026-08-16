@@ -122,7 +122,7 @@ onMounted(load)
   <div class="mx-auto max-w-7xl px-6 py-8">
     <div class="flex flex-wrap items-center justify-between gap-3">
       <h1 class="text-h1 text-ink">{{ t('courses.title') }}</h1>
-      <AppButton v-if="auth.hasPermission('course:create')" icon="plus" @click="router.push('/admin/courses/new')">{{ t('courses.newCourse') }}</AppButton>
+      <AppButton v-if="auth.hasPermission('course:create')" icon="plus" @click="router.push('/bos/courses/new')">{{ t('courses.newCourse') }}</AppButton>
     </div>
 
     <!-- items-center: unlabelled controls, and the button is shorter than
@@ -166,7 +166,7 @@ onMounted(load)
         padding="none"
         hover
         class="group relative flex cursor-pointer flex-col overflow-hidden"
-        @click="router.push(`/admin/courses/${course.id}`)"
+        @click="router.push(`/bos/courses/${course.id}`)"
       >
         <!-- Destructive actions stay hidden until the card is hovered or
              something inside it has focus, so the grid reads as a catalog

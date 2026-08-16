@@ -197,7 +197,7 @@ async function onDelete() {
   busy.value = true
   try {
     await groupsApi.remove(route.params.id)
-    router.push('/admin/groups')
+    router.push('/bos/groups')
   } catch (error) {
     toast.error(error.response?.data?.message ?? String(error))
   } finally {
@@ -214,7 +214,7 @@ onMounted(load)
     <button
       type="button"
       class="flex items-center gap-1.5 text-small font-medium text-ink-muted transition-default hover:text-ink"
-      @click="router.push('/admin/groups')"
+      @click="router.push('/bos/groups')"
     >
       <Icon name="chevron-left" size="16" />
       {{ t('groups.title') }}
@@ -257,7 +257,7 @@ onMounted(load)
             <button
               type="button"
               class="min-w-0 flex-1 text-left transition-default hover:text-primary"
-              @click="router.push(`/admin/users/${member.id}`)"
+              @click="router.push(`/bos/users/${member.id}`)"
             >
               <p class="truncate text-small font-medium text-ink">{{ member.fullName }}</p>
               <p class="truncate text-caption text-ink-faint">
@@ -298,7 +298,7 @@ onMounted(load)
             <button
               type="button"
               class="min-w-0 flex-1 text-left transition-default hover:text-primary"
-              @click="router.push(`/admin/courses/${course.id}`)"
+              @click="router.push(`/bos/courses/${course.id}`)"
             >
               <p class="truncate text-small font-medium text-ink">{{ course.title }}</p>
             </button>

@@ -331,7 +331,7 @@ onMounted(() => {
             v-for="user in items"
             :key="user.id"
             class="cursor-pointer border-b border-border text-small transition-default last:border-0 hover:bg-surface-2"
-            @click="router.push(`/admin/users/${user.id}`)"
+            @click="router.push(`/bos/users/${user.id}`)"
           >
             <td class="px-4 py-3" @click.stop>
               <input type="checkbox" :checked="selected.has(user.id)" class="h-4 w-4 rounded border-border-strong" @change="toggleOne(user.id)" />

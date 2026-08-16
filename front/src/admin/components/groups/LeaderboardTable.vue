@@ -41,7 +41,7 @@ const MEDAL_CLASSES = {
           v-for="row in rows"
           :key="row.userId"
           class="cursor-pointer transition-default hover:bg-surface-2"
-          @click="router.push(`/admin/users/${row.userId}`)"
+          @click="router.push(`/bos/users/${row.userId}`)"
         >
           <td class="px-4 py-3">
             <span

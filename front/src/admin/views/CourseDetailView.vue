@@ -126,7 +126,7 @@ function onCourseArchived(updated) {
 // The course this page is about no longer exists — there is nothing left to
 // render here, so fall back to the list.
 function onCourseDeleted() {
-  router.push('/admin/courses')
+  router.push('/bos/courses')
 }
 
 async function onAddTopicSubmit() {
@@ -178,7 +178,7 @@ onMounted(load)
 
 <template>
   <div class="mx-auto max-w-5xl px-6 py-8">
-    <button type="button" class="flex items-center gap-1.5 text-small font-medium text-ink-muted transition-default hover:text-ink" @click="router.push('/admin/courses')">
+    <button type="button" class="flex items-center gap-1.5 text-small font-medium text-ink-muted transition-default hover:text-ink" @click="router.push('/bos/courses')">
       <Icon name="chevron-left" size="16" />
       {{ t('courses.title') }}
     </button>

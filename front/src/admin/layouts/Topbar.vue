@@ -73,7 +73,7 @@ function pickLocale(code) {
         <Icon :name="theme.theme === 'dark' ? 'sun' : 'moon'" size="17" />
       </button>
 
-      <router-link to="/admin/notifications" class="relative flex h-9 w-9 items-center justify-center rounded-md text-ink-muted transition-default hover:bg-surface-2">
+      <router-link to="/bos/notifications" class="relative flex h-9 w-9 items-center justify-center rounded-md text-ink-muted transition-default hover:bg-surface-2">
         <Icon name="bell" size="17" />
         <span v-if="unreadCount > 0" class="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-danger ring-2 ring-surface" />
       </router-link>
@@ -89,7 +89,13 @@ function pickLocale(code) {
               <p class="truncate text-caption text-ink-faint">{{ auth.user?.email }}</p>
             </div>
             <div class="my-1 border-t border-border" />
-            <router-link to="/admin/settings" class="flex items-center gap-2 rounded-md px-2.5 py-1.5 text-small text-ink transition-default hover:bg-surface-2" @click="profileOpen = false">
+            <!-- The way back. Same session, same tokens — this is a router
+                 push inside one SPA, so nothing is re-authenticated. -->
+            <router-link to="/" class="flex items-center gap-2 rounded-md px-2.5 py-1.5 text-small text-ink transition-default hover:bg-surface-2" @click="profileOpen = false">
+              <Icon name="home" size="15" />
+              {{ t('settings.adminPanel.backToUser') }}
+            </router-link>
+            <router-link to="/bos/settings" class="flex items-center gap-2 rounded-md px-2.5 py-1.5 text-small text-ink transition-default hover:bg-surface-2" @click="profileOpen = false">
               <Icon name="settings" size="15" />
               {{ t('nav.settings') }}
             </router-link>

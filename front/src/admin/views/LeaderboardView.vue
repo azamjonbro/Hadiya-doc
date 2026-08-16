@@ -123,7 +123,7 @@ onMounted(() => {
       <LeaderboardTable class="mt-6" :rows="data.rows" :show-department="!groupId" />
 
       <p v-if="groupId" class="mt-3 text-caption text-ink-faint">
-        <button type="button" class="underline transition-default hover:text-ink" @click="router.push(`/admin/groups/${groupId}`)">
+        <button type="button" class="underline transition-default hover:text-ink" @click="router.push(`/bos/groups/${groupId}`)">
           {{ t('leaderboard.openGroup') }}
         </button>
       </p>

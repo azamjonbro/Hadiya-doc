@@ -1,11 +1,13 @@
 <script setup>
 import { computed, onMounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
+import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { useThemeStore } from '@/stores/theme'
 import { setLocale, availableLocales } from '@/i18n'
 import { gamificationApi } from '@/services/gamification'
 import { BADGE_ICONS } from '@/gamification/badgeIcons'
+import AppButton from '@/components/ui/AppButton.vue'
 import AppCard from '@/components/ui/AppCard.vue'
 import AppSelect from '@/components/ui/AppSelect.vue'
 import Avatar from '@/components/ui/Avatar.vue'
@@ -13,6 +15,7 @@ import Icon from '@/components/ui/Icon.vue'
 import Tabs from '@/components/ui/Tabs.vue'
 
 const { t, locale } = useI18n()
+const router = useRouter()
 const auth = useAuthStore()
 const theme = useThemeStore()
 
@@ -45,6 +48,22 @@ onMounted(loadGamification)
 <template>
   <div class="mx-auto max-w-2xl px-6 py-8">
     <h1 class="text-h1 text-ink">{{ t('settings.title') }}</h1>
+
+    <!-- SUPERADMIN only. ADMIN and MANAGER do not see it because they cannot
+         enter the admin panel at all — the same rule the /bos guard applies,
+         so the button never promises something the guard then refuses. This is
+         a convenience, not a control: hiding it protects nothing on its own. -->
+    <AppCard v-if="auth.isSuperAdmin" class="mt-6">
+      <div class="flex items-center justify-between gap-4">
+        <div>
+          <h2 class="text-small font-semibold text-ink">{{ t('settings.adminPanel.title') }}</h2>
+          <p class="mt-1 text-caption text-ink-faint">{{ t('settings.adminPanel.hint') }}</p>
+        </div>
+        <AppButton icon="shield" @click="router.push({ name: 'admin-dashboard' })">
+          {{ t('settings.adminPanel.open') }}
+        </AppButton>
+      </div>
+    </AppCard>
 
     <Tabs class="mt-6" v-model="activeTab" :tabs="tabs" />
 
