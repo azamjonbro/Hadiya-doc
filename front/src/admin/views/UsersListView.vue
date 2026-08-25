@@ -15,6 +15,7 @@ import AppSelect from '@/components/ui/AppSelect.vue'
 import BranchSelect from '@/components/ui/BranchSelect.vue'
 import GeneratedPasswordField from '@/components/ui/GeneratedPasswordField.vue'
 import Modal from '@/components/ui/Modal.vue'
+import FaceEnrollmentWizard from '@/components/face/FaceEnrollmentWizard.vue'
 import Avatar from '@/components/ui/Avatar.vue'
 import Badge from '@/components/ui/Badge.vue'
 import ProgressBar from '@/components/ui/ProgressBar.vue'
@@ -82,6 +83,10 @@ const createForm = reactive({
   courseIds: [],
 })
 const assignableCourses = ref([])
+
+// { id, fullName } of a just-created user, offered the optional face
+// enrollment step — see onCreateSubmit.
+const pendingFaceEnrollUser = ref(null)
 
 // Checked as the admin types, but only once the field is non-empty — a red
 // error on a field nobody has filled in yet reads as a failure, not a hint.
@@ -209,12 +214,18 @@ async function onCreateSubmit() {
   try {
     // Normalised here as well as on the server, so the value the admin sees in
     // the table is the one they typed minus the spaces they read it out with.
-    await usersApi.create({
+    const created = await usersApi.create({
       ...createForm,
       jshshir: normalizeJshshir(createForm.jshshir),
       passportSeries: normalizePassportSeries(createForm.passportSeries),
     })
     showCreateModal.value = false
+    // Optional, skippable follow-up — face enrollment is never required to
+    // finish creating an account (spec doesn't demand it happen in the same
+    // breath, only that SUPERADMIN "have the ability" to upload a reference
+    // photo). Offered right after creation since the new employee's id/name
+    // is right here; also reachable later from their profile's Settings tab.
+    pendingFaceEnrollUser.value = { id: created.id, fullName: created.fullName }
     Object.assign(createForm, {
       fullName: '', jshshir: '', passportSeries: '', email: '', phone: '', roleName: ROLES.EMPLOYEE, branch: '', department: '', position: '', password: '', isActive: true, courseIds: [],
     })
@@ -431,5 +442,15 @@ onMounted(() => {
         </div>
       </form>
     </Modal>
+
+    <FaceEnrollmentWizard
+      v-if="pendingFaceEnrollUser"
+      :model-value="Boolean(pendingFaceEnrollUser)"
+      :user-id="pendingFaceEnrollUser.id"
+      :user-name="pendingFaceEnrollUser.fullName"
+      mode="enroll"
+      @update:model-value="pendingFaceEnrollUser = null"
+      @enrolled="pendingFaceEnrollUser = null"
+    />
   </div>
 </template>

@@ -22,6 +22,8 @@ deterrent only.
 | Over-broad employee monitoring | Analytics is scoped to in-platform activity only (spec §43) — no OS-level hooks, no other-tab URLs; users see a monitoring notice describing exactly what's tracked |
 | Secret/log leakage | Winston formatter redacts password/token fields before any log line is written; `.env` is git-ignored, `.env.example` documents every required variable with no real secrets committed |
 | Expired/overdue course access | `courseAssignment.status` and `deadline`/`expiresAt` are checked server-side on every `video-access` token request — an expired assignment cannot mint a playback token regardless of what the frontend shows |
+| Face verification bypass | Match decision (cosine similarity vs. threshold) always computed server-side from an uploaded photo — a client can only submit pixels, never a pre-computed embedding, so there is no client-controlled value the decision trusts. Per-IP rate limit + per-account lockout on repeated failures. Challenge tokens (mid-login case) are opaque, hashed at rest, single-use, 5-minute-lived, and user-bound. See `docs/face-verification.md` |
+| Biometric data leakage | Face embedding lives in its own collection, `select: false` by default — never returned by `GET /users/:id` or any other user-serialization path. Reference photos sit in a dedicated private bucket (`lms-faces`) with no public policy and no signed URLs, streamed only through an audited SUPERADMIN-only endpoint |
 
 ## Test checklist (executed at Phase 16 — Security Hardening)
 

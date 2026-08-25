@@ -1,5 +1,6 @@
-import { ref, shallowRef } from 'vue'
+import { ref } from 'vue'
 import { ATTENTION_REASONS, FOREIGN_FACE_COOLDOWN_MS } from '@lms/shared'
+import { useFaceCamera } from './useFaceCamera.js'
 
 /**
  * Camera-based attention monitoring for video playback.
@@ -91,10 +92,9 @@ export function useAttentionMonitor() {
   const attentive = ref(true)
   const reason = ref(null)
   const errorMessage = ref('')
-  const cameraStream = shallowRef(null)
+  const camera = useFaceCamera()
 
   let landmarker = null
-  let cameraEl = null
   let timer = null
   let handlers = {}
   let graceMs = 4000
@@ -193,31 +193,16 @@ export function useAttentionMonitor() {
       faceCount,
       // Resolves to a Blob, or to null when the course did not ask for a
       // capture. The caller decides what to do with it; this module never
-      // uploads anything itself.
-      snapshot: captureFrame ? grabFrame() : Promise.resolve(null),
-    })
-  }
-
-  // One JPEG of the current camera frame, at the capture resolution (320x240),
-  // quality 0.7 — enough to recognise a person, small enough that the upload
-  // never competes with the video for bandwidth.
-  function grabFrame() {
-    return new Promise((resolve) => {
-      try {
-        const canvas = document.createElement('canvas')
-        canvas.width = cameraEl.videoWidth || 320
-        canvas.height = cameraEl.videoHeight || 240
-        canvas.getContext('2d').drawImage(cameraEl, 0, 0, canvas.width, canvas.height)
-        canvas.toBlob((blob) => resolve(blob), 'image/jpeg', 0.7)
-      } catch {
-        // A capture that fails must not take the alert down with it — the
-        // event is still worth reporting without a picture.
-        resolve(null)
-      }
+      // uploads anything itself. Quality 0.7, same as before the capture
+      // mechanics moved into useFaceCamera — enough to recognise a person,
+      // small enough that the upload never competes with the video for
+      // bandwidth.
+      snapshot: captureFrame ? camera.grabFrame(0.7) : Promise.resolve(null),
     })
   }
 
   function sample(videoEl) {
+    const cameraEl = camera.getElement()
     if (!landmarker || !cameraEl || cameraEl.readyState < 2) return
 
     // Nobody should be warned for looking away from a video they deliberately
@@ -334,12 +319,9 @@ export function useAttentionMonitor() {
     }
 
     try {
-      cameraStream.value = await navigator.mediaDevices.getUserMedia({
-        // Low resolution on purpose: a face landmark model needs nothing
-        // more, and it keeps both CPU and any perceived intrusiveness down.
-        video: { width: 320, height: 240, facingMode: 'user' },
-        audio: false,
-      })
+      // Low resolution on purpose: a face landmark model needs nothing more,
+      // and it keeps both CPU and any perceived intrusiveness down.
+      await camera.start({ video: { width: 320, height: 240, facingMode: 'user' }, audio: false })
     } catch (error) {
       const denied = error?.name === 'NotAllowedError' || error?.name === 'SecurityError'
       status.value = denied ? 'denied' : 'error'
@@ -349,13 +331,6 @@ export function useAttentionMonitor() {
     }
 
     try {
-      cameraEl = document.createElement('video')
-      cameraEl.autoplay = true
-      cameraEl.playsInline = true
-      cameraEl.muted = true
-      cameraEl.srcObject = cameraStream.value
-      await cameraEl.play()
-
       landmarker = await loadLandmarker()
     } catch (error) {
       status.value = 'error'
@@ -395,14 +370,7 @@ export function useAttentionMonitor() {
     timer = null
     landmarker?.close?.()
     landmarker = null
-    // Releasing the track is what turns the camera indicator light off — it
-    // must happen on every teardown path, not just the tidy one.
-    cameraStream.value?.getTracks().forEach((track) => track.stop())
-    cameraStream.value = null
-    if (cameraEl) {
-      cameraEl.srcObject = null
-      cameraEl = null
-    }
+    camera.stop()
     if (status.value !== 'denied' && status.value !== 'error') status.value = 'idle'
     attentive.value = true
     reason.value = null

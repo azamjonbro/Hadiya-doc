@@ -1,6 +1,15 @@
 import 'dotenv/config'
 import { z } from 'zod'
 
+// z.coerce.boolean() is a trap for env flags: it runs JS `Boolean(value)`,
+// so the string "false" — non-empty — coerces to `true`. This reads the
+// literal words instead.
+const booleanFlag = (defaultValue) =>
+  z
+    .enum(['true', 'false'])
+    .default(defaultValue ? 'true' : 'false')
+    .transform((v) => v === 'true')
+
 const envSchema = z.object({
   NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
   PORT: z.coerce.number().int().positive().default(4000),
@@ -11,6 +20,10 @@ const envSchema = z.object({
   MONGO_URI: z.string().min(1, 'MONGO_URI is required'),
   ALLOWED_ORIGINS: z.string().min(1, 'ALLOWED_ORIGINS is required'),
   LOG_LEVEL: z.enum(['error', 'warn', 'info', 'http', 'debug']).default('info'),
+  // No feature needed a configured timezone before face verification's
+  // once-a-day boundary — introduced here rather than hardcoded so it can be
+  // corrected without a code change if the deployment ever isn't Tashkent.
+  APP_TIMEZONE: z.string().default('Asia/Tashkent'),
 
   JWT_ACCESS_SECRET: z.string().min(16, 'JWT_ACCESS_SECRET must be at least 16 characters'),
   JWT_REFRESH_SECRET: z.string().min(16, 'JWT_REFRESH_SECRET must be at least 16 characters'),
@@ -42,6 +55,22 @@ const envSchema = z.object({
 
   LOGIN_MAX_ATTEMPTS: z.coerce.number().int().positive().default(5),
   LOGIN_LOCK_MINUTES: z.coerce.number().int().positive().default(15),
+
+  // Master kill-switch + rollout gates for daily face verification. Default
+  // off end to end, so upgrading an existing deployment never changes login
+  // or video-playback behavior until an operator opts in deliberately.
+  FACE_VERIFICATION_ENABLED: booleanFlag(false),
+  // Once enabled, gates users SUPERADMIN has actually enrolled. Unenrolled
+  // users are left alone unless FACE_VERIFICATION_ENFORCE_UNENROLLED is also
+  // set — flipping that on a rollout day one would lock out every employee
+  // nobody has enrolled yet.
+  FACE_VERIFICATION_REQUIRED: booleanFlag(false),
+  FACE_VERIFICATION_ENFORCE_UNENROLLED: booleanFlag(false),
+  // Cosine similarity floor for a match. Never sent to the frontend.
+  FACE_MATCH_THRESHOLD: z.coerce.number().min(0).max(1).default(0.55),
+  FACE_VERIFICATION_MAX_ATTEMPTS: z.coerce.number().int().positive().default(5),
+  FACE_VERIFICATION_LOCK_MINUTES: z.coerce.number().int().positive().default(15),
+  FACE_CHALLENGE_TTL_SECONDS: z.coerce.number().int().positive().default(300),
 
   REDIS_URL: z.string().min(1, 'REDIS_URL is required'),
 
@@ -85,6 +114,10 @@ const envSchema = z.object({
   // holding photographs of people, and it must never pick up the public-read
   // policy that the images bucket has.
   S3_BUCKET_PROCTOR: z.string().default('lms-proctor'),
+  // Face enrollment reference photos. Its own bucket, private like
+  // lms-proctor and for the same reason: this is the most sensitive
+  // biometric data in the system and deserves at least the same isolation.
+  S3_BUCKET_FACES: z.string().default('lms-faces'),
   S3_BUCKET_CHAT: z.string().min(1).default('lms-chat'),
   CHAT_MAX_FILE_SIZE_MB: z.coerce.number().int().positive().default(25),
   // Longer than the material TTL: an image sits rendered in a scrollback
@@ -117,6 +150,14 @@ if (parsed.data.COOKIE_SAMESITE === 'none' && !isProduction) {
     'Invalid environment configuration: COOKIE_SAMESITE=none requires Secure cookies, ' +
       'which are only sent when NODE_ENV=production. Use a same-site domain layout in ' +
       'development, or run with NODE_ENV=production behind HTTPS.'
+  )
+  process.exit(1)
+}
+
+if (parsed.data.FACE_VERIFICATION_REQUIRED && !parsed.data.FACE_VERIFICATION_ENABLED) {
+  console.error(
+    'Invalid environment configuration: FACE_VERIFICATION_REQUIRED=true requires ' +
+      'FACE_VERIFICATION_ENABLED=true.'
   )
   process.exit(1)
 }

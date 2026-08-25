@@ -2,14 +2,26 @@ import { authService } from '../services/auth/auth.service.js'
 import { asyncHandler } from '../utils/asyncHandler.js'
 import { sendSuccess } from '../utils/apiResponse.js'
 import { setAuthCookies, clearAuthCookies, getRefreshToken } from '../utils/cookies.js'
-
-function requestMeta(req) {
-  return { ip: req.ip, userAgent: req.headers['user-agent'] ?? '' }
-}
+import { requestMeta } from '../utils/requestMeta.js'
 
 export const authController = {
   login: asyncHandler(async (req, res) => {
-    const { accessToken, refreshToken, user } = await authService.login(req.body, requestMeta(req))
+    const result = await authService.login(req.body, requestMeta(req))
+
+    // Credentials were valid but a daily face check still stands between
+    // this request and a session — no access/refresh/CSRF tokens exist yet,
+    // only the short-lived challenge the client exchanges via
+    // POST /auth/face/verify.
+    if (result.requiresFaceVerification) {
+      sendSuccess(
+        res,
+        { requiresFaceVerification: true, verificationToken: result.verificationToken },
+        'Face verification required'
+      )
+      return
+    }
+
+    const { accessToken, refreshToken, user } = result
     const csrfToken = setAuthCookies(res, { refreshToken })
     sendSuccess(res, { accessToken, user, csrfToken }, 'Logged in')
   }),

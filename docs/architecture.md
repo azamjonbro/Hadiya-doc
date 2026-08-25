@@ -113,4 +113,5 @@ front/ or admin/ (Axios, Bearer access token + httpOnly refresh cookie)
 - `docs/video-streaming.md` — upload, processing pipeline, secure playback
 - `docs/analytics.md` — event schema, batching, anti-skip watched-segments
 - `docs/security-threat-model.md` — threats and mitigations
+- `docs/face-verification.md` — daily face check: enrollment, matching, rollout
 - `docs/roadmap.md` — phased build plan

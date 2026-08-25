@@ -31,3 +31,11 @@ Phase 1 is the concrete deliverable of this initial build. It intentionally
 contains no business logic (no auth, no course/video models wired to
 routes) — only the scaffolding every later phase builds on, verified
 booting end-to-end before Phase 2 starts.
+
+## Post-Phase-18: Face Verification
+
+Daily face verification (login + first-video-of-the-day gate, SUPERADMIN
+enrollment) — a second factor added on top of the existing password/RBAC
+system rather than a new phase's worth of parallel infrastructure. Off by
+default (`FACE_VERIFICATION_ENABLED=false`). Full detail:
+`docs/face-verification.md`.

@@ -60,6 +60,7 @@
     "minRead": "daq. o'qish",
     "goToDashboard": "Bosh sahifaga",
     "goBack": "Orqaga",
+    "close": "Yopish",
     "pagination": {
       "range": "{total} tadan {from}–{to}",
       "page": "Sahifa"
@@ -846,6 +847,56 @@
       "lockouts": "Bloklash",
       "cameraBlocked": "Kamera yoqilmagan — bu ko'rsatkichlar to'liq emas",
       "times": "marta"
+    }
+  },
+  "faceVerification": {
+    "panel": {
+      "title": "Shaxsingizni tasdiqlang",
+      "body": "Davom etishdan oldin kamera orqali yuzingizni tekshirish kerak. Bu kuniga bir marta so'raladi.",
+      "privacy": "Kamera tasviri faqat shu tekshiruv uchun ishlatiladi va saqlanmaydi.",
+      "start": "Kamerani yoqish",
+      "requestingCamera": "Kamera so'ralmoqda...",
+      "detecting": "Yuz aniqlanmoqda...",
+      "verifying": "Tekshirilmoqda...",
+      "successTitle": "Tasdiqlandi",
+      "successBody": "Davom etilmoqda...",
+      "failedTitle": "Tasdiqlash muvaffaqiyatsiz",
+      "failedBody": "Yuzingiz aniq ko'rinishiga va yorug'lik yetarli ekanligiga ishonch hosil qiling, so'ngra qayta urining.",
+      "tryAgain": "Qayta urinish",
+      "lockedTitle": "Vaqtincha bloklandi",
+      "lockedBody": "Bir necha marta muvaffaqiyatsiz urinishdan so'ng tekshiruv vaqtincha bloklandi. Birozdan so'ng qayta urining yoki administratorga murojaat qiling.",
+      "deniedTitle": "Kameraga ruxsat berilmadi",
+      "deniedBody": "Davom etish uchun brauzer sozlamalaridan kameraga ruxsat bering.",
+      "errorTitle": "Kamera ishga tushmadi",
+      "errorBody": "Kamerani ishga tushirib bo'lmadi. Boshqa dastur uni band qilgan bo'lishi mumkin.",
+      "noBypass": "Bu bosqichni kamerasiz o'tib bo'lmaydi."
+    },
+    "enrollment": {
+      "title": "Yuzni ro'yxatga olish",
+      "reEnrollTitle": "Yuzni qayta ro'yxatga olish",
+      "intro": "Xodim kameraga qarab tursin. Bir nechta aniq surat olinadi va shu xodimning namunaviy yuzi sifatida saqlanadi.",
+      "startCamera": "Kamerani yoqish",
+      "cameraDenied": "Kameraga ruxsat berilmadi. Brauzer sozlamalaridan ruxsat bering.",
+      "guidance": "Kameraga qarang. Yuzingizni ramka ichida saqlang.",
+      "capture": "Suratga olish",
+      "retake": "Qayta olish",
+      "progress": "{count}/{max} surat olindi",
+      "submit": "Saqlash",
+      "success": "Yuz muvaffaqiyatli ro'yxatga olindi"
+    },
+    "status": {
+      "title": "Yuz orqali tasdiqlash",
+      "hint": "Kuniga bir marta yuzni tekshirish — faqat SUPERADMIN boshqaradi.",
+      "enrolled": "Ro'yxatga olingan",
+      "notEnrolled": "Ro'yxatga olinmagan",
+      "disabled": "O'chirilgan",
+      "enrolledAt": "Ro'yxatga olindi: {date}",
+      "lastVerifiedAt": "Oxirgi tasdiqlash: {date}",
+      "enroll": "Ro'yxatga olish",
+      "reEnroll": "Qayta ro'yxatga olish",
+      "enable": "Yoqish",
+      "disable": "O'chirish",
+      "saved": "Saqlandi"
     }
   },
   "confirm": {

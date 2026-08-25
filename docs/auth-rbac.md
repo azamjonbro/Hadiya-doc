@@ -46,6 +46,14 @@ real password; there is no baked-in default.
   the caller has an active `courseAssignment` for that video's course (or
   is an admin-tier role that bypasses assignment scoping).
 
+## Face verification — a second factor, not a second auth system
+When `FACE_VERIFICATION_ENABLED`/`REQUIRED` are on, a successful password
+login for an enrolled user returns a short-lived challenge instead of
+session tokens until a face check passes; the video-playback gate re-checks
+once a day the same way. It never issues tokens on its own — the challenge
+path calls the exact same `issueSession()` used by `login()`/`refresh()`.
+Full detail: `docs/face-verification.md`.
+
 ## Frontend guards are UX only
 Route guards (`beforeEach`) and permission-gated UI (`v-if`) exist in both
 `front/` and `admin/` purely to avoid showing users controls they can't use.

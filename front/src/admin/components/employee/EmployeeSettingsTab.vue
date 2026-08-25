@@ -10,9 +10,12 @@ import AppCard from '@/components/ui/AppCard.vue'
 import AppButton from '@/components/ui/AppButton.vue'
 import AppInput from '@/components/ui/AppInput.vue'
 import AppSelect from '@/components/ui/AppSelect.vue'
+import Badge from '@/components/ui/Badge.vue'
 import BranchSelect from '@/components/ui/BranchSelect.vue'
 import GeneratedPasswordField from '@/components/ui/GeneratedPasswordField.vue'
 import ImageUploadField from '@/components/ui/ImageUploadField.vue'
+import FaceEnrollmentWizard from '@/components/face/FaceEnrollmentWizard.vue'
+import { faceApi } from '@/services/face'
 
 const props = defineProps({
   user: { type: Object, required: true },
@@ -122,6 +125,49 @@ async function onDeactivate() {
     deactivating.value = false
   }
 }
+
+// Face verification is entirely SUPERADMIN-managed (spec §16) — ADMIN/
+// MANAGER get no new privilege here, matching the backend's requireRole
+// gate on every /auth/face admin endpoint.
+const faceStatus = ref(null)
+const faceStatusLoading = ref(true)
+const showFaceWizard = ref(false)
+const faceEnableSaving = ref(false)
+const faceActionError = ref('')
+
+async function loadFaceStatus() {
+  if (!auth.isSuperAdmin) return
+  faceStatusLoading.value = true
+  try {
+    faceStatus.value = await faceApi.status(props.user.id)
+  } catch {
+    faceStatus.value = null
+  } finally {
+    faceStatusLoading.value = false
+  }
+}
+
+watch(() => props.user.id, loadFaceStatus, { immediate: true })
+
+async function onToggleFaceEnabled() {
+  if (!faceStatus.value) return
+  faceEnableSaving.value = true
+  faceActionError.value = ''
+  try {
+    const result = await faceApi.setEnabled(props.user.id, !faceStatus.value.enabled)
+    faceStatus.value.enabled = result.enabled
+    toast.success(t('faceVerification.status.saved'))
+  } catch (error) {
+    faceActionError.value = error.response?.data?.message ?? String(error)
+  } finally {
+    faceEnableSaving.value = false
+  }
+}
+
+function onFaceEnrolled() {
+  showFaceWizard.value = false
+  loadFaceStatus()
+}
 </script>
 
 <template>
@@ -191,4 +237,54 @@ async function onDeactivate() {
       </div>
     </form>
   </AppCard>
+
+  <AppCard v-if="auth.isSuperAdmin" class="mt-6 max-w-3xl">
+    <h2 class="text-h3 text-ink">{{ t('faceVerification.status.title') }}</h2>
+    <p class="mt-1 text-small text-ink-muted">{{ t('faceVerification.status.hint') }}</p>
+
+    <div v-if="faceStatusLoading" class="mt-4 text-small text-ink-faint">{{ t('common.loading') }}</div>
+    <div v-else class="mt-4 space-y-3">
+      <div class="flex flex-wrap items-center gap-2">
+        <Badge v-if="faceStatus?.enrolled" variant="success">{{ t('faceVerification.status.enrolled') }}</Badge>
+        <Badge v-else variant="neutral">{{ t('faceVerification.status.notEnrolled') }}</Badge>
+        <Badge v-if="faceStatus?.enrolled && !faceStatus?.enabled" variant="warning">
+          {{ t('faceVerification.status.disabled') }}
+        </Badge>
+      </div>
+
+      <p v-if="faceStatus?.enrolledAt" class="text-small text-ink-muted">
+        {{ t('faceVerification.status.enrolledAt', { date: new Date(faceStatus.enrolledAt).toLocaleString() }) }}
+      </p>
+      <p v-if="faceStatus?.lastVerifiedAt" class="text-small text-ink-muted">
+        {{ t('faceVerification.status.lastVerifiedAt', { date: new Date(faceStatus.lastVerifiedAt).toLocaleString() }) }}
+      </p>
+
+      <p v-if="faceActionError" class="text-small text-danger">{{ faceActionError }}</p>
+
+      <div class="flex flex-wrap gap-3 pt-1">
+        <AppButton type="button" variant="secondary" @click="showFaceWizard = true">
+          {{ faceStatus?.enrolled ? t('faceVerification.status.reEnroll') : t('faceVerification.status.enroll') }}
+        </AppButton>
+        <AppButton
+          v-if="faceStatus?.enrolled"
+          type="button"
+          variant="outline"
+          :loading="faceEnableSaving"
+          @click="onToggleFaceEnabled"
+        >
+          {{ faceStatus.enabled ? t('faceVerification.status.disable') : t('faceVerification.status.enable') }}
+        </AppButton>
+      </div>
+    </div>
+  </AppCard>
+
+  <FaceEnrollmentWizard
+    v-if="showFaceWizard"
+    :model-value="showFaceWizard"
+    :user-id="props.user.id"
+    :user-name="props.user.fullName"
+    :mode="faceStatus?.enrolled ? 're-enroll' : 'enroll'"
+    @update:model-value="showFaceWizard = false"
+    @enrolled="onFaceEnrolled"
+  />
 </template>

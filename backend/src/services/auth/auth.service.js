@@ -2,6 +2,8 @@ import { userRepository } from '../../repositories/user.repository.js'
 import { roleRepository } from '../../repositories/role.repository.js'
 import { sessionRepository } from '../../repositories/session.repository.js'
 import { auditLogRepository } from '../../repositories/auditLog.repository.js'
+import { faceProfileRepository } from '../../repositories/faceProfile.repository.js'
+import { faceVerificationChallengeRepository } from '../../repositories/faceVerificationChallenge.repository.js'
 import { verifyPassword, hashPassword } from '../../utils/hash.js'
 import {
   generateAccessToken,
@@ -10,11 +12,15 @@ import {
   refreshTokenExpiryDate,
 } from '../../utils/tokens.js'
 import { verifyCaptcha } from './captcha.service.js'
+import { isSameLocalDay } from '../../utils/timezone.js'
 import { ApiError } from '../../utils/ApiError.js'
 import { env } from '../../config/env.js'
 import { logger } from '../../config/logger.js'
 
-function toPublicUser(user, role) {
+// Exported so faceVerification.service.js can complete a login the exact
+// same way (mint access + refresh tokens) once the extra face check passes
+// — one token-issuing path, not two.
+export function toPublicUser(user, role) {
   return {
     id: user._id.toString(),
     fullName: user.fullName,
@@ -30,7 +36,7 @@ function toPublicUser(user, role) {
   }
 }
 
-async function issueSession(user, meta, replacesSessionId = null) {
+export async function issueSession(user, meta, replacesSessionId = null) {
   const refreshToken = generateOpaqueToken()
   const session = await sessionRepository.create({
     userId: user._id,
@@ -43,6 +49,42 @@ async function issueSession(user, meta, replacesSessionId = null) {
     await sessionRepository.markReplaced(replacesSessionId, session._id)
   }
   return { refreshToken, session }
+}
+
+// Returns a { requiresFaceVerification, verificationToken } payload if this
+// login must stop here for a face check, or null to proceed to normal
+// session issuance. FACE_VERIFICATION_ENABLED/REQUIRED off (the default)
+// short-circuits immediately, so an upgraded deployment behaves exactly as
+// before until an operator opts in.
+async function issueFaceChallengeIfRequired(user) {
+  if (!env.FACE_VERIFICATION_ENABLED || !env.FACE_VERIFICATION_REQUIRED) return null
+
+  const profile = await faceProfileRepository.findByUserId(user._id)
+  const enrolled = Boolean(profile?.enrolled && profile?.enabled)
+
+  if (!enrolled) {
+    // Nobody has enrolled this user yet. Left alone unless the stricter
+    // rollout flag is on, so turning FACE_VERIFICATION_REQUIRED on doesn't
+    // instantly lock out every legacy employee.
+    if (!env.FACE_VERIFICATION_ENFORCE_UNENROLLED) return null
+    throw ApiError.forbidden(
+      'Face verification has not been set up for your account yet. Contact an administrator.',
+      'FACE_NOT_ENROLLED'
+    )
+  }
+
+  const verifiedToday =
+    profile.lastVerifiedAt && isSameLocalDay(profile.lastVerifiedAt, new Date(), env.APP_TIMEZONE)
+  if (verifiedToday) return null
+
+  const verificationToken = generateOpaqueToken()
+  await faceVerificationChallengeRepository.create({
+    userId: user._id,
+    tokenHash: hashOpaqueToken(verificationToken),
+    expiresAt: new Date(Date.now() + env.FACE_CHALLENGE_TTL_SECONDS * 1000),
+  })
+
+  return { requiresFaceVerification: true, verificationToken }
 }
 
 export const authService = {
@@ -96,10 +138,10 @@ export const authService = {
 
     await userRepository.resetFailedLogins(user._id)
 
-    const role = await roleRepository.findById(user.roleId)
-    const accessToken = generateAccessToken(user, role)
-    const { refreshToken } = await issueSession(user, meta)
-
+    // Credentials are valid — audited as LOGIN_SUCCESS right here regardless
+    // of what happens next. A pending face check is a second factor on top
+    // of a successful login, not a reason to call the password step
+    // anything other than what it was.
     await auditLogRepository.record({
       actor: user._id,
       action: 'LOGIN_SUCCESS',
@@ -108,6 +150,13 @@ export const authService = {
       ip: meta.ip,
       userAgent: meta.userAgent,
     })
+
+    const pendingFaceVerification = await issueFaceChallengeIfRequired(user)
+    if (pendingFaceVerification) return pendingFaceVerification
+
+    const role = await roleRepository.findById(user.roleId)
+    const accessToken = generateAccessToken(user, role)
+    const { refreshToken } = await issueSession(user, meta)
 
     return { accessToken, refreshToken, user: toPublicUser(user, role) }
   },

@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia'
 import { http, csrfHeader, setCsrfToken, clearCsrfToken } from '@/services/http'
+import { faceApi } from '@/services/face'
 import { useChatStore } from './chat'
 
 // The admin area is for these three only; everyone else gets the employee
@@ -46,9 +47,26 @@ export const useAuthStore = defineStore('auth', {
       useChatStore().reset()
     },
 
+    // Two possible outcomes: a normal session, or a face-verification
+    // challenge (requiresFaceVerification: true) that must be completed via
+    // completeFaceLogin() before any session exists. Returning the raw
+    // shape rather than always calling setSession keeps this store the only
+    // place that decides what "logged in" means, while letting the login
+    // view branch on which case it got.
     async login(identifier, password, captchaToken) {
       const { data } = await http.post('/auth/login', { identifier, password, captchaToken })
+      if (data.data.requiresFaceVerification) {
+        return { requiresFaceVerification: true, verificationToken: data.data.verificationToken }
+      }
       this.setSession(data.data)
+      return { requiresFaceVerification: false }
+    },
+
+    // Completes a login that stopped at a face-verification challenge.
+    // photoBlob is one JPEG frame from useFaceVerification's capture().
+    async completeFaceLogin(verificationToken, photoBlob) {
+      const session = await faceApi.verify(photoBlob, { verificationToken })
+      this.setSession(session)
     },
 
     async logout() {

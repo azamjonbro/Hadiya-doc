@@ -60,6 +60,7 @@
     "minRead": "min read",
     "goToDashboard": "Go to dashboard",
     "goBack": "Go back",
+    "close": "Close",
     "pagination": {
       "range": "{from}–{to} of {total}",
       "page": "Page"
@@ -846,6 +847,56 @@
       "lockouts": "Lockouts",
       "cameraBlocked": "Camera was not running — these figures are incomplete",
       "times": "times"
+    }
+  },
+  "faceVerification": {
+    "panel": {
+      "title": "Verify your identity",
+      "body": "A quick camera check is needed before you continue. This is only asked once a day.",
+      "privacy": "The camera image is used only for this check and is not stored.",
+      "start": "Turn on camera",
+      "requestingCamera": "Requesting camera...",
+      "detecting": "Detecting face...",
+      "verifying": "Verifying...",
+      "successTitle": "Identity verified",
+      "successBody": "Redirecting...",
+      "failedTitle": "Face verification failed",
+      "failedBody": "Make sure your face is clearly visible and lighting is sufficient, then try again.",
+      "tryAgain": "Try again",
+      "lockedTitle": "Temporarily locked",
+      "lockedBody": "Verification is temporarily locked after repeated failed attempts. Try again later or contact an administrator.",
+      "deniedTitle": "Camera access is required",
+      "deniedBody": "Please allow camera access in your browser settings to continue.",
+      "errorTitle": "Camera did not start",
+      "errorBody": "Could not start the camera. Another application may be using it.",
+      "noBypass": "This step cannot be completed without the camera."
+    },
+    "enrollment": {
+      "title": "Face Enrollment",
+      "reEnrollTitle": "Re-enroll Face",
+      "intro": "Have the employee look at the camera. A few clear photos will be captured and stored as this employee's reference face.",
+      "startCamera": "Turn on camera",
+      "cameraDenied": "Camera access denied. Allow it in your browser settings.",
+      "guidance": "Look at the camera. Keep your face inside the frame.",
+      "capture": "Capture",
+      "retake": "Retake",
+      "progress": "{count}/{max} captured",
+      "submit": "Save",
+      "success": "Face successfully enrolled"
+    },
+    "status": {
+      "title": "Face Verification",
+      "hint": "Daily face check — managed by SUPERADMIN only.",
+      "enrolled": "Face enrolled",
+      "notEnrolled": "Face not enrolled",
+      "disabled": "Disabled",
+      "enrolledAt": "Enrolled: {date}",
+      "lastVerifiedAt": "Last verified: {date}",
+      "enroll": "Enroll Face",
+      "reEnroll": "Re-enroll Face",
+      "enable": "Enable",
+      "disable": "Disable",
+      "saved": "Saved"
     }
   },
   "confirm": {

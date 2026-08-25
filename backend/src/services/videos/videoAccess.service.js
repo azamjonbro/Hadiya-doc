@@ -2,13 +2,32 @@ import jwt from 'jsonwebtoken'
 import { PERMISSIONS } from '@lms/shared'
 import { videoRepository } from '../../repositories/video.repository.js'
 import { courseAssignmentRepository } from '../../repositories/courseAssignment.repository.js'
+import { faceProfileRepository } from '../../repositories/faceProfile.repository.js'
 import { computeAccessFlags } from '../courses/courseAssignmentAccess.js'
 import { assertVideoUnlocked } from '../courses/courseSequence.js'
+import { isSameLocalDay } from '../../utils/timezone.js'
 import { ApiError } from '../../utils/ApiError.js'
 import { env } from '../../config/env.js'
 
 function canManageCourses(actor) {
   return Boolean(actor.permissions?.includes(PERMISSIONS.COURSE_CREATE))
+}
+
+// Same rollout gate as auth.service.js's login check — only enforced once
+// FACE_VERIFICATION_ENABLED + REQUIRED are both on, and only for users
+// SUPERADMIN has actually enrolled unless ENFORCE_UNENROLLED is also set.
+async function assertFaceVerifiedToday(actor) {
+  if (!env.FACE_VERIFICATION_ENABLED || !env.FACE_VERIFICATION_REQUIRED) return
+
+  const profile = await faceProfileRepository.findByUserId(actor.id)
+  const enrolled = Boolean(profile?.enrolled && profile?.enabled)
+  if (!enrolled && !env.FACE_VERIFICATION_ENFORCE_UNENROLLED) return
+
+  const verifiedToday =
+    enrolled && profile.lastVerifiedAt && isSameLocalDay(profile.lastVerifiedAt, new Date(), env.APP_TIMEZONE)
+  if (!verifiedToday) {
+    throw ApiError.forbidden('Face verification is required before playback', 'FACE_VERIFICATION_REQUIRED')
+  }
 }
 
 export const videoAccessService = {
@@ -26,6 +45,7 @@ export const videoAccessService = {
       if (!accessible) {
         throw ApiError.forbidden('You do not have access to this course', 'COURSE_ACCESS_DENIED')
       }
+      await assertFaceVerifiedToday(actor)
     }
 
     // Lessons open one at a time. Checked here rather than only in the

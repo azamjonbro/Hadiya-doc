@@ -18,11 +18,22 @@ Reads follow the same chain minus `validate`.
 ## `/auth`
 | Method | Path | Notes |
 |---|---|---|
-| POST | `/login` | `identifier` (JSHSHIR / passport series / email) + password + captcha token |
+| POST | `/login` | `identifier` (JSHSHIR / passport series / email) + password + captcha token. Returns `{ requiresFaceVerification: true, verificationToken }` instead of session tokens if a face check is still needed — see `/auth/face` below |
 | POST | `/refresh` | httpOnly cookie in, rotated cookie out, CSRF double-submit checked |
 | POST | `/logout` | revokes current session |
 | POST | `/password-reset/request` | |
 | POST | `/password-reset/confirm` | |
+
+## `/auth/face` — daily face verification (`docs/face-verification.md`)
+| Method | Path | Who | Notes |
+|---|---|---|---|
+| POST | `/enroll` | SUPERADMIN | multipart, up to 3 photos + `userId` |
+| POST | `/re-enroll` | SUPERADMIN | same shape; 404 if nothing enrolled yet |
+| POST | `/verify` | bearer token **or** `verificationToken` field | one photo; PASS issues a session (challenge path) or just records `lastVerifiedAt` (already-authenticated path) |
+| GET | `/status` | self | `{ enabled, enrolled, enrolledAt, lastVerifiedAt }` |
+| GET | `/status/:userId` | SUPERADMIN | same shape, for another user |
+| PATCH | `/:userId` | SUPERADMIN | `{ enabled }` |
+| GET | `/:userId/reference-image` | SUPERADMIN | streams the private reference photo; every view audited |
 
 ## `/users`
 CRUD (SUPERADMIN/ADMIN/MANAGER, scope-limited), `GET /me`,

@@ -1,0 +1,96 @@
+<script setup>
+import { computed } from 'vue'
+import { useI18n } from 'vue-i18n'
+import AppButton from '@/components/ui/AppButton.vue'
+import Icon from '@/components/ui/Icon.vue'
+
+// Purely presentational, reused in two visual contexts: inline on the login
+// page (variant="inline", themed like the rest of the page) and as a
+// full-cover overlay on the video player (variant="overlay", always-dark —
+// same treatment as AttentionOverlay.vue, which it deliberately mirrors so
+// the two camera-driven overlays this app shows feel like one family).
+const props = defineProps({
+  // idle | requestingCamera | detecting | verifying | success | failed | denied | error | locked
+  state: { type: String, required: true },
+  errorMessage: { type: String, default: '' },
+  variant: { type: String, default: 'inline' }, // inline | overlay
+})
+
+defineEmits(['start', 'retry'])
+
+const { t } = useI18n()
+
+const isDark = computed(() => props.variant === 'overlay')
+const titleClass = computed(() => (isDark.value ? 'text-white' : 'text-ink'))
+const bodyClass = computed(() => (isDark.value ? 'text-white/70' : 'text-ink-muted'))
+const faintClass = computed(() => (isDark.value ? 'text-white/50' : 'text-ink-faint'))
+</script>
+
+<template>
+  <div class="flex flex-col items-center p-6 text-center">
+    <div v-if="state === 'idle'" class="max-w-md">
+      <Icon name="video" size="32" :class="isDark ? 'text-white/80' : 'text-primary'" class="mx-auto" />
+      <h3 class="mt-3 text-lg font-semibold" :class="titleClass">{{ t('faceVerification.panel.title') }}</h3>
+      <p class="mt-2 text-sm leading-relaxed" :class="bodyClass">{{ t('faceVerification.panel.body') }}</p>
+      <p
+        class="mt-3 rounded-lg px-3 py-2 text-xs leading-relaxed"
+        :class="isDark ? 'bg-white/10 text-white/70' : 'bg-surface-2 text-ink-muted'"
+      >
+        {{ t('faceVerification.panel.privacy') }}
+      </p>
+      <div class="mt-5 flex items-center justify-center">
+        <AppButton variant="primary" @click="$emit('start')">{{ t('faceVerification.panel.start') }}</AppButton>
+      </div>
+    </div>
+
+    <div v-else-if="state === 'requestingCamera' || state === 'detecting'" class="max-w-sm">
+      <Icon name="loader" size="26" class="mx-auto animate-spin" :class="isDark ? 'text-white/70' : 'text-ink-faint'" />
+      <p class="mt-3 text-sm" :class="bodyClass">
+        {{ state === 'requestingCamera' ? t('faceVerification.panel.requestingCamera') : t('faceVerification.panel.detecting') }}
+      </p>
+    </div>
+
+    <div v-else-if="state === 'verifying'" class="max-w-sm">
+      <Icon name="loader" size="26" class="mx-auto animate-spin" :class="isDark ? 'text-white/70' : 'text-ink-faint'" />
+      <p class="mt-3 text-sm" :class="bodyClass">{{ t('faceVerification.panel.verifying') }}</p>
+    </div>
+
+    <div v-else-if="state === 'success'" class="max-w-sm">
+      <Icon name="check-circle" size="32" class="mx-auto text-success" />
+      <h3 class="mt-3 text-lg font-semibold" :class="titleClass">{{ t('faceVerification.panel.successTitle') }}</h3>
+      <p class="mt-1.5 text-sm" :class="bodyClass">{{ t('faceVerification.panel.successBody') }}</p>
+    </div>
+
+    <div v-else-if="state === 'failed'" class="max-w-md">
+      <Icon name="alert-circle" size="30" class="mx-auto text-danger" />
+      <h3 class="mt-3 text-lg font-semibold" :class="titleClass">{{ t('faceVerification.panel.failedTitle') }}</h3>
+      <p class="mt-2 text-sm leading-relaxed" :class="bodyClass">{{ t('faceVerification.panel.failedBody') }}</p>
+      <div class="mt-5 flex items-center justify-center">
+        <AppButton variant="primary" @click="$emit('retry')">{{ t('faceVerification.panel.tryAgain') }}</AppButton>
+      </div>
+    </div>
+
+    <div v-else-if="state === 'locked'" class="max-w-md">
+      <Icon name="lock" size="30" class="mx-auto text-danger" />
+      <h3 class="mt-3 text-lg font-semibold" :class="titleClass">{{ t('faceVerification.panel.lockedTitle') }}</h3>
+      <p class="mt-2 text-sm leading-relaxed" :class="bodyClass">{{ t('faceVerification.panel.lockedBody') }}</p>
+    </div>
+
+    <div v-else-if="state === 'denied' || state === 'error'" class="max-w-md">
+      <Icon name="alert-circle" size="30" class="mx-auto text-danger" />
+      <h3 class="mt-3 text-lg font-semibold" :class="titleClass">
+        {{ state === 'denied' ? t('faceVerification.panel.deniedTitle') : t('faceVerification.panel.errorTitle') }}
+      </h3>
+      <p class="mt-2 text-sm leading-relaxed" :class="bodyClass">
+        {{ state === 'denied' ? t('faceVerification.panel.deniedBody') : errorMessage || t('faceVerification.panel.errorBody') }}
+      </p>
+      <div class="mt-5 flex items-center justify-center">
+        <AppButton variant="primary" @click="$emit('retry')">{{ t('faceVerification.panel.tryAgain') }}</AppButton>
+      </div>
+    </div>
+
+    <p v-if="['idle', 'requestingCamera', 'detecting', 'verifying'].includes(state)" class="mt-4 text-xs" :class="faintClass">
+      {{ t('faceVerification.panel.noBypass') }}
+    </p>
+  </div>
+</template>

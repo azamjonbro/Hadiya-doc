@@ -10,7 +10,10 @@ import { API_BASE_URL } from '@/services/apiBase'
 import { coursesApi } from '@/services/courses'
 import { useVideoAnalytics } from '@/composables/useVideoAnalytics'
 import { useAttentionMonitor } from '@/composables/useAttentionMonitor'
+import { useFaceVerification } from '@/composables/useFaceVerification'
+import { faceApi } from '@/services/face'
 import AttentionOverlay from './AttentionOverlay.vue'
+import FaceVerificationPanel from '@/components/face/FaceVerificationPanel.vue'
 import Icon from '@/components/ui/Icon.vue'
 
 const props = defineProps({
@@ -54,8 +57,12 @@ const lockoutRemaining = ref(0)
 let lockoutTimer = null
 
 const monitoringOn = computed(() => Boolean(policy.value?.enabled))
+const faceGateActive = computed(() => faceGateState.value !== 'none')
 
 const overlayState = computed(() => {
+  // The face gate blocks before a playback token even exists — nothing
+  // attention-related has anything to show yet either way.
+  if (faceGateActive.value) return null
   if (!monitoringOn.value) return null
   if (!consented.value) return 'consent'
   if (monitor.status.value === 'denied') return 'denied'
@@ -69,8 +76,11 @@ const overlayState = computed(() => {
 
 // Playback is held while the learner has not consented yet, while the camera
 // is being set up, and for the whole lockout — anything the overlay covers
-// completely.
-const playbackBlocked = computed(() => ['consent', 'denied', 'error', 'lockout'].includes(overlayState.value))
+// completely. The face gate blocks unconditionally: there is no token to
+// play against until it passes.
+const playbackBlocked = computed(
+  () => faceGateActive.value || ['consent', 'denied', 'error', 'lockout'].includes(overlayState.value)
+)
 
 function startLockout() {
   const seconds = policy.value?.lockoutSeconds ?? 20
@@ -172,6 +182,45 @@ async function onRetryCamera() {
   await startMonitoring()
 }
 
+// ---------------------------------------------------------------------------
+// Daily face verification gate
+//
+// Separate from attention monitoring above on purpose (spec: "is this the
+// enrolled employee" vs. "did someone else appear during the lesson" are
+// different questions, answered by different systems — see
+// docs/face-verification.md). Blocks *before* a playback token even exists:
+// issueToken() 403s with FACE_VERIFICATION_REQUIRED until today's check
+// passes, so nothing here trusts a client-side flag.
+// ---------------------------------------------------------------------------
+const faceVerification = useFaceVerification()
+// 'none' | 'idle' | 'requestingCamera' | 'detecting' | 'verifying' | 'success' | 'failed' | 'denied' | 'error' | 'locked'
+const faceGateState = ref('none')
+const faceGateErrorMessage = ref('')
+
+async function runFaceGateCapture() {
+  faceGateState.value = 'requestingCamera'
+  faceGateErrorMessage.value = ''
+  try {
+    const photoBlob = await faceVerification.capture()
+    faceGateState.value = 'verifying'
+    await faceApi.verify(photoBlob)
+    faceGateState.value = 'success'
+    setTimeout(() => {
+      faceGateState.value = 'none'
+      setup()
+    }, 600)
+  } catch (error) {
+    faceVerification.stop()
+    if (error?.response) {
+      faceGateState.value = error.response.status === 429 ? 'locked' : 'failed'
+      return
+    }
+    const denied = error?.name === 'NotAllowedError' || error?.name === 'SecurityError'
+    faceGateState.value = denied ? 'denied' : 'error'
+    faceGateErrorMessage.value = error?.message ?? String(error)
+  }
+}
+
 let hls = null
 let currentToken = null
 let tokenRefreshTimer = null
@@ -241,6 +290,10 @@ async function setup() {
     })
     videoEl.value.addEventListener('ended', () => emit('ended'))
   } catch (error) {
+    if (error.response?.data?.code === 'FACE_VERIFICATION_REQUIRED') {
+      faceGateState.value = 'idle'
+      return
+    }
     errorMessage.value = error.response?.data?.message ?? String(error)
   }
 }
@@ -285,6 +338,7 @@ onBeforeUnmount(() => {
     })
   }
   monitor.stop()
+  faceVerification.stop()
   clearInterval(lockoutTimer)
   analytics.detach()
   hls?.destroy()
@@ -327,6 +381,19 @@ onBeforeUnmount(() => {
       @accept="onConsent"
       @retry="onRetryCamera"
     />
+
+    <!-- Daily face check — blocks before any playback token exists, so it
+         takes priority over everything else the player might otherwise show. -->
+    <div v-if="faceGateActive" class="absolute inset-0 z-30 flex items-center justify-center bg-slate-950/92 backdrop-blur-md">
+      <FaceVerificationPanel
+        :state="faceGateState"
+        :error-message="faceGateErrorMessage"
+        variant="overlay"
+        @start="runFaceGateCapture"
+        @retry="runFaceGateCapture"
+      />
+    </div>
+
     <p v-if="errorMessage" class="p-2 text-sm text-red-400">{{ errorMessage }}</p>
   </div>
 </template>

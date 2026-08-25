@@ -264,6 +264,32 @@ Indexes: `{actor:1, timestamp:-1}`, `{entity:1, entityId:1}`.
 
 Indexes: `{userId:1, revoked:1}`, `{refreshTokenHash:1}` unique.
 
+### `faceProfiles` — daily face verification (`docs/face-verification.md`)
+
+| Field | Type |
+|---|---|
+| userId | ObjectId, unique |
+| enabled, enrolled | boolean |
+| embedding | `number[]` (128-float descriptor) — `select: false`, never returned by a plain query |
+| modelVersion | string |
+| referenceImageKey, referenceImageContentType | string (private bucket, admin review only) |
+| enrolledAt, enrolledBy | Date, ObjectId |
+| lastVerifiedAt | Date |
+| failedAttempts, lockedUntil | number, Date |
+
+Indexes: `{userId:1}` unique.
+
+### `faceVerificationChallenges` — short-lived mid-login ticket
+
+| Field | Type |
+|---|---|
+| userId | ObjectId |
+| tokenHash | string, unique (SHA-256, same pattern as `sessions.refreshTokenHash`) |
+| expiresAt | Date |
+| consumed | boolean |
+
+Indexes: `{expiresAt:1}` TTL (`expireAfterSeconds: 0`).
+
 ### `aiChats`
 
 | Field | Type |
