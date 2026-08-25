@@ -11,6 +11,11 @@ export function computeAccessFlags(assignment) {
     assignment.status === 'ACTIVE' && !isExpired && assignment.deadline && now > assignment.deadline
   )
   const notStartedYet = Boolean(assignment.startAt && now < assignment.startAt)
-  const accessible = assignment.status === 'ACTIVE' && !isExpired && !notStartedYet
+  // COMPLETED is a progress marker, not a revocation — videoEventProcessor.js
+  // flips ACTIVE to COMPLETED purely so the dashboard stops showing a
+  // finished course as "in progress" forever. Only CANCELLED (an assignment
+  // actually withdrawn) should block access; a learner who finished a course
+  // must still be able to reopen it to rewatch.
+  const accessible = assignment.status !== 'CANCELLED' && !isExpired && !notStartedYet
   return { isExpired, isOverdue, accessible }
 }

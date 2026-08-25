@@ -67,6 +67,17 @@ Deploy: `npm --prefix front run build` → rsync build + backend/src + packages/
 
 **Diqqat**: `ops.techinfo.uz` (qo'shni sayt) 2026-08-15 dagi deploy paytida to'xtab qolgan (PM2 `ops-backend`, port 4099) — hali qayta ishga tushirilmagan, egasi o'zi hal qilishini aytgan.
 
+**2026-08-25 deploy**: front (employee + `/bos` admin panel, bitta bundle) va backend
+(shu jumladan face-verification kodi) production'ga chiqarildi. Backend uchun yangi
+paketlar (`@tensorflow/tfjs-node`, `@vladmandic/face-api`) workspace root'dan
+(`/opt/spring-lms`) o'rnatildi, face-api modellari (~12MB) GitHub'dan yuklab olindi,
+`spring-lms`/`spring-lms-worker` toza qayta ishga tushdi, qo'shni saytlar tegilmadi.
+Serverning `.env`da hali bironta `FACE_*` kaliti yo'q — kod ishlab turibdi, lekin
+funksiya butunlay o'chiq (default false). Yoqish uchun avval `docs/face-verification.md`
+dagi Rollout bosqichlarini bajarish kerak. `springadmin.techinfo.uz` allaqachon
+`spring.techinfo.uz`ga 301 qilar ekan (repodagi `admin/` papkasi va `deploy/spring/`
+hujjatlari eskirgan — build/deploy qilinmaydi).
+
 ## Hali ochiq qolgan masalalar
 
 - **Material yuklab olish buzilgan** (hali materiallar yo'q, birinchi yuklanganda chiqadi): presigned URL loopback manzil (`127.0.0.1:9000`) ustidan imzolanadi, brauzerda ishlamaydi. To'g'ri yechim — MinIO uchun alohida ochiq host (masalan `media.techinfo.uz`) yoki materiallarni API orqali uzatish.
