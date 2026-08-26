@@ -51,11 +51,13 @@ async function resolveRecipients(actor, payload) {
     const assignee = await userRepository.findById(payload.assignedTo)
     if (!assignee) throw ApiError.notFound('Assignee not found')
     await assertManagerScopeForAssignee(actor, payload.assignedTo)
-    return [assignee]
+    return { recipients: [assignee], department: '' }
   }
 
   // Managers broadcast inside their own department only — the same scope
-  // rule that applies when they pick one person by hand.
+  // rule that applies when they pick one person by hand. Recorded alongside
+  // the recipients so a later hire can be matched against the same scope
+  // instead of a company-wide broadcast reaching them too.
   let department
   if (actor.roleName === ROLES.MANAGER) {
     const actorUser = await userRepository.findById(actor.id)
@@ -77,7 +79,7 @@ async function resolveRecipients(actor, payload) {
   if (!recipients.length) {
     throw ApiError.badRequest('No active employees match this audience', 'NO_TASK_RECIPIENTS')
   }
-  return recipients
+  return { recipients, department: department ?? '' }
 }
 
 async function assertManagerScopeForAssignee(actor, assignedToId) {
@@ -137,7 +139,75 @@ async function loadBatch(actor, batchId, fromStatus) {
   return tasks
 }
 
+// A brand-new (or newly re-matched) employee did not exist when an earlier
+// POSITION/ALL broadcast fanned out, so their own copy was never created —
+// the fan-out only ever runs once, at the moment the task is written. Called
+// right after a user account is created so they land on the same broadcasts
+// anyone already in their position/company would have gotten.
+async function backfillBroadcastTasksForUser(user) {
+  const candidates = await taskRepository.findBroadcastCandidates({
+    position: user.position,
+    department: user.department,
+  })
+  if (!candidates.length) return
+
+  // One template per batch — first match wins since candidates are sorted
+  // oldest-first, so a batch's original copy (not a later edit) is the one
+  // copied from. A broadcast that only ever matched one person has no
+  // batchId yet, so it is its own group of one.
+  const templates = new Map()
+  for (const task of candidates) {
+    const key = task.batchId ? task.batchId.toString() : task._id.toString()
+    if (!templates.has(key)) templates.set(key, task)
+  }
+
+  for (const template of templates.values()) {
+    let batchId = template.batchId
+    if (!batchId) {
+      // Promote a singleton broadcast into a real batch now that a second
+      // recipient exists, so the two copies show up as one grouped card
+      // instead of two unrelated tasks.
+      batchId = new Types.ObjectId()
+      await taskRepository.updateById(template._id.toString(), { batchId })
+    }
+
+    const [created] = await taskRepository.createMany([
+      {
+        title: template.title,
+        description: template.description,
+        priority: template.priority,
+        deadline: template.deadline,
+        attachments: template.attachments,
+        assignedTo: user._id,
+        assignedBy: template.assignedBy,
+        audienceType: template.audienceType,
+        audienceValue: template.audienceValue,
+        audienceDepartment: template.audienceDepartment,
+        batchId,
+      },
+    ])
+
+    await notificationService.notify({
+      userId: user._id.toString(),
+      type: 'TASK_ASSIGNED',
+      title: `Task assigned: ${created.title}`,
+      message: created.deadline ? `Deadline: ${new Date(created.deadline).toLocaleDateString()}` : '',
+      relatedEntityType: 'Task',
+      relatedEntityId: created._id.toString(),
+    })
+    await postTaskSystemMessage({
+      fromUserId: template.assignedBy.toString(),
+      toUserId: user._id.toString(),
+      event: 'TASK_ASSIGNED',
+      task: created,
+    })
+  }
+}
+
 export const taskService = {
+  backfillForUser: backfillBroadcastTasksForUser,
+
+
   async listMy(actor, query) {
     const rows = await taskRepository.listByAssignee({ assignedTo: actor.id, ...query })
     const hasMore = rows.length > query.limit
@@ -249,7 +319,7 @@ export const taskService = {
 
   async create(actor, payload) {
     const { assigneeType, position, title, description, priority, deadline, attachments } = payload
-    const recipients = await resolveRecipients(actor, payload)
+    const { recipients, department } = await resolveRecipients(actor, payload)
 
     // A single assignee keeps its own document ungrouped; a fan-out gets a
     // shared batch id so the origin of every copy stays traceable.
@@ -267,6 +337,7 @@ export const taskService = {
         assignedBy: actor.id,
         audienceType: assigneeType,
         audienceValue,
+        audienceDepartment: department,
         batchId,
       }))
     )

@@ -18,6 +18,12 @@ const taskSchema = new Schema(
     // created by the same action.
     audienceType: { type: String, enum: ['USER', 'POSITION', 'ALL'], default: 'USER' },
     audienceValue: { type: String, default: '' },
+    // Set only when a MANAGER's own department scoped the broadcast; empty
+    // means it was company-wide. Recorded so a broadcast can later be
+    // backfilled to a newly created employee without re-deriving whether it
+    // was meant to be department-scoped from whoever happened to be a
+    // recipient at the time.
+    audienceDepartment: { type: String, default: '' },
     batchId: { type: Schema.Types.ObjectId, default: null },
     // Dedup markers for the scheduled reminder job.
     deadlineReminderSentAt: { type: Date, default: null },

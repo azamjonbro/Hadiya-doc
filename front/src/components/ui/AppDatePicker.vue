@@ -1,5 +1,5 @@
 <script setup>
-import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import Icon from './Icon.vue'
 
@@ -65,6 +65,12 @@ const selected = computed(() => parseValue(props.modelValue))
 
 const open = ref(false)
 const rootEl = ref(null)
+const popupEl = ref(null)
+// Decided fresh each time the popup opens, from the trigger's actual position
+// in the viewport — a modal has no room to grow, so a popup that always drops
+// down-right will get clipped whenever the field sits near the modal's edge.
+const openUp = ref(false)
+const alignRight = ref(false)
 const viewDate = ref(selected.value ?? new Date())
 const timeValue = ref(selected.value ? `${pad2(selected.value.getHours())}:${pad2(selected.value.getMinutes())}` : '12:00')
 
@@ -151,10 +157,25 @@ function clearValue() {
   open.value = false
 }
 
-function toggleOpen() {
+async function toggleOpen() {
   if (props.disabled) return
   open.value = !open.value
-  if (open.value) viewDate.value = selected.value ?? new Date()
+  if (open.value) {
+    viewDate.value = selected.value ?? new Date()
+    await nextTick()
+    positionPopup()
+  }
+}
+
+function positionPopup() {
+  const trigger = rootEl.value
+  const popup = popupEl.value
+  if (!trigger || !popup) return
+  const triggerRect = trigger.getBoundingClientRect()
+  const popupRect = popup.getBoundingClientRect()
+  openUp.value =
+    triggerRect.bottom + popupRect.height > window.innerHeight && triggerRect.top - popupRect.height > 0
+  alignRight.value = triggerRect.left + popupRect.width > window.innerWidth
 }
 
 function onClickOutside(event) {
@@ -209,7 +230,12 @@ const inputId = `datepicker-${Math.random().toString(36).slice(2, 9)}`
            though the visible trigger is a button, not a real form control. -->
       <input :type="withTime ? 'datetime-local' : 'date'" :required="required" :value="modelValue" tabindex="-1" aria-hidden="true" class="sr-only" />
 
-      <div v-if="open" class="absolute z-20 mt-1 w-72 rounded-md border border-border bg-surface p-3 text-small shadow-md">
+      <div
+        v-if="open"
+        ref="popupEl"
+        class="absolute z-20 w-72 rounded-md border border-border bg-surface p-3 text-small shadow-md"
+        :class="[openUp ? 'bottom-full mb-1' : 'top-full mt-1', alignRight ? 'right-0' : 'left-0']"
+      >
         <div class="flex items-center justify-between">
           <button type="button" class="rounded-md p-1.5 text-ink-muted transition-default hover:bg-surface-2" @click="prevMonth">
             <Icon name="chevron-left" size="16" />

@@ -6,6 +6,7 @@ import { auditLogRepository } from '../../repositories/auditLog.repository.js'
 import { hashPassword } from '../../utils/hash.js'
 import { ApiError } from '../../utils/ApiError.js'
 import { courseAssignmentService } from '../courses/courseAssignment.service.js'
+import { taskService } from '../tasks/task.service.js'
 import { logger } from '../../config/logger.js'
 
 const EMPLOYEE_TIER_ROLES = [ROLES.EMPLOYEE, ROLES.CALL_OPERATOR, ROLES.SELLER]
@@ -234,6 +235,17 @@ export const userService = {
           error: error.message,
         })
       }
+    }
+
+    // Best-effort, same reasoning: a broadcast task this employee should
+    // also carry must not roll back the account that was just created.
+    try {
+      await taskService.backfillForUser(user)
+    } catch (error) {
+      logger.warn('Failed to backfill broadcast tasks for new user', {
+        userId: user._id.toString(),
+        error: error.message,
+      })
     }
 
     return toPublicUser(user, role)

@@ -84,4 +84,21 @@ export const taskRepository = {
   deleteByIds(ids) {
     return Task.deleteMany({ _id: { $in: ids } })
   },
+
+  // Every POSITION/ALL broadcast a newly (re)matched employee should have
+  // received had they existed at the time: company-wide broadcasts, plus
+  // POSITION broadcasts for their exact job title, each scoped to either no
+  // department (company-wide) or this employee's own department. Sorted
+  // oldest-first so the earliest copy in a batch is picked as the template
+  // when several exist.
+  findBroadcastCandidates({ position, department }) {
+    const audienceOr = [{ audienceType: 'ALL' }]
+    if (position) audienceOr.push({ audienceType: 'POSITION', audienceValue: position })
+    return Task.find({
+      $and: [
+        { $or: audienceOr },
+        { $or: [{ audienceDepartment: '' }, { audienceDepartment: department || '' }] },
+      ],
+    }).sort({ createdAt: 1 })
+  },
 }
