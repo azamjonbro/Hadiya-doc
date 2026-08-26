@@ -31,12 +31,12 @@ const sizes = { sm: 'max-w-sm', md: 'max-w-lg', lg: 'max-w-2xl' }
         >
           <div
             v-if="modelValue"
-            class="relative w-full rounded-xl border border-border bg-surface p-6 shadow-lg"
+            class="relative flex max-h-[90vh] w-full flex-col rounded-xl border border-border bg-surface p-4 shadow-lg sm:p-6"
             :class="sizes[size]"
             role="dialog"
             aria-modal="true"
           >
-            <div class="flex items-start justify-between">
+            <div class="flex shrink-0 items-start justify-between">
               <div>
                 <h2 v-if="title" class="text-h3 text-ink">{{ title }}</h2>
                 <p v-if="description" class="mt-1 text-small text-ink-muted">{{ description }}</p>
@@ -49,10 +49,10 @@ const sizes = { sm: 'max-w-sm', md: 'max-w-lg', lg: 'max-w-2xl' }
                 <Icon name="close" size="18" />
               </button>
             </div>
-            <div class="mt-4">
+            <div class="mt-4 min-h-0 flex-1 overflow-y-auto">
               <slot />
             </div>
-            <div v-if="$slots.footer" class="mt-6 flex items-center justify-end gap-2">
+            <div v-if="$slots.footer" class="mt-6 flex shrink-0 items-center justify-end gap-2">
               <slot name="footer" />
             </div>
           </div>
