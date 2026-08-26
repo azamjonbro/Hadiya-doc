@@ -517,7 +517,7 @@ onMounted(() => {
         </div>
 
         <p v-else class="rounded-md bg-surface-2 px-3.5 py-2.5 text-caption text-ink-muted">{{ t('tasks.allHint') }}</p>
-        <div class="grid grid-cols-2 gap-4">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <AppSelect v-model="createForm.priority" :label="t('tasks.priorityLabel')" :options="priorityOptions" />
           <AppDatePicker v-model="createForm.deadline" :label="t('tasks.deadline')" />
         </div>

@@ -141,7 +141,7 @@ onMounted(loadFirstPage)
           <label class="mb-1.5 block text-small font-medium text-ink">{{ t('news.fields.content') }}</label>
           <textarea v-model="createForm.content" required rows="5" class="w-full rounded-md border border-border-strong bg-surface px-3.5 py-2.5 text-body text-ink outline-none transition-default focus:border-primary focus:ring-2 focus:ring-primary/15" />
         </div>
-        <div class="grid grid-cols-2 gap-4">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <AppInput v-model="createForm.tags" :label="t('news.fields.tags')" />
           <AppSelect v-model="createForm.status" :label="t('courses.status.label')" :options="[{ value: 'DRAFT', label: t('courses.status.draft') }, { value: 'PUBLISHED', label: t('courses.status.published') }]" />
           <AppInput v-model="createForm.departmentTargets" :label="t('news.fields.departmentTargets')" />

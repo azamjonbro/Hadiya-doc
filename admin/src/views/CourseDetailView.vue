@@ -205,11 +205,11 @@ onMounted(load)
 
       <AppCard v-if="showEditForm" class="mt-6">
         <h2 class="text-h3 text-ink">{{ t('courses.fields.title') }}</h2>
-        <form class="mt-4 grid grid-cols-2 gap-4" @submit.prevent="onSave">
-          <div class="col-span-2">
+        <form class="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-4" @submit.prevent="onSave">
+          <div class="sm:col-span-2">
             <AppInput v-model="form.title" :label="t('courses.fields.title')" :disabled="!auth.hasPermission('course:update')" />
           </div>
-          <div class="col-span-2">
+          <div class="sm:col-span-2">
             <label class="mb-1.5 block text-small font-medium text-ink">{{ t('courses.fields.description') }}</label>
             <textarea
               v-model="form.description"
@@ -225,7 +225,7 @@ onMounted(load)
             :options="statusOptions.map((o) => ({ value: o.value, label: t(o.label) }))"
           />
 
-          <div class="col-span-2">
+          <div class="sm:col-span-2">
             <p class="mb-1.5 text-small font-medium text-ink">{{ t('courses.targeting.rolesLabel') }}</p>
             <div class="flex flex-wrap gap-2">
               <label
@@ -263,16 +263,16 @@ onMounted(load)
             :placeholder="t('courses.targeting.departmentPlaceholder')"
             :disabled="!auth.hasPermission('course:update')"
           />
-          <p class="col-span-2 -mt-2 text-caption text-ink-faint">{{ t('courses.targeting.noRestrictionHint') }}</p>
-          <label v-if="hasTargeting" class="col-span-2 flex items-center gap-2 text-small text-ink">
+          <p class="sm:col-span-2 -mt-2 text-caption text-ink-faint">{{ t('courses.targeting.noRestrictionHint') }}</p>
+          <label v-if="hasTargeting" class="sm:col-span-2 flex items-center gap-2 text-small text-ink">
             <input v-model="form.autoAssign" type="checkbox" class="h-4 w-4 rounded border-border-strong text-primary" :disabled="!auth.hasPermission('course:update')" />
             {{ t('courses.targeting.autoAssignLabel') }}
           </label>
-          <p v-if="hasTargeting" class="col-span-2 -mt-2 text-caption text-ink-faint">{{ t('courses.targeting.autoAssignHint') }}</p>
+          <p v-if="hasTargeting" class="sm:col-span-2 -mt-2 text-caption text-ink-faint">{{ t('courses.targeting.autoAssignHint') }}</p>
 
-          <p v-if="errorMessage" class="col-span-2 text-small text-danger">{{ errorMessage }}</p>
+          <p v-if="errorMessage" class="sm:col-span-2 text-small text-danger">{{ errorMessage }}</p>
 
-          <div v-if="auth.hasPermission('course:update')" class="col-span-2 flex gap-3 pt-1">
+          <div v-if="auth.hasPermission('course:update')" class="sm:col-span-2 flex gap-3 pt-1">
             <AppButton type="submit" :loading="saving">{{ saving ? t('courses.saving') : t('courses.save') }}</AppButton>
           </div>
         </form>
@@ -287,8 +287,8 @@ onMounted(load)
         </div>
 
         <AppCard v-if="showAddTopic" class="mt-3">
-          <form class="grid grid-cols-3 gap-3" @submit.prevent="onAddTopicSubmit">
-            <div class="col-span-2"><AppInput v-model="addTopicForm.title" required :label="t('courses.fields.title')" /></div>
+          <form class="grid grid-cols-1 sm:grid-cols-3 gap-3" @submit.prevent="onAddTopicSubmit">
+            <div class="sm:col-span-2"><AppInput v-model="addTopicForm.title" required :label="t('courses.fields.title')" /></div>
             <AppInput v-model.number="addTopicForm.order" type="number" :label="t('courses.topics.order')" />
             <div class="col-span-3">
               <AppSelect v-model="addTopicForm.status" :label="t('courses.status.label')" :options="[{ value: 'DRAFT', label: t('courses.status.draft') }, { value: 'PUBLISHED', label: t('courses.status.published') }]" />
@@ -303,8 +303,8 @@ onMounted(load)
         <div class="mt-4 space-y-3">
           <AppCard v-for="topic in topics" :key="topic.id">
             <template v-if="editingTopicId === topic.id">
-              <div class="grid grid-cols-3 gap-3">
-                <div class="col-span-2"><AppInput v-model="editTopicForm.title" :label="t('courses.fields.title')" /></div>
+              <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div class="sm:col-span-2"><AppInput v-model="editTopicForm.title" :label="t('courses.fields.title')" /></div>
                 <AppInput v-model.number="editTopicForm.order" type="number" :label="t('courses.topics.order')" />
                 <div class="col-span-3">
                   <AppSelect v-model="editTopicForm.status" :label="t('courses.status.label')" :options="[{ value: 'DRAFT', label: t('courses.status.draft') }, { value: 'PUBLISHED', label: t('courses.status.published') }]" />

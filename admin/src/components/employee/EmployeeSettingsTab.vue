@@ -129,8 +129,8 @@ async function onDeactivate() {
     <h2 class="text-h3 text-ink">{{ t('settings.sections.profile') }}</h2>
     <p class="mt-1 text-small text-ink-muted">{{ t('employee.settings.hint') }}</p>
 
-    <form class="mt-5 grid grid-cols-2 gap-4" @submit.prevent="onSave">
-      <div class="col-span-2 max-w-[10rem]">
+    <form class="mt-5 grid grid-cols-1 sm:grid-cols-2 gap-4" @submit.prevent="onSave">
+      <div class="sm:col-span-2 max-w-[10rem]">
         <ImageUploadField
           v-model="form.avatar"
           :label="t('users.fields.avatar')"
@@ -138,7 +138,7 @@ async function onDeactivate() {
           :disabled="!canEdit"
         />
       </div>
-      <div class="col-span-2">
+      <div class="sm:col-span-2">
         <AppInput v-model="form.fullName" :label="t('users.fields.fullName')" :disabled="!canEdit" />
       </div>
       <AppInput
@@ -167,17 +167,17 @@ async function onDeactivate() {
       <AppInput v-model="form.department" :label="t('users.fields.department')" :disabled="!canEdit" />
       <AppInput v-model="form.position" :label="t('users.fields.position')" :disabled="!canEdit" />
       <AppSelect v-model="form.roleName" :label="t('users.role')" :options="roleOptions" :disabled="!canEdit" />
-      <label class="col-span-2 flex items-center gap-2 text-small font-medium text-ink">
+      <label class="sm:col-span-2 flex items-center gap-2 text-small font-medium text-ink">
         <input v-model="form.isActive" type="checkbox" :disabled="!canEdit" class="h-4 w-4 rounded border-border-strong text-primary" />
         {{ t('users.filters.active') }}
       </label>
-      <div class="col-span-2">
+      <div class="sm:col-span-2">
         <GeneratedPasswordField v-model="form.password" :label="t('users.fields.newPassword')" :disabled="!canEdit" />
       </div>
 
-      <p v-if="errorMessage" class="col-span-2 text-small text-danger">{{ errorMessage }}</p>
+      <p v-if="errorMessage" class="sm:col-span-2 text-small text-danger">{{ errorMessage }}</p>
 
-      <div v-if="canEdit" class="col-span-2 flex gap-3 pt-2">
+      <div v-if="canEdit" class="sm:col-span-2 flex gap-3 pt-2">
         <AppButton type="submit" :loading="saving">{{ saving ? t('users.saving') : t('users.save') }}</AppButton>
         <AppButton
           v-if="auth.hasPermission('user:delete')"

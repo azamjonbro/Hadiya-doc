@@ -103,9 +103,9 @@ onMounted(load)
       <h1 class="mt-4 text-h1 text-ink">{{ news.title }}</h1>
 
       <AppCard class="mt-6">
-        <form class="grid grid-cols-2 gap-4" @submit.prevent="onSave">
-          <div class="col-span-2"><AppInput v-model="form.title" :label="t('news.fields.title')" :disabled="!auth.hasPermission('news:manage')" /></div>
-          <div class="col-span-2">
+        <form class="grid grid-cols-1 sm:grid-cols-2 gap-4" @submit.prevent="onSave">
+          <div class="sm:col-span-2"><AppInput v-model="form.title" :label="t('news.fields.title')" :disabled="!auth.hasPermission('news:manage')" /></div>
+          <div class="sm:col-span-2">
             <label class="mb-1.5 block text-small font-medium text-ink">{{ t('news.fields.content') }}</label>
             <textarea v-model="form.content" :disabled="!auth.hasPermission('news:manage')" rows="6" class="w-full rounded-md border border-border-strong bg-surface px-3.5 py-2.5 text-body text-ink outline-none transition-default focus:border-primary focus:ring-2 focus:ring-primary/15 disabled:opacity-50" />
           </div>
@@ -127,11 +127,11 @@ onMounted(load)
               </label>
             </div>
           </div>
-          <div class="col-span-2"><AppDatePicker v-model="form.expiryAt" :label="t('news.fields.expiryAt')" :disabled="!auth.hasPermission('news:manage')" /></div>
+          <div class="sm:col-span-2"><AppDatePicker v-model="form.expiryAt" :label="t('news.fields.expiryAt')" :disabled="!auth.hasPermission('news:manage')" /></div>
 
-          <p v-if="errorMessage" class="col-span-2 text-small text-danger">{{ errorMessage }}</p>
+          <p v-if="errorMessage" class="sm:col-span-2 text-small text-danger">{{ errorMessage }}</p>
 
-          <div v-if="auth.hasPermission('news:manage')" class="col-span-2 flex gap-3 pt-1">
+          <div v-if="auth.hasPermission('news:manage')" class="sm:col-span-2 flex gap-3 pt-1">
             <AppButton type="submit" :loading="saving">{{ saving ? t('courses.saving') : t('courses.save') }}</AppButton>
             <AppButton type="button" variant="danger" @click="onDelete">{{ t('news.delete') }}</AppButton>
           </div>

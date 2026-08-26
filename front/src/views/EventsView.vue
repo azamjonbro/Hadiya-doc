@@ -149,7 +149,7 @@ onMounted(load)
         <AppInput v-model="createForm.title" required :label="t('courses.fields.title')" />
         <AppSelect v-model="createForm.type" :label="t('events.type')" :options="typeOptions" />
         <AppInput v-model="createForm.location" :label="t('events.location')" />
-        <div class="grid grid-cols-2 gap-3">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <AppDatePicker v-model="createForm.startAt" with-time required :label="t('events.startAt')" />
           <AppDatePicker v-model="createForm.endAt" with-time required :label="t('events.endAt')" />
         </div>

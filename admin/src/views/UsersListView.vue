@@ -376,7 +376,7 @@ onMounted(() => {
     </div>
 
     <Modal v-model="showCreateModal" :title="t('users.newUser')" size="lg">
-      <form class="grid grid-cols-2 gap-4" @submit.prevent="onCreateSubmit">
+      <form class="grid grid-cols-1 sm:grid-cols-2 gap-4" @submit.prevent="onCreateSubmit">
         <AppInput v-model="createForm.fullName" required :label="t('users.fields.fullName')" />
         <AppInput
           v-model="createForm.jshshir"
@@ -402,11 +402,11 @@ onMounted(() => {
         />
         <AppInput v-model="createForm.department" :label="t('users.fields.department')" />
         <AppInput v-model="createForm.position" :label="t('users.fields.position')" />
-        <div class="col-span-2">
+        <div class="sm:col-span-2">
           <GeneratedPasswordField v-model="createForm.password" required :label="t('users.fields.password')" />
         </div>
 
-        <div class="col-span-2">
+        <div class="sm:col-span-2">
           <p class="mb-1.5 text-small font-medium text-ink">{{ t('users.fields.assignCourses') }}</p>
           <div v-if="assignableCourses.length" class="max-h-40 space-y-1.5 overflow-y-auto rounded-md border border-border-strong p-3">
             <label v-for="course in assignableCourses" :key="course.id" class="flex items-center gap-2 text-small text-ink">
@@ -422,9 +422,9 @@ onMounted(() => {
           <p v-else class="text-small text-ink-faint">{{ t('courses.empty') }}</p>
         </div>
 
-        <p v-if="createError" class="col-span-2 text-small text-danger">{{ createError }}</p>
+        <p v-if="createError" class="sm:col-span-2 text-small text-danger">{{ createError }}</p>
 
-        <div class="col-span-2 flex justify-end gap-2 pt-2">
+        <div class="sm:col-span-2 flex justify-end gap-2 pt-2">
           <AppButton type="button" variant="ghost" @click="showCreateModal = false">{{ t('users.cancel') }}</AppButton>
           <AppButton type="submit" :loading="createSubmitting">{{ createSubmitting ? t('users.creating') : t('users.create') }}</AppButton>
         </div>

@@ -92,15 +92,15 @@ onMounted(load)
         </ul>
       </div>
 
-      <div v-if="selectedUser" class="mt-3 grid grid-cols-2 gap-3">
-        <label class="col-span-2 flex items-center gap-2 text-small text-ink">
+      <div v-if="selectedUser" class="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <label class="sm:col-span-2 flex items-center gap-2 text-small text-ink">
           <input v-model="form.mandatory" type="checkbox" class="h-4 w-4 rounded border-border-strong text-primary" />
           {{ t('courses.mandatory') }}
         </label>
         <AppDatePicker v-model="form.deadline" :label="t('courses.deadline')" />
         <AppDatePicker v-model="form.expiresAt" :label="t('courses.access.expiresAt')" />
-        <p v-if="errorMessage" class="col-span-2 text-small text-danger">{{ errorMessage }}</p>
-        <div class="col-span-2">
+        <p v-if="errorMessage" class="sm:col-span-2 text-small text-danger">{{ errorMessage }}</p>
+        <div class="sm:col-span-2">
           <AppButton size="sm" :loading="submitting" @click="onAssign">{{ t('courses.access.assign') }}</AppButton>
         </div>
       </div>
