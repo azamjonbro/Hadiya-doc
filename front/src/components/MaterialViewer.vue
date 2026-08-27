@@ -118,7 +118,11 @@ async function renderXlsx(buffer) {
 // template — it writes straight into a DOM node, so that node has to be
 // mounted before it runs. The host only mounts once `loading` is false.
 async function renderPptx(buffer) {
-  const { init } = await import('pptx-preview')
+  const [{ init }, { repairPptx }] = await Promise.all([
+    import('pptx-preview'),
+    import('@/utils/pptxRepair'),
+  ])
+  const deck = await repairPptx(buffer)
   await nextTick()
   if (!pptxHost.value) throw new Error('pptx viewer host is not mounted')
   pptxHost.value.innerHTML = ''
@@ -129,7 +133,12 @@ async function renderPptx(buffer) {
     width,
     height: Math.round((width * 9) / 16),
   })
-  await pptxPreviewer.preview(buffer)
+  await pptxPreviewer.preview(deck)
+  // preview() resolves either way: the library swallows its own load errors
+  // and leaves an empty wrapper behind, which reads as a black rectangle. If
+  // nothing came out of it, fail into the error state instead — that one at
+  // least says so and offers the download.
+  if (!pptxPreviewer.slideCount) throw new Error('pptx produced no slides')
 }
 
 async function load() {
