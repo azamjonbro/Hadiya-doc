@@ -10,6 +10,12 @@ export const faceController = {
     sendSuccess(res, result, 'Face enrolled', 201)
   }),
 
+  // The employee's own first-run enrollment — no userId in the body: it is
+  // always the caller, so there is nothing here to point at someone else.
+  selfEnroll: asyncHandler(async (req, res) => {
+    sendSuccess(res, await faceVerificationService.selfEnroll(req.user, req.files), 'Face enrolled', 201)
+  }),
+
   reEnroll: asyncHandler(async (req, res) => {
     const result = await faceVerificationService.reEnroll(req.user, req.body.userId, req.files)
     sendSuccess(res, result, 'Face re-enrolled')

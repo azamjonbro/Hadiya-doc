@@ -14,6 +14,7 @@ import { useFaceVerification } from '@/composables/useFaceVerification'
 import { faceApi } from '@/services/face'
 import AttentionOverlay from './AttentionOverlay.vue'
 import FaceVerificationPanel from '@/components/face/FaceVerificationPanel.vue'
+import FaceEnrollmentWizard from '@/components/face/FaceEnrollmentWizard.vue'
 import Icon from '@/components/ui/Icon.vue'
 
 const props = defineProps({
@@ -197,6 +198,19 @@ const faceVerification = useFaceVerification()
 const faceGateState = ref('none')
 const faceGateErrorMessage = ref('')
 
+// First use, no reference photo on file: the employee captures their own,
+// the way a banking app has you do it, instead of waiting for an admin to
+// enrol them. The API decides this (FACE_ENROLLMENT_REQUIRED from
+// issueToken), never anything computed here.
+const showSelfEnrollment = ref(false)
+
+async function onSelfEnrolled() {
+  showSelfEnrollment.value = false
+  // Enrolling counts as today's check, so playback can start straight away.
+  faceGateState.value = 'none'
+  await setup()
+}
+
 async function runFaceGateCapture() {
   faceGateState.value = 'requestingCamera'
   faceGateErrorMessage.value = ''
@@ -290,8 +304,16 @@ async function setup() {
     })
     videoEl.value.addEventListener('ended', () => emit('ended'))
   } catch (error) {
-    if (error.response?.data?.code === 'FACE_VERIFICATION_REQUIRED') {
+    const code = error.response?.data?.code
+    if (code === 'FACE_VERIFICATION_REQUIRED') {
       faceGateState.value = 'idle'
+      return
+    }
+    if (code === 'FACE_ENROLLMENT_REQUIRED') {
+      // Hold the gate open behind the wizard: playbackBlocked follows
+      // faceGateActive, so nothing plays while the modal is up.
+      faceGateState.value = 'enroll'
+      showSelfEnrollment.value = true
       return
     }
     errorMessage.value = error.response?.data?.message ?? String(error)
@@ -386,13 +408,32 @@ onBeforeUnmount(() => {
          takes priority over everything else the player might otherwise show. -->
     <div v-if="faceGateActive" class="absolute inset-0 z-30 flex items-center justify-center bg-slate-950/92 backdrop-blur-md">
       <FaceVerificationPanel
+        v-if="faceGateState !== 'enroll'"
         :state="faceGateState"
         :error-message="faceGateErrorMessage"
         variant="overlay"
         @start="runFaceGateCapture"
         @retry="runFaceGateCapture"
       />
+
+      <!-- The enrolment case keeps its own prompt rather than borrowing the
+           verification panel: it is also what the employee comes back to if
+           they close the wizard, so the gate never becomes an empty screen
+           with no way forward. -->
+      <div v-else class="mx-4 max-w-sm space-y-4 rounded-xl bg-surface p-6 text-center">
+        <Icon name="video" size="28" class="mx-auto text-primary" />
+        <p class="text-small text-ink-muted">{{ t('faceVerification.enrollment.selfIntro') }}</p>
+        <button
+          type="button"
+          class="w-full rounded-md bg-primary px-4 py-2.5 text-small font-medium text-primary-foreground transition-default hover:opacity-90"
+          @click="showSelfEnrollment = true"
+        >
+          {{ t('faceVerification.enrollment.startCamera') }}
+        </button>
+      </div>
     </div>
+
+    <FaceEnrollmentWizard v-model="showSelfEnrollment" mode="self" @enrolled="onSelfEnrolled" />
 
     <p v-if="errorMessage" class="p-2 text-sm text-red-400">{{ errorMessage }}</p>
   </div>

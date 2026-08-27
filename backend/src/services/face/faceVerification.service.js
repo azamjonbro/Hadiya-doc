@@ -61,7 +61,12 @@ async function processEnrollmentFrames(files) {
   return { embedding: faceEmbeddingService.averageDescriptors(descriptors), referenceFrame }
 }
 
-async function enrollInternal(actor, targetUserId, files, { action, requireExisting }) {
+async function enrollInternal(
+  actor,
+  targetUserId,
+  files,
+  { action, requireExisting, refuseIfEnrolled = false, countsAsVerification = false }
+) {
   if (!targetUserId) throw ApiError.badRequest('userId is required', 'VALIDATION_ERROR')
 
   const targetUser = await userRepository.findById(targetUserId)
@@ -71,6 +76,20 @@ async function enrollInternal(actor, targetUserId, files, { action, requireExist
     const existing = await faceProfileRepository.findByUserId(targetUserId)
     if (!existing?.enrolled) {
       throw ApiError.notFound('User has no existing face enrollment to replace', 'FACE_PROFILE_NOT_ENROLLED')
+    }
+  }
+
+  // The guard that keeps self-enrollment a first-run step and nothing more.
+  // Replacing a face that is already on file stays with SUPERADMIN: if it
+  // did not, anyone holding the password could answer a failed match by
+  // simply enrolling their own face over the employee's.
+  if (refuseIfEnrolled) {
+    const existing = await faceProfileRepository.findByUserId(targetUserId)
+    if (existing?.enrolled) {
+      throw ApiError.conflict(
+        'A reference photo is already on file for this account',
+        'FACE_ALREADY_ENROLLED'
+      )
     }
   }
 
@@ -98,6 +117,11 @@ async function enrollInternal(actor, targetUserId, files, { action, requireExist
     referenceImageContentType: processed.referenceFrame.mime,
     enrolledBy: actor.id,
   })
+
+  // The employee stood in front of the camera to produce these frames, so the
+  // day's check is already answered — asking them to capture a second time,
+  // seconds later, would be theatre.
+  if (countsAsVerification) await faceProfileRepository.markVerified(targetUserId)
 
   await auditLogRepository.record({
     actor: actor.id,
@@ -144,11 +168,11 @@ async function failVerification(userId, reason) {
 }
 
 /**
- * Who hears about a lockout — same shape as proctorSnapshot.service.js's
- * notifyReviewers(): every active SUPERADMIN, plus the employee's own
- * department managers if they have one.
+ * Who hears about something on an employee's face profile — same shape as
+ * proctorSnapshot.service.js's notifyReviewers(): every active SUPERADMIN,
+ * plus the employee's own department managers if they have one.
  */
-async function notifyLockout(userId) {
+async function notifyReviewers(userId, build) {
   const learner = await userRepository.findById(userId)
   const recipients = new Set()
 
@@ -164,17 +188,40 @@ async function notifyLockout(userId) {
   }
   recipients.delete(userId)
 
+  const notification = build(learner)
   for (const recipientId of recipients) {
     await notificationService.notify({
       userId: recipientId,
-      type: 'FACE_VERIFICATION_LOCKED',
-      title: `Face verification locked: ${learner?.fullName ?? 'an employee'}`,
-      message: 'Repeated failed face verification attempts locked this account out temporarily.',
       relatedEntityType: 'FaceProfile',
       relatedEntityId: userId,
-      severity: 'WARNING',
+      ...notification,
     })
   }
+}
+
+function notifyLockout(userId) {
+  return notifyReviewers(userId, (learner) => ({
+    type: 'FACE_VERIFICATION_LOCKED',
+    title: `Face verification locked: ${learner?.fullName ?? 'an employee'}`,
+    message: 'Repeated failed face verification attempts locked this account out temporarily.',
+    severity: 'WARNING',
+  }))
+}
+
+/**
+ * Self-enrollment is trust-on-first-use: the reference face is whoever sat in
+ * front of the camera holding this account's password. That is the trade the
+ * product makes for not needing an admin present, and this notice is what
+ * keeps it reviewable — the photo is on file and openable from the admin
+ * panel, so a wrong face can be spotted and re-enrolled.
+ */
+function notifySelfEnrollment(userId) {
+  return notifyReviewers(userId, (learner) => ({
+    type: 'FACE_SELF_ENROLLMENT',
+    title: `Face enrolled by the employee: ${learner?.fullName ?? 'an employee'}`,
+    message: 'They captured their own reference photo on first use. Open their profile to review it.',
+    severity: 'INFO',
+  }))
 }
 
 export const faceVerificationService = {
@@ -190,6 +237,31 @@ export const faceVerificationService = {
       action: 'FACE_RE_ENROLLMENT',
       requireExisting: true,
     })
+  },
+
+  /**
+   * The employee enrolling their own face, the way a banking app has you do
+   * it: first time the app asks for a face and none is on file, the frames
+   * they capture become the reference. Only ever the first time — see the
+   * refuseIfEnrolled guard in enrollInternal.
+   */
+  async selfEnroll(actor, files) {
+    const result = await enrollInternal(actor, actor.id, files, {
+      action: 'FACE_SELF_ENROLLMENT',
+      requireExisting: false,
+      refuseIfEnrolled: true,
+      countsAsVerification: true,
+    })
+
+    // Best-effort: an account is enrolled either way, and a failed notice is
+    // not worth undoing that.
+    try {
+      await notifySelfEnrollment(actor.id)
+    } catch (error) {
+      logger.error('Self-enrollment notification failed', { error: error.message, userId: actor.id })
+    }
+
+    return result
   },
 
   /**

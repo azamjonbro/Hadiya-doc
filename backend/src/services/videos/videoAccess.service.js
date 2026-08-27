@@ -23,8 +23,17 @@ async function assertFaceVerifiedToday(actor) {
   const enrolled = Boolean(profile?.enrolled && profile?.enabled)
   if (!enrolled && !env.FACE_VERIFICATION_ENFORCE_UNENROLLED) return
 
+  // Two different answers, because the player can act on both: with no
+  // reference photo on file the employee is sent to capture one (first use),
+  // and with one on file they are asked to match it. Collapsing these into a
+  // single code is what left an unenrolled employee staring at a verification
+  // step that could only ever fail.
+  if (!enrolled) {
+    throw ApiError.forbidden('Face enrollment is required before playback', 'FACE_ENROLLMENT_REQUIRED')
+  }
+
   const verifiedToday =
-    enrolled && profile.lastVerifiedAt && isSameLocalDay(profile.lastVerifiedAt, new Date(), env.APP_TIMEZONE)
+    profile.lastVerifiedAt && isSameLocalDay(profile.lastVerifiedAt, new Date(), env.APP_TIMEZONE)
   if (!verifiedToday) {
     throw ApiError.forbidden('Face verification is required before playback', 'FACE_VERIFICATION_REQUIRED')
   }

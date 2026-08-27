@@ -64,16 +64,11 @@ async function issueFaceChallengeIfRequired(user) {
   const profile = await faceProfileRepository.findByUserId(user._id)
   const enrolled = Boolean(profile?.enrolled && profile?.enabled)
 
-  if (!enrolled) {
-    // Nobody has enrolled this user yet. Left alone unless the stricter
-    // rollout flag is on, so turning FACE_VERIFICATION_REQUIRED on doesn't
-    // instantly lock out every legacy employee.
-    if (!env.FACE_VERIFICATION_ENFORCE_UNENROLLED) return null
-    throw ApiError.forbidden(
-      'Face verification has not been set up for your account yet. Contact an administrator.',
-      'FACE_NOT_ENROLLED'
-    )
-  }
+  // No reference photo on file: sign in, and let the first screen that needs
+  // a face walk them through capturing one (POST /auth/face/self-enroll).
+  // Refusing the login instead — which is what this did while only SUPERADMIN
+  // could enrol — left a new employee with nothing to do but phone an admin.
+  if (!enrolled) return null
 
   const verifiedToday =
     profile.lastVerifiedAt && isSameLocalDay(profile.lastVerifiedAt, new Date(), env.APP_TIMEZONE)

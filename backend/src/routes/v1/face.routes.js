@@ -54,6 +54,18 @@ faceRouter.post(
   faceController.reEnroll
 )
 
+// Self-enrollment: any signed-in employee, for their own account only, and
+// only while no reference photo exists yet (the service refuses otherwise).
+// This is the trust-on-first-use path — the admin routes above stay the way
+// to *replace* a face that is already on file.
+faceRouter.post(
+  '/self-enroll',
+  authenticate,
+  imageUploadRateLimiter,
+  uploadPhotos('photos', 3),
+  faceController.selfEnroll
+)
+
 // The one route usable both mid-login (challenge token, no session yet) and
 // with a normal session (the daily video-playback gate) — see
 // authenticateOrFaceChallenge.middleware.js.

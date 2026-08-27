@@ -10,15 +10,24 @@ import { useToast } from '@/composables/useToast'
 
 const props = defineProps({
   modelValue: { type: Boolean, default: false },
-  userId: { type: String, required: true },
+  // Empty in 'self' mode — the API takes the caller's own account there.
+  userId: { type: String, default: '' },
   userName: { type: String, default: '' },
-  mode: { type: String, default: 'enroll' }, // enroll | re-enroll
+  mode: { type: String, default: 'enroll' }, // enroll | re-enroll | self
 })
 const emit = defineEmits(['update:modelValue', 'enrolled'])
 
 const { t } = useI18n()
 const toast = useToast()
 const enrollment = useFaceEnrollment()
+
+// 'self' is the employee setting up their own face, so it is addressed to
+// them rather than describing a third person to an admin.
+const titleForMode = computed(() => {
+  if (props.mode === 'self') return t('faceVerification.enrollment.selfTitle')
+  if (props.mode === 're-enroll') return t('faceVerification.enrollment.reEnrollTitle')
+  return t('faceVerification.enrollment.title')
+})
 
 const step = ref('intro') // intro | capture | submitting | done
 const errorMessage = ref('')
@@ -58,7 +67,8 @@ async function onSubmit() {
   errorMessage.value = ''
   try {
     const photos = enrollment.frames.value.map((frame) => frame.blob)
-    if (props.mode === 're-enroll') await faceApi.reEnroll(props.userId, photos)
+    if (props.mode === 'self') await faceApi.selfEnroll(photos)
+    else if (props.mode === 're-enroll') await faceApi.reEnroll(props.userId, photos)
     else await faceApi.enroll(props.userId, photos)
     step.value = 'done'
     toast.success(t('faceVerification.enrollment.success'))
@@ -81,14 +91,16 @@ function close() {
 <template>
   <Modal
     :model-value="modelValue"
-    :title="mode === 're-enroll' ? t('faceVerification.enrollment.reEnrollTitle') : t('faceVerification.enrollment.title')"
+    :title="titleForMode"
     :description="userName"
     size="md"
     @update:model-value="close"
   >
     <div v-if="step === 'intro'" class="space-y-4 text-center">
       <Icon name="video" size="30" class="mx-auto text-primary" />
-      <p class="text-small text-ink-muted">{{ t('faceVerification.enrollment.intro') }}</p>
+      <p class="text-small text-ink-muted">
+        {{ mode === 'self' ? t('faceVerification.enrollment.selfIntro') : t('faceVerification.enrollment.intro') }}
+      </p>
       <p v-if="cameraError" class="text-small text-danger">{{ cameraError }}</p>
       <AppButton variant="primary" @click="onStartCamera">{{ t('faceVerification.enrollment.startCamera') }}</AppButton>
     </div>

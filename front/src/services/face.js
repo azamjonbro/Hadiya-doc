@@ -15,6 +15,14 @@ export const faceApi = {
     return http.post('/auth/face/re-enroll', form).then((r) => r.data.data)
   },
 
+  // The employee enrolling their own face. No userId: the API always reads it
+  // from the session, so this can never point at somebody else's account.
+  selfEnroll(photos) {
+    const form = new FormData()
+    photos.forEach((blob, i) => form.append('photos', blob, `frame-${i}.jpg`))
+    return http.post('/auth/face/self-enroll', form).then((r) => r.data.data)
+  },
+
   // Two call shapes: an already-authenticated user needs only the photo (the
   // http instance attaches their bearer token automatically); the mid-login
   // case has no session yet, so it passes verificationToken instead — the
