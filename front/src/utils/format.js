@@ -44,3 +44,14 @@ export function scoreTone(score) {
   if (score >= 50) return 'warning'
   return 'danger'
 }
+
+/**
+ * `<input type="date">` accepts exactly 'YYYY-MM-DD' and silently shows an
+ * empty box for anything else — including the ISO timestamps the API returns.
+ * Sliced rather than parsed on purpose: a birth date is a calendar day, and
+ * running it through the local timezone is what turns the 1st into the 31st.
+ */
+export function toDateInputValue(value) {
+  if (!value) return ''
+  return String(value).slice(0, 10)
+}

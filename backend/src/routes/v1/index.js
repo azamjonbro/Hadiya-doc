@@ -22,6 +22,8 @@ import { notificationsRouter } from './notifications.routes.js'
 import { aiChatRouter } from './aiChat.routes.js'
 import { dashboardRouter } from './dashboard.routes.js'
 import { branchesRouter } from './branches.routes.js'
+import { rolesRouter } from './roles.routes.js'
+import { orgListsRouter } from './orgLists.routes.js'
 import { proctorRouter } from './proctor.routes.js'
 import { reportsRouter } from './reports.routes.js'
 import { uploadsRouter } from './uploads.routes.js'
@@ -54,6 +56,8 @@ v1Router.use('/notifications', notificationsRouter)
 v1Router.use('/ai-chat', aiChatRouter)
 v1Router.use('/dashboard', dashboardRouter)
 v1Router.use('/branches', branchesRouter)
+v1Router.use('/roles', rolesRouter)
+v1Router.use('/org-lists', orgListsRouter)
 v1Router.use('/proctor', proctorRouter)
 v1Router.use('/reports', reportsRouter)
 v1Router.use('/uploads', uploadsRouter)

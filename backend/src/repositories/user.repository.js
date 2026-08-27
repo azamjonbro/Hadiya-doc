@@ -134,7 +134,7 @@ export const userRepository = {
 
   // Shared by listPage and count so a page and its total can never be
   // computed from two subtly different filters.
-  buildFilter({ search, roleId, branch, department, isActive }) {
+  buildFilter({ search, roleId, branch, department, subdivision, country, position, employment }) {
     const filter = {}
     if (search) {
       const regex = new RegExp(search.trim(), 'i')
@@ -143,7 +143,18 @@ export const userRepository = {
     if (roleId) filter.roleId = roleId
     if (branch) filter.branch = branch
     if (department) filter.department = department
-    if (isActive !== undefined) filter.isActive = isActive
+    if (subdivision) filter.subdivision = subdivision
+    if (country) filter.country = country
+    if (position) filter.position = position
+
+    // Three states, not two. Someone who left the company is archived, which
+    // is a different thing from an account an admin switched off while the
+    // person is still employed — the old active/inactive pair could not tell
+    // those apart, and "who works here" is the question this page is for.
+    if (employment === 'working') filter.terminationDate = null
+    if (employment === 'archived') filter.terminationDate = { $ne: null }
+    if (employment === 'active') Object.assign(filter, { isActive: true, terminationDate: null })
+    if (employment === 'inactive') Object.assign(filter, { isActive: false, terminationDate: null })
     return filter
   },
 

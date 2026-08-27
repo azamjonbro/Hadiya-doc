@@ -47,6 +47,10 @@ async function seedSuperAdmin(superAdminRoleId) {
 
   const passwordHash = await hashPassword(env.SUPERADMIN_PASSWORD)
   await User.create({
+    // Surname first, so composeFullName() rebuilds exactly the fullName below
+    // if this account is ever saved through the employee form.
+    firstName: 'Admin',
+    lastName: 'Super',
     fullName: 'Super Admin',
     jshshir: env.SUPERADMIN_JSHSHIR,
     email: env.SUPERADMIN_EMAIL.toLowerCase(),

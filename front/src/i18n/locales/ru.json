@@ -1037,7 +1037,21 @@
       "passportSeriesHint": "Например AA1234567 — необязательно, вход возможен и по нему",
       "passportSeriesInvalid": "Неверный формат. Например: AA1234567",
       "emailOptional": "Email (необязательно)",
-      "branch": "Филиал"
+      "branch": "Филиал",
+      "firstName": "Имя",
+      "lastName": "Фамилия",
+      "gender": "Пол",
+      "genderMale": "Мужской",
+      "genderFemale": "Женский",
+      "genderUnset": "Не указан",
+      "birthDate": "Дата рождения",
+      "address": "Адрес",
+      "country": "Страна",
+      "subdivision": "Подразделение",
+      "hireDate": "Дата приёма на работу",
+      "terminationDate": "Дата увольнения",
+      "terminationDateHint": "Необязательно. Если указать, аккаунт уйдёт в архив.",
+      "terminationDateArchives": "Этот аккаунт уйдёт в архив и больше не сможет входить в систему."
     },
     "filters": {
       "search": "Поиск...",
@@ -1048,7 +1062,11 @@
       "apply": "Применить",
       "allDepartments": "Все отделы",
       "clear": "Сбросить",
-      "allBranches": "Все филиалы"
+      "allBranches": "Все филиалы",
+      "working": "Работает",
+      "archived": "Архив (уволенные)",
+      "allSubdivisions": "Все подразделения",
+      "allCountries": "Все страны"
     },
     "columns": {
       "progress": "Прогресс"
@@ -1059,6 +1077,11 @@
       "copied": "Пароль скопирован",
       "copyFailed": "Не удалось скопировать — перепишите пароль вручную",
       "hint": "Пароль из {length} символов. Похожие символы (0/O, 1/l/I) не используются."
+    },
+    "sections": {
+      "personal": "Личные данные",
+      "employment": "Место работы",
+      "access": "Доступ"
     }
   },
   "courseBuilder": {
@@ -1367,5 +1390,15 @@
     "name": "Название филиала",
     "renamed": "Переименовано: перенесено сотрудников — {users}, курсов — {courses}",
     "confirmDelete": "Удалить филиал «{name}»?"
+  },
+  "orgLists": {
+    "select": "Выберите",
+    "search": "Поиск",
+    "searchOrCreate": "Найдите или введите новое",
+    "create": "Добавить «{name}»",
+    "remove": "Удалить",
+    "empty": "Ничего не найдено",
+    "addFailed": "Не удалось добавить",
+    "removeFailed": "Не удалось удалить"
   }
 }

@@ -3,9 +3,10 @@ import { computed, onMounted, reactive, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useConfirm } from '@/composables/useConfirm'
 import { useRoute, useRouter } from 'vue-router'
-import { ROLES, isJshshir, isPassportSeries, normalizeJshshir, normalizePassportSeries } from '@lms/shared'
+import { ROLES, normalizeJshshir, normalizePassportSeries } from '@lms/shared'
 import { useAuthStore } from '@/stores/auth'
 import { usersApi } from '@/services/users'
+import { useOrgDirectory } from '@/composables/useOrgDirectory'
 import { coursesApi } from '@/services/courses'
 import { useToast } from '@/composables/useToast'
 import AppCard from '@/components/ui/AppCard.vue'
@@ -13,6 +14,7 @@ import AppButton from '@/components/ui/AppButton.vue'
 import AppInput from '@/components/ui/AppInput.vue'
 import AppSelect from '@/components/ui/AppSelect.vue'
 import BranchSelect from '@/components/ui/BranchSelect.vue'
+import EmployeeFormFields from '@/admin/components/employee/EmployeeFormFields.vue'
 import GeneratedPasswordField from '@/components/ui/GeneratedPasswordField.vue'
 import Modal from '@/components/ui/Modal.vue'
 import FaceEnrollmentWizard from '@/components/face/FaceEnrollmentWizard.vue'
@@ -31,25 +33,35 @@ const router = useRouter()
 const route = useRoute()
 const toast = useToast()
 
-const roleOptions = Object.values(ROLES).map((r) => ({ value: r, label: r }))
-
-// Departments come from the accounts that actually exist rather than being
-// typed by hand: the API filters on an exact match, so a free-text box
-// turned any typo (or "manage" for "management") into an empty result with
-// no hint as to why.
-const departmentOptions = ref([])
+// Roles, job titles, departments, subdivisions and countries all come from the
+// server rather than from a hard-coded list: they are rows an admin can add
+// from the employee form, and the filters here have to offer the same set the
+// form just wrote to. Filtering is an exact match, so a free-text box turned
+// any typo (or "manage" for "management") into an empty result with no hint
+// as to why.
+const directory = useOrgDirectory()
+const { ORG_LIST_TYPES } = directory
 const branchOptions = ref([])
 
-const filters = reactive({ search: '', role: '', branch: route.query.branch ?? '', department: '', status: '' })
+const EMPTY_FILTERS = { search: '', role: '', branch: '', department: '', subdivision: '', country: '', status: '' }
+const filters = reactive({ ...EMPTY_FILTERS, branch: route.query.branch ?? '' })
 
-const hasActiveFilters = computed(() =>
-  Boolean(filters.search || filters.role || filters.branch || filters.department || filters.status)
-)
+const hasActiveFilters = computed(() => Object.keys(EMPTY_FILTERS).some((key) => filters[key]))
 
 function clearFilters() {
-  Object.assign(filters, { search: '', role: '', branch: '', department: '', status: '' })
+  Object.assign(filters, EMPTY_FILTERS)
   loadFirstPage()
 }
+
+// Three answers to "who works here", not two: archived is someone who left,
+// which is a different thing from an account switched off while the person is
+// still on the payroll.
+const statusOptions = computed(() => [
+  { value: 'working', label: t('users.filters.working') },
+  { value: 'archived', label: t('users.filters.archived') },
+  { value: 'active', label: t('users.filters.active') },
+  { value: 'inactive', label: t('users.filters.inactive') },
+])
 const PAGE_SIZE = 15
 
 const items = ref([])
@@ -68,8 +80,9 @@ const rangeEnd = computed(() => Math.min(page.value * PAGE_SIZE, total.value))
 const showCreateModal = ref(false)
 const createSubmitting = ref(false)
 const createError = ref('')
-const createForm = reactive({
-  fullName: '',
+const BLANK_USER = {
+  firstName: '',
+  lastName: '',
   jshshir: '',
   passportSeries: '',
   email: '',
@@ -77,28 +90,27 @@ const createForm = reactive({
   roleName: ROLES.EMPLOYEE,
   branch: '',
   department: '',
+  subdivision: '',
   position: '',
+  country: '',
+  address: '',
+  gender: '',
+  birthDate: '',
+  hireDate: '',
+  terminationDate: '',
   password: '',
   isActive: true,
   courseIds: [],
-})
+}
+const createForm = reactive({ ...BLANK_USER })
+// Raised by the shared field block: identity fields that are filled in but
+// malformed. Submitting anyway would only earn a 400.
+const fieldsValid = ref(true)
 const assignableCourses = ref([])
 
 // { id, fullName } of a just-created user, offered the optional face
 // enrollment step — see onCreateSubmit.
 const pendingFaceEnrollUser = ref(null)
-
-// Checked as the admin types, but only once the field is non-empty — a red
-// error on a field nobody has filled in yet reads as a failure, not a hint.
-// The same rules run again server-side (user.validator.js).
-const jshshirError = computed(() =>
-  createForm.jshshir && !isJshshir(createForm.jshshir) ? t('users.fields.jshshirInvalid') : ''
-)
-const passportSeriesError = computed(() =>
-  createForm.passportSeries && !isPassportSeries(createForm.passportSeries)
-    ? t('users.fields.passportSeriesInvalid')
-    : ''
-)
 
 const progressByUserId = ref({})
 
@@ -139,6 +151,8 @@ function buildParams() {
   if (filters.role) params.role = filters.role
   if (filters.branch) params.branch = filters.branch
   if (filters.department) params.department = filters.department
+  if (filters.subdivision) params.subdivision = filters.subdivision
+  if (filters.country) params.country = filters.country
   if (filters.status) params.status = filters.status
   return params
 }
@@ -175,14 +189,6 @@ async function goToPage(next) {
   window.scrollTo({ top: 0, behavior: 'smooth' })
 }
 
-async function loadDepartments() {
-  try {
-    departmentOptions.value = (await usersApi.departments()).map((name) => ({ value: name, label: name }))
-  } catch {
-    departmentOptions.value = []
-  }
-}
-
 async function loadBranches() {
   try {
     branchOptions.value = await usersApi.branches()
@@ -207,7 +213,7 @@ function toggleCourse(courseId) {
 }
 
 async function onCreateSubmit() {
-  if (jshshirError.value || passportSeriesError.value) return
+  if (!fieldsValid.value) return
 
   createSubmitting.value = true
   createError.value = ''
@@ -226,9 +232,7 @@ async function onCreateSubmit() {
     // photo). Offered right after creation since the new employee's id/name
     // is right here; also reachable later from their profile's Settings tab.
     pendingFaceEnrollUser.value = { id: created.id, fullName: created.fullName }
-    Object.assign(createForm, {
-      fullName: '', jshshir: '', passportSeries: '', email: '', phone: '', roleName: ROLES.EMPLOYEE, branch: '', department: '', position: '', password: '', isActive: true, courseIds: [],
-    })
+    Object.assign(createForm, { ...BLANK_USER, courseIds: [] })
     await loadFirstPage()
     toast.success(t('users.created'))
   } catch (error) {
@@ -251,7 +255,7 @@ async function bulkDeactivate() {
 
 onMounted(() => {
   load()
-  loadDepartments()
+  directory.loadAll()
   loadBranches()
   loadAssignableCourses()
 })
@@ -272,7 +276,7 @@ onMounted(() => {
         <AppInput v-model="filters.search" icon="search" :placeholder="t('users.filters.search')" @keyup.enter="loadFirstPage" />
       </div>
       <div class="w-44">
-        <AppSelect v-model="filters.role" :placeholder="t('users.filters.allRoles')" :options="roleOptions" @update:model-value="loadFirstPage" />
+        <AppSelect v-model="filters.role" :placeholder="t('users.filters.allRoles')" :options="directory.roleOptions.value" @update:model-value="loadFirstPage" />
       </div>
       <div class="w-44">
         <BranchSelect
@@ -286,15 +290,31 @@ onMounted(() => {
         <AppSelect
           v-model="filters.department"
           :placeholder="t('users.filters.allDepartments')"
-          :options="departmentOptions"
+          :options="directory.optionsFor(ORG_LIST_TYPES.DEPARTMENT)"
           @update:model-value="loadFirstPage"
         />
       </div>
-      <div class="w-40">
+      <div class="w-44">
+        <AppSelect
+          v-model="filters.subdivision"
+          :placeholder="t('users.filters.allSubdivisions')"
+          :options="directory.optionsFor(ORG_LIST_TYPES.SUBDIVISION)"
+          @update:model-value="loadFirstPage"
+        />
+      </div>
+      <div class="w-44">
+        <AppSelect
+          v-model="filters.country"
+          :placeholder="t('users.filters.allCountries')"
+          :options="directory.optionsFor(ORG_LIST_TYPES.COUNTRY)"
+          @update:model-value="loadFirstPage"
+        />
+      </div>
+      <div class="w-44">
         <AppSelect
           v-model="filters.status"
           :placeholder="t('users.filters.allStatuses')"
-          :options="[{ value: 'active', label: t('users.filters.active') }, { value: 'inactive', label: t('users.filters.inactive') }]"
+          :options="statusOptions"
           @update:model-value="loadFirstPage"
         />
       </div>
@@ -367,7 +387,13 @@ onMounted(() => {
               </div>
             </td>
             <td class="px-4 py-3">
-              <Badge :variant="user.isActive ? 'success' : 'danger'" dot size="sm">
+              <!-- Archived outranks inactive: both accounts are switched off,
+                   but only one of them is a person who left, and that is the
+                   distinction this column is asked about. -->
+              <Badge v-if="user.isArchived" variant="neutral" dot size="sm">
+                {{ t('users.filters.archived') }}
+              </Badge>
+              <Badge v-else :variant="user.isActive ? 'success' : 'danger'" dot size="sm">
                 {{ user.isActive ? t('users.filters.active') : t('users.filters.inactive') }}
               </Badge>
             </td>
@@ -389,31 +415,18 @@ onMounted(() => {
 
     <Modal v-model="showCreateModal" :title="t('users.newUser')" size="lg">
       <form class="grid grid-cols-1 sm:grid-cols-2 gap-4" @submit.prevent="onCreateSubmit">
-        <AppInput v-model="createForm.fullName" required :label="t('users.fields.fullName')" />
-        <AppInput
-          v-model="createForm.jshshir"
-          required
-          :label="t('users.fields.jshshir')"
-          :hint="t('users.fields.jshshirHint')"
-          :error="jshshirError"
+        <EmployeeFormFields
+          :form="createForm"
+          :directory="directory"
+          :branch-options="branchOptions"
+          :can-manage-roles="auth.hasPermission('role:manage')"
+          :can-manage-lists="auth.hasPermission('user:update')"
+          @validity="fieldsValid = $event"
         />
-        <AppInput
-          v-model="createForm.passportSeries"
-          :label="t('users.fields.passportSeries')"
-          :hint="t('users.fields.passportSeriesHint')"
-          :error="passportSeriesError"
-        />
-        <AppInput v-model="createForm.email" type="email" :label="t('users.fields.emailOptional')" />
-        <AppInput v-model="createForm.phone" :label="t('users.fields.phone')" />
-        <AppSelect v-model="createForm.roleName" :label="t('users.role')" :options="roleOptions" />
-        <BranchSelect
-          v-model="createForm.branch"
-          :options="branchOptions"
-          allow-create
-          :label="t('users.fields.branch')"
-        />
-        <AppInput v-model="createForm.department" :label="t('users.fields.department')" />
-        <AppInput v-model="createForm.position" :label="t('users.fields.position')" />
+
+        <p class="sm:col-span-2 mt-2 text-caption font-semibold uppercase tracking-widest text-ink-faint">
+          {{ t('users.sections.access') }}
+        </p>
         <div class="sm:col-span-2">
           <GeneratedPasswordField v-model="createForm.password" required :label="t('users.fields.password')" />
         </div>

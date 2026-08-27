@@ -1037,7 +1037,21 @@
       "passportSeriesHint": "For example AA1234567 — optional, also works for signing in",
       "passportSeriesInvalid": "Invalid format. For example: AA1234567",
       "emailOptional": "Email (optional)",
-      "branch": "Branch"
+      "branch": "Branch",
+      "firstName": "First name",
+      "lastName": "Last name",
+      "gender": "Gender",
+      "genderMale": "Male",
+      "genderFemale": "Female",
+      "genderUnset": "Not specified",
+      "birthDate": "Date of birth",
+      "address": "Address",
+      "country": "Country",
+      "subdivision": "Subdivision",
+      "hireDate": "Hire date",
+      "terminationDate": "Termination date",
+      "terminationDateHint": "Optional. Setting it archives the account.",
+      "terminationDateArchives": "This account will be archived and can no longer sign in."
     },
     "filters": {
       "search": "Search...",
@@ -1048,7 +1062,11 @@
       "apply": "Apply",
       "allDepartments": "All departments",
       "clear": "Clear",
-      "allBranches": "All branches"
+      "allBranches": "All branches",
+      "working": "Working",
+      "archived": "Archived (left)",
+      "allSubdivisions": "All subdivisions",
+      "allCountries": "All countries"
     },
     "columns": {
       "progress": "Progress"
@@ -1059,6 +1077,11 @@
       "copied": "Password copied",
       "copyFailed": "Could not copy — write the password down manually",
       "hint": "{length}-character password. Ambiguous characters (0/O, 1/l/I) are never used."
+    },
+    "sections": {
+      "personal": "Personal details",
+      "employment": "Employment",
+      "access": "Access"
     }
   },
   "courseBuilder": {
@@ -1367,5 +1390,15 @@
     "name": "Branch name",
     "renamed": "Renamed — moved {users} employee(s) and {courses} course(s)",
     "confirmDelete": "Delete the branch “{name}”?"
+  },
+  "orgLists": {
+    "select": "Select",
+    "search": "Search",
+    "searchOrCreate": "Search or type a new one",
+    "create": "Add \"{name}\"",
+    "remove": "Delete",
+    "empty": "Nothing found",
+    "addFailed": "Could not add",
+    "removeFailed": "Could not delete"
   }
 }

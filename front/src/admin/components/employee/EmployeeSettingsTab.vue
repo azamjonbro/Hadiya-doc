@@ -1,17 +1,18 @@
 <script setup>
-import { computed, reactive, ref, watch } from 'vue'
+import { reactive, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useConfirm } from '@/composables/useConfirm'
-import { ROLES, isJshshir, isPassportSeries, normalizeJshshir, normalizePassportSeries } from '@lms/shared'
+import { normalizeJshshir, normalizePassportSeries } from '@lms/shared'
 import { useAuthStore } from '@/stores/auth'
 import { usersApi } from '@/services/users'
+import { useOrgDirectory } from '@/composables/useOrgDirectory'
+import { toDateInputValue } from '@/utils/format'
 import { useToast } from '@/composables/useToast'
 import AppCard from '@/components/ui/AppCard.vue'
 import AppButton from '@/components/ui/AppButton.vue'
 import AppInput from '@/components/ui/AppInput.vue'
-import AppSelect from '@/components/ui/AppSelect.vue'
 import Badge from '@/components/ui/Badge.vue'
-import BranchSelect from '@/components/ui/BranchSelect.vue'
+import EmployeeFormFields from './EmployeeFormFields.vue'
 import GeneratedPasswordField from '@/components/ui/GeneratedPasswordField.vue'
 import ImageUploadField from '@/components/ui/ImageUploadField.vue'
 import FaceEnrollmentWizard from '@/components/face/FaceEnrollmentWizard.vue'
@@ -28,7 +29,11 @@ const confirm = useConfirm()
 const auth = useAuthStore()
 const toast = useToast()
 
-const roleOptions = Object.values(ROLES).map((role) => ({ value: role, label: role }))
+// Roles and the four org lists, from the server — same source the employee
+// form and the list filters read, so a title added while editing one person is
+// there for the next.
+const directory = useOrgDirectory()
+directory.loadAll()
 const canEdit = auth.hasPermission('user:update')
 
 const saving = ref(false)
@@ -48,37 +53,51 @@ usersApi
   })
 
 const form = reactive({
-  fullName: '',
+  firstName: '',
+  lastName: '',
   jshshir: '',
   passportSeries: '',
   email: '',
   phone: '',
   branch: '',
   department: '',
+  subdivision: '',
   position: '',
+  country: '',
+  address: '',
+  gender: '',
+  birthDate: '',
+  hireDate: '',
+  terminationDate: '',
   roleName: '',
   isActive: true,
   password: '',
   avatar: '',
 })
 
-// Editable here, not just at creation: the JSHSHIR migration gave every
-// pre-existing account a placeholder starting with `9`, and this tab is where
-// an admin replaces it with the employee's real number.
-const jshshirError = computed(() => (form.jshshir && !isJshshir(form.jshshir) ? t('users.fields.jshshirInvalid') : ''))
-const passportSeriesError = computed(() =>
-  form.passportSeries && !isPassportSeries(form.passportSeries) ? t('users.fields.passportSeriesInvalid') : ''
-)
+// Raised by the shared field block — the identity fields are editable here and
+// not only at creation, because the JSHSHIR migration gave every pre-existing
+// account a placeholder starting with `9` and this tab is where an admin
+// replaces it with the real number.
+const fieldsValid = ref(true)
 
 function resetFrom(user) {
-  form.fullName = user.fullName ?? ''
+  form.firstName = user.firstName ?? ''
+  form.lastName = user.lastName ?? ''
   form.jshshir = user.jshshir ?? ''
   form.passportSeries = user.passportSeries ?? ''
   form.email = user.email ?? ''
   form.phone = user.phone ?? ''
   form.branch = user.branch ?? ''
   form.department = user.department ?? ''
+  form.subdivision = user.subdivision ?? ''
   form.position = user.position ?? ''
+  form.country = user.country ?? ''
+  form.address = user.address ?? ''
+  form.gender = user.gender ?? ''
+  form.birthDate = toDateInputValue(user.birthDate)
+  form.hireDate = toDateInputValue(user.hireDate)
+  form.terminationDate = toDateInputValue(user.terminationDate)
   form.roleName = user.role ?? ''
   form.isActive = user.isActive
   form.avatar = user.avatar ?? ''
@@ -90,7 +109,7 @@ function resetFrom(user) {
 watch(() => props.user.id, () => resetFrom(props.user), { immediate: true })
 
 async function onSave() {
-  if (jshshirError.value || passportSeriesError.value) return
+  if (!fieldsValid.value) return
 
   saving.value = true
   errorMessage.value = ''
@@ -184,35 +203,19 @@ function onFaceEnrolled() {
           :disabled="!canEdit"
         />
       </div>
-      <div class="sm:col-span-2">
-        <AppInput v-model="form.fullName" :label="t('users.fields.fullName')" :disabled="!canEdit" />
-      </div>
-      <AppInput
-        v-model="form.jshshir"
-        :label="t('users.fields.jshshir')"
-        :hint="t('users.fields.jshshirHint')"
-        :error="jshshirError"
+      <EmployeeFormFields
+        :form="form"
+        :directory="directory"
+        :branch-options="branchOptions"
+        :can-manage-roles="auth.hasPermission('role:manage')"
+        :can-manage-lists="canEdit"
         :disabled="!canEdit"
+        @validity="fieldsValid = $event"
       />
-      <AppInput
-        v-model="form.passportSeries"
-        :label="t('users.fields.passportSeries')"
-        :hint="t('users.fields.passportSeriesHint')"
-        :error="passportSeriesError"
-        :disabled="!canEdit"
-      />
-      <AppInput v-model="form.email" type="email" :label="t('users.fields.emailOptional')" :disabled="!canEdit" />
-      <AppInput v-model="form.phone" :label="t('users.fields.phone')" :disabled="!canEdit" />
-      <BranchSelect
-        v-model="form.branch"
-        :options="branchOptions"
-        allow-create
-        :label="t('users.fields.branch')"
-        :disabled="!canEdit"
-      />
-      <AppInput v-model="form.department" :label="t('users.fields.department')" :disabled="!canEdit" />
-      <AppInput v-model="form.position" :label="t('users.fields.position')" :disabled="!canEdit" />
-      <AppSelect v-model="form.roleName" :label="t('users.role')" :options="roleOptions" :disabled="!canEdit" />
+
+      <p class="sm:col-span-2 mt-2 text-caption font-semibold uppercase tracking-widest text-ink-faint">
+        {{ t('users.sections.access') }}
+      </p>
       <label class="sm:col-span-2 flex items-center gap-2 text-small font-medium text-ink">
         <input v-model="form.isActive" type="checkbox" :disabled="!canEdit" class="h-4 w-4 rounded border-border-strong text-primary" />
         {{ t('users.filters.active') }}

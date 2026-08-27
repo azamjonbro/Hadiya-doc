@@ -1037,7 +1037,21 @@
       "passportSeriesHint": "Masalan AA1234567 — ixtiyoriy, u bilan ham kirish mumkin",
       "passportSeriesInvalid": "Format noto'g'ri. Masalan: AA1234567",
       "emailOptional": "Email (ixtiyoriy)",
-      "branch": "Filial"
+      "branch": "Filial",
+      "firstName": "Ism",
+      "lastName": "Familiya",
+      "gender": "Jinsi",
+      "genderMale": "Erkak",
+      "genderFemale": "Ayol",
+      "genderUnset": "Ko'rsatilmagan",
+      "birthDate": "Tug'ilgan sana",
+      "address": "Manzil",
+      "country": "Davlat",
+      "subdivision": "Bo'linma",
+      "hireDate": "Ishga qabul qilingan sana",
+      "terminationDate": "Ishdan ketgan sana",
+      "terminationDateHint": "Ixtiyoriy. Kiritilsa, hisob arxivga o'tadi.",
+      "terminationDateArchives": "Bu hisob arxivga tushadi va tizimga kira olmaydi."
     },
     "filters": {
       "search": "Qidirish...",
@@ -1048,7 +1062,11 @@
       "apply": "Filtrlash",
       "allDepartments": "Barcha bo'limlar",
       "clear": "Tozalash",
-      "allBranches": "Barcha filiallar"
+      "allBranches": "Barcha filiallar",
+      "working": "Ishlayapti",
+      "archived": "Arxiv (ishdan ketgan)",
+      "allSubdivisions": "Barcha bo'linmalar",
+      "allCountries": "Barcha davlatlar"
     },
     "columns": {
       "progress": "Progress"
@@ -1059,6 +1077,11 @@
       "copied": "Parol nusxalandi",
       "copyFailed": "Nusxalab bo'lmadi — parolni qo'lda yozib oling",
       "hint": "{length} belgili parol. Chalkash belgilar (0/O, 1/l/I) ishlatilmaydi."
+    },
+    "sections": {
+      "personal": "Shaxsiy ma'lumotlar",
+      "employment": "Ish joyi",
+      "access": "Tizimga kirish"
     }
   },
   "courseBuilder": {
@@ -1367,5 +1390,15 @@
     "name": "Filial nomi",
     "renamed": "Nomi o'zgartirildi: {users} xodim, {courses} kurs ko'chirildi",
     "confirmDelete": "«{name}» filiali o'chirilsinmi?"
+  },
+  "orgLists": {
+    "select": "Tanlang",
+    "search": "Qidirish",
+    "searchOrCreate": "Qidiring yoki yangisini yozing",
+    "create": "\"{name}\" ni qo'shish",
+    "remove": "O'chirish",
+    "empty": "Hech narsa topilmadi",
+    "addFailed": "Qo'shib bo'lmadi",
+    "removeFailed": "O'chirib bo'lmadi"
   }
 }

@@ -22,6 +22,8 @@ export const userController = {
     }
     sendSuccess(res, {
       id: user._id.toString(),
+      firstName: user.firstName ?? '',
+      lastName: user.lastName ?? '',
       fullName: user.fullName,
       jshshir: user.jshshir,
       passportSeries: user.passportSeries ?? '',

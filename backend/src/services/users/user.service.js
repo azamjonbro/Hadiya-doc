@@ -1,4 +1,4 @@
-import { ROLES } from '@lms/shared'
+import { ROLES, composeFullName } from '@lms/shared'
 import { userRepository } from '../../repositories/user.repository.js'
 import { courseRepository } from '../../repositories/course.repository.js'
 import { roleRepository } from '../../repositories/role.repository.js'
@@ -14,6 +14,10 @@ const EMPLOYEE_TIER_ROLES = [ROLES.EMPLOYEE, ROLES.CALL_OPERATOR, ROLES.SELLER]
 function toPublicUser(user, role) {
   return {
     id: user._id.toString(),
+    // Both halves and the composed whole: forms edit the halves, every list
+    // and header in the app renders fullName.
+    firstName: user.firstName ?? '',
+    lastName: user.lastName ?? '',
     fullName: user.fullName,
     jshshir: user.jshshir,
     // Normalised to '' for the clients: the field is absent on documents where
@@ -23,7 +27,17 @@ function toPublicUser(user, role) {
     phone: user.phone,
     branch: user.branch ?? '',
     department: user.department,
+    subdivision: user.subdivision ?? '',
     position: user.position,
+    country: user.country ?? '',
+    address: user.address ?? '',
+    gender: user.gender ?? '',
+    birthDate: user.birthDate ?? null,
+    hireDate: user.hireDate ?? null,
+    terminationDate: user.terminationDate ?? null,
+    // Derived rather than stored: "archived" is exactly "has a leaving date",
+    // and a second flag saying the same thing is a second thing to get wrong.
+    isArchived: Boolean(user.terminationDate),
     avatar: user.avatar,
     isActive: user.isActive,
     role: role?.name ?? null,
@@ -92,7 +106,10 @@ export const userService = {
       roleId: roleFilter?._id,
       branch: query.branch,
       department,
-      isActive: query.status === 'active' ? true : query.status === 'inactive' ? false : undefined,
+      subdivision: query.subdivision,
+      country: query.country,
+      position: query.position,
+      employment: query.status,
       cursor: query.cursor,
       page: query.page,
       limit: query.limit,
@@ -196,7 +213,9 @@ export const userService = {
     let user
     try {
       user = await userRepository.create({
-        fullName: payload.fullName,
+        firstName: payload.firstName,
+        lastName: payload.lastName,
+        fullName: composeFullName(payload.firstName, payload.lastName),
         jshshir: payload.jshshir,
         // Left off the document entirely when blank — see user.model.js on why
         // these must be absent rather than '' or null.
@@ -207,8 +226,18 @@ export const userService = {
         roleId: role._id,
         branch: payload.branch ?? '',
         department: payload.department ?? '',
+        subdivision: payload.subdivision ?? '',
         position: payload.position ?? '',
-        isActive: payload.isActive ?? true,
+        country: payload.country ?? '',
+        address: payload.address ?? '',
+        gender: payload.gender ?? '',
+        birthDate: payload.birthDate ?? null,
+        hireDate: payload.hireDate ?? null,
+        terminationDate: payload.terminationDate ?? null,
+        // Someone entered with a leaving date is someone being recorded after
+        // the fact. The account follows the employment: archived means it
+        // cannot sign in, so the two can never disagree.
+        isActive: payload.terminationDate ? false : payload.isActive ?? true,
       })
     } catch (error) {
       if (error.code === 11000) throw duplicateIdentityError(error)
@@ -262,12 +291,35 @@ export const userService = {
     await assertManagerCanManage(actor, role, payload.department ?? existing.department)
 
     const updateData = {}
-    if (payload.fullName !== undefined) updateData.fullName = payload.fullName
+    // The halves are what an admin edits; fullName is recomposed from whichever
+    // of them the request carried, falling back to what is already stored, so a
+    // request that changes only the surname still leaves a consistent whole.
+    if (payload.firstName !== undefined) updateData.firstName = payload.firstName
+    if (payload.lastName !== undefined) updateData.lastName = payload.lastName
+    if (payload.firstName !== undefined || payload.lastName !== undefined) {
+      updateData.fullName = composeFullName(
+        payload.firstName ?? existing.firstName,
+        payload.lastName ?? existing.lastName
+      )
+    }
     if (payload.phone !== undefined) updateData.phone = payload.phone
     if (payload.branch !== undefined) updateData.branch = payload.branch
     if (payload.department !== undefined) updateData.department = payload.department
+    if (payload.subdivision !== undefined) updateData.subdivision = payload.subdivision
     if (payload.position !== undefined) updateData.position = payload.position
+    if (payload.country !== undefined) updateData.country = payload.country
+    if (payload.address !== undefined) updateData.address = payload.address
+    if (payload.gender !== undefined) updateData.gender = payload.gender
+    if (payload.birthDate !== undefined) updateData.birthDate = payload.birthDate
+    if (payload.hireDate !== undefined) updateData.hireDate = payload.hireDate
+    if (payload.terminationDate !== undefined) updateData.terminationDate = payload.terminationDate
     if (payload.isActive !== undefined) updateData.isActive = payload.isActive
+    // Recording a leaving date archives the account in the same write, so an
+    // admin cannot end up with someone who left still able to sign in. The
+    // reverse is deliberately not automatic: clearing the date says the record
+    // was wrong, and bringing an account back is its own decision, made with
+    // the account switch.
+    if (payload.terminationDate) updateData.isActive = false
     if (payload.avatar !== undefined) updateData.avatar = payload.avatar
     if (payload.roleName !== undefined) updateData.roleId = role._id
     if (payload.jshshir !== undefined) updateData.jshshir = payload.jshshir
