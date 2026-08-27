@@ -115,6 +115,19 @@ const { unreadCount } = useNotifications()
               <p class="truncate text-caption text-ink-faint">{{ auth.user?.email }}</p>
             </div>
             <div class="my-1 border-t border-border" />
+            <!-- The mirror of the admin Topbar's way back. /bos is SUPERADMIN
+                 only (router guard), so the same gate the Settings page uses
+                 decides whether this doorway is even shown. Crossing over is a
+                 router push inside one SPA — same session, no re-login. -->
+            <router-link
+              v-if="auth.isSuperAdmin"
+              :to="{ name: 'admin-dashboard' }"
+              class="flex items-center gap-2 rounded-md px-2.5 py-1.5 text-small text-ink transition-default hover:bg-surface-2"
+              @click="profileOpen = false"
+            >
+              <Icon name="shield" size="15" />
+              {{ t('settings.adminPanel.open') }}
+            </router-link>
             <router-link to="/settings" class="flex items-center gap-2 rounded-md px-2.5 py-1.5 text-small text-ink transition-default hover:bg-surface-2" @click="profileOpen = false">
               <Icon name="settings" size="15" />
               {{ t('nav.settings') }}
