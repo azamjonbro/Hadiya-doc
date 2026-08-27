@@ -224,7 +224,6 @@ async function runFaceGateCapture() {
       setup()
     }, 600)
   } catch (error) {
-    faceVerification.stop()
     if (error?.response) {
       faceGateState.value = error.response.status === 429 ? 'locked' : 'failed'
       return
@@ -232,6 +231,12 @@ async function runFaceGateCapture() {
     const denied = error?.name === 'NotAllowedError' || error?.name === 'SecurityError'
     faceGateState.value = denied ? 'denied' : 'error'
     faceGateErrorMessage.value = error?.message ?? String(error)
+  } finally {
+    // Releases the track and turns the camera light off. Runs on the success
+    // path too, which it never did before: the preview kept streaming (and
+    // the indicator stayed lit) for as long as the page was open. stop() is
+    // idempotent, so the error paths are unaffected.
+    faceVerification.stop()
   }
 }
 
@@ -411,6 +416,7 @@ onBeforeUnmount(() => {
         v-if="faceGateState !== 'enroll'"
         :state="faceGateState"
         :error-message="faceGateErrorMessage"
+        :stream="faceVerification.cameraStream.value"
         variant="overlay"
         @start="runFaceGateCapture"
         @retry="runFaceGateCapture"

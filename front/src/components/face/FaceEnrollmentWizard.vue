@@ -34,12 +34,16 @@ const errorMessage = ref('')
 const cameraError = ref('')
 const videoEl = ref(null)
 
-watch(
-  () => enrollment.cameraStream.value,
-  (stream) => {
-    if (videoEl.value) videoEl.value.srcObject = stream ?? null
-  }
-)
+// Watching the element as well as the stream, because the two arrive in the
+// wrong order: start() resolves with a stream while the step is still
+// 'intro', so the <video> it belongs to does not exist yet. Watching only the
+// stream assigned it to nothing and left the preview black — even though the
+// camera was running and the captured frames came out fine.
+function attachStream() {
+  if (videoEl.value) videoEl.value.srcObject = enrollment.cameraStream.value ?? null
+}
+
+watch([() => enrollment.cameraStream.value, videoEl], attachStream, { flush: 'post' })
 
 async function onStartCamera() {
   errorMessage.value = ''
@@ -107,7 +111,7 @@ function close() {
 
     <div v-else-if="step === 'capture' || step === 'submitting'" class="space-y-4">
       <div class="relative mx-auto aspect-video w-full max-w-sm overflow-hidden rounded-lg bg-black">
-        <video ref="videoEl" autoplay playsinline muted class="h-full w-full object-cover" />
+        <video ref="videoEl" autoplay playsinline muted class="h-full w-full -scale-x-100 object-cover" />
       </div>
 
       <p class="text-center text-small text-ink-muted">

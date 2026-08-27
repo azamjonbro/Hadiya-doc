@@ -1,5 +1,5 @@
 <script setup>
-import { computed } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import AppButton from '@/components/ui/AppButton.vue'
 import Icon from '@/components/ui/Icon.vue'
@@ -14,11 +14,31 @@ const props = defineProps({
   state: { type: String, required: true },
   errorMessage: { type: String, default: '' },
   variant: { type: String, default: 'inline' }, // inline | overlay
+  // The live camera stream, handed down by whoever is driving the capture
+  // (useFaceVerification). Optional: the panel still renders its states
+  // without one, it simply has nothing to show.
+  stream: { type: Object, default: null },
 })
 
 defineEmits(['start', 'retry'])
 
 const { t } = useI18n()
+
+const videoEl = ref(null)
+
+// While the camera is open, being photographed blind is unnerving — you
+// cannot tell whether you are in frame, lit, or looking the right way. Both
+// the element and the stream are watched because they arrive in either order
+// depending on which state the panel is in when the stream opens.
+const showPreview = computed(() =>
+  Boolean(props.stream) && ['requestingCamera', 'detecting', 'verifying'].includes(props.state)
+)
+
+function attachStream() {
+  if (videoEl.value) videoEl.value.srcObject = props.stream ?? null
+}
+
+watch([() => props.stream, videoEl], attachStream, { flush: 'post' })
 
 const isDark = computed(() => props.variant === 'overlay')
 const titleClass = computed(() => (isDark.value ? 'text-white' : 'text-ink'))
@@ -44,14 +64,35 @@ const faintClass = computed(() => (isDark.value ? 'text-white/50' : 'text-ink-fa
     </div>
 
     <div v-else-if="state === 'requestingCamera' || state === 'detecting'" class="max-w-sm">
-      <Icon name="loader" size="26" class="mx-auto animate-spin" :class="isDark ? 'text-white/70' : 'text-ink-faint'" />
+      <!-- Mirrored, like a mirror: a preview that moves the opposite way when
+           you lean makes people correct in the wrong direction. Only the
+           preview — the frame that is sent is the one the camera saw. -->
+      <div v-if="showPreview" class="mx-auto mb-4 aspect-video w-full max-w-xs overflow-hidden rounded-lg bg-black">
+        <video ref="videoEl" autoplay playsinline muted class="h-full w-full -scale-x-100 object-cover" />
+      </div>
+      <Icon
+        v-else
+        name="loader"
+        size="26"
+        class="mx-auto animate-spin"
+        :class="isDark ? 'text-white/70' : 'text-ink-faint'"
+      />
       <p class="mt-3 text-sm" :class="bodyClass">
         {{ state === 'requestingCamera' ? t('faceVerification.panel.requestingCamera') : t('faceVerification.panel.detecting') }}
       </p>
     </div>
 
     <div v-else-if="state === 'verifying'" class="max-w-sm">
-      <Icon name="loader" size="26" class="mx-auto animate-spin" :class="isDark ? 'text-white/70' : 'text-ink-faint'" />
+      <div v-if="showPreview" class="mx-auto mb-4 aspect-video w-full max-w-xs overflow-hidden rounded-lg bg-black">
+        <video ref="videoEl" autoplay playsinline muted class="h-full w-full -scale-x-100 object-cover" />
+      </div>
+      <Icon
+        v-else
+        name="loader"
+        size="26"
+        class="mx-auto animate-spin"
+        :class="isDark ? 'text-white/70' : 'text-ink-faint'"
+      />
       <p class="mt-3 text-sm" :class="bodyClass">{{ t('faceVerification.panel.verifying') }}</p>
     </div>
 

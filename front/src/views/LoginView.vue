@@ -45,7 +45,6 @@ async function runFaceCapture() {
     faceState.value = 'success'
     setTimeout(goHome, 600)
   } catch (error) {
-    faceVerification.stop()
     if (error?.response) {
       faceState.value = error.response.status === 429 ? 'locked' : 'failed'
       return
@@ -53,6 +52,12 @@ async function runFaceCapture() {
     const denied = error?.name === 'NotAllowedError' || error?.name === 'SecurityError'
     faceState.value = denied ? 'denied' : 'error'
     faceErrorMessage.value = error?.message ?? String(error)
+  } finally {
+    // Releases the track and turns the camera light off. Runs on the success
+    // path too, which it never did before: the preview kept streaming (and
+    // the indicator stayed lit) for as long as the page was open. stop() is
+    // idempotent, so the error paths are unaffected.
+    faceVerification.stop()
   }
 }
 
@@ -197,6 +202,7 @@ const highlights = [
           v-else
           :state="faceState"
           :error-message="faceErrorMessage"
+          :stream="faceVerification.cameraStream.value"
           variant="inline"
           @start="runFaceCapture"
           @retry="runFaceCapture"
