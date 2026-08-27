@@ -882,7 +882,9 @@
       "retake": "Qayta olish",
       "progress": "{count}/{max} surat olindi",
       "submit": "Saqlash",
-      "success": "Yuz muvaffaqiyatli ro'yxatga olindi"
+      "success": "Yuz muvaffaqiyatli ro'yxatga olindi",
+      "selfTitle": "Yuzni ro'yxatdan o'tkazish",
+      "selfIntro": "Videoni ochish uchun yuzingizni bir marta ro'yxatdan o'tkazing. Kameraga qarab bir nechta kadr olamiz — keyingi safar shu rasm bilan solishtiriladi."
     },
     "status": {
       "title": "Yuz orqali tasdiqlash",

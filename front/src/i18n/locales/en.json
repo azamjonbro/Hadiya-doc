@@ -882,7 +882,9 @@
       "retake": "Retake",
       "progress": "{count}/{max} captured",
       "submit": "Save",
-      "success": "Face successfully enrolled"
+      "success": "Face successfully enrolled",
+      "selfTitle": "Set up face check",
+      "selfIntro": "Register your face once to open videos. We'll take a few frames — next time the check compares against this photo."
     },
     "status": {
       "title": "Face Verification",

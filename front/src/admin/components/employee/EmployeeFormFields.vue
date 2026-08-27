@@ -14,6 +14,7 @@ import { computed, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { GENDERS, isJshshir, isPassportSeries } from '@lms/shared'
 import AppInput from '@/components/ui/AppInput.vue'
+import AppDatePicker from '@/components/ui/AppDatePicker.vue'
 import AppSelect from '@/components/ui/AppSelect.vue'
 import BranchSelect from '@/components/ui/BranchSelect.vue'
 import ManagedSelect from '@/components/ui/ManagedSelect.vue'
@@ -51,6 +52,10 @@ watch(
   ([a, b]) => emit('validity', !a && !b),
   { immediate: true }
 )
+
+// Nobody was born tomorrow — and capping it also stops the year grid from
+// offering a decade that cannot contain a birthday.
+const today = new Date().toISOString().slice(0, 10)
 
 const genderOptions = computed(() => [
   { value: GENDERS.MALE, label: t('users.fields.genderMale') },
@@ -107,7 +112,7 @@ function entryRemove(type) {
     :placeholder="t('users.fields.genderUnset')"
     :options="genderOptions"
   />
-  <AppInput v-model="form.birthDate" type="date" :disabled="disabled" :label="t('users.fields.birthDate')" />
+  <AppDatePicker v-model="form.birthDate" :disabled="disabled" :max="today" :label="t('users.fields.birthDate')" />
 
   <AppInput v-model="form.email" type="email" :disabled="disabled" :label="t('users.fields.emailOptional')" />
   <AppInput v-model="form.phone" :disabled="disabled" :label="t('users.fields.phone')" />
@@ -169,11 +174,11 @@ function entryRemove(type) {
   />
   <div class="hidden sm:block" />
 
-  <AppInput v-model="form.hireDate" type="date" :disabled="disabled" :label="t('users.fields.hireDate')" />
-  <AppInput
+  <AppDatePicker v-model="form.hireDate" :disabled="disabled" :label="t('users.fields.hireDate')" />
+  <AppDatePicker
     v-model="form.terminationDate"
-    type="date"
     :disabled="disabled"
+    :min="form.hireDate"
     :label="t('users.fields.terminationDate')"
     :hint="terminationHint"
   />
