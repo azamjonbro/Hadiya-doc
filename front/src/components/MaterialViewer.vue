@@ -114,14 +114,20 @@ async function renderXlsx(buffer) {
   })
 }
 
+// Unlike the other two renderers, this one hands nothing back to the
+// template — it writes straight into a DOM node, so that node has to be
+// mounted before it runs. The host only mounts once `loading` is false.
 async function renderPptx(buffer) {
   const { init } = await import('pptx-preview')
   await nextTick()
-  if (!pptxHost.value) return
+  if (!pptxHost.value) throw new Error('pptx viewer host is not mounted')
   pptxHost.value.innerHTML = ''
+  // clientWidth includes the host's own padding, so hand the previewer the
+  // width it can actually draw in — otherwise every slide overflows right.
+  const width = Math.max(320, (pptxHost.value.clientWidth || 900) - 32)
   pptxPreviewer = init(pptxHost.value, {
-    width: pptxHost.value.clientWidth || 900,
-    height: Math.round(((pptxHost.value.clientWidth || 900) * 9) / 16),
+    width,
+    height: Math.round((width * 9) / 16),
   })
   await pptxPreviewer.preview(buffer)
 }
@@ -149,7 +155,12 @@ async function load() {
     const buffer = await materialsApi.getContent(material.id)
     if (kind.value === 'docx') await renderDocx(buffer)
     else if (kind.value === 'xlsx') await renderXlsx(buffer)
-    else if (kind.value === 'pptx') await renderPptx(buffer)
+    else if (kind.value === 'pptx') {
+      // Drop the spinner before rendering, not after: renderPptx needs its
+      // host element, and the template only swaps it in once loading is off.
+      loading.value = false
+      await renderPptx(buffer)
+    }
   } catch (error) {
     errorMessage.value = error.response?.data?.message ?? t('materials.error')
   } finally {
