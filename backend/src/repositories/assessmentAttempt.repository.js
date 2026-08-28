@@ -12,4 +12,8 @@ export const assessmentAttemptRepository = {
   listByUser(userId) {
     return AssessmentAttempt.find({ userId }).sort({ createdAt: -1 })
   },
+
+  listByUserAndCourse(userId, courseId) {
+    return AssessmentAttempt.find({ userId, courseId }).sort({ createdAt: -1 })
+  },
 }

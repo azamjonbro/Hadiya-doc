@@ -1,26 +1,36 @@
 <script setup>
 /**
- * Reads a course material in place instead of sending it to the downloads
- * folder. Three different mechanics hide behind one window:
- *   - PDF and audio: the browser already renders these, so it gets a signed,
- *     short-lived URL and does the work itself (no whole-file download into
- *     memory, and range requests keep audio seekable).
- *   - docx / xlsx / pptx: nothing renders these natively, so the bytes are
- *     fetched through the API and parsed in the browser. Parsers are loaded
- *     on demand — a reader who only ever opens PDFs never downloads them.
- * Anything else keeps the download button, which is always present anyway.
+ * Reads a course material in place, as a reader rather than a download.
+ *
+ * Anything with pages — a PDF or a presentation — is driven the way a player
+ * is: one page at a time, with previous/next, an autoplay that advances on a
+ * timer, a speed for that timer, and full screen. That is also what makes
+ * progress measurable: the page you are on is reported as you turn it, so a
+ * hundred-slide deck two slides in counts as two slides, not as "opened".
+ *
+ * Three mechanics behind one window:
+ *   - PDF: parsed and drawn page by page with pdf.js. An <iframe> could show
+ *     the file but not say how many pages it has or which one you are on, and
+ *     both are the point here.
+ *   - pptx: pptx-preview's load() + renderSingleSlide(), deliberately not its
+ *     preview(), which renders every slide at once along with its own
+ *     navigation.
+ *   - docx / xlsx: flowing documents with no page model, parsed and shown as
+ *     one scroll. Audio and anything else keep the browser's own handling.
+ * Parsers load on demand — a reader who only opens PDFs never downloads the
+ * presentation code.
  */
 import { computed, nextTick, onBeforeUnmount, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { materialsApi } from '@/services/materials'
+import { apiErrorText } from '@/utils/apiError'
 import AppButton from '@/components/ui/AppButton.vue'
 import Icon from '@/components/ui/Icon.vue'
-import { apiErrorText } from '@/utils/apiError'
 
 const props = defineProps({
   material: { type: Object, default: null },
 })
-const emit = defineEmits(['close'])
+const emit = defineEmits(['close', 'progress'])
 
 const { t } = useI18n()
 
@@ -31,6 +41,10 @@ const PARSE_MAX_BYTES = 40 * 1024 * 1024
 // of rows; rendering all of them as DOM nodes is what actually hangs the
 // page, not the parsing.
 const MAX_PREVIEW_ROWS = 500
+// Seconds a page is held at 1× autoplay. Slow enough to read a slide, and
+// the speed control moves it either way.
+const AUTOPLAY_BASE_MS = 6000
+const SPEEDS = [0.5, 1, 1.5, 2]
 
 const loading = ref(false)
 const errorMessage = ref('')
@@ -38,8 +52,24 @@ const nativeUrl = ref('')
 const docHtml = ref('')
 const sheets = ref([])
 const truncated = ref(false)
-const pptxHost = ref(null)
+
+const dialogEl = ref(null)
+const pageHost = ref(null)
+const pdfCanvas = ref(null)
+
+const pageCount = ref(0)
+const page = ref(1)
+const playing = ref(false)
+const speed = ref(1)
+const isFullscreen = ref(false)
+
 let pptxPreviewer = null
+let pdfDoc = null
+let pdfRenderTask = null
+let autoplayTimer = null
+// Pages already reported this session. The server deduplicates too, but there
+// is no reason to send the same page again every time it is revisited.
+let reportedPages = new Set()
 
 const kind = computed(() => {
   const mime = props.material?.mimeType ?? ''
@@ -50,6 +80,10 @@ const kind = computed(() => {
   if (mime.includes('presentationml')) return 'pptx'
   return 'unknown'
 })
+
+const paged = computed(() => ['pdf', 'pptx'].includes(kind.value) && pageCount.value > 0)
+const canGoBack = computed(() => page.value > 1)
+const canGoForward = computed(() => page.value < pageCount.value)
 
 const sizeLabel = computed(() => {
   const bytes = props.material?.fileSize ?? 0
@@ -71,21 +105,26 @@ function cellText(value) {
   return String(value)
 }
 
-function reset() {
-  destroyPptx()
-  nativeUrl.value = ''
-  docHtml.value = ''
-  sheets.value = []
-  truncated.value = false
-  errorMessage.value = ''
+// ---------------------------------------------------------------------------
+// Progress
+// ---------------------------------------------------------------------------
+async function reportPage(pageNumber) {
+  if (!props.material || !pageCount.value) return
+  if (reportedPages.has(pageNumber)) return
+  reportedPages.add(pageNumber)
+  try {
+    const progress = await materialsApi.recordPage(props.material.id, pageNumber, pageCount.value)
+    // The course page redraws its bar from this rather than guessing.
+    emit('progress', progress)
+  } catch {
+    // A page that failed to record can be sent again later.
+    reportedPages.delete(pageNumber)
+  }
 }
 
-function destroyPptx() {
-  pptxPreviewer?.destroy?.()
-  pptxPreviewer = null
-  if (pptxHost.value) pptxHost.value.innerHTML = ''
-}
-
+// ---------------------------------------------------------------------------
+// Renderers
+// ---------------------------------------------------------------------------
 async function renderDocx(buffer) {
   const mammoth = await import('mammoth/mammoth.browser.js')
   const result = await mammoth.convertToHtml({ arrayBuffer: buffer })
@@ -115,31 +154,185 @@ async function renderXlsx(buffer) {
   })
 }
 
-// Unlike the other two renderers, this one hands nothing back to the
-// template — it writes straight into a DOM node, so that node has to be
-// mounted before it runs. The host only mounts once `loading` is false.
-async function renderPptx(buffer) {
+async function loadPdf(buffer) {
+  const [pdfjs, worker] = await Promise.all([
+    import('pdfjs-dist'),
+    import('pdfjs-dist/build/pdf.worker.mjs?worker'),
+  ])
+  // A worker port rather than a URL: the bundler owns the file's final name,
+  // and a hardcoded path breaks the moment the hash changes.
+  pdfjs.GlobalWorkerOptions.workerPort = new worker.default()
+  pdfDoc = await pdfjs.getDocument({ data: buffer }).promise
+  pageCount.value = pdfDoc.numPages
+}
+
+async function drawPdfPage(pageNumber) {
+  if (!pdfDoc || !pdfCanvas.value) return
+  // Cancel rather than queue: fast clicking through pages otherwise leaves
+  // several renders racing for the same canvas, and the last to finish wins
+  // — which is not necessarily the page the reader is on.
+  pdfRenderTask?.cancel()
+
+  const pdfPage = await pdfDoc.getPage(pageNumber)
+  const host = pageHost.value
+  const unscaled = pdfPage.getViewport({ scale: 1 })
+  const available = Math.max(320, (host?.clientWidth ?? 900) - 32)
+  const availableHeight = Math.max(240, (host?.clientHeight ?? 600) - 32)
+  // Fit whole pages, not just the width: a portrait page scaled to a wide
+  // window would be taller than the screen and read like a scroll.
+  const scale = Math.min(available / unscaled.width, availableHeight / unscaled.height)
+  const ratio = window.devicePixelRatio || 1
+  const viewport = pdfPage.getViewport({ scale: scale * ratio })
+
+  const canvas = pdfCanvas.value
+  canvas.width = Math.floor(viewport.width)
+  canvas.height = Math.floor(viewport.height)
+  canvas.style.width = `${Math.floor(viewport.width / ratio)}px`
+  canvas.style.height = `${Math.floor(viewport.height / ratio)}px`
+
+  pdfRenderTask = pdfPage.render({ canvasContext: canvas.getContext('2d'), viewport })
+  try {
+    await pdfRenderTask.promise
+  } catch (error) {
+    // A cancelled render is the expected outcome of turning the page quickly.
+    if (error?.name !== 'RenderingCancelledException') throw error
+  }
+}
+
+async function loadPptx(buffer) {
   const [{ init }, { repairPptx }] = await Promise.all([
     import('pptx-preview'),
     import('@/utils/pptxRepair'),
   ])
   const deck = await repairPptx(buffer)
   await nextTick()
-  if (!pptxHost.value) throw new Error('pptx viewer host is not mounted')
-  pptxHost.value.innerHTML = ''
-  // clientWidth includes the host's own padding, so hand the previewer the
-  // width it can actually draw in — otherwise every slide overflows right.
-  const width = Math.max(320, (pptxHost.value.clientWidth || 900) - 32)
-  pptxPreviewer = init(pptxHost.value, {
-    width,
-    height: Math.round((width * 9) / 16),
-  })
-  await pptxPreviewer.preview(deck)
-  // preview() resolves either way: the library swallows its own load errors
-  // and leaves an empty wrapper behind, which reads as a black rectangle. If
-  // nothing came out of it, fail into the error state instead — that one at
-  // least says so and offers the download.
-  if (!pptxPreviewer.slideCount) throw new Error('pptx produced no slides')
+  if (!pageHost.value) throw new Error('pptx viewer host is not mounted')
+  pageHost.value.innerHTML = ''
+
+  const width = Math.max(320, (pageHost.value.clientWidth || 900) - 32)
+  pptxPreviewer = init(pageHost.value, { width, height: Math.round((width * 9) / 16) })
+  // load(), not preview(): preview() paints every slide at once and adds its
+  // own navigation, and this window has its own.
+  await pptxPreviewer.load(deck)
+  pageCount.value = pptxPreviewer.slideCount ?? 0
+  if (!pageCount.value) throw new Error('pptx produced no slides')
+}
+
+function drawPptxSlide(pageNumber) {
+  if (!pptxPreviewer) return
+  pptxPreviewer.removeCurrentSlide?.()
+  pptxPreviewer.renderSingleSlide(pageNumber - 1)
+}
+
+async function showPage(pageNumber) {
+  const clamped = Math.min(Math.max(pageNumber, 1), pageCount.value || 1)
+  page.value = clamped
+  if (kind.value === 'pdf') await drawPdfPage(clamped)
+  else if (kind.value === 'pptx') drawPptxSlide(clamped)
+  reportPage(clamped)
+}
+
+// ---------------------------------------------------------------------------
+// Controls
+// ---------------------------------------------------------------------------
+function goPrev() {
+  if (canGoBack.value) showPage(page.value - 1)
+}
+
+function goNext() {
+  if (canGoForward.value) showPage(page.value + 1)
+  else stopAutoplay()
+}
+
+function startAutoplay() {
+  stopAutoplay()
+  playing.value = true
+  autoplayTimer = setInterval(goNext, AUTOPLAY_BASE_MS / speed.value)
+}
+
+function stopAutoplay() {
+  clearInterval(autoplayTimer)
+  autoplayTimer = null
+  playing.value = false
+}
+
+function toggleAutoplay() {
+  playing.value ? stopAutoplay() : startAutoplay()
+}
+
+function cycleSpeed() {
+  const next = SPEEDS[(SPEEDS.indexOf(speed.value) + 1) % SPEEDS.length]
+  speed.value = next
+  // Restart so the new interval takes effect on the current page, not the
+  // next one.
+  if (playing.value) startAutoplay()
+}
+
+async function toggleFullscreen() {
+  if (document.fullscreenElement) {
+    await document.exitFullscreen()
+    return
+  }
+  await dialogEl.value?.requestFullscreen?.()
+}
+
+function onFullscreenChange() {
+  isFullscreen.value = Boolean(document.fullscreenElement)
+  // The page is drawn to fit its container, and the container just changed.
+  if (paged.value) showPage(page.value)
+}
+
+let resizeTimer = null
+function onResize() {
+  clearTimeout(resizeTimer)
+  resizeTimer = setTimeout(() => {
+    if (paged.value) showPage(page.value)
+  }, 150)
+}
+
+function onKeydown(event) {
+  if (event.key === 'Escape') {
+    if (!document.fullscreenElement) emit('close')
+    return
+  }
+  if (!paged.value) return
+  if (event.key === 'ArrowLeft' || event.key === 'PageUp') {
+    event.preventDefault()
+    goPrev()
+  } else if (event.key === 'ArrowRight' || event.key === 'PageDown') {
+    event.preventDefault()
+    goNext()
+  } else if (event.key === ' ') {
+    event.preventDefault()
+    toggleAutoplay()
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Lifecycle
+// ---------------------------------------------------------------------------
+function destroyViewers() {
+  stopAutoplay()
+  pdfRenderTask?.cancel()
+  pdfRenderTask = null
+  pdfDoc?.destroy?.()
+  pdfDoc = null
+  pptxPreviewer?.destroy?.()
+  pptxPreviewer = null
+  if (pageHost.value) pageHost.value.innerHTML = ''
+}
+
+function reset() {
+  destroyViewers()
+  nativeUrl.value = ''
+  docHtml.value = ''
+  sheets.value = []
+  truncated.value = false
+  errorMessage.value = ''
+  pageCount.value = 0
+  page.value = 1
+  speed.value = 1
+  reportedPages = new Set()
 }
 
 async function load() {
@@ -149,7 +342,7 @@ async function load() {
   reset()
   loading.value = true
   try {
-    if (kind.value === 'pdf' || kind.value === 'audio') {
+    if (kind.value === 'audio') {
       const { url } = await materialsApi.getUrl(material.id, 'inline')
       nativeUrl.value = url
       return
@@ -163,13 +356,28 @@ async function load() {
     }
 
     const buffer = await materialsApi.getContent(material.id)
-    if (kind.value === 'docx') await renderDocx(buffer)
-    else if (kind.value === 'xlsx') await renderXlsx(buffer)
-    else if (kind.value === 'pptx') {
-      // Drop the spinner before rendering, not after: renderPptx needs its
-      // host element, and the template only swaps it in once loading is off.
+    if (kind.value === 'docx') {
+      await renderDocx(buffer)
+      return
+    }
+    if (kind.value === 'xlsx') {
+      await renderXlsx(buffer)
+      return
+    }
+
+    // Paged formats need their host element in the DOM, and the template only
+    // swaps it in once the spinner is gone.
+    if (kind.value === 'pdf') {
+      await loadPdf(buffer)
       loading.value = false
-      await renderPptx(buffer)
+      await nextTick()
+      await showPage(1)
+      return
+    }
+    if (kind.value === 'pptx') {
+      loading.value = false
+      await loadPptx(buffer)
+      await showPage(1)
     }
   } catch (error) {
     errorMessage.value = apiErrorText(error, t('materials.error'))
@@ -187,18 +395,18 @@ async function onDownload() {
   }
 }
 
-function onKeydown(event) {
-  if (event.key === 'Escape') emit('close')
-}
-
 watch(
   () => props.material?.id,
   (id) => {
     if (id) {
       window.addEventListener('keydown', onKeydown)
+      window.addEventListener('resize', onResize)
+      document.addEventListener('fullscreenchange', onFullscreenChange)
       load()
     } else {
       window.removeEventListener('keydown', onKeydown)
+      window.removeEventListener('resize', onResize)
+      document.removeEventListener('fullscreenchange', onFullscreenChange)
       reset()
     }
   },
@@ -207,30 +415,47 @@ watch(
 
 onBeforeUnmount(() => {
   window.removeEventListener('keydown', onKeydown)
-  destroyPptx()
+  window.removeEventListener('resize', onResize)
+  document.removeEventListener('fullscreenchange', onFullscreenChange)
+  if (document.fullscreenElement) document.exitFullscreen?.()
+  destroyViewers()
 })
 </script>
 
 <template>
   <Teleport to="body">
-    <div v-if="material" class="fixed inset-0 z-50 flex items-center justify-center p-4">
-      <div class="absolute inset-0 bg-slate-950/60 backdrop-blur-[2px]" @click="emit('close')" />
+    <div v-if="material" class="fixed inset-0 z-50 flex items-center justify-center">
+      <div class="absolute inset-0 bg-slate-950/70 backdrop-blur-[2px]" @click="emit('close')" />
 
+      <!-- Opens filling the window: a document read at 90% of a dialog is a
+           document read through a letterbox. The button hands it the whole
+           screen, browser chrome included. -->
       <div
-        class="relative flex h-[90vh] w-full max-w-5xl flex-col overflow-hidden rounded-xl border border-border bg-surface shadow-lg"
+        ref="dialogEl"
+        class="relative flex h-full w-full flex-col overflow-hidden bg-surface"
         role="dialog"
         aria-modal="true"
       >
-        <header class="flex items-center gap-3 border-b border-border px-5 py-3.5">
+        <header class="flex items-center gap-3 border-b border-border px-4 py-2.5">
           <div class="min-w-0 flex-1">
             <p class="truncate text-small font-semibold text-ink">{{ material.title }}</p>
             <p class="truncate text-caption text-ink-faint">
               {{ material.originalFilename }}<span v-if="sizeLabel"> · {{ sizeLabel }}</span>
             </p>
           </div>
+
           <AppButton variant="outline" size="sm" icon="download" @click="onDownload">
             {{ t('materials.download') }}
           </AppButton>
+          <button
+            type="button"
+            class="rounded-md p-1.5 text-ink-faint transition-default hover:bg-surface-2 hover:text-ink"
+            :aria-label="isFullscreen ? t('materials.exitFullscreen') : t('materials.fullscreen')"
+            :title="isFullscreen ? t('materials.exitFullscreen') : t('materials.fullscreen')"
+            @click="toggleFullscreen"
+          >
+            <Icon :name="isFullscreen ? 'minimize' : 'maximize'" size="18" />
+          </button>
           <button
             type="button"
             class="rounded-md p-1.5 text-ink-faint transition-default hover:bg-surface-2 hover:text-ink"
@@ -252,13 +477,6 @@ onBeforeUnmount(() => {
             <p class="text-small text-ink-muted">{{ errorMessage }}</p>
             <AppButton size="sm" icon="download" @click="onDownload">{{ t('materials.download') }}</AppButton>
           </div>
-
-          <iframe
-            v-else-if="kind === 'pdf'"
-            :src="nativeUrl"
-            class="h-full w-full border-0 bg-surface"
-            :title="material.title"
-          />
 
           <div v-else-if="kind === 'audio'" class="flex h-full flex-col items-center justify-center gap-4 px-6">
             <span class="flex h-14 w-14 items-center justify-center rounded-full bg-primary-subtle text-primary">
@@ -300,7 +518,13 @@ onBeforeUnmount(() => {
             </p>
           </div>
 
-          <div v-else-if="kind === 'pptx'" ref="pptxHost" class="flex min-h-full justify-center p-4" />
+          <div
+            v-else-if="kind === 'pdf' || kind === 'pptx'"
+            ref="pageHost"
+            class="flex h-full items-center justify-center p-4"
+          >
+            <canvas v-if="kind === 'pdf'" ref="pdfCanvas" class="max-h-full max-w-full rounded shadow-md" />
+          </div>
 
           <div v-else class="flex h-full flex-col items-center justify-center gap-3 px-6 text-center">
             <Icon name="file-text" size="22" class="text-ink-faint" />
@@ -308,6 +532,50 @@ onBeforeUnmount(() => {
             <AppButton size="sm" icon="download" @click="onDownload">{{ t('materials.download') }}</AppButton>
           </div>
         </div>
+
+        <!-- The player bar. Only for formats that have pages: a spreadsheet
+             has nothing to advance to. -->
+        <footer v-if="paged" class="flex items-center justify-center gap-2 border-t border-border px-4 py-2.5">
+          <button
+            type="button"
+            :disabled="!canGoBack"
+            class="rounded-md p-2 text-ink-muted transition-default hover:bg-surface-2 hover:text-ink disabled:cursor-not-allowed disabled:opacity-40"
+            :title="t('materials.prevPage')"
+            @click="goPrev"
+          >
+            <Icon name="chevron-left" size="18" />
+          </button>
+
+          <button
+            type="button"
+            class="rounded-md bg-primary p-2 text-primary-foreground transition-default hover:opacity-90"
+            :title="playing ? t('materials.pause') : t('materials.play')"
+            @click="toggleAutoplay"
+          >
+            <Icon :name="playing ? 'pause' : 'play'" size="18" />
+          </button>
+
+          <button
+            type="button"
+            :disabled="!canGoForward"
+            class="rounded-md p-2 text-ink-muted transition-default hover:bg-surface-2 hover:text-ink disabled:cursor-not-allowed disabled:opacity-40"
+            :title="t('materials.nextPage')"
+            @click="goNext"
+          >
+            <Icon name="chevron-right" size="18" />
+          </button>
+
+          <p class="mx-2 min-w-20 text-center text-small tabular-nums text-ink">{{ page }} / {{ pageCount }}</p>
+
+          <button
+            type="button"
+            class="rounded-md border border-border-strong px-2.5 py-1.5 text-caption font-medium text-ink-muted transition-default hover:bg-surface-2 hover:text-ink"
+            :title="t('materials.speed')"
+            @click="cycleSpeed"
+          >
+            {{ speed }}×
+          </button>
+        </footer>
       </div>
     </div>
   </Teleport>

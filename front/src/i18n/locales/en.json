@@ -339,7 +339,14 @@
     "unpublish": "Unpublish",
     "remove": "Remove",
     "browse": "Choose a file",
-    "titleLabel": "Title"
+    "titleLabel": "Title",
+    "prevPage": "Previous page",
+    "nextPage": "Next page",
+    "play": "Autoplay",
+    "pause": "Pause",
+    "speed": "Speed",
+    "fullscreen": "Full screen",
+    "exitFullscreen": "Exit full screen"
   },
   "quiz": {
     "title": "Quiz",

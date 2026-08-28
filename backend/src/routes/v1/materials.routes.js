@@ -6,7 +6,11 @@ import { validateBody, validateQuery } from '../../middlewares/validate.middlewa
 import { materialDownloadRateLimiter } from '../../middlewares/materialRateLimit.middleware.js'
 import { materialController } from '../../controllers/material.controller.js'
 import { materialAccessController } from '../../controllers/materialAccess.controller.js'
-import { updateMaterialSchema, materialUrlQuerySchema } from '../../validators/material.validator.js'
+import {
+  updateMaterialSchema,
+  materialUrlQuerySchema,
+  materialPageSchema,
+} from '../../validators/material.validator.js'
 
 export const materialsRouter = Router()
 
@@ -32,4 +36,15 @@ materialsRouter.get(
   requirePermission(PERMISSIONS.VIDEO_VIEW),
   materialDownloadRateLimiter,
   materialAccessController.streamContent
+)
+
+// Reading progress. Both are about the caller's own record, so they ride on
+// the same view permission the material itself does — there is nothing here
+// an employee could use to see or change anyone else's.
+materialsRouter.get('/:id/progress', requirePermission(PERMISSIONS.VIDEO_VIEW), materialAccessController.progress)
+materialsRouter.post(
+  '/:id/progress',
+  requirePermission(PERMISSIONS.VIDEO_VIEW),
+  validateBody(materialPageSchema),
+  materialAccessController.recordPage
 )

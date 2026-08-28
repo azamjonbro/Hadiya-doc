@@ -39,6 +39,17 @@ const materialsByTopic = ref({})
 const openMaterial = ref(null)
 const openTopics = ref(new Set())
 const progress = ref(null)
+
+// Refetched rather than patched locally after a page is read: the server owns
+// what a page is worth, and a bar that disagrees with the next page load is
+// worse than one that redraws.
+async function loadProgress() {
+  try {
+    progress.value = await coursesApi.getMyProgress(route.params.id)
+  } catch {
+    // Keep the last figure on screen rather than blanking the bar.
+  }
+}
 const activeTab = ref('content')
 const tabs = [
   { value: 'content', label: t('courses.curriculum') },
@@ -130,7 +141,7 @@ async function load() {
     materialsByTopic.value = Object.fromEntries(topics.value.map((topic, i) => [topic.id, materialLists[i]]))
     assessmentsByTopic.value = Object.fromEntries(topics.value.map((topic, i) => [topic.id, assessmentLists[i]]))
     openTopics.value = new Set(topics.value.slice(0, 1).map((tp) => tp.id))
-    progress.value = await coursesApi.getMyProgress(route.params.id)
+    await loadProgress()
   } catch (error) {
     errorMessage.value = apiErrorText(error)
   } finally {
@@ -301,7 +312,7 @@ onMounted(load)
             <ProgressBar class="mt-3" :value="progress?.completionPercent ?? 0" />
             <p class="mt-2 text-caption text-ink-faint">
               {{ progress?.completionPercent ?? 0 }}% {{ t('videos.completed') }}
-              <span v-if="progress">({{ progress.completedVideos }}/{{ progress.totalVideos }})</span>
+              <span v-if="progress">({{ progress.completedItems }}/{{ progress.totalItems }})</span>
             </p>
             <AppButton block class="mt-4" :disabled="!continueVideo()" @click="onContinue">{{ t('courses.continue') }}</AppButton>
           </AppCard>
@@ -314,6 +325,9 @@ onMounted(load)
       </div>
     </template>
 
-    <MaterialViewer :material="openMaterial" @close="openMaterial = null" />
+    <!-- Reading a document moves the bar: the viewer reports each page it
+         shows, so the panel is refreshed from the server rather than guessing
+         what that page was worth. -->
+    <MaterialViewer :material="openMaterial" @close="openMaterial = null" @progress="loadProgress" />
   </div>
 </template>

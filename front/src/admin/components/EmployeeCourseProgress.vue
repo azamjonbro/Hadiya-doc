@@ -72,7 +72,7 @@ onMounted(load)
       <div v-if="progress" class="flex items-center gap-3 pt-3">
         <div class="flex-1"><ProgressBar :value="progress.completionPercent" size="sm" /></div>
         <span class="shrink-0 text-caption font-medium text-ink-muted">
-          {{ progress.completionPercent }}% ({{ progress.completedVideos }}/{{ progress.totalVideos }})
+          {{ progress.completionPercent }}% ({{ progress.completedItems }}/{{ progress.totalItems }})
         </span>
       </div>
 

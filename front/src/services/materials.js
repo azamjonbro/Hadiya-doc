@@ -13,6 +13,15 @@ export const materialsApi = {
 
   // Raw bytes, proxied through the API so the in-browser parsers (docx, xlsx,
   // pptx) work without CORS rules on the storage bucket.
+  // Reading progress: one call per page turn, deduplicated server-side.
+  recordPage(id, page, totalPages) {
+    return http.post(`/materials/${id}/progress`, { page, totalPages }).then((r) => r.data.data)
+  },
+
+  progress(id) {
+    return http.get(`/materials/${id}/progress`).then((r) => r.data.data)
+  },
+
   getContent(id) {
     return http.get(`/materials/${id}/content`, { responseType: 'arraybuffer' }).then((r) => r.data)
   },

@@ -37,6 +37,7 @@ const icons = {
   pause: '<line x1="8.5" y1="5" x2="8.5" y2="19"/><line x1="15.5" y1="5" x2="15.5" y2="19"/>',
   volume: '<polygon points="4 9.5 8.5 9.5 13 5.5 13 18.5 8.5 14.5 4 14.5"/><path d="M16.5 9.2a4 4 0 0 1 0 5.6"/>',
   maximize: '<polyline points="9 4.5 4.5 4.5 4.5 9"/><polyline points="15 4.5 19.5 4.5 19.5 9"/><polyline points="9 19.5 4.5 19.5 4.5 15"/><polyline points="15 19.5 19.5 19.5 19.5 15"/>',
+  minimize: '<polyline points="4.5 9 9 9 9 4.5"/><polyline points="19.5 9 15 9 15 4.5"/><polyline points="4.5 15 9 15 9 19.5"/><polyline points="19.5 15 15 15 15 19.5"/>',
   check: '<polyline points="4.5 12.5 9.5 17.5 19.5 6.5"/>',
   'check-circle': '<circle cx="12" cy="12" r="8.5"/><polyline points="8 12.3 11 15.3 16 9.3"/>',
   'alert-triangle': '<path d="M12 4.5 21 19.5H3Z"/><line x1="12" y1="10" x2="12" y2="14.2"/><circle cx="12" cy="17" r="0.15" fill="currentColor" stroke="none"/>',

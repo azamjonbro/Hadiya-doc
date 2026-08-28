@@ -1,8 +1,20 @@
 import { materialAccessService } from '../services/materials/materialAccess.service.js'
+import { materialProgressService } from '../services/materials/materialProgress.service.js'
 import { asyncHandler } from '../utils/asyncHandler.js'
 import { sendSuccess } from '../utils/apiResponse.js'
 
 export const materialAccessController = {
+  // Called as the reader turns pages, so it stays small: one page number and
+  // the document's length, nothing the client could use to claim completion
+  // it did not earn (the service dedupes and recomputes the percentage).
+  recordPage: asyncHandler(async (req, res) => {
+    sendSuccess(res, await materialProgressService.recordPage(req.user, req.params.id, req.body))
+  }),
+
+  progress: asyncHandler(async (req, res) => {
+    sendSuccess(res, await materialProgressService.get(req.user, req.params.id))
+  }),
+
   getDownloadUrl: asyncHandler(async (req, res) => {
     const { disposition } = req.validatedQuery
     sendSuccess(res, await materialAccessService.getDownloadUrl(req.user, req.params.id, disposition))

@@ -339,7 +339,14 @@
     "unpublish": "Chop etishni bekor qilish",
     "remove": "O'chirish",
     "browse": "Faylni tanlang",
-    "titleLabel": "Nomi"
+    "titleLabel": "Nomi",
+    "prevPage": "Oldingi sahifa",
+    "nextPage": "Keyingi sahifa",
+    "play": "Avtomatik varaqlash",
+    "pause": "To'xtatish",
+    "speed": "Tezlik",
+    "fullscreen": "Butun ekran",
+    "exitFullscreen": "Butun ekrandan chiqish"
   },
   "quiz": {
     "title": "Test",

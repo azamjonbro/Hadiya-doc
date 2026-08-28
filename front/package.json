@@ -18,6 +18,7 @@
     "hls.js": "^1.6.17",
     "jszip": "^3.10.1",
     "mammoth": "^1.12.1",
+    "pdfjs-dist": "^4.10.38",
     "pinia": "^2.2.6",
     "pptx-preview": "^1.0.7",
     "socket.io-client": "^4.8.3",

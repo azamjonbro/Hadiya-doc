@@ -2,6 +2,10 @@ import { PERMISSIONS } from '@lms/shared'
 import { courseRepository } from '../../repositories/course.repository.js'
 import { videoRepository } from '../../repositories/video.repository.js'
 import { videoProgressRepository } from '../../repositories/videoProgress.repository.js'
+import { materialRepository } from '../../repositories/material.repository.js'
+import { materialProgressRepository } from '../../repositories/materialProgress.repository.js'
+import { assessmentRepository } from '../../repositories/assessment.repository.js'
+import { assessmentAttemptRepository } from '../../repositories/assessmentAttempt.repository.js'
 import { auditLogRepository } from '../../repositories/auditLog.repository.js'
 import { userRepository } from '../../repositories/user.repository.js'
 import { courseAssignmentRepository } from '../../repositories/courseAssignment.repository.js'
@@ -61,11 +65,73 @@ async function computeCourseProgress(actor, id, targetUserId) {
     }
   }
 
+  // Everything a topic can hold counts, not just video. A course whose only
+  // content is one presentation and one test used to sit at "0% (0/0)"
+  // forever — there were no videos to complete, so there was nothing to
+  // divide by.
+  //
+  // Each item carries the same weight, and a document contributes the
+  // fraction of its pages that were actually read: two slides of a hundred is
+  // 2% of that item, not nothing and not all of it. Videos and tests stay
+  // all-or-nothing, which is what completing them already meant.
+  const [materials, materialRows, assessments, attempts] = await Promise.all([
+    materialRepository.listByCourse(id),
+    materialProgressRepository.listByUserAndCourse(targetUserId, id),
+    assessmentRepository.listByCourse(id),
+    assessmentAttemptRepository.listByUserAndCourse(targetUserId, id),
+  ])
+
+  const visibleMaterials = canManageCourses(actor) ? materials : materials.filter((m) => m.status === 'PUBLISHED')
+  const visibleAssessments = canManageCourses(actor)
+    ? assessments
+    : assessments.filter((a) => a.status === 'PUBLISHED')
+
+  const materialRowById = new Map(materialRows.map((row) => [row.materialId.toString(), row]))
+  const materialProgress = {}
+  for (const material of visibleMaterials) {
+    const materialId = material._id.toString()
+    const row = materialRowById.get(materialId)
+    materialProgress[materialId] = {
+      completionPercent: row?.completionPercent ?? 0,
+      viewedPages: row?.viewedPages?.length ?? 0,
+      totalPages: row?.totalPages ?? 0,
+      completed: Boolean(row?.completedAt),
+    }
+  }
+
+  // A test is done when it has been passed. An attempt that failed is a try,
+  // not a completion, and counting it would let a course reach 100% with
+  // nothing learned.
+  const passedAssessmentIds = new Set(
+    attempts.filter((a) => a.passed).map((a) => a.assessmentId.toString())
+  )
+  const assessmentProgress = {}
+  for (const assessment of visibleAssessments) {
+    const assessmentId = assessment._id.toString()
+    assessmentProgress[assessmentId] = { completed: passedAssessmentIds.has(assessmentId) }
+  }
+
+  const shares = [
+    ...visibleVideos.map((v) => (videoProgress[v._id.toString()].completed ? 1 : 0)),
+    ...visibleMaterials.map((m) => materialProgress[m._id.toString()].completionPercent / 100),
+    ...visibleAssessments.map((a) => (assessmentProgress[a._id.toString()].completed ? 1 : 0)),
+  ]
+
+  const totalItems = shares.length
+  const earned = shares.reduce((sum, share) => sum + share, 0)
+  const completedItems = shares.filter((share) => share >= 1).length
+
   return {
-    completionPercent: totalVideos ? Math.round((completedVideos / totalVideos) * 100) : 0,
+    completionPercent: totalItems ? Math.round((earned / totalItems) * 100) : 0,
+    completedItems,
+    totalItems,
+    // Kept for the callers that still speak in videos (the sequencing UI, the
+    // admin's per-course table).
     completedVideos,
     totalVideos,
     videos: videoProgress,
+    materials: materialProgress,
+    assessments: assessmentProgress,
   }
 }
 
