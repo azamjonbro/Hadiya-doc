@@ -46,6 +46,12 @@ const MAX_PREVIEW_ROWS = 500
 // the speed control moves it either way.
 const AUTOPLAY_BASE_MS = 6000
 const SPEEDS = [0.5, 1, 1.5, 2]
+// A page is drawn to this fraction of the space it is given. The measurement
+// below is honest about the header and the control bar, but a document that
+// lands exactly on the boundary still produces a scrollbar over a rounding
+// error, and a scrollbar on a page that is meant to fit is worse than a
+// margin. Raise it towards 1 for edge-to-edge pages.
+const PAGE_FIT = 0.9
 
 const loading = ref(false)
 const errorMessage = ref('')
@@ -84,9 +90,15 @@ const kind = computed(() => {
   return 'unknown'
 })
 
-const paged = computed(() => ['pdf', 'pptx'].includes(kind.value) && pageCount.value > 0)
-const canGoBack = computed(() => page.value > 1)
-const canGoForward = computed(() => page.value < pageCount.value)
+// Kind, not page count: the control bar has to exist before the first page is
+// measured. Deciding it on pageCount meant the bar appeared *after* that
+// measurement, shrinking the window the page had already been drawn for —
+// which is exactly where the scrollbar came from. The controls sit disabled
+// until the count is known.
+const paged = computed(() => ['pdf', 'pptx'].includes(kind.value))
+const pagesKnown = computed(() => pageCount.value > 0)
+const canGoBack = computed(() => pagesKnown.value && page.value > 1)
+const canGoForward = computed(() => pagesKnown.value && page.value < pageCount.value)
 
 const sizeLabel = computed(() => {
   const bytes = props.material?.fileSize ?? 0
@@ -163,6 +175,26 @@ async function loadPdf(pdfjs, buffer) {
   pageCount.value = pdfDoc.numPages
 }
 
+/**
+ * The space a page actually has.
+ *
+ * Measured from the scroll container rather than the host element, because
+ * the host is `h-full` inside it and reports the *content* height — which is
+ * whatever the last page made it, not what is visible. The header and the
+ * control bar are real estate too, and the bar in particular only exists once
+ * the page count is known: the first page used to be drawn while the footer
+ * was still absent, so it was sized for a taller window and overflowed the
+ * moment the bar appeared.
+ */
+function pageBox() {
+  const scroller = pageHost.value?.parentElement
+  const padding = 32 // p-4 on the host, both sides
+  return {
+    width: Math.max(320, (scroller?.clientWidth ?? 900) - padding),
+    height: Math.max(240, (scroller?.clientHeight ?? 600) - padding),
+  }
+}
+
 async function drawPdfPage(pageNumber) {
   if (!pdfDoc || !pdfCanvas.value) return
   // Cancel rather than queue: fast clicking through pages otherwise leaves
@@ -171,13 +203,11 @@ async function drawPdfPage(pageNumber) {
   pdfRenderTask?.cancel()
 
   const pdfPage = await pdfDoc.getPage(pageNumber)
-  const host = pageHost.value
   const unscaled = pdfPage.getViewport({ scale: 1 })
-  const available = Math.max(320, (host?.clientWidth ?? 900) - 32)
-  const availableHeight = Math.max(240, (host?.clientHeight ?? 600) - 32)
+  const { width: available, height: availableHeight } = pageBox()
   // Fit whole pages, not just the width: a portrait page scaled to a wide
   // window would be taller than the screen and read like a scroll.
-  const scale = Math.min(available / unscaled.width, availableHeight / unscaled.height)
+  const scale = Math.min(available / unscaled.width, availableHeight / unscaled.height) * PAGE_FIT
   const ratio = window.devicePixelRatio || 1
   const viewport = pdfPage.getViewport({ scale: scale * ratio })
 
@@ -206,7 +236,8 @@ async function loadPptx(buffer) {
   if (!pageHost.value) throw new Error('pptx viewer host is not mounted')
   pageHost.value.innerHTML = ''
 
-  const width = Math.max(320, (pageHost.value.clientWidth || 900) - 32)
+  const box = pageBox()
+  const width = Math.round(Math.min(box.width, (box.height * 16) / 9) * PAGE_FIT)
   pptxPreviewer = init(pageHost.value, { width, height: Math.round((width * 9) / 16) })
   // load(), not preview(): preview() paints every slide at once and adds its
   // own navigation, and this window has its own.
@@ -242,6 +273,7 @@ function goNext() {
 }
 
 function startAutoplay() {
+  if (!pagesKnown.value) return
   stopAutoplay()
   playing.value = true
   autoplayTimer = setInterval(goNext, AUTOPLAY_BASE_MS / speed.value)
@@ -293,14 +325,14 @@ async function toggleFullscreen() {
 function onFullscreenChange() {
   isFullscreen.value = Boolean(document.fullscreenElement)
   // The page is drawn to fit its container, and the container just changed.
-  if (paged.value) showPage(page.value)
+  if (pagesKnown.value) showPage(page.value)
 }
 
 let resizeTimer = null
 function onResize() {
   clearTimeout(resizeTimer)
   resizeTimer = setTimeout(() => {
-    if (paged.value) showPage(page.value)
+    if (pagesKnown.value) showPage(page.value)
   }, 150)
 }
 
@@ -309,7 +341,7 @@ function onKeydown(event) {
     if (!document.fullscreenElement) emit('close')
     return
   }
-  if (!paged.value) return
+  if (!pagesKnown.value) return
   if (event.key === 'ArrowLeft' || event.key === 'PageUp') {
     event.preventDefault()
     goPrev()
@@ -568,7 +600,8 @@ onBeforeUnmount(() => {
 
           <button
             type="button"
-            class="rounded-md bg-primary p-2 text-primary-foreground transition-default hover:opacity-90"
+            :disabled="!pagesKnown"
+            class="rounded-md bg-primary p-2 text-primary-foreground transition-default hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40"
             :title="playing ? t('materials.pause') : t('materials.play')"
             @click="toggleAutoplay"
           >
@@ -585,7 +618,10 @@ onBeforeUnmount(() => {
             <Icon name="chevron-right" size="18" />
           </button>
 
-          <p class="mx-2 min-w-20 text-center text-small tabular-nums text-ink">{{ page }} / {{ pageCount }}</p>
+          <p class="mx-2 min-w-20 text-center text-small tabular-nums text-ink">
+            <template v-if="pagesKnown">{{ page }} / {{ pageCount }}</template>
+            <span v-else class="text-ink-faint">— / —</span>
+          </p>
 
           <button
             type="button"
