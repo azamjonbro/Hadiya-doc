@@ -596,16 +596,19 @@ onBeforeUnmount(() => {
             {{ speed }}×
           </button>
 
-          <!-- Appears once the last page has been reached, and turns into a
-               plain green statement afterwards: pressing it again would mean
-               nothing. -->
-          <span
+          <!-- Appears once the last page has been reached. Afterwards it says
+               so and closes the reader: there is nothing left to do in here,
+               and hunting for the × in the corner is a poor ending to a
+               document you just finished. -->
+          <button
             v-if="completed"
-            class="ml-2 flex items-center gap-1.5 rounded-md bg-success-subtle px-3 py-1.5 text-caption font-medium text-success"
+            type="button"
+            class="ml-2 flex items-center gap-1.5 rounded-md bg-success-subtle px-3 py-1.5 text-caption font-medium text-success transition-default hover:bg-success hover:text-white"
+            @click="emit('close')"
           >
             <Icon name="check-circle" size="15" />
-            {{ t('materials.done') }}
-          </span>
+            {{ t('materials.doneClose') }}
+          </button>
           <AppButton
             v-else-if="page === pageCount"
             class="ml-2"

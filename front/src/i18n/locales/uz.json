@@ -348,7 +348,8 @@
     "fullscreen": "Butun ekran",
     "exitFullscreen": "Butun ekrandan chiqish",
     "markDone": "Tugatdim",
-    "done": "Tugallandi"
+    "done": "Tugallandi",
+    "doneClose": "Tugadi — yopish"
   },
   "quiz": {
     "title": "Test",

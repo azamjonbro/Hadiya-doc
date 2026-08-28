@@ -348,7 +348,8 @@
     "fullscreen": "Full screen",
     "exitFullscreen": "Exit full screen",
     "markDone": "Mark as finished",
-    "done": "Finished"
+    "done": "Finished",
+    "doneClose": "Finished — close"
   },
   "quiz": {
     "title": "Quiz",
