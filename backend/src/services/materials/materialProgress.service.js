@@ -50,6 +50,10 @@ export const materialProgressService = {
       : 0
     row.lastViewedAt = new Date()
     if (row.completionPercent >= 100 && !row.completedAt) row.completedAt = new Date()
+    // Finished stays finished. Re-opening a completed document and landing on
+    // page one would otherwise recompute the percentage back down, and a
+    // course that was complete yesterday would quietly un-complete itself.
+    if (row.completedAt) row.completionPercent = 100
 
     await materialProgressRepository.save(row)
 
@@ -59,6 +63,43 @@ export const materialProgressService = {
       viewedPages: row.viewedPages.length,
       completionPercent: row.completionPercent,
       completed: Boolean(row.completedAt),
+    }
+  },
+
+  /**
+   * The reader saying they are done, from the last page of the document.
+   *
+   * Needed because "every page was displayed" and "this person has finished"
+   * are not the same thing: a slide skipped on the way through leaves the
+   * count at 9 of 10 forever, with nothing the reader can do about it. The
+   * button is only offered at the end of the document, and the service checks
+   * that too — the client asking nicely is not the control.
+   */
+  async markComplete(actor, materialId) {
+    const material = await materialRepository.findById(materialId)
+    if (!material) throw ApiError.notFound('Material not found')
+
+    const row = await materialProgressRepository.findByUserAndMaterial(actor.id, materialId)
+    if (!row || !row.totalPages) {
+      throw ApiError.badRequest('Open the document before marking it finished', 'MATERIAL_NOT_STARTED')
+    }
+    if (!row.viewedPages.includes(row.totalPages)) {
+      throw ApiError.badRequest('Read to the last page before marking it finished', 'MATERIAL_NOT_AT_END')
+    }
+
+    if (!row.completedAt) {
+      row.completedAt = new Date()
+      row.completionPercent = 100
+      row.lastViewedAt = new Date()
+      await materialProgressRepository.save(row)
+    }
+
+    return {
+      materialId,
+      totalPages: row.totalPages,
+      viewedPages: row.viewedPages.length,
+      completionPercent: row.completionPercent,
+      completed: true,
     }
   },
 

@@ -61,6 +61,8 @@ const pdfCanvas = ref(null)
 const pageCount = ref(0)
 const page = ref(1)
 const playing = ref(false)
+const completed = ref(false)
+const finishing = ref(false)
 const speed = ref(1)
 const isFullscreen = ref(false)
 
@@ -115,6 +117,7 @@ async function reportPage(pageNumber) {
   reportedPages.add(pageNumber)
   try {
     const progress = await materialsApi.recordPage(props.material.id, pageNumber, pageCount.value)
+    completed.value = progress.completed
     // The course page redraws its bar from this rather than guessing.
     emit('progress', progress)
   } catch {
@@ -254,6 +257,23 @@ function toggleAutoplay() {
   playing.value ? stopAutoplay() : startAutoplay()
 }
 
+// Offered at the end of the document, because "every page was displayed" and
+// "I have finished this" are not the same thing: one slide skipped on the way
+// through leaves the count at 9 of 10 with nothing the reader can do about it.
+async function markFinished() {
+  if (completed.value || finishing.value) return
+  finishing.value = true
+  try {
+    const progress = await materialsApi.markComplete(props.material.id)
+    completed.value = true
+    emit('progress', progress)
+  } catch (error) {
+    errorMessage.value = apiErrorText(error, t('materials.error'))
+  } finally {
+    finishing.value = false
+  }
+}
+
 function cycleSpeed() {
   const next = SPEEDS[(SPEEDS.indexOf(speed.value) + 1) % SPEEDS.length]
   speed.value = next
@@ -325,6 +345,8 @@ function reset() {
   errorMessage.value = ''
   pageCount.value = 0
   page.value = 1
+  completed.value = false
+  finishing.value = false
   speed.value = 1
   reportedPages = new Set()
 }
@@ -573,6 +595,27 @@ onBeforeUnmount(() => {
           >
             {{ speed }}×
           </button>
+
+          <!-- Appears once the last page has been reached, and turns into a
+               plain green statement afterwards: pressing it again would mean
+               nothing. -->
+          <span
+            v-if="completed"
+            class="ml-2 flex items-center gap-1.5 rounded-md bg-success-subtle px-3 py-1.5 text-caption font-medium text-success"
+          >
+            <Icon name="check-circle" size="15" />
+            {{ t('materials.done') }}
+          </span>
+          <AppButton
+            v-else-if="page === pageCount"
+            class="ml-2"
+            size="sm"
+            icon="check"
+            :loading="finishing"
+            @click="markFinished"
+          >
+            {{ t('materials.markDone') }}
+          </AppButton>
         </footer>
       </div>
     </div>

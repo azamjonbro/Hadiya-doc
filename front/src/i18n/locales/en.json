@@ -346,7 +346,9 @@
     "pause": "Pause",
     "speed": "Speed",
     "fullscreen": "Full screen",
-    "exitFullscreen": "Exit full screen"
+    "exitFullscreen": "Exit full screen",
+    "markDone": "Mark as finished",
+    "done": "Finished"
   },
   "quiz": {
     "title": "Quiz",
@@ -1462,7 +1464,9 @@
     "INVALID_RESET_TOKEN": "This password reset link is invalid or has expired.",
     "INVALID_ROLE_NAME": "A role name must start with a Latin letter and contain only letters, digits and underscores.",
     "INVALID_VERIFICATION_TOKEN": "The verification has expired. Please sign in again.",
+    "MATERIAL_NOT_AT_END": "Read to the last page before marking it finished.",
     "MATERIAL_NOT_AVAILABLE": "The material is not ready to download yet.",
+    "MATERIAL_NOT_STARTED": "Open the document first.",
     "MESSAGE_DELETED": "The message was deleted.",
     "MISSING_ACCESS_TOKEN": "No session found. Please sign in again.",
     "MISSING_CREDENTIALS": "No session or verification token.",
@@ -1476,6 +1480,7 @@
     "NO_TASK_RECIPIENTS": "No active employee matches this audience.",
     "ORG_LIST_ENTRY_EXISTS": "This entry already exists.",
     "ORG_LIST_ENTRY_IN_USE": "Still assigned to {count} employees — move them first.",
+    "PAGE_OUT_OF_RANGE": "That page is outside the document.",
     "PLAYBACK_TOKEN_MISMATCH": "The playback token does not belong to this video.",
     "PREVIOUS_VIDEO_INCOMPLETE": "This lesson opens once you have watched the previous one in full.",
     "RATE_LIMITED": "Too many attempts. Wait a moment and try again.",

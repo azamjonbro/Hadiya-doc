@@ -18,6 +18,12 @@ export const materialsApi = {
     return http.post(`/materials/${id}/progress`, { page, totalPages }).then((r) => r.data.data)
   },
 
+  // The reader declaring they are done, from the last page. The API checks
+  // they actually got there.
+  markComplete(id) {
+    return http.post(`/materials/${id}/progress/complete`).then((r) => r.data.data)
+  },
+
   progress(id) {
     return http.get(`/materials/${id}/progress`).then((r) => r.data.data)
   },

@@ -48,3 +48,8 @@ materialsRouter.post(
   validateBody(materialPageSchema),
   materialAccessController.recordPage
 )
+materialsRouter.post(
+  '/:id/progress/complete',
+  requirePermission(PERMISSIONS.VIDEO_VIEW),
+  materialAccessController.markComplete
+)

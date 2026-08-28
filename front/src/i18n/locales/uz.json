@@ -346,7 +346,9 @@
     "pause": "To'xtatish",
     "speed": "Tezlik",
     "fullscreen": "Butun ekran",
-    "exitFullscreen": "Butun ekrandan chiqish"
+    "exitFullscreen": "Butun ekrandan chiqish",
+    "markDone": "Tugatdim",
+    "done": "Tugallandi"
   },
   "quiz": {
     "title": "Test",
@@ -1462,7 +1464,9 @@
     "INVALID_RESET_TOKEN": "Parolni tiklash havolasi yaroqsiz yoki muddati tugagan.",
     "INVALID_ROLE_NAME": "Rol nomi lotin harfi bilan boshlanib, faqat harf, raqam va pastki chiziqdan iborat bo'lishi kerak.",
     "INVALID_VERIFICATION_TOKEN": "Tasdiqlash muddati tugagan. Qaytadan kiring.",
+    "MATERIAL_NOT_AT_END": "Tugatgan deb belgilash uchun oxirgi sahifagacha o'qing.",
     "MATERIAL_NOT_AVAILABLE": "Material hali yuklab olishga tayyor emas.",
+    "MATERIAL_NOT_STARTED": "Avval hujjatni oching.",
     "MESSAGE_DELETED": "Xabar o'chirilgan.",
     "MISSING_ACCESS_TOKEN": "Sessiya topilmadi. Qaytadan kiring.",
     "MISSING_CREDENTIALS": "Sessiya yoki tasdiqlash tokeni yo'q.",
@@ -1476,6 +1480,7 @@
     "NO_TASK_RECIPIENTS": "Bu shartlarga mos faol xodim topilmadi.",
     "ORG_LIST_ENTRY_EXISTS": "Bunday yozuv allaqachon bor.",
     "ORG_LIST_ENTRY_IN_USE": "Bu yozuv hali {count} ta xodimga biriktirilgan — avval ularni boshqasiga o'tkazing.",
+    "PAGE_OUT_OF_RANGE": "Sahifa hujjat chegarasidan tashqarida.",
     "PLAYBACK_TOKEN_MISMATCH": "Ko'rish tokeni bu videoga tegishli emas.",
     "PREVIOUS_VIDEO_INCOMPLETE": "Avvalgi darsni to'liq ko'rmaguningizcha bu dars ochilmaydi.",
     "RATE_LIMITED": "Juda ko'p urinish. Biroz kutib qayta urinib ko'ring.",

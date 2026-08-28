@@ -11,6 +11,10 @@ export const materialAccessController = {
     sendSuccess(res, await materialProgressService.recordPage(req.user, req.params.id, req.body))
   }),
 
+  markComplete: asyncHandler(async (req, res) => {
+    sendSuccess(res, await materialProgressService.markComplete(req.user, req.params.id), 'Marked as finished')
+  }),
+
   progress: asyncHandler(async (req, res) => {
     sendSuccess(res, await materialProgressService.get(req.user, req.params.id))
   }),
