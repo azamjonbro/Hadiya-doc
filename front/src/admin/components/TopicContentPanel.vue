@@ -19,6 +19,7 @@ import AppInput from '@/components/ui/AppInput.vue'
 import Badge from '@/components/ui/Badge.vue'
 import ProgressBar from '@/components/ui/ProgressBar.vue'
 import Icon from '@/components/ui/Icon.vue'
+import { apiErrorText } from '@/utils/apiError'
 
 const props = defineProps({ topicId: { type: String, required: true } })
 
@@ -47,7 +48,7 @@ async function load() {
   try {
     items.value = await topicsApi.listContent(props.topicId)
   } catch (error) {
-    errorMessage.value = error.response?.data?.message ?? String(error)
+    errorMessage.value = apiErrorText(error)
   } finally {
     loading.value = false
   }

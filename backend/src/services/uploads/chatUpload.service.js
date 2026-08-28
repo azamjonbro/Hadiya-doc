@@ -32,7 +32,9 @@ export const chatUploadService = {
   async upload(actor, kind, file) {
     if (!file) throw ApiError.badRequest('No file uploaded', 'FILE_REQUIRED')
     if (file.size > MAX_BYTES) {
-      throw ApiError.badRequest(`File must be ${env.CHAT_MAX_FILE_SIZE_MB}MB or smaller`, 'FILE_TOO_LARGE')
+      throw ApiError.badRequest(`File must be ${env.CHAT_MAX_FILE_SIZE_MB}MB or smaller`, 'FILE_TOO_LARGE', {
+        limit: env.CHAT_MAX_FILE_SIZE_MB,
+      })
     }
 
     const allowedExts = ALLOWED_EXTS_BY_KIND[kind]

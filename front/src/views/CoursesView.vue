@@ -13,6 +13,7 @@ import ProgressBar from '@/components/ui/ProgressBar.vue'
 import Skeleton from '@/components/ui/Skeleton.vue'
 import EmptyState from '@/components/ui/EmptyState.vue'
 import Icon from '@/components/ui/Icon.vue'
+import { apiErrorText } from '@/utils/apiError'
 
 const { t, locale } = useI18n()
 const auth = useAuthStore()
@@ -87,7 +88,7 @@ async function load() {
     )
     progressByCourseId.value = Object.fromEntries(progressEntries)
   } catch (error) {
-    errorMessage.value = error.response?.data?.message ?? String(error)
+    errorMessage.value = apiErrorText(error)
   } finally {
     loading.value = false
   }
@@ -100,7 +101,7 @@ async function enroll(course) {
     assignments.value = [...assignments.value, { ...assignment, course }]
     router.push(`/courses/${course.id}`)
   } catch (error) {
-    errorMessage.value = error.response?.data?.message ?? String(error)
+    errorMessage.value = apiErrorText(error)
   } finally {
     enrollingId.value = null
   }

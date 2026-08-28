@@ -16,6 +16,7 @@ import Skeleton from '@/components/ui/Skeleton.vue'
 import EmptyState from '@/components/ui/EmptyState.vue'
 import Icon from '@/components/ui/Icon.vue'
 import CourseDangerActions from '@/admin/components/CourseDangerActions.vue'
+import { apiErrorText } from '@/utils/apiError'
 
 const { t, locale } = useI18n()
 const auth = useAuthStore()
@@ -74,7 +75,7 @@ async function load() {
     total.value = result.total
     totalPages.value = result.totalPages
   } catch (error) {
-    errorMessage.value = error.response?.data?.message ?? String(error)
+    errorMessage.value = apiErrorText(error)
   } finally {
     loading.value = false
   }

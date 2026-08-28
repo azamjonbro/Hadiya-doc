@@ -5,6 +5,7 @@ import { gamificationApi } from '@/services/gamification'
 import LeaderboardTable from './LeaderboardTable.vue'
 import AppSelect from '@/components/ui/AppSelect.vue'
 import Skeleton from '@/components/ui/Skeleton.vue'
+import { apiErrorText } from '@/utils/apiError'
 
 const props = defineProps({
   groupId: { type: String, required: true },
@@ -34,7 +35,7 @@ async function load() {
       includeZero: 'true',
     })
   } catch (error) {
-    errorMessage.value = error.response?.data?.message ?? String(error)
+    errorMessage.value = apiErrorText(error)
   } finally {
     loading.value = false
   }

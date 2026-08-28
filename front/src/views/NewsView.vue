@@ -9,6 +9,7 @@ import Badge from '@/components/ui/Badge.vue'
 import Skeleton from '@/components/ui/Skeleton.vue'
 import EmptyState from '@/components/ui/EmptyState.vue'
 import Icon from '@/components/ui/Icon.vue'
+import { apiErrorText } from '@/utils/apiError'
 
 const { t, locale } = useI18n()
 const router = useRouter()
@@ -34,7 +35,7 @@ async function load() {
     items.value = result.items
     nextCursor.value = result.nextCursor
   } catch (error) {
-    errorMessage.value = error.response?.data?.message ?? String(error)
+    errorMessage.value = apiErrorText(error)
   } finally {
     loading.value = false
   }

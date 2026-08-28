@@ -17,6 +17,7 @@ import GeneratedPasswordField from '@/components/ui/GeneratedPasswordField.vue'
 import ImageUploadField from '@/components/ui/ImageUploadField.vue'
 import FaceEnrollmentWizard from '@/components/face/FaceEnrollmentWizard.vue'
 import { faceApi } from '@/services/face'
+import { apiErrorText } from '@/utils/apiError'
 
 const props = defineProps({
   user: { type: Object, required: true },
@@ -125,7 +126,7 @@ async function onSave() {
     emit('updated', updated)
     toast.success(t('users.save'))
   } catch (error) {
-    errorMessage.value = error.response?.data?.message ?? String(error)
+    errorMessage.value = apiErrorText(error)
   } finally {
     saving.value = false
   }
@@ -139,7 +140,7 @@ async function onDeactivate() {
     await usersApi.deactivate(props.user.id)
     emit('deactivated')
   } catch (error) {
-    errorMessage.value = error.response?.data?.message ?? String(error)
+    errorMessage.value = apiErrorText(error)
   } finally {
     deactivating.value = false
   }
@@ -177,7 +178,7 @@ async function onToggleFaceEnabled() {
     faceStatus.value.enabled = result.enabled
     toast.success(t('faceVerification.status.saved'))
   } catch (error) {
-    faceActionError.value = error.response?.data?.message ?? String(error)
+    faceActionError.value = apiErrorText(error)
   } finally {
     faceEnableSaving.value = false
   }

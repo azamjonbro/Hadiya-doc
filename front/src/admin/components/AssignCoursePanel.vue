@@ -11,6 +11,7 @@ import Avatar from '@/components/ui/Avatar.vue'
 import Badge from '@/components/ui/Badge.vue'
 import Skeleton from '@/components/ui/Skeleton.vue'
 import EmptyState from '@/components/ui/EmptyState.vue'
+import { apiErrorText } from '@/utils/apiError'
 
 const props = defineProps({ courseId: { type: String, required: true } })
 
@@ -70,7 +71,7 @@ async function onAssign() {
     Object.assign(form, { mandatory: true, deadline: '', expiresAt: '' })
     await load()
   } catch (error) {
-    errorMessage.value = error.response?.data?.message ?? String(error)
+    errorMessage.value = apiErrorText(error)
   } finally {
     submitting.value = false
   }

@@ -4,6 +4,7 @@ import { useI18n } from 'vue-i18n'
 import { uploadsApi } from '@/services/uploads'
 import { useToast } from '@/composables/useToast'
 import Icon from './Icon.vue'
+import { apiErrorText } from '@/utils/apiError'
 
 const props = defineProps({
   modelValue: { type: String, default: '' },
@@ -32,7 +33,7 @@ async function onFileChange(event) {
     const { url } = await uploadsApi.image(file)
     emit('update:modelValue', url)
   } catch (error) {
-    toast.error(error.response?.data?.message ?? t('imageUpload.error'))
+    toast.error(apiErrorText(error, t('imageUpload.error')))
   } finally {
     uploading.value = false
   }

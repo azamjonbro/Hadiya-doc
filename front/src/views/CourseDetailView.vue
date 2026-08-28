@@ -19,6 +19,7 @@ import Skeleton from '@/components/ui/Skeleton.vue'
 import EmptyState from '@/components/ui/EmptyState.vue'
 import Icon from '@/components/ui/Icon.vue'
 import Tabs from '@/components/ui/Tabs.vue'
+import { apiErrorText } from '@/utils/apiError'
 
 const { t, locale } = useI18n()
 const route = useRoute()
@@ -131,7 +132,7 @@ async function load() {
     openTopics.value = new Set(topics.value.slice(0, 1).map((tp) => tp.id))
     progress.value = await coursesApi.getMyProgress(route.params.id)
   } catch (error) {
-    errorMessage.value = error.response?.data?.message ?? String(error)
+    errorMessage.value = apiErrorText(error)
   } finally {
     loading.value = false
   }

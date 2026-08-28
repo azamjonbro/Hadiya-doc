@@ -70,7 +70,8 @@ export const roleService = {
     if (users > 0) {
       throw ApiError.conflict(
         `${users} employee${users === 1 ? '' : 's'} still hold this role — move them to another one first`,
-        'ROLE_IN_USE'
+        'ROLE_IN_USE',
+        { count: users }
       )
     }
 

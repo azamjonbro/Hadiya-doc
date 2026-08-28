@@ -117,7 +117,8 @@ export const branchService = {
     if (users || courses) {
       throw ApiError.conflict(
         `Branch is still in use: ${users} employee(s), ${courses} course(s)`,
-        'BRANCH_IN_USE'
+        'BRANCH_IN_USE',
+        { users, courses }
       )
     }
 

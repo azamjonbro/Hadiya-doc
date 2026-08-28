@@ -11,6 +11,7 @@ import AppCard from '@/components/ui/AppCard.vue'
 import Badge from '@/components/ui/Badge.vue'
 import Icon from '@/components/ui/Icon.vue'
 import ImageUploadField from '@/components/ui/ImageUploadField.vue'
+import { apiErrorText } from '@/utils/apiError'
 
 const { t } = useI18n()
 const router = useRouter()
@@ -67,7 +68,7 @@ async function onPublish(status) {
     toast.success(t('courseBuilder.created'))
     router.push(`/bos/courses/${course.id}`)
   } catch (error) {
-    errorMessage.value = error.response?.data?.message ?? String(error)
+    errorMessage.value = apiErrorText(error)
   } finally {
     submitting.value = false
   }

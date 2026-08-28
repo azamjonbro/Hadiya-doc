@@ -9,6 +9,7 @@ import AppButton from '@/components/ui/AppButton.vue'
 import Skeleton from '@/components/ui/Skeleton.vue'
 import ErrorState from '@/components/ui/ErrorState.vue'
 import Icon from '@/components/ui/Icon.vue'
+import { apiErrorText } from '@/utils/apiError'
 
 /**
  * The lesson quiz on its own page rather than stacked under the player.
@@ -51,7 +52,7 @@ async function load() {
     quiz.value = quizData
     video.value = videoData
   } catch (error) {
-    errorMessage.value = error.response?.data?.message ?? String(error)
+    errorMessage.value = apiErrorText(error)
   } finally {
     loading.value = false
   }
@@ -74,7 +75,7 @@ async function submit() {
     result.value = await quizzesApi.submitQuiz(route.params.id, answers)
     window.scrollTo({ top: 0, behavior: 'smooth' })
   } catch (error) {
-    errorMessage.value = error.response?.data?.message ?? String(error)
+    errorMessage.value = apiErrorText(error)
   } finally {
     submitting.value = false
   }

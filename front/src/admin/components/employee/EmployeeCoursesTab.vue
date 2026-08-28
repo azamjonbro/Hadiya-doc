@@ -10,6 +10,7 @@ import Skeleton from '@/components/ui/Skeleton.vue'
 import EmptyState from '@/components/ui/EmptyState.vue'
 import Icon from '@/components/ui/Icon.vue'
 import TabError from './TabError.vue'
+import { apiErrorText } from '@/utils/apiError'
 
 const props = defineProps({
   userId: { type: String, required: true },
@@ -33,7 +34,7 @@ async function load() {
     const courses = await Promise.all(rows.map((row) => coursesApi.getById(row.courseId)))
     assignments.value = rows.map((row, index) => ({ ...row, course: courses[index] }))
   } catch (error) {
-    errorMessage.value = error.response?.data?.message ?? String(error)
+    errorMessage.value = apiErrorText(error)
     assignments.value = []
   } finally {
     loading.value = false

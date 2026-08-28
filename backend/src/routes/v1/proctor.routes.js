@@ -22,7 +22,7 @@ function uploadSnapshot(req, res, next) {
       return
     }
     if (err.code === 'LIMIT_FILE_SIZE') {
-      next(ApiError.badRequest('Snapshot must be 1MB or smaller', 'FILE_TOO_LARGE'))
+      next(ApiError.badRequest('Snapshot must be 1MB or smaller', 'FILE_TOO_LARGE', { limit: 1 }))
       return
     }
     next(ApiError.badRequest('Invalid upload', 'UPLOAD_ERROR'))

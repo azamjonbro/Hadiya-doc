@@ -6,6 +6,7 @@ import { assessmentsApi } from '@/services/assessments'
 import AppButton from '@/components/ui/AppButton.vue'
 import AppInput from '@/components/ui/AppInput.vue'
 import Icon from '@/components/ui/Icon.vue'
+import { apiErrorText } from '@/utils/apiError'
 
 const props = defineProps({ assessmentId: { type: String, required: true } })
 const emit = defineEmits(['updated', 'removed'])
@@ -79,7 +80,7 @@ async function load() {
         : [emptyQuestion()])
     )
   } catch (error) {
-    errorMessage.value = error.response?.data?.message ?? String(error)
+    errorMessage.value = apiErrorText(error)
   } finally {
     loading.value = false
   }
@@ -102,7 +103,7 @@ async function save() {
     })
     emit('updated', updated)
   } catch (error) {
-    errorMessage.value = error.response?.data?.message ?? String(error)
+    errorMessage.value = apiErrorText(error)
   } finally {
     saving.value = false
   }
@@ -124,7 +125,7 @@ async function removeAssessment() {
     await assessmentsApi.remove(props.assessmentId)
     emit('removed')
   } catch (error) {
-    errorMessage.value = error.response?.data?.message ?? String(error)
+    errorMessage.value = apiErrorText(error)
     removing.value = false
   }
 }

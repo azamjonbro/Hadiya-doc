@@ -6,6 +6,7 @@ import { videoAnalyticsApi } from '@/services/videoAnalytics'
 import AppInput from '@/components/ui/AppInput.vue'
 import Badge from '@/components/ui/Badge.vue'
 import Icon from '@/components/ui/Icon.vue'
+import { apiErrorText } from '@/utils/apiError'
 
 const props = defineProps({ videoId: { type: String, required: true } })
 
@@ -34,7 +35,7 @@ async function selectUser(user) {
   try {
     report.value = await videoAnalyticsApi.getUserReport(props.videoId, user.id)
   } catch (error) {
-    errorMessage.value = error.response?.data?.message ?? String(error)
+    errorMessage.value = apiErrorText(error)
   } finally {
     loadingReport.value = false
   }

@@ -8,6 +8,7 @@ import AppButton from '@/components/ui/AppButton.vue'
 import Skeleton from '@/components/ui/Skeleton.vue'
 import ErrorState from '@/components/ui/ErrorState.vue'
 import Icon from '@/components/ui/Icon.vue'
+import { apiErrorText } from '@/utils/apiError'
 
 /**
  * A module test is a supervised sitting, so this page has three phases:
@@ -69,7 +70,7 @@ async function loadBriefing() {
     // rather than restarted.
     if (briefing.value.activeSession) await start()
   } catch (error) {
-    errorMessage.value = error.response?.data?.message ?? String(error)
+    errorMessage.value = apiErrorText(error)
   } finally {
     loading.value = false
   }
@@ -87,7 +88,7 @@ async function start() {
     beginTicking()
     attachProctoring()
   } catch (error) {
-    errorMessage.value = error.response?.data?.message ?? String(error)
+    errorMessage.value = apiErrorText(error)
   } finally {
     starting.value = false
   }
@@ -178,7 +179,7 @@ async function submit({ auto = false } = {}) {
     // server grades it as a zero rather than leaving it open.
     finish(await assessmentsApi.submit(route.params.id, collectAnswers()))
   } catch (error) {
-    errorMessage.value = error.response?.data?.message ?? String(error)
+    errorMessage.value = apiErrorText(error)
   } finally {
     submitting.value = false
   }

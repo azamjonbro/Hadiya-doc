@@ -5,6 +5,7 @@ import { useI18n } from 'vue-i18n'
 import { useAuthStore } from '@/stores/auth'
 import { homeRouteFor } from '@/router'
 import { useFaceVerification } from '@/composables/useFaceVerification'
+import { apiErrorText } from '@/utils/apiError'
 import AppInput from '@/components/ui/AppInput.vue'
 import AppButton from '@/components/ui/AppButton.vue'
 import Icon from '@/components/ui/Icon.vue'
@@ -72,7 +73,9 @@ function loginErrorMessage(error) {
   if (status === 429) return t(data?.code === 'ACCOUNT_LOCKED' ? 'auth.login.accountLocked' : 'auth.login.rateLimited')
   if (status >= 500) return t('auth.login.serverError')
   if (status === 401) return t('auth.login.error')
-  return data?.message ?? t('auth.login.error')
+  // Everything else goes through the shared translator, so a code this page
+  // does not special-case still arrives in the reader's language.
+  return apiErrorText(error, t('auth.login.error'))
 }
 
 async function onSubmit() {

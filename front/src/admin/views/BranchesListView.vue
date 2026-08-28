@@ -22,6 +22,7 @@ import EmptyState from '@/components/ui/EmptyState.vue'
 import ErrorState from '@/components/ui/ErrorState.vue'
 import Skeleton from '@/components/ui/Skeleton.vue'
 import Icon from '@/components/ui/Icon.vue'
+import { apiErrorText } from '@/utils/apiError'
 
 const { t } = useI18n()
 const router = useRouter()
@@ -44,7 +45,7 @@ async function load() {
   try {
     items.value = await branchesApi.overview()
   } catch (error) {
-    errorMessage.value = error.response?.data?.message ?? String(error)
+    errorMessage.value = apiErrorText(error)
   } finally {
     loading.value = false
   }
@@ -89,7 +90,7 @@ async function submitDialog() {
     dialog.open = false
     await load()
   } catch (error) {
-    dialog.error = error.response?.data?.message ?? String(error)
+    dialog.error = apiErrorText(error)
   } finally {
     dialog.submitting = false
   }
@@ -103,7 +104,7 @@ async function removeBranch(branch) {
   } catch (error) {
     // The server refuses a branch that is still in use and says how much is
     // attached; that message is the useful part, so pass it straight through.
-    toast.error(error.response?.data?.message ?? String(error))
+    toast.error(apiErrorText(error))
   }
 }
 

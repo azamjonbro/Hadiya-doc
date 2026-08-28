@@ -21,6 +21,7 @@ import Badge from '@/components/ui/Badge.vue'
 import Icon from '@/components/ui/Icon.vue'
 import Skeleton from '@/components/ui/Skeleton.vue'
 import EmptyState from '@/components/ui/EmptyState.vue'
+import { apiErrorText } from '@/utils/apiError'
 
 const { t, locale } = useI18n()
 const auth = useAuthStore()
@@ -46,7 +47,7 @@ async function load() {
     items.value = result.items
     retentionDays.value = result.retentionDays
   } catch (error) {
-    errorMessage.value = error.response?.data?.message ?? String(error)
+    errorMessage.value = apiErrorText(error)
   } finally {
     loading.value = false
   }
@@ -69,7 +70,7 @@ async function onRestore(course) {
     toast.success(t('trash.restored', { title: course.title }))
     await load()
   } catch (error) {
-    toast.error(error.response?.data?.message ?? String(error))
+    toast.error(apiErrorText(error))
   } finally {
     busyId.value = null
   }
@@ -83,7 +84,7 @@ async function onDestroy(course) {
     toast.success(t('trash.destroyed', { title: course.title }))
     await load()
   } catch (error) {
-    toast.error(error.response?.data?.message ?? String(error))
+    toast.error(apiErrorText(error))
   } finally {
     busyId.value = null
   }

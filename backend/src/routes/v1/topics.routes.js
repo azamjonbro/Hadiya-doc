@@ -34,7 +34,13 @@ function uploadSingleMaterial(req, res, next) {
       return
     }
     if (err.code === 'LIMIT_FILE_SIZE') {
-      next(ApiError.badRequest(`File must be ${env.MATERIAL_MAX_FILE_SIZE_MB}MB or smaller`, 'FILE_TOO_LARGE'))
+      next(
+        ApiError.badRequest(
+          `File must be ${env.MATERIAL_MAX_FILE_SIZE_MB}MB or smaller`,
+          'FILE_TOO_LARGE',
+          { limit: env.MATERIAL_MAX_FILE_SIZE_MB }
+        )
+      )
       return
     }
     next(ApiError.badRequest('Invalid upload', 'UPLOAD_ERROR'))

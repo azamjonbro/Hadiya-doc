@@ -9,6 +9,7 @@ import Avatar from '@/components/ui/Avatar.vue'
 import Skeleton from '@/components/ui/Skeleton.vue'
 import EmptyState from '@/components/ui/EmptyState.vue'
 import Icon from '@/components/ui/Icon.vue'
+import { apiErrorText } from '@/utils/apiError'
 
 const props = defineProps({ courseId: { type: String, required: true } })
 
@@ -43,7 +44,7 @@ async function ask() {
     toast.success(t('qa.posted'))
     await load()
   } catch (error) {
-    toast.error(error.response?.data?.message ?? t('qa.error'))
+    toast.error(apiErrorText(error, t('qa.error')))
   } finally {
     asking.value = false
   }
@@ -59,7 +60,7 @@ async function submitAnswer(questionId) {
     openAnswerBox[questionId] = false
     await load()
   } catch (error) {
-    toast.error(error.response?.data?.message ?? t('qa.error'))
+    toast.error(apiErrorText(error, t('qa.error')))
   } finally {
     answering[questionId] = false
   }
@@ -70,7 +71,7 @@ async function removeQuestion(questionId) {
     await courseQuestionsApi.remove(props.courseId, questionId)
     await load()
   } catch (error) {
-    toast.error(error.response?.data?.message ?? t('qa.error'))
+    toast.error(apiErrorText(error, t('qa.error')))
   }
 }
 

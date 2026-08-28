@@ -25,6 +25,7 @@ import Pagination from '@/components/ui/Pagination.vue'
 import Skeleton from '@/components/ui/Skeleton.vue'
 import EmptyState from '@/components/ui/EmptyState.vue'
 import Icon from '@/components/ui/Icon.vue'
+import { apiErrorText } from '@/utils/apiError'
 
 const { t, locale } = useI18n()
 const confirm = useConfirm()
@@ -170,7 +171,7 @@ async function load() {
     totalPages.value = result.totalPages
     loadProgressForVisibleUsers(result.items)
   } catch (error) {
-    errorMessage.value = error.response?.data?.message ?? String(error)
+    errorMessage.value = apiErrorText(error)
   } finally {
     loading.value = false
   }
@@ -236,7 +237,7 @@ async function onCreateSubmit() {
     await loadFirstPage()
     toast.success(t('users.created'))
   } catch (error) {
-    createError.value = error.response?.data?.message ?? String(error)
+    createError.value = apiErrorText(error)
   } finally {
     createSubmitting.value = false
   }

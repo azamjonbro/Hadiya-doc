@@ -11,6 +11,7 @@ import AppInput from '@/components/ui/AppInput.vue'
 import AppSelect from '@/components/ui/AppSelect.vue'
 import AppDatePicker from '@/components/ui/AppDatePicker.vue'
 import Icon from '@/components/ui/Icon.vue'
+import { apiErrorText } from '@/utils/apiError'
 
 const { t, locale } = useI18n()
 
@@ -97,7 +98,7 @@ async function onDownload(type, format) {
       dateTo: filters.dateTo,
     })
   } catch (error) {
-    errors[key] = error.response?.data?.message ?? t('reports.error')
+    errors[key] = apiErrorText(error, t('reports.error'))
   } finally {
     pending[key] = false
   }

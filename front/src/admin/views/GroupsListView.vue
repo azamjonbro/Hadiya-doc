@@ -13,6 +13,7 @@ import Badge from '@/components/ui/Badge.vue'
 import Skeleton from '@/components/ui/Skeleton.vue'
 import EmptyState from '@/components/ui/EmptyState.vue'
 import Icon from '@/components/ui/Icon.vue'
+import { apiErrorText } from '@/utils/apiError'
 
 const { t } = useI18n()
 const router = useRouter()
@@ -37,7 +38,7 @@ async function load() {
   try {
     groups.value = await groupsApi.list(search.value ? { search: search.value } : {})
   } catch (error) {
-    errorMessage.value = error.response?.data?.message ?? String(error)
+    errorMessage.value = apiErrorText(error)
   } finally {
     loading.value = false
   }
@@ -60,7 +61,7 @@ async function onCreate() {
     toast.success(t('groups.created'))
     router.push(`/bos/groups/${group.id}`)
   } catch (error) {
-    createError.value = error.response?.data?.message ?? String(error)
+    createError.value = apiErrorText(error)
   } finally {
     creating.value = false
   }

@@ -7,6 +7,7 @@ import { attentionPolicyApi } from '@/services/attentionPolicy'
 import AppButton from '@/components/ui/AppButton.vue'
 import AppInput from '@/components/ui/AppInput.vue'
 import Icon from '@/components/ui/Icon.vue'
+import { apiErrorText } from '@/utils/apiError'
 
 // Drives both the global rules page and the per-course override panel. The
 // only real difference is what "inherit" falls back to — the built-in
@@ -57,7 +58,7 @@ async function load() {
         : await attentionPolicyApi.getGlobal()
     )
   } catch (error) {
-    errorMessage.value = error.response?.data?.message ?? String(error)
+    errorMessage.value = apiErrorText(error)
   } finally {
     loading.value = false
   }
@@ -104,7 +105,7 @@ async function save() {
     )
     toast.success(t('attention.admin.saved'))
   } catch (error) {
-    errorMessage.value = error.response?.data?.message ?? String(error)
+    errorMessage.value = apiErrorText(error)
   } finally {
     saving.value = false
   }
@@ -116,7 +117,7 @@ async function resetAll() {
     applyResponse(await attentionPolicyApi.resetForCourse(props.courseId))
     toast.success(t('attention.admin.resetDone'))
   } catch (error) {
-    errorMessage.value = error.response?.data?.message ?? String(error)
+    errorMessage.value = apiErrorText(error)
   } finally {
     saving.value = false
   }

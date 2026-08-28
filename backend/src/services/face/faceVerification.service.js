@@ -26,7 +26,9 @@ const MAX_BYTES = 3 * 1024 * 1024
 const MAX_ENROLLMENT_FRAMES = 3
 
 async function readFrame(file) {
-  if (file.buffer.length > MAX_BYTES) throw ApiError.badRequest('Photo is too large', 'FILE_TOO_LARGE')
+  if (file.buffer.length > MAX_BYTES) {
+    throw ApiError.badRequest('Photo is too large', 'FILE_TOO_LARGE', { limit: MAX_BYTES / (1024 * 1024) })
+  }
   const detected = await fileTypeFromBuffer(file.buffer)
   const ext = detected && ALLOWED_MIME_TO_EXT[detected.mime]
   if (!ext) throw ApiError.badRequest('Photo is not a supported image', 'UNSUPPORTED_IMAGE_TYPE')
@@ -39,7 +41,9 @@ async function readFrame(file) {
 async function processEnrollmentFrames(files) {
   if (!files?.length) throw ApiError.badRequest('At least one face photo is required', 'FILE_REQUIRED')
   if (files.length > MAX_ENROLLMENT_FRAMES) {
-    throw ApiError.badRequest(`At most ${MAX_ENROLLMENT_FRAMES} photos are allowed`, 'TOO_MANY_FILES')
+    throw ApiError.badRequest(`At most ${MAX_ENROLLMENT_FRAMES} photos are allowed`, 'TOO_MANY_FILES', {
+      max: MAX_ENROLLMENT_FRAMES,
+    })
   }
 
   const descriptors = []

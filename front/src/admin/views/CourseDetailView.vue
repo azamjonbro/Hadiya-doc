@@ -21,6 +21,7 @@ import Badge from '@/components/ui/Badge.vue'
 import Skeleton from '@/components/ui/Skeleton.vue'
 import EmptyState from '@/components/ui/EmptyState.vue'
 import Icon from '@/components/ui/Icon.vue'
+import { apiErrorText } from '@/utils/apiError'
 
 const { t } = useI18n()
 const confirm = useConfirm()
@@ -98,7 +99,7 @@ async function load() {
     form.autoAssign = false
     topics.value = await coursesApi.listTopics(route.params.id)
   } catch (error) {
-    errorMessage.value = error.response?.data?.message ?? String(error)
+    errorMessage.value = apiErrorText(error)
   } finally {
     loading.value = false
   }
@@ -110,7 +111,7 @@ async function onSave() {
   try {
     course.value = await coursesApi.update(route.params.id, { ...form })
   } catch (error) {
-    errorMessage.value = error.response?.data?.message ?? String(error)
+    errorMessage.value = apiErrorText(error)
   } finally {
     saving.value = false
   }
@@ -138,7 +139,7 @@ async function onAddTopicSubmit() {
     showAddTopic.value = false
     Object.assign(addTopicForm, { title: '', order: nextTopicOrder(), status: 'DRAFT' })
   } catch (error) {
-    addTopicError.value = error.response?.data?.message ?? String(error)
+    addTopicError.value = apiErrorText(error)
   } finally {
     addTopicSubmitting.value = false
   }
@@ -157,7 +158,7 @@ async function saveTopicEdit(topicId) {
     topics.value = topics.value.map((tp) => (tp.id === topicId ? updated : tp)).sort((a, b) => a.order - b.order)
     editingTopicId.value = null
   } catch (error) {
-    errorMessage.value = error.response?.data?.message ?? String(error)
+    errorMessage.value = apiErrorText(error)
   }
 }
 
@@ -167,7 +168,7 @@ async function removeTopic(topicId) {
     await topicsApi.remove(topicId)
     topics.value = topics.value.filter((tp) => tp.id !== topicId)
   } catch (error) {
-    errorMessage.value = error.response?.data?.message ?? String(error)
+    errorMessage.value = apiErrorText(error)
   }
 }
 

@@ -18,6 +18,7 @@ import Badge from '@/components/ui/Badge.vue'
 import Skeleton from '@/components/ui/Skeleton.vue'
 import EmptyState from '@/components/ui/EmptyState.vue'
 import Icon from '@/components/ui/Icon.vue'
+import { apiErrorText } from '@/utils/apiError'
 
 const { t } = useI18n()
 const confirm = useConfirm()
@@ -71,7 +72,7 @@ async function load() {
   try {
     group.value = await groupsApi.getById(route.params.id)
   } catch (error) {
-    errorMessage.value = error.response?.data?.message ?? String(error)
+    errorMessage.value = apiErrorText(error)
   } finally {
     loading.value = false
   }
@@ -110,7 +111,7 @@ async function onAddMembers() {
     showAddMembers.value = false
     toast.success(t('groups.membersAdded'))
   } catch (error) {
-    toast.error(error.response?.data?.message ?? String(error))
+    toast.error(apiErrorText(error))
   } finally {
     busy.value = false
   }
@@ -124,7 +125,7 @@ async function onRemoveMember(userId) {
     group.value = await groupsApi.removeMember(route.params.id, userId)
     toast.success(t('groups.memberRemoved'))
   } catch (error) {
-    toast.error(error.response?.data?.message ?? String(error))
+    toast.error(apiErrorText(error))
   } finally {
     busy.value = false
   }
@@ -151,7 +152,7 @@ async function onAddCourses() {
     showAddCourses.value = false
     toast.success(t('groups.coursesAdded'))
   } catch (error) {
-    toast.error(error.response?.data?.message ?? String(error))
+    toast.error(apiErrorText(error))
   } finally {
     busy.value = false
   }
@@ -163,7 +164,7 @@ async function onRemoveCourse(courseId) {
     group.value = await groupsApi.removeCourse(route.params.id, courseId)
     toast.success(t('groups.courseRemoved'))
   } catch (error) {
-    toast.error(error.response?.data?.message ?? String(error))
+    toast.error(apiErrorText(error))
   } finally {
     busy.value = false
   }
@@ -186,7 +187,7 @@ async function onEdit() {
     await load()
     toast.success(t('groups.saved'))
   } catch (error) {
-    toast.error(error.response?.data?.message ?? String(error))
+    toast.error(apiErrorText(error))
   } finally {
     busy.value = false
   }
@@ -199,7 +200,7 @@ async function onDelete() {
     await groupsApi.remove(route.params.id)
     router.push('/bos/groups')
   } catch (error) {
-    toast.error(error.response?.data?.message ?? String(error))
+    toast.error(apiErrorText(error))
   } finally {
     busy.value = false
   }

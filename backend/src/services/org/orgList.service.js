@@ -84,7 +84,8 @@ export const orgListService = {
     if (inUse > 0) {
       throw ApiError.conflict(
         `Still assigned to ${inUse} employee${inUse === 1 ? '' : 's'} — move them first`,
-        'ORG_LIST_ENTRY_IN_USE'
+        'ORG_LIST_ENTRY_IN_USE',
+        { count: inUse }
       )
     }
 

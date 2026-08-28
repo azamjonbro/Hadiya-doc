@@ -10,6 +10,7 @@ import TrendChart from '@/admin/components/dashboard/TrendChart.vue'
 import AppCard from '@/components/ui/AppCard.vue'
 import Skeleton from '@/components/ui/Skeleton.vue'
 import Icon from '@/components/ui/Icon.vue'
+import { apiErrorText } from '@/utils/apiError'
 
 const { t, locale } = useI18n()
 const auth = useAuthStore()
@@ -38,7 +39,7 @@ async function loadDashboard() {
   try {
     dashboard.value = await dashboardApi.get()
   } catch (error) {
-    dashboardError.value = error.response?.data?.message ?? String(error)
+    dashboardError.value = apiErrorText(error)
   } finally {
     dashboardLoading.value = false
   }

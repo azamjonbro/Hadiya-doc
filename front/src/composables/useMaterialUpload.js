@@ -1,5 +1,6 @@
 import { ref } from 'vue'
 import { materialsApi } from '@/services/materials'
+import { apiErrorText } from '@/utils/apiError'
 
 // Plain single-shot multipart POST with progress tracking — unlike
 // useVideoUpload.js's tus-based resumable-chunk state machine, materials
@@ -22,7 +23,7 @@ export function useMaterialUpload() {
       return material
     } catch (error) {
       status.value = 'error'
-      errorMessage.value = error.response?.data?.message ?? String(error)
+      errorMessage.value = apiErrorText(error)
       return null
     }
   }

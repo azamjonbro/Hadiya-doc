@@ -16,6 +16,7 @@ import AttentionOverlay from './AttentionOverlay.vue'
 import FaceVerificationPanel from '@/components/face/FaceVerificationPanel.vue'
 import FaceEnrollmentWizard from '@/components/face/FaceEnrollmentWizard.vue'
 import Icon from '@/components/ui/Icon.vue'
+import { apiErrorText } from '@/utils/apiError'
 
 const props = defineProps({
   videoId: { type: String, required: true },
@@ -321,7 +322,7 @@ async function setup() {
       showSelfEnrollment.value = true
       return
     }
-    errorMessage.value = error.response?.data?.message ?? String(error)
+    errorMessage.value = apiErrorText(error)
   }
 }
 

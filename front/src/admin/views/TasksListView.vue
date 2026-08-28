@@ -16,6 +16,7 @@ import Badge from '@/components/ui/Badge.vue'
 import Icon from '@/components/ui/Icon.vue'
 import Skeleton from '@/components/ui/Skeleton.vue'
 import EmptyState from '@/components/ui/EmptyState.vue'
+import { apiErrorText } from '@/utils/apiError'
 
 const { t, locale } = useI18n()
 const auth = useAuthStore()
@@ -163,7 +164,7 @@ async function load() {
     const result = await tasksApi.listBoard()
     items.value = result.items
   } catch (error) {
-    errorMessage.value = error.response?.data?.message ?? String(error)
+    errorMessage.value = apiErrorText(error)
   } finally {
     loading.value = false
   }
@@ -235,7 +236,7 @@ async function onCreateSubmit() {
     userResults.value = []
     await load()
   } catch (error) {
-    createError.value = error.response?.data?.message ?? String(error)
+    createError.value = apiErrorText(error)
   } finally {
     createSubmitting.value = false
   }
@@ -272,7 +273,7 @@ async function onDrop(status) {
     }
     await load()
   } catch (error) {
-    errorMessage.value = error.response?.data?.message ?? String(error)
+    errorMessage.value = apiErrorText(error)
   }
 }
 
@@ -309,7 +310,7 @@ async function deleteTask(card) {
     else await tasksApi.remove(card.id)
     await load()
   } catch (error) {
-    errorMessage.value = error.response?.data?.message ?? String(error)
+    errorMessage.value = apiErrorText(error)
   }
 }
 

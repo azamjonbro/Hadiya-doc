@@ -6,6 +6,7 @@ import { newsAnalyticsApi } from '@/services/newsAnalytics'
 import AppInput from '@/components/ui/AppInput.vue'
 import Badge from '@/components/ui/Badge.vue'
 import Icon from '@/components/ui/Icon.vue'
+import { apiErrorText } from '@/utils/apiError'
 
 const props = defineProps({ newsId: { type: String, required: true } })
 
@@ -34,7 +35,7 @@ async function selectUser(user) {
   try {
     report.value = await newsAnalyticsApi.getUserReport(props.newsId, user.id)
   } catch (error) {
-    errorMessage.value = error.response?.data?.message ?? String(error)
+    errorMessage.value = apiErrorText(error)
   } finally {
     loadingReport.value = false
   }

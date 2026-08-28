@@ -15,6 +15,7 @@ import { useI18n } from 'vue-i18n'
 import { materialsApi } from '@/services/materials'
 import AppButton from '@/components/ui/AppButton.vue'
 import Icon from '@/components/ui/Icon.vue'
+import { apiErrorText } from '@/utils/apiError'
 
 const props = defineProps({
   material: { type: Object, default: null },
@@ -171,7 +172,7 @@ async function load() {
       await renderPptx(buffer)
     }
   } catch (error) {
-    errorMessage.value = error.response?.data?.message ?? t('materials.error')
+    errorMessage.value = apiErrorText(error, t('materials.error'))
   } finally {
     loading.value = false
   }
@@ -182,7 +183,7 @@ async function onDownload() {
     const { url } = await materialsApi.getUrl(props.material.id, 'attachment')
     window.open(url, '_blank', 'noopener')
   } catch (error) {
-    errorMessage.value = error.response?.data?.message ?? t('materials.error')
+    errorMessage.value = apiErrorText(error, t('materials.error'))
   }
 }
 

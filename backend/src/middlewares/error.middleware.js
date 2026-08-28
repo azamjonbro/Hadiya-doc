@@ -12,7 +12,7 @@ export function errorHandler(err, req, res, _next) {
     if (err.statusCode >= 500) {
       logger.error(err.message, { code: err.code, stack: err.stack, path: req.originalUrl })
     }
-    sendError(res, err.statusCode, err.code, err.message)
+    sendError(res, err.statusCode, err.code, err.message, err.details)
     return
   }
 

@@ -26,7 +26,7 @@ function uploadPhotos(fieldName, maxCount) {
         return
       }
       if (err.code === 'LIMIT_FILE_SIZE') {
-        next(ApiError.badRequest('Photo must be 3MB or smaller', 'FILE_TOO_LARGE'))
+        next(ApiError.badRequest('Photo must be 3MB or smaller', 'FILE_TOO_LARGE', { limit: 3 }))
         return
       }
       next(ApiError.badRequest('Invalid upload', 'UPLOAD_ERROR'))

@@ -10,6 +10,7 @@ import AppSelect from '@/components/ui/AppSelect.vue'
 import Avatar from '@/components/ui/Avatar.vue'
 import Skeleton from '@/components/ui/Skeleton.vue'
 import Icon from '@/components/ui/Icon.vue'
+import { apiErrorText } from '@/utils/apiError'
 
 const { t } = useI18n()
 const router = useRouter()
@@ -52,7 +53,7 @@ async function load() {
       ...(groupId.value ? { groupId: groupId.value } : {}),
     })
   } catch (error) {
-    errorMessage.value = error.response?.data?.message ?? String(error)
+    errorMessage.value = apiErrorText(error)
   } finally {
     loading.value = false
   }

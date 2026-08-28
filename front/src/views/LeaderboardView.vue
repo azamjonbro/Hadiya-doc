@@ -8,6 +8,7 @@ import AppCard from '@/components/ui/AppCard.vue'
 import Avatar from '@/components/ui/Avatar.vue'
 import Skeleton from '@/components/ui/Skeleton.vue'
 import Icon from '@/components/ui/Icon.vue'
+import { apiErrorText } from '@/utils/apiError'
 
 const { t } = useI18n()
 const auth = useAuthStore()
@@ -23,7 +24,7 @@ async function load() {
   try {
     ;[summary.value, rows.value] = await Promise.all([gamificationApi.getMySummary(), gamificationApi.getLeaderboard()])
   } catch (error) {
-    errorMessage.value = error.response?.data?.message ?? String(error)
+    errorMessage.value = apiErrorText(error)
   } finally {
     loading.value = false
   }

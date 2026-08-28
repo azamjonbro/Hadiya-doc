@@ -12,6 +12,7 @@ import AppButton from '@/components/ui/AppButton.vue'
 import ProgressBar from '@/components/ui/ProgressBar.vue'
 import Skeleton from '@/components/ui/Skeleton.vue'
 import Icon from '@/components/ui/Icon.vue'
+import { apiErrorText } from '@/utils/apiError'
 
 const { t } = useI18n()
 const route = useRoute()
@@ -99,7 +100,7 @@ async function load() {
     progress.value = await coursesApi.getMyProgress(video.value.courseId)
     openTopics.value = new Set([video.value.topicId])
   } catch (error) {
-    errorMessage.value = error.response?.data?.message ?? String(error)
+    errorMessage.value = apiErrorText(error)
   } finally {
     loading.value = false
   }

@@ -13,6 +13,7 @@ import AppSelect from '@/components/ui/AppSelect.vue'
 import AppDatePicker from '@/components/ui/AppDatePicker.vue'
 import Skeleton from '@/components/ui/Skeleton.vue'
 import Icon from '@/components/ui/Icon.vue'
+import { apiErrorText } from '@/utils/apiError'
 
 const { t } = useI18n()
 const confirm = useConfirm()
@@ -51,7 +52,7 @@ async function load() {
     form.status = news.value.status
     form.expiryAt = news.value.expiryAt ? news.value.expiryAt.slice(0, 10) : ''
   } catch (error) {
-    errorMessage.value = error.response?.data?.message ?? String(error)
+    errorMessage.value = apiErrorText(error)
   } finally {
     loading.value = false
   }
@@ -71,7 +72,7 @@ async function onSave() {
       expiryAt: form.expiryAt ? new Date(form.expiryAt).toISOString() : null,
     })
   } catch (error) {
-    errorMessage.value = error.response?.data?.message ?? String(error)
+    errorMessage.value = apiErrorText(error)
   } finally {
     saving.value = false
   }
@@ -83,7 +84,7 @@ async function onDelete() {
     await newsApi.remove(route.params.id)
     router.push('/bos/news')
   } catch (error) {
-    errorMessage.value = error.response?.data?.message ?? String(error)
+    errorMessage.value = apiErrorText(error)
   }
 }
 

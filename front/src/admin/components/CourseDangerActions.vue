@@ -8,6 +8,7 @@ import AppButton from '@/components/ui/AppButton.vue'
 import AppInput from '@/components/ui/AppInput.vue'
 import Modal from '@/components/ui/Modal.vue'
 import Icon from '@/components/ui/Icon.vue'
+import { apiErrorText } from '@/utils/apiError'
 
 // The two destructive course actions plus their confirmations, kept in one
 // component so the courses list and the course detail page can't drift apart
@@ -58,7 +59,7 @@ async function onArchive() {
     showArchive.value = false
     emit('archived', updated)
   } catch (error) {
-    toast.error(error.response?.data?.message ?? String(error))
+    toast.error(apiErrorText(error))
   } finally {
     archiving.value = false
   }
@@ -73,7 +74,7 @@ async function onDelete() {
     showDelete.value = false
     emit('deleted', props.course.id)
   } catch (error) {
-    toast.error(error.response?.data?.message ?? String(error))
+    toast.error(apiErrorText(error))
   } finally {
     deleting.value = false
   }

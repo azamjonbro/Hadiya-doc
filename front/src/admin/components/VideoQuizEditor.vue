@@ -5,6 +5,7 @@ import { quizzesApi } from '@/services/quizzes'
 import AppButton from '@/components/ui/AppButton.vue'
 import AppInput from '@/components/ui/AppInput.vue'
 import Icon from '@/components/ui/Icon.vue'
+import { apiErrorText } from '@/utils/apiError'
 
 const props = defineProps({
   videoId: { type: String, required: true },
@@ -78,7 +79,7 @@ async function load() {
       questions.splice(0, questions.length, emptyQuestion())
     }
   } catch (error) {
-    errorMessage.value = error.response?.data?.message ?? String(error)
+    errorMessage.value = apiErrorText(error)
   } finally {
     loading.value = false
   }
@@ -98,7 +99,7 @@ async function save() {
     })
     emit('updated', true)
   } catch (error) {
-    errorMessage.value = error.response?.data?.message ?? String(error)
+    errorMessage.value = apiErrorText(error)
   } finally {
     saving.value = false
   }
@@ -112,7 +113,7 @@ async function removeQuiz() {
     questions.splice(0, questions.length, emptyQuestion())
     emit('updated', false)
   } catch (error) {
-    errorMessage.value = error.response?.data?.message ?? String(error)
+    errorMessage.value = apiErrorText(error)
   } finally {
     removing.value = false
   }

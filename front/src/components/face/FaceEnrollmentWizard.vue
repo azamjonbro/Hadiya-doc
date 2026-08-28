@@ -7,6 +7,7 @@ import Icon from '@/components/ui/Icon.vue'
 import { useFaceEnrollment, MAX_ENROLLMENT_FRAMES } from '@/composables/useFaceEnrollment'
 import { faceApi } from '@/services/face'
 import { useToast } from '@/composables/useToast'
+import { apiErrorText } from '@/utils/apiError'
 
 const props = defineProps({
   modelValue: { type: Boolean, default: false },
@@ -78,7 +79,7 @@ async function onSubmit() {
     toast.success(t('faceVerification.enrollment.success'))
     emit('enrolled')
   } catch (error) {
-    errorMessage.value = error.response?.data?.message ?? String(error)
+    errorMessage.value = apiErrorText(error)
     step.value = previousStep
   }
 }

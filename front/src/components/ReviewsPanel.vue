@@ -9,6 +9,7 @@ import Avatar from '@/components/ui/Avatar.vue'
 import Skeleton from '@/components/ui/Skeleton.vue'
 import EmptyState from '@/components/ui/EmptyState.vue'
 import Icon from '@/components/ui/Icon.vue'
+import { apiErrorText } from '@/utils/apiError'
 
 const props = defineProps({ courseId: { type: String, required: true } })
 
@@ -52,7 +53,7 @@ async function submit() {
     toast.success(t('reviews.submitted'))
     await load()
   } catch (error) {
-    toast.error(error.response?.data?.message ?? t('reviews.error'))
+    toast.error(apiErrorText(error, t('reviews.error')))
   } finally {
     submitting.value = false
   }
@@ -63,7 +64,7 @@ async function remove(reviewId) {
     await courseReviewsApi.remove(props.courseId, reviewId)
     await load()
   } catch (error) {
-    toast.error(error.response?.data?.message ?? t('reviews.error'))
+    toast.error(apiErrorText(error, t('reviews.error')))
   }
 }
 

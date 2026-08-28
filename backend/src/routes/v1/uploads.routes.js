@@ -19,7 +19,7 @@ function uploadSingleImage(req, res, next) {
       return
     }
     if (err.code === 'LIMIT_FILE_SIZE') {
-      next(ApiError.badRequest('Image must be 5MB or smaller', 'FILE_TOO_LARGE'))
+      next(ApiError.badRequest('Image must be 5MB or smaller', 'FILE_TOO_LARGE', { limit: 5 }))
       return
     }
     next(ApiError.badRequest('Invalid upload', 'UPLOAD_ERROR'))

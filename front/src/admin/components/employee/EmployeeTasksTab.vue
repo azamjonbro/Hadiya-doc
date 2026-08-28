@@ -10,6 +10,7 @@ import EmptyState from '@/components/ui/EmptyState.vue'
 import AppSelect from '@/components/ui/AppSelect.vue'
 import Icon from '@/components/ui/Icon.vue'
 import TabError from './TabError.vue'
+import { apiErrorText } from '@/utils/apiError'
 
 const props = defineProps({
   userId: { type: String, required: true },
@@ -46,7 +47,7 @@ async function load() {
   try {
     data.value = await usersApi.tasks(props.userId)
   } catch (error) {
-    errorMessage.value = error.response?.data?.message ?? String(error)
+    errorMessage.value = apiErrorText(error)
   } finally {
     loading.value = false
   }

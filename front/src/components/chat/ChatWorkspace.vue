@@ -21,6 +21,7 @@ import GroupCreateDialog from './GroupCreateDialog.vue'
 import { PERMISSIONS } from '@lms/shared'
 import { formatDayLabel, formatClock } from '@/utils/chatFormat'
 import { markdownToPlainText } from '@/utils/markdown'
+import { apiErrorText } from '@/utils/apiError'
 
 const { t, locale } = useI18n()
 const auth = useAuthStore()
@@ -112,7 +113,7 @@ async function load() {
     else await chat.loadConversations()
     await chat.loadContacts()
   } catch (error) {
-    errorMessage.value = error.response?.data?.message ?? String(error)
+    errorMessage.value = apiErrorText(error)
   } finally {
     loading.value = false
   }
@@ -127,7 +128,7 @@ async function openConversation(conversation) {
     composer.value?.focus()
     if (infoOpen.value) await loadDetails()
   } catch (error) {
-    errorMessage.value = error.response?.data?.message ?? String(error)
+    errorMessage.value = apiErrorText(error)
   }
 }
 
@@ -138,7 +139,7 @@ async function startWith(person) {
     await scrollToBottom()
     composer.value?.focus()
   } catch (error) {
-    errorMessage.value = error.response?.data?.message ?? String(error)
+    errorMessage.value = apiErrorText(error)
   }
 }
 
@@ -162,7 +163,7 @@ async function onSend({ body, kind, file, durationSec = 0 }) {
     await chat.send({ body, kind, attachment })
     await scrollToBottom('smooth')
   } catch (error) {
-    errorMessage.value = error.response?.data?.message ?? String(error)
+    errorMessage.value = apiErrorText(error)
   } finally {
     sending.value = false
   }
@@ -190,7 +191,7 @@ async function onEdit(messageId, body) {
   try {
     await chat.edit(messageId, body)
   } catch (error) {
-    toast.error(error.response?.data?.message ?? String(error))
+    toast.error(apiErrorText(error))
   }
 }
 
@@ -198,7 +199,7 @@ async function onDelete(messageId) {
   try {
     await chat.remove(messageId)
   } catch (error) {
-    toast.error(error.response?.data?.message ?? String(error))
+    toast.error(apiErrorText(error))
   }
 }
 
@@ -213,7 +214,7 @@ async function onCreateGroup(payload) {
     await scrollToBottom()
     composer.value?.focus()
   } catch (error) {
-    groupError.value = error.response?.data?.message ?? String(error)
+    groupError.value = apiErrorText(error)
   } finally {
     creatingGroup.value = false
   }
@@ -224,7 +225,7 @@ async function onRenameGroup(title) {
     await chat.renameGroup(selected.value.id, title)
     await loadDetails()
   } catch (error) {
-    toast.error(error.response?.data?.message ?? String(error))
+    toast.error(apiErrorText(error))
   }
 }
 
@@ -233,7 +234,7 @@ async function onAddMembers(memberIds) {
     await chat.addGroupMembers(selected.value.id, memberIds)
     await loadDetails()
   } catch (error) {
-    toast.error(error.response?.data?.message ?? String(error))
+    toast.error(apiErrorText(error))
   }
 }
 
@@ -244,7 +245,7 @@ async function onRemoveMember(userId) {
     await chat.removeGroupMember(selected.value.id, userId)
     await loadDetails()
   } catch (error) {
-    toast.error(error.response?.data?.message ?? String(error))
+    toast.error(apiErrorText(error))
   }
 }
 
@@ -254,7 +255,7 @@ async function onLeaveGroup() {
     await chat.leaveGroup(selected.value.id)
     infoOpen.value = false
   } catch (error) {
-    toast.error(error.response?.data?.message ?? String(error))
+    toast.error(apiErrorText(error))
   }
 }
 

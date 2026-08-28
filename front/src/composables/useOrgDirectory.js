@@ -4,6 +4,7 @@ import { ORG_LIST_TYPES, ORG_LIST_TYPE_VALUES } from '@lms/shared'
 import { orgListsApi } from '@/services/orgLists'
 import { rolesApi } from '@/services/roles'
 import { useToast } from '@/composables/useToast'
+import { apiErrorText } from '@/utils/apiError'
 
 /**
  * The org chart's vocabulary — roles, job titles, departments, subdivisions
@@ -75,7 +76,7 @@ export function useOrgDirectory() {
       await loadList(type)
       return true
     } catch (error) {
-      toast.error(error.response?.data?.message ?? t('orgLists.addFailed'))
+      toast.error(apiErrorText(error, t('orgLists.addFailed')))
       return false
     }
   }
@@ -86,7 +87,7 @@ export function useOrgDirectory() {
       await loadList(type)
       return true
     } catch (error) {
-      toast.error(error.response?.data?.message ?? t('orgLists.removeFailed'))
+      toast.error(apiErrorText(error, t('orgLists.removeFailed')))
       return false
     }
   }
@@ -97,7 +98,7 @@ export function useOrgDirectory() {
       await loadRoles()
       return true
     } catch (error) {
-      toast.error(error.response?.data?.message ?? t('orgLists.addFailed'))
+      toast.error(apiErrorText(error, t('orgLists.addFailed')))
       return false
     }
   }
@@ -108,7 +109,7 @@ export function useOrgDirectory() {
       await loadRoles()
       return true
     } catch (error) {
-      toast.error(error.response?.data?.message ?? t('orgLists.removeFailed'))
+      toast.error(apiErrorText(error, t('orgLists.removeFailed')))
       return false
     }
   }
