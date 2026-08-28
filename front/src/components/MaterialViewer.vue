@@ -24,6 +24,7 @@ import { computed, nextTick, onBeforeUnmount, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { materialsApi } from '@/services/materials'
 import { apiErrorText } from '@/utils/apiError'
+import { loadPdfjs, PDF_ASSET_OPTIONS } from '@/utils/pdfjs'
 import AppButton from '@/components/ui/AppButton.vue'
 import Icon from '@/components/ui/Icon.vue'
 
@@ -154,15 +155,8 @@ async function renderXlsx(buffer) {
   })
 }
 
-async function loadPdf(buffer) {
-  const [pdfjs, worker] = await Promise.all([
-    import('pdfjs-dist'),
-    import('pdfjs-dist/build/pdf.worker.mjs?worker'),
-  ])
-  // A worker port rather than a URL: the bundler owns the file's final name,
-  // and a hardcoded path breaks the moment the hash changes.
-  pdfjs.GlobalWorkerOptions.workerPort = new worker.default()
-  pdfDoc = await pdfjs.getDocument({ data: buffer }).promise
+async function loadPdf(pdfjs, buffer) {
+  pdfDoc = await pdfjs.getDocument({ data: buffer, ...PDF_ASSET_OPTIONS }).promise
   pageCount.value = pdfDoc.numPages
 }
 
@@ -355,6 +349,10 @@ async function load() {
       return
     }
 
+    // The library and the file are independent downloads, and the library is
+    // the larger of the two. Fetching them one after the other made opening a
+    // 32 KB PDF wait for half a megabyte of parser first.
+    const pdfjsReady = kind.value === 'pdf' ? loadPdfjs() : null
     const buffer = await materialsApi.getContent(material.id)
     if (kind.value === 'docx') {
       await renderDocx(buffer)
@@ -368,7 +366,7 @@ async function load() {
     // Paged formats need their host element in the DOM, and the template only
     // swaps it in once the spinner is gone.
     if (kind.value === 'pdf') {
-      await loadPdf(buffer)
+      await loadPdf(await pdfjsReady, buffer)
       loading.value = false
       await nextTick()
       await showPage(1)

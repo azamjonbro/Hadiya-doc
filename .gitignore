@@ -48,6 +48,7 @@ docker-compose.override.yml
 # MediaPipe runtime + face model for attention monitoring (~26MB).
 # Staged by: npm run assets:mediapipe --workspace front
 front/public/mediapipe/
+front/public/pdfjs/
 
 # face-api.js detection/recognition models for face verification (~12MB).
 # Staged by: npm run assets:face-models --workspace backend

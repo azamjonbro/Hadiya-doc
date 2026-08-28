@@ -20,6 +20,7 @@ import EmptyState from '@/components/ui/EmptyState.vue'
 import Icon from '@/components/ui/Icon.vue'
 import Tabs from '@/components/ui/Tabs.vue'
 import { apiErrorText } from '@/utils/apiError'
+import { loadPdfjs } from '@/utils/pdfjs'
 
 const { t, locale } = useI18n()
 const route = useRoute()
@@ -108,6 +109,32 @@ function materialIcon(material) {
 function videoProgress(video) {
   return progress.value?.videos?.[video.id] ?? { completionPercent: 0, completed: false }
 }
+
+// The same answer for the other two kinds of content, so a row can say where
+// the reader got to rather than looking identical whether it was opened or
+// not. Both come from the course progress payload — nothing here is inferred
+// client-side.
+function materialProgress(material) {
+  return (
+    progress.value?.materials?.[material.id] ?? {
+      completionPercent: 0,
+      viewedPages: 0,
+      totalPages: 0,
+      completed: false,
+    }
+  )
+}
+
+function assessmentProgress(assessment) {
+  return progress.value?.assessments?.[assessment.id] ?? { completed: false }
+}
+
+// pdf.js weighs more than most of the documents it opens, so the download
+// starts while the pointer is still on the row rather than after the click.
+function onMaterialHover(material) {
+  if (material.mimeType === 'application/pdf') loadPdfjs()
+}
+
 
 function continueVideo() {
   for (const topic of topics.value) {
@@ -259,12 +286,31 @@ onMounted(load)
                   type="button"
                   class="flex w-full items-center gap-3 px-4 py-3 text-left transition-default hover:bg-surface-2"
                   @click="openMaterial = material"
+                  @mouseenter="onMaterialHover(material)"
                 >
-                  <span class="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-surface-2 text-ink-muted">
+                  <span
+                    class="flex h-7 w-7 shrink-0 items-center justify-center rounded-full"
+                    :class="materialProgress(material).completed ? 'bg-success-subtle text-success' : 'bg-surface-2 text-ink-muted'"
+                  >
                     <Icon :name="materialIcon(material)" size="13" />
                   </span>
                   <span class="min-w-0 flex-1 truncate text-small text-ink">{{ material.title }}</span>
-                  <Icon name="eye" size="13" class="shrink-0 text-ink-faint" />
+
+                  <!-- Read all of it, part of it, or none: the row says which. -->
+                  <Icon
+                    v-if="materialProgress(material).completed"
+                    name="check-circle"
+                    size="15"
+                    class="shrink-0 text-success"
+                  />
+                  <span
+                    v-else-if="materialProgress(material).totalPages"
+                    class="shrink-0 text-caption tabular-nums text-ink-faint"
+                  >
+                    {{ materialProgress(material).viewedPages }}/{{ materialProgress(material).totalPages }} ·
+                    {{ materialProgress(material).completionPercent }}%
+                  </span>
+                  <Icon v-else name="eye" size="13" class="shrink-0 text-ink-faint" />
                 </button>
 
                 <!-- The module's closing test, listed after its videos -->
@@ -275,11 +321,21 @@ onMounted(load)
                   class="flex w-full items-center gap-3 px-4 py-3 text-left transition-default hover:bg-surface-2"
                   @click="router.push(`/assessments/${assessment.id}`)"
                 >
-                  <span class="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-primary-subtle text-primary">
+                  <span
+                    class="flex h-7 w-7 shrink-0 items-center justify-center rounded-full"
+                    :class="assessmentProgress(assessment).completed ? 'bg-success-subtle text-success' : 'bg-primary-subtle text-primary'"
+                  >
                     <Icon name="check-square" size="13" />
                   </span>
                   <span class="min-w-0 flex-1 truncate text-small font-medium text-ink">{{ assessment.title }}</span>
-                  <span class="shrink-0 text-caption text-ink-faint">
+                  <span
+                    v-if="assessmentProgress(assessment).completed"
+                    class="flex shrink-0 items-center gap-1 text-caption font-medium text-success"
+                  >
+                    <Icon name="check-circle" size="14" />
+                    {{ t('assessment.passed') }}
+                  </span>
+                  <span v-else class="shrink-0 text-caption text-ink-faint">
                     {{ t('assessment.questionCount', { count: assessment.questionCount ?? assessment.questions?.length ?? 0 }) }}
                   </span>
                 </button>
