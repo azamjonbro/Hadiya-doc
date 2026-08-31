@@ -5,6 +5,7 @@ import { FACE_POLICY_DEFAULTS } from '@lms/shared'
 import { useToast } from '@/composables/useToast'
 import { facePolicyApi } from '@/services/facePolicy'
 import AppButton from '@/components/ui/AppButton.vue'
+import { apiErrorText } from '@/utils/apiError'
 
 /**
  * The organisation-wide face-verification settings. One scope only — there is
@@ -29,7 +30,7 @@ async function load() {
   try {
     effective.value = (await facePolicyApi.getGlobal()).effective
   } catch (error) {
-    errorMessage.value = error.response?.data?.message ?? String(error)
+    errorMessage.value = apiErrorText(error)
   } finally {
     loading.value = false
   }
@@ -44,7 +45,7 @@ async function save() {
     effective.value = (await facePolicyApi.updateGlobal({ verifyEveryOpen: effective.value.verifyEveryOpen })).effective
     toast.success(t('facePolicy.saved'))
   } catch (error) {
-    errorMessage.value = error.response?.data?.message ?? String(error)
+    errorMessage.value = apiErrorText(error)
   } finally {
     saving.value = false
   }

@@ -8,7 +8,6 @@ import AppCard from '@/components/ui/AppCard.vue'
 import AppSelect from '@/components/ui/AppSelect.vue'
 import Avatar from '@/components/ui/Avatar.vue'
 import AttentionPolicyForm from '@/components/AttentionPolicyForm.vue'
-import FacePolicyForm from '@/components/FacePolicyForm.vue'
 
 const { t, locale } = useI18n()
 const auth = useAuthStore()
@@ -67,17 +66,6 @@ function onLocaleChange(code) {
         <h2 class="text-small font-semibold text-ink">{{ t('settings.sections.language') }}</h2>
         <div class="mt-3">
           <AppSelect :model-value="locale" :options="languageOptions" @update:model-value="onLocaleChange" />
-        </div>
-      </AppCard>
-
-      <!-- SUPERADMIN only, like the rest of face verification: how often an
-           employee has to prove who they are is not a course-editing
-           decision, and there is no per-course override to soften it. -->
-      <AppCard v-if="auth.isSuperAdmin">
-        <h2 class="text-small font-semibold text-ink">{{ t('facePolicy.title') }}</h2>
-        <p class="mt-1 text-caption text-ink-faint">{{ t('facePolicy.hint') }}</p>
-        <div class="mt-4">
-          <FacePolicyForm />
         </div>
       </AppCard>
 

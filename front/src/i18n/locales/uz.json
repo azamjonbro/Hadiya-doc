@@ -859,6 +859,18 @@
       "times": "marta"
     }
   },
+  "facePolicy": {
+    "title": "Yuz tekshiruvi",
+    "hint": "Barcha kurslar uchun amal qiladi. Yuzni ro'yxatga olish va xodim holati — xodim sahifasida.",
+    "save": "Saqlash",
+    "saved": "Yuz tekshiruvi sozlamalari saqlandi",
+    "fields": {
+      "verifyEveryOpen": {
+        "label": "Har bir video, material va test uchun yuz tekshiruvi talab qilinsin",
+        "hint": "O'chiq: xodim kuniga bir marta tekshiruvdan o'tadi. Yoqilgan: har bir video, har bir material va har bir test ochilishidan oldin kamera tekshiruvi qaytadan so'raladi."
+      }
+    }
+  },
   "faceVerification": {
     "panel": {
       "title": "Shaxsingizni tasdiqlang",

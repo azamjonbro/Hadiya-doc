@@ -859,6 +859,18 @@
       "times": "times"
     }
   },
+  "facePolicy": {
+    "title": "Face verification",
+    "hint": "Applies to every course. Enrolment and per-employee status stay on the employee page.",
+    "save": "Save",
+    "saved": "Face verification settings saved",
+    "fields": {
+      "verifyEveryOpen": {
+        "label": "Require a face check for every video, material and test",
+        "hint": "Off: an employee passes one check a day. On: the camera check is asked for again before each video, each material and each test they open."
+      }
+    }
+  },
   "faceVerification": {
     "panel": {
       "title": "Verify your identity",
