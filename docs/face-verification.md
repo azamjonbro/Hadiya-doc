@@ -1,6 +1,6 @@
-# Face Verification (Daily Face Check)
+# Face Verification
 
-Confirms the person signing in / about to watch a video is the enrolled
+Confirms the person signing in / about to open course content is the enrolled
 employee — a second, biometric factor layered on top of password login, not
 a replacement for it. Off by default (`FACE_VERIFICATION_ENABLED=false`);
 see [Rollout](#rollout) before turning it on anywhere.
@@ -10,9 +10,9 @@ see [Rollout](#rollout) before turning it on anywhere.
 - **Not the proctoring "foreign face" feature** (`docs/attention-monitoring.md`,
   `ProctorSnapshot`). That asks "did someone else appear on camera *during*
   a video" using only face-count detection, continuously, with no reference
-  photo. This feature asks "is the person logging in / about to watch a
-  video *the enrolled employee*", once a day, against a stored reference.
-  They share nothing at the data layer and only a little at the UI/camera
+  photo. This feature asks "is the person logging in / about to open a
+  video, a material or a test *the enrolled employee*", against a stored
+  reference. They share nothing at the data layer and only a little at the UI/camera
   layer (see [Shared camera layer](#shared-camera-layer)).
 - **Not cryptographic-grade liveness.** The blink/head-turn check client-side
   is a deterrent against a static printed photo, not a guarantee against a
@@ -51,15 +51,57 @@ Password valid + face verification required + not verified yet today?
                                                   out after repeated failures
 ```
 
-Once verified, the same check gates the first video of the day
-(`videoAccessService.issueToken()` — `FACE_VERIFICATION_REQUIRED` 403 until
-verified). No second challenge token is minted for that check: the user
-already has a full session, so `/auth/face/verify` is called with their
-normal bearer token instead.
+Once verified, the same check gates course content. No second challenge
+token is minted for that check: the user already has a full session, so
+`/auth/face/verify` is called with their normal bearer token instead.
 
-"Today" is the calendar day in `env.APP_TIMEZONE` (default `Asia/Tashkent`),
-computed with `Intl.DateTimeFormat` (`backend/src/utils/timezone.js`) —
-correct across DST-observing zones, unlike a fixed-offset subtraction.
+### Where the gate stands
+
+`backend/src/services/face/faceGate.service.js` is the single implementation,
+called from every entry point that hands content over, so the three cannot
+drift apart and a fourth is one line:
+
+| Entry point | Called from | `details.action` |
+|---|---|---|
+| Playback token | `videoAccessService.issueToken()` | `video` |
+| A material's bytes or download URL | `materialAccessService` (both paths share `assertReadable`) | `material` |
+| A test's questions | `assessmentService.start()` | `assessment` |
+
+Each refuses with a 403 — `FACE_ENROLLMENT_REQUIRED` when there is no
+reference photo on file yet, `FACE_VERIFICATION_REQUIRED` when there is one
+and it needs matching now. The employee app hands any failure to
+`useFaceGate.js`, which claims those two codes, puts `FaceGateOverlay.vue`
+over whatever was opening, and re-runs the original call once the check
+passes. Everything else it lets through to the caller's own error handling.
+
+One exemption, and only one: the player's two-minute token refresh sends the
+token it already holds as `renewToken`, and a valid one skips the gate. A
+first token cannot be obtained any other way, so holding one is proof the
+check already passed for that video — without this, "check before every
+video" would kill a lesson halfway through.
+
+### How often
+
+Set in the admin app under **Settings → Face verification**
+(`facePolicyService`, a single GLOBAL row, SUPERADMIN only — there is no
+per-course override, because a course that could opt itself out would make
+the setting advisory):
+
+- **Off (default) — once a day.** "Today" is the calendar day in
+  `env.APP_TIMEZONE` (default `Asia/Tashkent`), computed with
+  `Intl.DateTimeFormat` (`backend/src/utils/timezone.js`) — correct across
+  DST-observing zones, unlike a fixed-offset subtraction.
+- **On — before every video, material and test.** Enforced as a freshness
+  window (`FACE_VERIFICATION_FRESH_SECONDS`, default 120) rather than a
+  single-use ticket: a window is what the stored `lastVerifiedAt` can
+  express, and in practice it costs one check per resource, since opening a
+  second lesson happens minutes after the first. The tradeoff it accepts
+  knowingly is that a material opened seconds after a video reuses that
+  video's check instead of asking twice in a row.
+
+The rule itself is `faceCadence.js` — deliberately free of repository and
+cache imports so `backend/test/facePolicy.test.js` can check it with no Mongo
+and no Redis running.
 
 ## Data model
 
@@ -92,6 +134,13 @@ that `baseRateLimiter` already exempts — see `rateLimit.middleware.js`).
 | `GET /status/:userId` | SUPERADMIN | same shape, for the admin panel |
 | `PATCH /:userId` | SUPERADMIN | `{ enabled }` |
 | `GET /:userId/reference-image` | SUPERADMIN | streams the private photo; every view audited |
+
+Plus, outside that prefix:
+
+| Route | Who | Notes |
+|---|---|---|
+| `GET /api/v1/face-policy` | SUPERADMIN | `{ effective, stored }` — the cadence setting |
+| `PUT /api/v1/face-policy` | SUPERADMIN | `{ verifyEveryOpen }`; `null` unsets a field back to the default |
 
 ### The `/verify` endpoint
 
@@ -146,6 +195,7 @@ only where `npm install` runs on Linux — the actual deploy target.
 FACE_VERIFICATION_ENABLED=false        # master kill-switch
 FACE_VERIFICATION_REQUIRED=false       # gates enrolled users once ENABLED
 FACE_VERIFICATION_ENFORCE_UNENROLLED=false  # gates unenrolled users too
+FACE_VERIFICATION_FRESH_SECONDS=120         # only read in "every open" mode
 ```
 
 Both default off, so upgrading an existing deployment changes nothing until

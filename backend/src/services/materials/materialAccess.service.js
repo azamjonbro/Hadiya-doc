@@ -1,7 +1,8 @@
-import { PERMISSIONS } from '@lms/shared'
+import { FACE_GATE_ACTIONS, PERMISSIONS } from '@lms/shared'
 import { materialRepository } from '../../repositories/material.repository.js'
 import { courseAssignmentRepository } from '../../repositories/courseAssignment.repository.js'
 import { computeAccessFlags } from '../courses/courseAssignmentAccess.js'
+import { faceGateService } from '../face/faceGate.service.js'
 import { S3StorageProvider } from '../../storage/S3StorageProvider.js'
 import { env } from '../../config/env.js'
 import { ApiError } from '../../utils/ApiError.js'
@@ -32,6 +33,10 @@ async function assertReadable(actor, materialId) {
     if (!accessible) {
       throw ApiError.forbidden('You do not have access to this course', 'COURSE_ACCESS_DENIED')
     }
+    // A presentation read in the viewer is the same lesson a video is, so it
+    // is behind the same identity check — both call sites below come through
+    // here, and neither hands over a byte before it passes.
+    await faceGateService.assertVerified(actor, FACE_GATE_ACTIONS.MATERIAL)
   }
 
   return material

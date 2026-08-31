@@ -25,7 +25,9 @@ import { useI18n } from 'vue-i18n'
 import { materialsApi } from '@/services/materials'
 import { apiErrorText } from '@/utils/apiError'
 import { loadPdfjs, PDF_ASSET_OPTIONS } from '@/utils/pdfjs'
+import { useFaceGate } from '@/composables/useFaceGate'
 import AppButton from '@/components/ui/AppButton.vue'
+import FaceGateOverlay from '@/components/face/FaceGateOverlay.vue'
 import Icon from '@/components/ui/Icon.vue'
 
 const props = defineProps({
@@ -383,6 +385,11 @@ function reset() {
   reportedPages = new Set()
 }
 
+// The same identity check the video player runs, in front of the reader: a
+// presentation is a lesson too. The API is what decides it is needed — every
+// call below 403s until it passes — and load() simply runs again afterwards.
+const faceGate = useFaceGate(() => load())
+
 async function load() {
   const material = props.material
   if (!material) return
@@ -432,7 +439,7 @@ async function load() {
       await showPage(1)
     }
   } catch (error) {
-    errorMessage.value = apiErrorText(error, t('materials.error'))
+    if (!faceGate.claim(error)) errorMessage.value = apiErrorText(error, t('materials.error'))
   } finally {
     loading.value = false
   }
@@ -443,7 +450,10 @@ async function onDownload() {
     const { url } = await materialsApi.getUrl(props.material.id, 'attachment')
     window.open(url, '_blank', 'noopener')
   } catch (error) {
-    errorMessage.value = apiErrorText(error, t('materials.error'))
+    // Downloading is gated the same way reading is, so the same overlay
+    // handles it — the reader reloads once the check passes and the download
+    // button is right there again.
+    if (!faceGate.claim(error)) errorMessage.value = apiErrorText(error, t('materials.error'))
   }
 }
 
@@ -459,6 +469,7 @@ watch(
       window.removeEventListener('keydown', onKeydown)
       window.removeEventListener('resize', onResize)
       document.removeEventListener('fullscreenchange', onFullscreenChange)
+      faceGate.reset()
       reset()
     }
   },
@@ -470,6 +481,7 @@ onBeforeUnmount(() => {
   window.removeEventListener('resize', onResize)
   document.removeEventListener('fullscreenchange', onFullscreenChange)
   if (document.fullscreenElement) document.exitFullscreen?.()
+  faceGate.stop()
   destroyViewers()
 })
 </script>
@@ -518,7 +530,20 @@ onBeforeUnmount(() => {
           </button>
         </header>
 
-        <div class="min-h-0 flex-1 overflow-auto bg-surface-2">
+        <div class="relative min-h-0 flex-1 overflow-auto bg-surface-2">
+          <!-- Covers the reading area only: the header keeps its close button,
+               so the check is never a screen with no way out of it. -->
+          <FaceGateOverlay
+            v-if="faceGate.active.value"
+            v-model:show-enrollment="faceGate.showEnrollment.value"
+            :state="faceGate.state.value"
+            :action="faceGate.action.value"
+            :error-message="faceGate.errorMessage.value"
+            :stream="faceGate.cameraStream.value"
+            @capture="faceGate.capture"
+            @enrolled="faceGate.onEnrolled"
+          />
+
           <div v-if="loading" class="flex h-full items-center justify-center gap-2 text-small text-ink-muted">
             <Icon name="loader" size="16" class="animate-spin" />
             {{ t('materials.loading') }}

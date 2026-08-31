@@ -881,6 +881,11 @@
       "errorBody": "Could not start the camera. Another application may be using it.",
       "noBypass": "This step cannot be completed without the camera."
     },
+    "gate": {
+      "video": "A quick camera check before this lesson opens.",
+      "material": "A quick camera check before this material opens.",
+      "assessment": "A quick camera check before the test starts."
+    },
     "enrollment": {
       "title": "Face Enrollment",
       "reEnrollTitle": "Re-enroll Face",
@@ -894,7 +899,7 @@
       "submit": "Save",
       "success": "Face successfully enrolled",
       "selfTitle": "Set up face check",
-      "selfIntro": "Register your face once to open videos. We'll take a few frames — next time the check compares against this photo."
+      "selfIntro": "Register your face once to open lessons, materials and tests. We'll take a few frames — next time the check compares against this photo."
     },
     "status": {
       "title": "Face Verification",
@@ -1440,14 +1445,14 @@
     "EMPTY_MESSAGE": "A message needs text or an attachment.",
     "ENROLLMENT_FRAME_REJECTED": "One of the photos did not contain a single clear face. Look straight at the camera, with your face centred and well lit.",
     "FACE_ALREADY_ENROLLED": "A reference photo is already on file for this account.",
-    "FACE_ENROLLMENT_REQUIRED": "Register your face before opening the video.",
+    "FACE_ENROLLMENT_REQUIRED": "Register your face before opening this.",
     "FACE_NOT_ENROLLED": "Face verification is not set up for this account.",
     "FACE_PROFILE_NOT_ENROLLED": "This employee has no reference photo on file.",
     "FACE_PROFILE_NOT_FOUND": "Face profile not found.",
     "FACE_RUNTIME_UNAVAILABLE": "Face verification is unavailable right now.",
     "FACE_VERIFICATION_FAILED": "The face did not match. Please try again.",
     "FACE_VERIFICATION_LOCKED": "Face verification is temporarily locked after repeated failed attempts.",
-    "FACE_VERIFICATION_REQUIRED": "Pass the face check before opening the video.",
+    "FACE_VERIFICATION_REQUIRED": "Pass the face check before opening this.",
     "FILE_REQUIRED": "Upload at least one file.",
     "FILE_TOO_LARGE": "The file must be {limit} MB or smaller.",
     "FORBIDDEN": "You do not have permission for this.",

@@ -1,5 +1,6 @@
 export * from './roles.js'
 export * from './permissions.js'
 export * from './attention.js'
+export * from './facePolicy.js'
 export * from './identity.js'
 export * from './employee.js'

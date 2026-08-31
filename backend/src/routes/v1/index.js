@@ -30,6 +30,7 @@ import { uploadsRouter } from './uploads.routes.js'
 import { gamificationRouter } from './gamification.routes.js'
 import { chatRouter } from './chat.routes.js'
 import { attentionPolicyRouter } from './attentionPolicy.routes.js'
+import { facePolicyRouter } from './facePolicy.routes.js'
 
 export const v1Router = Router()
 
@@ -64,3 +65,4 @@ v1Router.use('/uploads', uploadsRouter)
 v1Router.use('/gamification', gamificationRouter)
 v1Router.use('/chat', chatRouter)
 v1Router.use('/attention-policy', attentionPolicyRouter)
+v1Router.use('/face-policy', facePolicyRouter)

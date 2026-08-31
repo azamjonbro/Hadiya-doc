@@ -1,11 +1,10 @@
 import jwt from 'jsonwebtoken'
-import { PERMISSIONS } from '@lms/shared'
+import { FACE_GATE_ACTIONS, PERMISSIONS } from '@lms/shared'
 import { videoRepository } from '../../repositories/video.repository.js'
 import { courseAssignmentRepository } from '../../repositories/courseAssignment.repository.js'
-import { faceProfileRepository } from '../../repositories/faceProfile.repository.js'
 import { computeAccessFlags } from '../courses/courseAssignmentAccess.js'
 import { assertVideoUnlocked } from '../courses/courseSequence.js'
-import { isSameLocalDay } from '../../utils/timezone.js'
+import { faceGateService } from '../face/faceGate.service.js'
 import { ApiError } from '../../utils/ApiError.js'
 import { env } from '../../config/env.js'
 
@@ -13,34 +12,17 @@ function canManageCourses(actor) {
   return Boolean(actor.permissions?.includes(PERMISSIONS.COURSE_CREATE))
 }
 
-// Same rollout gate as auth.service.js's login check — only enforced once
-// FACE_VERIFICATION_ENABLED + REQUIRED are both on, and only for users
-// SUPERADMIN has actually enrolled unless ENFORCE_UNENROLLED is also set.
-async function assertFaceVerifiedToday(actor) {
-  if (!env.FACE_VERIFICATION_ENABLED || !env.FACE_VERIFICATION_REQUIRED) return
-
-  const profile = await faceProfileRepository.findByUserId(actor.id)
-  const enrolled = Boolean(profile?.enrolled && profile?.enabled)
-  if (!enrolled && !env.FACE_VERIFICATION_ENFORCE_UNENROLLED) return
-
-  // Two different answers, because the player can act on both: with no
-  // reference photo on file the employee is sent to capture one (first use),
-  // and with one on file they are asked to match it. Collapsing these into a
-  // single code is what left an unenrolled employee staring at a verification
-  // step that could only ever fail.
-  if (!enrolled) {
-    throw ApiError.forbidden('Face enrollment is required before playback', 'FACE_ENROLLMENT_REQUIRED')
-  }
-
-  const verifiedToday =
-    profile.lastVerifiedAt && isSameLocalDay(profile.lastVerifiedAt, new Date(), env.APP_TIMEZONE)
-  if (!verifiedToday) {
-    throw ApiError.forbidden('Face verification is required before playback', 'FACE_VERIFICATION_REQUIRED')
-  }
-}
-
 export const videoAccessService = {
-  async issueToken(actor, videoId) {
+  /**
+   * `renewToken` is the caller's current, still-valid playback token, sent by
+   * the player's two-minute refresh loop. It exempts the renewal from the
+   * face gate and nothing else: holding one is proof the gate was already
+   * passed for this video, since a first token cannot be obtained any other
+   * way. Without this, a policy of "check before every video" would stop a
+   * lesson halfway through — the refresh would 403 and the stream would die
+   * when the token in flight expired.
+   */
+  async issueToken(actor, videoId, { renewToken = '' } = {}) {
     const video = await videoRepository.findById(videoId)
     if (!video) throw ApiError.notFound('Video not found')
 
@@ -54,7 +36,9 @@ export const videoAccessService = {
       if (!accessible) {
         throw ApiError.forbidden('You do not have access to this course', 'COURSE_ACCESS_DENIED')
       }
-      await assertFaceVerifiedToday(actor)
+      if (!this.isRenewal(actor, renewToken, video._id.toString())) {
+        await faceGateService.assertVerified(actor, FACE_GATE_ACTIONS.VIDEO)
+      }
     }
 
     // Lessons open one at a time. Checked here rather than only in the
@@ -67,6 +51,18 @@ export const videoAccessService = {
     })
 
     return { token, expiresIn: env.VIDEO_PLAYBACK_TOKEN_TTL }
+  },
+
+  // Deliberately silent about *why* a renewal token was rejected: a bad one
+  // simply means the gate is applied, which is the safe answer either way.
+  isRenewal(actor, token, videoId) {
+    if (!token) return false
+    try {
+      const payload = this.verifyToken(token, videoId)
+      return payload.sub === actor.id
+    } catch {
+      return false
+    }
   },
 
   verifyToken(token, videoId) {

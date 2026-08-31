@@ -4,7 +4,9 @@ import { sendSuccess } from '../utils/apiResponse.js'
 
 export const videoAccessController = {
   issueToken: asyncHandler(async (req, res) => {
-    const result = await videoAccessService.issueToken(req.user, req.params.videoId)
+    const result = await videoAccessService.issueToken(req.user, req.params.videoId, {
+      renewToken: req.body?.renewToken,
+    })
     sendSuccess(res, result)
   }),
 }

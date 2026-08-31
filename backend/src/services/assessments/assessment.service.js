@@ -1,10 +1,11 @@
-import { PERMISSIONS } from '@lms/shared'
+import { FACE_GATE_ACTIONS, PERMISSIONS } from '@lms/shared'
 import { assessmentRepository } from '../../repositories/assessment.repository.js'
 import { assessmentAttemptRepository } from '../../repositories/assessmentAttempt.repository.js'
 import { assessmentSessionRepository } from '../../repositories/assessmentSession.repository.js'
 import { topicRepository } from '../../repositories/topic.repository.js'
 import { courseAssignmentRepository } from '../../repositories/courseAssignment.repository.js'
 import { computeAccessFlags } from '../courses/courseAssignmentAccess.js'
+import { faceGateService } from '../face/faceGate.service.js'
 import { auditLogRepository } from '../../repositories/auditLog.repository.js'
 import { pointsService } from '../gamification/points.service.js'
 import { ApiError } from '../../utils/ApiError.js'
@@ -221,6 +222,13 @@ export const assessmentService = {
       throw ApiError.conflict('Assessment is not available yet', 'ASSESSMENT_NOT_AVAILABLE')
     }
     await assertAssignedOrStaff(actor, assessment.courseId)
+    // Who is sitting the test is the whole question an exam asks, so the
+    // identity check comes before the questions are handed over. Applied to a
+    // resumed sitting as well as a new one: a reload is exactly when somebody
+    // else could take the chair. It costs a resuming learner nothing in the
+    // usual case — the daily check has already passed, and the per-open mode
+    // counts a check from the last couple of minutes as current.
+    await faceGateService.assertVerified(actor, FACE_GATE_ACTIONS.ASSESSMENT)
 
     const existing = await assessmentSessionRepository.findActive(actor.id, id)
     if (existing) {

@@ -3,8 +3,10 @@ import { computed, onBeforeUnmount, onMounted, reactive, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { assessmentsApi } from '@/services/assessments'
+import { useFaceGate } from '@/composables/useFaceGate'
 import AppCard from '@/components/ui/AppCard.vue'
 import AppButton from '@/components/ui/AppButton.vue'
+import FaceGateOverlay from '@/components/face/FaceGateOverlay.vue'
 import Skeleton from '@/components/ui/Skeleton.vue'
 import ErrorState from '@/components/ui/ErrorState.vue'
 import Icon from '@/components/ui/Icon.vue'
@@ -76,6 +78,12 @@ async function loadBriefing() {
   }
 }
 
+// Who is sitting the test is the question the whole exam rests on, so the
+// questions are not handed over until the camera says it is the enrolled
+// employee. The API refuses /start until then; this only puts the check on
+// screen and starts again once it passes.
+const faceGate = useFaceGate(() => start())
+
 async function start() {
   starting.value = true
   errorMessage.value = ''
@@ -88,7 +96,7 @@ async function start() {
     beginTicking()
     attachProctoring()
   } catch (error) {
-    errorMessage.value = apiErrorText(error)
+    if (!faceGate.claim(error)) errorMessage.value = apiErrorText(error)
   } finally {
     starting.value = false
   }
@@ -197,11 +205,26 @@ onMounted(loadBriefing)
 onBeforeUnmount(() => {
   clearInterval(tickTimer)
   detachProctoring()
+  faceGate.stop()
 })
 </script>
 
 <template>
-  <div class="mx-auto max-w-3xl px-6 py-8">
+  <div class="relative mx-auto max-w-3xl px-6 py-8">
+    <!-- Fixed rather than absolute: the sitting cannot start behind it, and
+         on a long briefing the check must not be somewhere up the page. -->
+    <FaceGateOverlay
+      v-if="faceGate.active.value"
+      v-model:show-enrollment="faceGate.showEnrollment.value"
+      full-page
+      :state="faceGate.state.value"
+      :action="faceGate.action.value"
+      :error-message="faceGate.errorMessage.value"
+      :stream="faceGate.cameraStream.value"
+      @capture="faceGate.capture"
+      @enrolled="faceGate.onEnrolled"
+    />
+
     <button
       v-if="phase !== 'running'"
       type="button"

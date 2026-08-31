@@ -24,7 +24,7 @@ Reads follow the same chain minus `validate`.
 | POST | `/password-reset/request` | |
 | POST | `/password-reset/confirm` | |
 
-## `/auth/face` — daily face verification (`docs/face-verification.md`)
+## `/auth/face` — face verification (`docs/face-verification.md`)
 | Method | Path | Who | Notes |
 |---|---|---|---|
 | POST | `/enroll` | SUPERADMIN | multipart, up to 3 photos + `userId` |
@@ -34,6 +34,12 @@ Reads follow the same chain minus `validate`.
 | GET | `/status/:userId` | SUPERADMIN | same shape, for another user |
 | PATCH | `/:userId` | SUPERADMIN | `{ enabled }` |
 | GET | `/:userId/reference-image` | SUPERADMIN | streams the private reference photo; every view audited |
+
+## `/face-policy` — how often the check is asked for
+| Method | Path | Who | Notes |
+|---|---|---|---|
+| GET | `/` | SUPERADMIN | `{ effective, stored }` |
+| PUT | `/` | SUPERADMIN | `{ verifyEveryOpen }` — once a day (false, default) or before every video, material and test (true). `null` unsets a field back to the default |
 
 ## `/users`
 CRUD (SUPERADMIN/ADMIN/MANAGER, scope-limited), `GET /me`,
@@ -61,7 +67,9 @@ does not depend on CORS rules on the storage bucket.
 ## `/video-access`
 `POST /:videoId/token` — validates the caller's `courseAssignment`
 (assigned, not expired, deadline not passed) and issues a short-lived signed
-playback token.
+playback token. Optional body `{ renewToken }`: the token the player already
+holds, sent by its refresh loop, which exempts a renewal from the face check
+(and from nothing else) so a lesson in progress is never interrupted by it.
 
 ## `/video-stream`
 `GET /:videoId/master.m3u8`, `GET /:videoId/:quality.m3u8`,

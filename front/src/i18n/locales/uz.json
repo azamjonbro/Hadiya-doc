@@ -881,6 +881,11 @@
       "errorBody": "Kamerani ishga tushirib bo'lmadi. Boshqa dastur uni band qilgan bo'lishi mumkin.",
       "noBypass": "Bu bosqichni kamerasiz o'tib bo'lmaydi."
     },
+    "gate": {
+      "video": "Dars ochilishidan oldin kamera orqali qisqa tekshiruv.",
+      "material": "Material ochilishidan oldin kamera orqali qisqa tekshiruv.",
+      "assessment": "Test boshlanishidan oldin kamera orqali qisqa tekshiruv."
+    },
     "enrollment": {
       "title": "Yuzni ro'yxatga olish",
       "reEnrollTitle": "Yuzni qayta ro'yxatga olish",
@@ -894,7 +899,7 @@
       "submit": "Saqlash",
       "success": "Yuz muvaffaqiyatli ro'yxatga olindi",
       "selfTitle": "Yuzni ro'yxatdan o'tkazish",
-      "selfIntro": "Videoni ochish uchun yuzingizni bir marta ro'yxatdan o'tkazing. Kameraga qarab bir nechta kadr olamiz — keyingi safar shu rasm bilan solishtiriladi."
+      "selfIntro": "Darslar, materiallar va testlarni ochish uchun yuzingizni bir marta ro'yxatdan o'tkazing. Bir nechta kadr olamiz — keyingi safar tekshiruv shu surat bilan solishtiradi."
     },
     "status": {
       "title": "Yuz orqali tasdiqlash",
@@ -1440,14 +1445,14 @@
     "EMPTY_MESSAGE": "Xabarda matn yoki biriktirma bo'lishi kerak.",
     "ENROLLMENT_FRAME_REJECTED": "Suratlarning birida aniq bitta yuz topilmadi. To'g'ri kameraga qarang va yuzingiz kadr markazida, yorug' bo'lsin.",
     "FACE_ALREADY_ENROLLED": "Bu hisob uchun yuz rasmi allaqachon saqlangan.",
-    "FACE_ENROLLMENT_REQUIRED": "Videoni ochishdan oldin yuzingizni ro'yxatdan o'tkazing.",
+    "FACE_ENROLLMENT_REQUIRED": "Buni ochish uchun avval yuzingizni ro'yxatdan o'tkazing.",
     "FACE_NOT_ENROLLED": "Bu hisob uchun yuz tekshiruvi sozlanmagan.",
     "FACE_PROFILE_NOT_ENROLLED": "Bu xodimning saqlangan yuz rasmi yo'q.",
     "FACE_PROFILE_NOT_FOUND": "Yuz profili topilmadi.",
     "FACE_RUNTIME_UNAVAILABLE": "Yuzni tekshirish xizmati hozir ishlamayapti.",
     "FACE_VERIFICATION_FAILED": "Yuz mos kelmadi. Qaytadan urinib ko'ring.",
     "FACE_VERIFICATION_LOCKED": "Bir necha marta muvaffaqiyatsiz urinish sababli yuz tekshiruvi vaqtincha bloklandi.",
-    "FACE_VERIFICATION_REQUIRED": "Videoni ochishdan oldin yuz tekshiruvidan o'ting.",
+    "FACE_VERIFICATION_REQUIRED": "Buni ochishdan oldin yuz tekshiruvidan o'ting.",
     "FILE_REQUIRED": "Kamida bitta fayl yuklang.",
     "FILE_TOO_LARGE": "Fayl hajmi {limit} MB dan oshmasligi kerak.",
     "FORBIDDEN": "Bu amalga ruxsatingiz yo'q.",

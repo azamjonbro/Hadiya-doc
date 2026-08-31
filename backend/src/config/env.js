@@ -68,6 +68,10 @@ const envSchema = z.object({
   FACE_VERIFICATION_ENFORCE_UNENROLLED: booleanFlag(false),
   // Cosine similarity floor for a match. Never sent to the frontend.
   FACE_MATCH_THRESHOLD: z.coerce.number().min(0).max(1).default(0.55),
+  // How recent a check has to be when the "verify before every video and
+  // material" setting is on (facePolicy.service.js). Only consulted in that
+  // mode — the default cadence is once per local day.
+  FACE_VERIFICATION_FRESH_SECONDS: z.coerce.number().int().positive().default(120),
   FACE_VERIFICATION_MAX_ATTEMPTS: z.coerce.number().int().positive().default(5),
   FACE_VERIFICATION_LOCK_MINUTES: z.coerce.number().int().positive().default(15),
   FACE_CHALLENGE_TTL_SECONDS: z.coerce.number().int().positive().default(300),

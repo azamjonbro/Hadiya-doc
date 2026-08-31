@@ -14,6 +14,12 @@ const props = defineProps({
   state: { type: String, required: true },
   errorMessage: { type: String, default: '' },
   variant: { type: String, default: 'inline' }, // inline | overlay
+  // Overrides the "why you are being asked" line. The login page's default
+  // sentence says the check is a once-a-day thing, which stops being true
+  // when the gate is standing in front of a material or a test, or when the
+  // policy asks for a check every time — so whoever put the gate up says
+  // what it is for.
+  bodyText: { type: String, default: '' },
   // The live camera stream, handed down by whoever is driving the capture
   // (useFaceVerification). Optional: the panel still renders its states
   // without one, it simply has nothing to show.
@@ -51,7 +57,7 @@ const faintClass = computed(() => (isDark.value ? 'text-white/50' : 'text-ink-fa
     <div v-if="state === 'idle'" class="max-w-md">
       <Icon name="video" size="32" :class="isDark ? 'text-white/80' : 'text-primary'" class="mx-auto" />
       <h3 class="mt-3 text-lg font-semibold" :class="titleClass">{{ t('faceVerification.panel.title') }}</h3>
-      <p class="mt-2 text-sm leading-relaxed" :class="bodyClass">{{ t('faceVerification.panel.body') }}</p>
+      <p class="mt-2 text-sm leading-relaxed" :class="bodyClass">{{ bodyText || t('faceVerification.panel.body') }}</p>
       <p
         class="mt-3 rounded-lg px-3 py-2 text-xs leading-relaxed"
         :class="isDark ? 'bg-white/10 text-white/70' : 'bg-surface-2 text-ink-muted'"
