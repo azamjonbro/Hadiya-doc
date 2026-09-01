@@ -171,7 +171,12 @@ export const groupService = {
 
     // Members and courses can be supplied at creation time so "create the
     // group and put these five people in it" is one call, not three.
-    if (payload.memberIds?.length) await this.addMembers(actor, group._id.toString(), payload.memberIds)
+    //
+    // The bulk variant, not addMembers: the roster often comes from a
+    // selection made on the employees page minutes earlier, and one id that
+    // has since stopped resolving must not leave a group created with nobody
+    // in it and a 404 on the way out.
+    if (payload.memberIds?.length) await this.addMembersBulk(actor, group._id.toString(), payload.memberIds)
     if (payload.courseIds?.length) await this.addCourses(actor, group._id.toString(), payload.courseIds)
 
     return this.getById(actor, group._id.toString())
@@ -254,6 +259,98 @@ export const groupService = {
     })
 
     return this.getById(actor, id)
+  },
+
+  // The employees table's "add the selection to a group". Unlike addMembers
+  // above this never refuses the whole batch: ids that no longer resolve to a
+  // user (someone deleted while the selection sat on screen) and people who
+  // are already in the group are reported back rather than thrown, so the
+  // admin learns what actually happened instead of losing the operation.
+  async addMembersBulk(actor, id, userIds) {
+    const group = await loadGroupOr404(id)
+    await assertManagerScopeForGroup(actor, group)
+
+    const wanted = [...new Set(userIds.map(String))]
+    const users = await userRepository.findByIds(wanted)
+    const foundIds = new Set(users.map((user) => user._id.toString()))
+    const notFoundIds = wanted.filter((userId) => !foundIds.has(userId))
+    await assertManagerScopeForUsers(actor, users)
+
+    const existing = new Set(group.memberIds.map(String))
+    const alreadyMemberIds = [...foundIds].filter((userId) => existing.has(userId))
+    const toAdd = [...foundIds].filter((userId) => !existing.has(userId))
+
+    // Nothing resolvable at all is a real failure; "everyone was already in
+    // the group" is not — it is the answer to the question that was asked.
+    if (!toAdd.length && !alreadyMemberIds.length) {
+      throw ApiError.notFound('None of the selected employees could be found')
+    }
+
+    if (toAdd.length) {
+      const updated = await groupRepository.addMembers(id, toAdd, actor.id)
+
+      // New members immediately get every course the group already has open —
+      // the same rule addMembers applies.
+      const created = await openCoursesToMembers({
+        actor,
+        groupId: updated._id,
+        userIds: toAdd,
+        courseIds: updated.courseIds.map((courseId) => courseId.toString()),
+      })
+      await notifyEnrolments(created)
+
+      await auditLogRepository.record({
+        actor: actor.id,
+        action: 'GROUP_MEMBERS_ADDED',
+        entity: 'Group',
+        entityId: id,
+        metadata: { userIds: toAdd, enrolmentsCreated: created.length, bulk: true },
+      })
+    }
+
+    return {
+      group: await this.getById(actor, id),
+      requested: wanted.length,
+      added: toAdd.length,
+      addedIds: toAdd,
+      alreadyMemberIds,
+      notFoundIds,
+    }
+  },
+
+  // The mirror image: only people who are actually in the group leave it, and
+  // the ones who were never in it are reported rather than treated as an
+  // error. The employees themselves are untouched — this removes a membership
+  // and the course access that membership opened, nothing else.
+  async removeMembersBulk(actor, id, userIds) {
+    const group = await loadGroupOr404(id)
+    await assertManagerScopeForGroup(actor, group)
+
+    const wanted = [...new Set(userIds.map(String))]
+    const existing = new Set(group.memberIds.map(String))
+    const toRemove = wanted.filter((userId) => existing.has(userId))
+    const notMemberIds = wanted.filter((userId) => !existing.has(userId))
+
+    if (toRemove.length) {
+      await groupRepository.removeMembers(id, toRemove, actor.id)
+      await courseAssignmentRepository.deleteByGroup({ groupId: group._id, userIds: toRemove })
+
+      await auditLogRepository.record({
+        actor: actor.id,
+        action: 'GROUP_MEMBERS_REMOVED',
+        entity: 'Group',
+        entityId: id,
+        metadata: { userIds: toRemove, bulk: true },
+      })
+    }
+
+    return {
+      group: await this.getById(actor, id),
+      requested: wanted.length,
+      removed: toRemove.length,
+      removedIds: toRemove,
+      notMemberIds,
+    }
   },
 
   async removeMember(actor, id, userId) {

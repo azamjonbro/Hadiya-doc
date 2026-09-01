@@ -6,6 +6,7 @@ import { auditLogRepository } from '../../repositories/auditLog.repository.js'
 import { hashPassword } from '../../utils/hash.js'
 import { ApiError } from '../../utils/ApiError.js'
 import { courseAssignmentService } from '../courses/courseAssignment.service.js'
+import { chatService } from '../chat/chat.service.js'
 import { taskService } from '../tasks/task.service.js'
 import { logger } from '../../config/logger.js'
 
@@ -89,6 +90,69 @@ async function assertManagerCanView(actor, department) {
   if (department !== actorUser.department) {
     throw ApiError.forbidden('Managers can only view users within their own department', 'DEPARTMENT_SCOPE_FORBIDDEN')
   }
+}
+
+
+// Ids as the table sent them, split into the ones this actor may act on and
+// the ones they may not, with a reason attached to every rejection. Both bulk
+// operations start here so "you cannot touch this person" is decided once, in
+// the same terms, whichever button was pressed.
+async function partitionBulkTargets(actor, userIds, { requireActive = false } = {}) {
+  const wanted = [...new Set(userIds.map(String))]
+  const users = await userRepository.findByIds(wanted)
+  const userById = new Map(users.map((user) => [user._id.toString(), user]))
+
+  const roles = await roleRepository.findAll()
+  const roleById = new Map(roles.map((role) => [role._id.toString(), role]))
+
+  // A manager is fenced to their own department; loaded once rather than
+  // per row, which is what assertManagerCanManage would have done.
+  const actorDepartment =
+    actor.roleName === ROLES.MANAGER ? (await userRepository.findById(actor.id))?.department : null
+
+  const eligible = []
+  const failed = []
+  const skipped = []
+
+  for (const id of wanted) {
+    const user = userById.get(id)
+    if (!user) {
+      failed.push({ id, code: 'NOT_FOUND', message: 'User not found' })
+      continue
+    }
+    if (id === actor.id) {
+      failed.push({ id, code: 'SELF_ACTION_FORBIDDEN', message: 'You cannot do this to your own account' })
+      continue
+    }
+
+    const role = roleById.get(user.roleId.toString())
+    if (actor.roleName === ROLES.MANAGER) {
+      if (!role || !EMPLOYEE_TIER_ROLES.includes(role.name)) {
+        failed.push({ id, code: 'ROLE_SCOPE_FORBIDDEN', message: 'Managers can only manage employee-tier accounts' })
+        continue
+      }
+      if (user.department !== actorDepartment) {
+        failed.push({
+          id,
+          code: 'DEPARTMENT_SCOPE_FORBIDDEN',
+          message: 'Managers can only manage users within their own department',
+        })
+        continue
+      }
+    }
+
+    // Not a failure — writing to (or switching off) somebody who is already
+    // switched off is a no-op the admin should be told about, not an error
+    // that makes the whole batch look broken.
+    if (requireActive && !user.isActive) {
+      skipped.push({ id, code: 'ACCOUNT_INACTIVE', fullName: user.fullName })
+      continue
+    }
+
+    eligible.push(user)
+  }
+
+  return { requested: wanted.length, eligible, failed, skipped }
 }
 
 export const userService = {
@@ -352,6 +416,79 @@ export const userService = {
     })
 
     return toPublicUser(updated, role)
+  },
+
+  // ------------------------------------------------------------------
+  // Bulk actions from the employees table
+  // ------------------------------------------------------------------
+  // One message written once, delivered as a separate private conversation to
+  // each selected employee. The delivery itself belongs to chat, so this only
+  // decides who is a legitimate recipient and hands the rest over.
+  async bulkMessage(actor, { userIds, message }) {
+    const { requested, eligible, failed, skipped } = await partitionBulkTargets(actor, userIds, {
+      requireActive: true,
+    })
+
+    if (!eligible.length) {
+      throw ApiError.badRequest('None of the selected employees can receive a message', 'NO_ELIGIBLE_RECIPIENTS', {
+        count: requested,
+      })
+    }
+
+    const { sent, failed: deliveryFailures } = await chatService.sendDirectBulk(
+      actor,
+      eligible.map((user) => user._id.toString()),
+      message
+    )
+
+    await auditLogRepository.record({
+      actor: actor.id,
+      action: 'USERS_BULK_MESSAGED',
+      entity: 'User',
+      metadata: { requested, sent: sent.length, failed: failed.length + deliveryFailures.length },
+    })
+
+    return {
+      requested,
+      sent: sent.length,
+      conversationIds: sent.map((row) => row.conversationId),
+      skipped: skipped.map((row) => ({ id: row.id, code: row.code })),
+      failed: [...failed, ...deliveryFailures.map((row) => ({ id: row.userId, code: row.code, message: row.message }))],
+    }
+  },
+
+  // The employees table's "Faolsizlantirish" for a whole selection. Everyone
+  // is checked before anything is written, then the survivors are switched
+  // off in one update — so the operation cannot half-apply because the tenth
+  // row turned out to be someone this actor may not touch.
+  async bulkDeactivate(actor, userIds) {
+    const { requested, eligible, failed, skipped } = await partitionBulkTargets(actor, userIds, {
+      requireActive: true,
+    })
+
+    const ids = eligible.map((user) => user._id.toString())
+    if (ids.length) await userRepository.setManyActive(ids, false)
+
+    // One row per employee, with the same action name a single deactivation
+    // writes — an audit trail queried by entityId must not care which button
+    // switched the account off.
+    for (const id of ids) {
+      await auditLogRepository.record({
+        actor: actor.id,
+        action: 'USER_DEACTIVATED',
+        entity: 'User',
+        entityId: id,
+        metadata: { bulk: true },
+      })
+    }
+
+    return {
+      requested,
+      deactivated: ids.length,
+      deactivatedIds: ids,
+      skipped: skipped.map((row) => ({ id: row.id, code: row.code })),
+      failed,
+    }
   },
 
   async deactivate(actor, id) {

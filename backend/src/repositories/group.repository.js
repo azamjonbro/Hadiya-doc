@@ -42,6 +42,16 @@ export const groupRepository = {
     return Group.findByIdAndUpdate(id, { $pull: { memberIds: userId }, $set: { updatedBy } }, { new: true })
   },
 
+  // The counterpart to addMembers' $addToSet: a whole selection leaves in one
+  // write, so a bulk removal cannot strand half the roster.
+  removeMembers(id, userIds, updatedBy) {
+    return Group.findByIdAndUpdate(
+      id,
+      { $pull: { memberIds: { $in: userIds } }, $set: { updatedBy } },
+      { new: true }
+    )
+  },
+
   addCourses(id, courseIds, updatedBy) {
     return Group.findByIdAndUpdate(
       id,

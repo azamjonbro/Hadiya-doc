@@ -120,3 +120,22 @@ export const listUsersQuerySchema = z.object({
   cursor: z.string().optional(),
   limit: z.coerce.number().int().min(1).max(100).optional().default(20),
 })
+
+const objectId = z.string().regex(/^[a-f\d]{24}$/i, 'Invalid id')
+
+// Bulk actions from the employees table. The 200 ceiling matches the chat
+// group roster limit — the table pages at 15, so anything near this is a
+// script rather than an admin ticking boxes.
+const bulkUserIds = z.array(objectId).min(1, 'Select at least one employee').max(200)
+
+export const bulkUserIdsSchema = z.object({
+  userIds: bulkUserIds,
+})
+
+// `message` mirrors sendChatMessageSchema's body: same trim, same 4000 cap,
+// because every id in the list ends up receiving exactly that message
+// through the ordinary chat pipeline.
+export const bulkMessageSchema = z.object({
+  userIds: bulkUserIds,
+  message: z.string().trim().min(1, 'Message cannot be empty').max(4000),
+})

@@ -191,6 +191,13 @@ export const userRepository = {
     return User.findByIdAndUpdate(id, { $set: { isActive } }, { new: true })
   },
 
+  // The whole selection in one write, so a bulk deactivation cannot leave
+  // half the employees switched off. Callers have already decided which ids
+  // they are allowed to touch — this does no checking of its own.
+  setManyActive(ids, isActive) {
+    return User.updateMany({ _id: { $in: ids } }, { $set: { isActive } })
+  },
+
   async registerFailedLogin(userId, { maxAttempts, lockMinutes }) {
     const user = await User.findById(userId)
     if (!user) return null

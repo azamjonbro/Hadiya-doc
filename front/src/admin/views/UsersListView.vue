@@ -25,6 +25,10 @@ import Pagination from '@/components/ui/Pagination.vue'
 import Skeleton from '@/components/ui/Skeleton.vue'
 import EmptyState from '@/components/ui/EmptyState.vue'
 import Icon from '@/components/ui/Icon.vue'
+import UserBulkActionsBar from '@/admin/components/users/UserBulkActionsBar.vue'
+import BulkMessageModal from '@/admin/components/users/BulkMessageModal.vue'
+import BulkGroupCreateModal from '@/admin/components/users/BulkGroupCreateModal.vue'
+import BulkGroupMembersModal from '@/admin/components/users/BulkGroupMembersModal.vue'
 import { apiErrorText } from '@/utils/apiError'
 
 const { t, locale } = useI18n()
@@ -145,6 +149,37 @@ function toggleOne(id) {
   next.has(id) ? next.delete(id) : next.add(id)
   selected.value = next
 }
+function clearSelection() {
+  selected.value = new Set()
+}
+
+// The rows behind the ticks, in the order they appear in the table. Derived
+// from `items` rather than kept alongside the id set, so there is still only
+// one selection state and it cannot drift out of step with what is on screen.
+const selectedUsers = computed(() => items.value.filter((user) => selected.value.has(user.id)))
+
+// ---------------------------------------------------------------------
+// Bulk actions
+// ---------------------------------------------------------------------
+
+// Read this list, write to these people, put them in a group, switch them
+// off — three different permissions, checked here so the buttons match what
+// the API will actually allow. The endpoints check the same things again;
+// hiding a button is a courtesy, not the rule.
+const canBulkMessage = computed(() => auth.hasPermission('user:read'))
+const canManageGroups = computed(() => auth.hasPermission('course:assign'))
+const canDeactivate = computed(() => auth.hasPermission('user:delete'))
+
+const showBulkMessage = ref(false)
+const showGroupCreate = ref(false)
+const showGroupMembers = ref(false)
+const groupMembersMode = ref('add')
+const bulkBusy = ref(false)
+
+function openGroupMembers(mode) {
+  groupMembersMode.value = mode
+  showGroupMembers.value = true
+}
 
 function buildParams() {
   const params = { page: page.value, limit: PAGE_SIZE }
@@ -245,13 +280,45 @@ async function onCreateSubmit() {
 
 async function bulkDeactivate() {
   const ids = [...selected.value]
-  if (!(await confirm.ask({ message: t('confirm.deactivateUsers', { count: ids.length }) }))) return
-  await Promise.all(ids.map((id) => usersApi.deactivate(id)))
-  toast.success(t('users.bulkDeactivated', { count: ids.length }))
-  // Stay where the user was working. If a status filter emptied the last
-  // page, step back rather than showing a blank table.
-  await load()
-  if (items.value.length === 0 && page.value > 1) await goToPage(page.value - 1)
+  if (!ids.length) return
+
+  const confirmed = await confirm.ask({
+    title: t('users.bulk.deactivateTitle'),
+    message: t('confirm.deactivateUsers', { count: ids.length }),
+    confirmLabel: t('users.deactivate'),
+  })
+  if (!confirmed) return
+
+  bulkBusy.value = true
+  try {
+    // One request, not one per row: the server checks every id, switches the
+    // eligible ones off in a single write, and answers with what it did — so
+    // a selection containing somebody this admin may not touch no longer
+    // half-applies and no longer needs the browser to reconcile N promises.
+    const result = await usersApi.bulkDeactivate(ids)
+
+    if (result.deactivated > 0) toast.success(t('users.bulkDeactivated', { count: result.deactivated }))
+    if (result.skipped?.length) toast.info(t('users.bulk.alreadyInactive', { count: result.skipped.length }))
+    if (result.failed?.length) toast.warning(t('users.bulk.deactivateFailed', { count: result.failed.length }))
+    if (!result.deactivated && !result.skipped?.length) toast.error(t('users.bulk.nothingDone'))
+
+    // Stay where the user was working. If a status filter emptied the last
+    // page, step back rather than showing a blank table. `load()` clears the
+    // selection on its way through.
+    await load()
+    if (items.value.length === 0 && page.value > 1) await goToPage(page.value - 1)
+  } catch (error) {
+    toast.error(apiErrorText(error))
+  } finally {
+    bulkBusy.value = false
+  }
+}
+
+// Messaging and group membership change nothing this table renders, so they
+// only drop the ticks — reloading would cost a page fetch to redraw the same
+// rows. The selection goes either way: it has been acted on.
+function onBulkFinished() {
+  clearSelection()
 }
 
 onMounted(() => {
@@ -326,9 +393,20 @@ onMounted(() => {
     </div>
 
     <Transition enter-active-class="transition-default" enter-from-class="opacity-0 -translate-y-1">
-      <div v-if="selected.size > 0" class="mt-4 flex items-center justify-between rounded-lg border border-primary/25 bg-primary-subtle px-4 py-2.5">
-        <p class="text-small font-medium text-primary">{{ selected.size }} {{ t('users.selected') }}</p>
-        <AppButton variant="danger" size="sm" icon="trash" @click="bulkDeactivate">{{ t('users.deactivate') }}</AppButton>
+      <div v-if="selected.size > 0" class="mt-4">
+        <UserBulkActionsBar
+          :count="selected.size"
+          :busy="bulkBusy"
+          :can-message="canBulkMessage"
+          :can-manage-groups="canManageGroups"
+          :can-deactivate="canDeactivate"
+          @message="showBulkMessage = true"
+          @group-create="showGroupCreate = true"
+          @group-add="openGroupMembers('add')"
+          @group-remove="openGroupMembers('remove')"
+          @deactivate="bulkDeactivate"
+          @clear="clearSelection"
+        />
       </div>
     </Transition>
 
@@ -456,6 +534,15 @@ onMounted(() => {
         </div>
       </form>
     </Modal>
+
+    <BulkMessageModal v-model="showBulkMessage" :users="selectedUsers" @sent="onBulkFinished" />
+    <BulkGroupCreateModal v-model="showGroupCreate" :users="selectedUsers" @created="onBulkFinished" />
+    <BulkGroupMembersModal
+      v-model="showGroupMembers"
+      :mode="groupMembersMode"
+      :users="selectedUsers"
+      @done="onBulkFinished"
+    />
 
     <FaceEnrollmentWizard
       v-if="pendingFaceEnrollUser"

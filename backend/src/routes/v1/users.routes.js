@@ -3,12 +3,15 @@ import { PERMISSIONS } from '@lms/shared'
 import { authenticate } from '../../middlewares/auth.middleware.js'
 import { requirePermission, requireSelfOrPermission } from '../../middlewares/rbac.middleware.js'
 import { validateBody, validateQuery } from '../../middlewares/validate.middleware.js'
+import { chatSendRateLimiter } from '../../middlewares/chatRateLimit.middleware.js'
 import { userController } from '../../controllers/user.controller.js'
 import {
   createUserSchema,
   updateUserSchema,
   listUsersQuerySchema,
   activityQuerySchema,
+  bulkMessageSchema,
+  bulkUserIdsSchema,
 } from '../../validators/user.validator.js'
 
 export const usersRouter = Router()
@@ -25,6 +28,25 @@ usersRouter.get('/departments', requirePermission(PERMISSIONS.USER_READ), userCo
 usersRouter.get('/branches', requirePermission(PERMISSIONS.USER_READ), userController.listBranches)
 usersRouter.get('/branches/overview', requirePermission(PERMISSIONS.USER_READ), userController.branchOverview)
 usersRouter.get('/positions', requirePermission(PERMISSIONS.USER_READ), userController.listPositions)
+// Bulk actions from the employees table. Declared before '/:id' for the same
+// reason the literal segments above are, and gated on the same permissions
+// their single-row counterparts use: writing to an employee needs to be able
+// to see them, switching an account off is the DELETE handler's permission.
+// Hiding the buttons in the admin app is not the check — this is.
+usersRouter.post(
+  '/bulk/message',
+  requirePermission(PERMISSIONS.USER_READ),
+  chatSendRateLimiter,
+  validateBody(bulkMessageSchema),
+  userController.bulkMessage
+)
+usersRouter.post(
+  '/bulk/deactivate',
+  requirePermission(PERMISSIONS.USER_DELETE),
+  validateBody(bulkUserIdsSchema),
+  userController.bulkDeactivate
+)
+
 usersRouter.get('/:id', requirePermission(PERMISSIONS.USER_READ), userController.getById)
 usersRouter.patch('/:id', requirePermission(PERMISSIONS.USER_UPDATE), validateBody(updateUserSchema), userController.update)
 usersRouter.delete('/:id', requirePermission(PERMISSIONS.USER_DELETE), userController.deactivate)

@@ -73,6 +73,14 @@ export const userController = {
     sendSuccess(res, user, 'User updated')
   }),
 
+  bulkMessage: asyncHandler(async (req, res) => {
+    sendSuccess(res, await userService.bulkMessage(req.user, req.body), 'Messages sent')
+  }),
+
+  bulkDeactivate: asyncHandler(async (req, res) => {
+    sendSuccess(res, await userService.bulkDeactivate(req.user, req.body.userIds), 'Users deactivated')
+  }),
+
   deactivate: asyncHandler(async (req, res) => {
     const user = await userService.deactivate(req.user, req.params.id)
     sendSuccess(res, user, 'User deactivated')

@@ -33,6 +33,16 @@ export const usersApi = {
   deactivate(id) {
     return http.delete(`/users/${id}`).then((r) => r.data.data)
   },
+
+  // Bulk actions from the employees table. One request per action rather than
+  // one per employee: the server decides who is eligible and answers with a
+  // summary (sent/deactivated, skipped, failed) the table can report on.
+  bulkMessage({ userIds, message }) {
+    return http.post('/users/bulk/message', { userIds, message }).then((r) => r.data.data)
+  },
+  bulkDeactivate(userIds) {
+    return http.post('/users/bulk/deactivate', { userIds }).then((r) => r.data.data)
+  },
   getCourses(id) {
     return http.get(`/users/${id}/courses`).then((r) => r.data.data)
   },

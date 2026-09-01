@@ -28,6 +28,14 @@ export const groupController = {
     sendSuccess(res, await groupService.addMembers(req.user, req.params.id, req.body.userIds))
   }),
 
+  addMembersBulk: asyncHandler(async (req, res) => {
+    sendSuccess(res, await groupService.addMembersBulk(req.user, req.params.id, req.body.userIds))
+  }),
+
+  removeMembersBulk: asyncHandler(async (req, res) => {
+    sendSuccess(res, await groupService.removeMembersBulk(req.user, req.params.id, req.body.userIds))
+  }),
+
   removeMember: asyncHandler(async (req, res) => {
     sendSuccess(res, await groupService.removeMember(req.user, req.params.id, req.params.userId))
   }),

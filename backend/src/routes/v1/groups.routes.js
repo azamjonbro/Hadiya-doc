@@ -40,6 +40,24 @@ groupsRouter.post(
 )
 groupsRouter.delete('/:id/members/:userId', requirePermission(PERMISSIONS.COURSE_ASSIGN), groupController.removeMember)
 
+// Roster changes driven from the employees table, where a selection of people
+// is moved in or out at once. Separate from the two routes above because they
+// answer with a summary — who was added, who was already a member, whose id no
+// longer resolves — which the group page's own single-row calls do not need.
+// Same permission: every membership change opens or revokes course access.
+groupsRouter.post(
+  '/:id/members/bulk-add',
+  requirePermission(PERMISSIONS.COURSE_ASSIGN),
+  validateBody(groupMembersSchema),
+  groupController.addMembersBulk
+)
+groupsRouter.post(
+  '/:id/members/bulk-remove',
+  requirePermission(PERMISSIONS.COURSE_ASSIGN),
+  validateBody(groupMembersSchema),
+  groupController.removeMembersBulk
+)
+
 groupsRouter.post(
   '/:id/courses',
   requirePermission(PERMISSIONS.COURSE_ASSIGN),

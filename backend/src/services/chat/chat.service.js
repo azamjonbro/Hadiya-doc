@@ -14,6 +14,7 @@ import {
   isUserOnline,
 } from '../../realtime/socket.js'
 import { ApiError } from '../../utils/ApiError.js'
+import { logger } from '../../config/logger.js'
 
 // Sidebar preview text for a message whose body is empty (a pure
 // attachment). Kept as a short marker rather than a translated string —
@@ -425,6 +426,45 @@ export const chatService = {
     await broadcastConversation(updated)
 
     return publicMessage
+  },
+
+  // One message, many private threads — never a group. An admin picking
+  // several employees in the users table and writing once means "say this to
+  // each of them", so every recipient gets an ordinary DM they can answer
+  // without the others seeing it.
+  //
+  // Deliberately built on openDirect + sendMessage rather than on the
+  // repositories: idempotent thread creation, the empty-body guard, the
+  // socket fan-out and the sidebar broadcast are all rules that must not
+  // exist twice. Sequential, because the per-recipient work is small and a
+  // parallel burst would only race the same broadcasts against each other.
+  //
+  // One bad recipient does not sink the batch: a deactivated employee, an id
+  // deleted since the table was drawn, or the sender's own row is recorded in
+  // `failed` and the rest still go out.
+  async sendDirectBulk(actor, userIds, body) {
+    const text = String(body ?? '').trim()
+    if (!text) throw ApiError.badRequest('A message needs text or an attachment', 'EMPTY_MESSAGE')
+
+    const sent = []
+    const failed = []
+
+    for (const userId of [...new Set(userIds.map(String))]) {
+      try {
+        const conversation = await this.openDirect(actor, userId)
+        const message = await this.sendMessage(actor, conversation.id, { body: text })
+        sent.push({ userId, conversationId: conversation.id, messageId: message.id })
+      } catch (error) {
+        logger.warn('Bulk direct message failed for one recipient', {
+          actorId: actor.id,
+          userId,
+          error: error.message,
+        })
+        failed.push({ userId, code: error.code ?? 'INTERNAL_ERROR', message: error.message })
+      }
+    }
+
+    return { sent, failed }
   },
 
   async editMessage(actor, messageId, body) {
