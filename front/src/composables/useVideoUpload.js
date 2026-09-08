@@ -5,6 +5,31 @@ import { API_BASE_URL } from '@/services/apiBase'
 
 const UPLOAD_ENDPOINT = `${API_BASE_URL}/videos/upload`
 
+/**
+ * Drops upload URLs the browser can no longer reach.
+ *
+ * tus remembers an interrupted upload in localStorage so the same file
+ * resumes where it stopped. Until the server was fixed it stored an
+ * `http://` URL (see tusServer.js), and on an https page every resume of it
+ * is blocked as mixed content before a request is even sent — so the entry
+ * outlives the bug and keeps failing the same upload with an error that
+ * names no status code. Anything stored for a scheme the page cannot call
+ * is unusable, so it goes; the upload then starts fresh instead of trying to
+ * resume into a wall.
+ */
+function dropUnreachableResumeEntries() {
+  try {
+    if (window.location.protocol !== 'https:') return
+    for (const key of Object.keys(localStorage)) {
+      if (!key.startsWith('tus::')) continue
+      if (localStorage.getItem(key)?.includes('"uploadUrl":"http://')) localStorage.removeItem(key)
+    }
+  } catch {
+    // Private mode, or storage disabled — there is then nothing stored to
+    // clean up, and the upload works without it.
+  }
+}
+
 export function useVideoUpload() {
   const auth = useAuthStore()
 
@@ -17,6 +42,7 @@ export function useVideoUpload() {
   let lastSample = null
 
   function start({ file, topicId, title, description, required, order }) {
+    dropUnreachableResumeEntries()
     status.value = 'uploading'
     progress.value = 0
     errorMessage.value = ''

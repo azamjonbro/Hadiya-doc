@@ -39,6 +39,21 @@ export const tusServer = new Server({
   allowedCredentials: true,
   respectForwardedHeaders: true,
 
+  // The upload URL tus hands back is relative ("/api/v1/videos/upload/<id>")
+  // rather than absolute, and tus-js-client resolves it against the endpoint
+  // it already called — so it inherits the scheme and host of the request the
+  // browser actually made.
+  //
+  // Absolute is what tus builds by default, from X-Forwarded-Proto. Behind a
+  // Cloudflare tunnel that header is a lie: TLS terminates at the edge, the
+  // tunnel reaches nginx over plain http, and nginx sets the header from
+  // $scheme — so tus announced http:// to a page loaded over https. The
+  // browser blocks that as mixed content, and the upload dies on the HEAD
+  // with an opaque "[object ProgressEvent]" rather than an HTTP status.
+  // Deriving the URL from the request removes the guess entirely: nothing to
+  // configure, nothing to drift when the domain or the proxy changes.
+  relativeLocation: true,
+
   async onUploadCreate(req, upload) {
     const metadata = upload.metadata ?? {}
 
