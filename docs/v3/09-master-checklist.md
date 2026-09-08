@@ -412,10 +412,34 @@
   middleware'ni ulashni eslab qolishidan **kuchliroq kafolat**. Uni
   tartib uchun zaiflashtirish noto'g'ri savdo bo'lardi.
 
-- [ ] **2.3** **`PATCH /roles/:id` + ruxsat matritsasi UI**
+- [x] **2.3** **`PATCH /roles/:id` + ruxsat matritsasi UI**
   · `routes/v1/roles.routes.js` — `PATCH` (tizim rollari qulflangan)
   · `front/src/admin/views/RolesPermissionsView.vue` — rol × ruxsat grid
   · Qabul: mavjud rolning ruxsatini o'zgartirib bo'ladi, uni o'chirmasdan
+  · Bajarildi (`e2f23ea`) — 12 test + brauzerda jonli API bilan tekshirildi:
+  grid 29 ruxsatni chiqardi, `user:read` yoqildi va `course:read` o'chirildi,
+  ikkalasi ham bazaga yetdi; oltita o'rnatilgan rol to'g'ri scope yorlig'i
+  bilan va tahrirlash tugmasisiz ko'rindi.
+  · **Qabul sharti ayni shu edi:** ilgari rolning ruxsatini o'zgartirishning
+  yagona yo'li uni o'chirib qayta yaratish edi — API esa kimdir ushlab
+  turgan rolni o'chirishdan bosh tortadi. Ya'ni amaldagi tartib: hamma
+  xodimni boshqa rolga ko'chirish → o'chirish → qayta yaratish → hammasini
+  qaytarish.
+  · Ruxsatlar ro'yxati **butunlay almashtiriladi**, birlashtirilmaydi: grid
+  butun qatorni yuboradi, va birlashtirish katakchani o'chirishni ta'sirsiz
+  qilardi — ruxsat UI'si uchun bu eng yomon xatti-harakat, chunki ishlagandek
+  ko'rinadi.
+  · Chetlanishlar:
+    1. **O'rnatilgan rollar qulflangan** (o'chirish yo'li bilan bir xil
+    qoida). `SUPERADMIN` dan `role:manage` ni olib tashlay oladigan admin
+    hammani rol boshqaruvidan abadiy qulflab qo'yardi — UI orqali qaytish
+    yo'li yo'q.
+    2. Audit yozuvi **nima o'zgarganini** yozadi (qo'shilgan/olib tashlangan
+    kalitlar, scope oldin/keyin), shunchaki "o'zgardi" emas.
+    3. `GET /roles/permissions` katalogni `permissions` kolleksiyasidan
+    o'qiydi, `ALL_PERMISSIONS` dan to'g'ridan-to'g'ri emas — kolleksiyada
+    tavsif bor va u har boot'da o'sha konstantadan seed qilinadi, ya'ni
+    ikkalasi bir-biridan uzoqlasha olmaydi.
 
 - [ ] **2.4** **Yangi rollar** — `AUTHOR`, `INSTRUCTOR`, `MENTOR`
   · `packages/shared/src/roles.js`, `permissions.js` (+45 kalit, §8.2 matritsasi)
