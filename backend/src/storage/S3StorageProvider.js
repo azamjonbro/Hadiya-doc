@@ -3,6 +3,7 @@ import {
   GetObjectCommand,
   DeleteObjectCommand,
   HeadObjectCommand,
+  ListObjectsV2Command,
 } from '@aws-sdk/client-s3'
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner'
 import { s3Client, s3SigningClient } from '../config/storage.js'
@@ -25,10 +26,40 @@ export class S3StorageProvider {
     this.bucket = bucket
   }
 
-  async putObject(key, body, contentType) {
+  // contentLength is only needed when `body` is a stream: the SDK cannot
+  // measure one, and S3 rejects a PUT with no length rather than reading to
+  // the end. Callers passing a Buffer or string leave it out.
+  async putObject(key, body, contentType, { contentLength } = {}) {
     await s3Client.send(
-      new PutObjectCommand({ Bucket: this.bucket, Key: key, Body: body, ContentType: contentType })
+      new PutObjectCommand({
+        Bucket: this.bucket,
+        Key: key,
+        Body: body,
+        ContentType: contentType,
+        ...(contentLength === undefined ? {} : { ContentLength: contentLength }),
+      })
     )
+  }
+
+  // Paginates to completion — a truncated listing would make a retention
+  // sweep believe old objects are already gone.
+  async listObjects(prefix) {
+    const objects = []
+    let continuationToken
+    do {
+      const result = await s3Client.send(
+        new ListObjectsV2Command({
+          Bucket: this.bucket,
+          ...(prefix ? { Prefix: prefix } : {}),
+          ...(continuationToken ? { ContinuationToken: continuationToken } : {}),
+        })
+      )
+      for (const item of result.Contents ?? []) {
+        objects.push({ key: item.Key, size: item.Size, lastModified: item.LastModified })
+      }
+      continuationToken = result.IsTruncated ? result.NextContinuationToken : undefined
+    } while (continuationToken)
+    return objects
   }
 
   async getObject(key) {

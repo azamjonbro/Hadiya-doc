@@ -128,6 +128,27 @@ const envSchema = z.object({
   // the reader may leave open, and a 2-minute URL would break on scroll-up.
   CHAT_ATTACHMENT_URL_TTL: z.coerce.number().int().positive().default(3600),
 
+  // Nightly encrypted mongodump to object storage. Off by default: it needs
+  // a key an operator has to generate, and a backup job that runs without
+  // one would only produce a nightly error, which is worse than an explicit
+  // opt-in. Production boots with a warning when it is off (see below).
+  BACKUP_ENABLED: booleanFlag(false),
+  // 32 bytes, hex. Generate with:
+  //   node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
+  // Losing it makes every stored archive unreadable, so it belongs in the
+  // password manager, NOT only in this file on the box being backed up.
+  BACKUP_ENCRYPTION_KEY: z.string().optional().default(''),
+  S3_BUCKET_BACKUPS: z.string().min(1).default('lms-backups'),
+  BACKUP_RETENTION_DAYS: z.coerce.number().int().positive().default(30),
+  // Cron, in APP_TIMEZONE. Default 03:20 — off the hour, because every other
+  // cron on a shared box fires at :00.
+  BACKUP_SCHEDULE_CRON: z.string().default('20 3 * * *'),
+  // mongodump/mongorestore are separate from the mongo server package and
+  // are frequently absent from a PM2 process's PATH even when they are on
+  // the operator's. Overridable with an absolute path.
+  MONGODUMP_BIN: z.string().default('mongodump'),
+  MONGORESTORE_BIN: z.string().default('mongorestore'),
+
   VIDEO_TOKEN_SECRET: z.string().min(16, 'VIDEO_TOKEN_SECRET must be at least 16 characters'),
   VIDEO_PLAYBACK_TOKEN_TTL: z.coerce.number().int().positive().default(180),
 
@@ -211,6 +232,26 @@ if (parsed.data.S3_SIGNING_ENDPOINT) {
         'Verify with: node src/scripts/checkStorageSigning.js'
     )
   }
+}
+
+// A backup job with no key encrypts nothing and uploads nothing; it would
+// just fail nightly in a log nobody reads. Fail at boot instead, where the
+// person who flipped the flag is still watching.
+if (parsed.data.BACKUP_ENABLED && !/^[0-9a-fA-F]{64}$/.test(parsed.data.BACKUP_ENCRYPTION_KEY)) {
+  console.error(
+    'Invalid environment configuration: BACKUP_ENABLED=true requires BACKUP_ENCRYPTION_KEY ' +
+      'to be 64 hex characters (32 bytes). Generate one with:\n' +
+      '  node -e "console.log(require(\'crypto\').randomBytes(32).toString(\'hex\'))"\n' +
+      'and store it somewhere that survives the loss of this machine.'
+  )
+  process.exit(1)
+}
+
+if (isProduction && !parsed.data.BACKUP_ENABLED) {
+  console.warn(
+    'Warning: BACKUP_ENABLED is false — no database backup is being taken. ' +
+      'See docs/deployment.md §5 (Backup and restore).'
+  )
 }
 
 if (parsed.data.FACE_VERIFICATION_REQUIRED && !parsed.data.FACE_VERIFICATION_ENABLED) {
