@@ -508,11 +508,46 @@
     `TEAM` so'roviga qaytarilardi, ya'ni **haqli bo'lganidan kengroq**.
     Kalitga scope qo'shildi.
 
-- [ ] **2.6** **Bulk XLSX import**
+- [x] **2.6** **Bulk XLSX import**
   · `services/users/userImport.service.js` (dry-run + commit, `exceljs` mavjud)
   · `models/importJob.model.js`, `POST /users/import/{dry-run,commit}`
   · `front/src/admin/views/UsersListView.vue` — import sehrgari
   · Qabul: **AT-28, AT-29**
+  · Bajarildi (`de4a1d0`) — **BLOK 2 yopildi**. 17 test, xotirada haqiqiy
+  300 satrli `.xlsx` yasab, endpoint ishlatadigan **o'sha parser** orqali
+  o'qilgan holda. Servisga oddiy massiv beradigan test aynan buziladigan
+  qismni o'tkazib yuborardi.
+  · **AT-28**: `willCreate 295`, `willUpdate 0`, beshta xato — har biri
+  **fayldagi satr raqami** bilan; hech narsa yozilmaydi; hisobot XLSX
+  bo'lib yuklab olinadi. **AT-29**: 295 hisob, parollar faqat javobda,
+  bitta `USERS_IMPORTED` (soni bilan) + har biriga `USER_CREATED`, va har
+  biriga `ACCOUNT_CREATED`. Endpointlar HTTP orqali ham sinaldi.
+  · **Dry-run — funksiyaning mazmuni**, xushmuomalalik emas: uch yuz kishilik
+  HR eksportida xato bo'ladi, va ularni bittalab 400 orqali topish ish
+  usuli emas.
+  · Commit dry-run tahlil qilgan qatorlardan ishlaydi, qayta yuklashdan
+  emas: operator **aniq bir ro'yxatni** tasdiqladi, qayta tahlil esa
+  oraliqda kimdir bo'lim qo'shgan bo'lsa boshqacha natija berishi mumkin.
+  `ImportJob` shuning uchun bor va **2 soatlik TTL** bilan — tahlil
+  qilingan import bu har bir xodimning shaxsiy ma'lumotlari nusxasi.
+  · Chetlanishlar:
+    1. Filial, bo'lim, bo'linma va lavozim **ro'yxatda bo'lishi shart**.
+    Ro'yxatda yo'q qiymat deyarli har doim xato yozuv, va uni qabul qilish
+    odamni o'z jamoasidan filtrlab tashlaydigan ikkinchi imlo yaratadi.
+    2. **Fayl ichidagi** takrorlar ham tekshiriladi — ular bazadagi
+    to'qnashuvlar kabi tez-tez uchraydi va yozish paytida ancha chalkash
+    xato beradi.
+    3. Rahbar bog'lanishi hamma hisob yaratilgandan **keyin bitta o'tishda**
+    biriktiriladi: rahbar o'ziga bo'ysunuvchidan pastroq satrda bo'lishi
+    mumkin.
+    4. **Test yana haqiqiy kamchilikni ochdi:** olingan e-maillar oddiy
+    `Set` da saqlanardi, shuning uchun bir xil faylni qayta import qilishda
+    (odamlarni yangilashning odatiy yo'li) har bir satrning **o'z** e-maili
+    o'ziga to'qnashuv deb hisoblanardi — 295 yangilanish o'rniga 295 xato.
+    Endi egasi bo'yicha: qiymat faqat **boshqa** odamda bo'lsa band.
+    5. `user:import` alohida ruxsat (§8.2): bitta hisob yaratish va uch yuz
+    hisob yaratish — boshqa-boshqa qarorlar; `MANAGER` da birinchisi bor,
+    ikkinchisi yo'q.
 
 ---
 
