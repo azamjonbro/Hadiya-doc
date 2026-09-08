@@ -9,6 +9,7 @@ import { Role } from '../../models/role.model.js'
 import { User } from '../../models/user.model.js'
 import { auditLogRepository } from '../../repositories/auditLog.repository.js'
 import { ApiError } from '../../utils/ApiError.js'
+import { Permission } from '../../models/permission.model.js'
 
 // What a role created from the employee form is allowed to do. An admin adding
 // "CASHIER" is naming a job, not granting authority, so a new role gets exactly
@@ -34,6 +35,7 @@ export const roleService = {
       // no field, and the resolver reads that as narrowly as the name allows
       // rather than as ALL.
       scope: resolveRoleScope(role),
+      permissions: role.permissions ?? [],
       isSystem: role.isSystem || SYSTEM_ROLE_NAMES.includes(role.name),
       users: usersByRoleId.get(role._id.toString()) ?? 0,
     }))
@@ -68,6 +70,80 @@ export const roleService = {
     })
 
     return { id: role._id.toString(), name: role.name, scope: role.scope, isSystem: false, users: 0 }
+  },
+
+  /**
+   * Changes what a role may do, without deleting it.
+   *
+   * Until now the only way to correct a role's permissions was to delete it
+   * and make a new one — which the API refuses while anyone holds it, so in
+   * practice a role's permissions were fixed for its lifetime.
+   *
+   * The seeded roles stay locked, the same six the delete path protects and
+   * for the same reason: SUPERADMIN gates the admin panel and the others are
+   * referenced by the seed. An admin who could untick `role:manage` on
+   * SUPERADMIN would lock everyone out of role management permanently, with
+   * no way back through the UI.
+   */
+  /**
+   * The permission catalogue, grouped by module.
+   *
+   * Read from the `permissions` collection rather than from ALL_PERMISSIONS
+   * directly: the collection carries the human description, and it is seeded
+   * from that constant on every boot, so the two cannot drift.
+   */
+  async listPermissions() {
+    const rows = await Permission.find().sort({ module: 1, key: 1 }).lean()
+    const byModule = new Map()
+    for (const row of rows) {
+      if (!byModule.has(row.module)) byModule.set(row.module, [])
+      byModule.get(row.module).push({ key: row.key, description: row.description ?? '' })
+    }
+    return [...byModule.entries()].map(([module, items]) => ({ module, permissions: items }))
+  },
+
+  async update(actor, id, { permissions, scope }) {
+    const role = await Role.findById(id)
+    if (!role) throw ApiError.notFound('Role not found')
+
+    if (role.isSystem || SYSTEM_ROLE_NAMES.includes(role.name)) {
+      throw ApiError.badRequest('Built-in roles cannot be edited', 'SYSTEM_ROLE_PROTECTED')
+    }
+
+    const before = { permissions: [...role.permissions], scope: resolveRoleScope(role) }
+    if (permissions !== undefined) {
+      // Deduplicated, because a grid can send the same key twice after a
+      // double-click and a role holding a permission twice is confusing to
+      // read back.
+      role.permissions = [...new Set(permissions)]
+    }
+    if (scope !== undefined) role.scope = scope
+    await role.save()
+
+    await auditLogRepository.record({
+      actor: actor.id,
+      action: 'ROLE_UPDATED',
+      entity: 'Role',
+      entityId: role._id.toString(),
+      // What changed, not just that something did: a permission grant is
+      // exactly the kind of change someone will want to reconstruct later.
+      metadata: {
+        name: role.name,
+        added: (permissions ?? []).filter((key) => !before.permissions.includes(key)),
+        removed: before.permissions.filter((key) => !(permissions ?? before.permissions).includes(key)),
+        scope: { from: before.scope, to: role.scope },
+      },
+    })
+
+    const users = await User.countDocuments({ roleId: role._id })
+    return {
+      id: role._id.toString(),
+      name: role.name,
+      permissions: role.permissions,
+      scope: role.scope,
+      isSystem: false,
+      users,
+    }
   },
 
   async remove(actor, id) {

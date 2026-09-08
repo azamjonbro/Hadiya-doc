@@ -137,6 +137,12 @@ export const router = createRouter({
           meta: { permission: 'report:export', titleKey: 'nav.reports' },
         },
         {
+          path: 'roles',
+          name: 'admin-roles',
+          component: () => import('@/admin/views/RolesPermissionsView.vue'),
+          meta: { permission: 'role:manage', titleKey: 'roles.title' },
+        },
+        {
           path: 'audit-logs',
           name: 'admin-audit-logs',
           component: () => import('@/admin/views/AuditLogView.vue'),

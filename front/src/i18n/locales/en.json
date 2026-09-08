@@ -65,7 +65,9 @@
     "pagination": {
       "range": "{from}–{to} of {total}",
       "page": "Page"
-    }
+    },
+    "edit": "Edit",
+    "delete": "Delete"
   },
   "auth": {
     "login": {
@@ -1649,5 +1651,40 @@
     "network": "Could not reach the server. Check your internet connection.",
     "timeout": "The server did not respond. Please try again.",
     "unknown": "Something went wrong. Please try again."
+  },
+  "roles": {
+    "title": "Roles and permissions",
+    "hint": "What each role may do, and how far it can see. Built-in roles cannot be edited.",
+    "newRole": "New role",
+    "name": "Name",
+    "namePlaceholder": "e.g. SUPERVISOR",
+    "scope": "Scope",
+    "create": "Create",
+    "newRoleHint": "A new role starts with the baseline permissions and the narrowest scope — widen it from here.",
+    "builtIn": "Built-in",
+    "userCount": "{count} employee(s)",
+    "permissionCount": "{count} permission(s)",
+    "selectedCount": "{count} of {total} selected",
+    "saved": "Role saved.",
+    "saveFailed": "The role was not saved.",
+    "created": "Role created.",
+    "createFailed": "The role was not created.",
+    "deleted": "Role deleted.",
+    "deleteFailed": "The role was not deleted.",
+    "loadFailed": "Could not load the roles.",
+    "confirmDeleteTitle": "Delete role",
+    "confirmDelete": "Delete the role “{name}”? This cannot be undone.",
+    "scopes": {
+      "ALL": "Whole company",
+      "DEPARTMENT": "Own department",
+      "TEAM": "Own team",
+      "SELF": "Themselves only"
+    },
+    "scopeHints": {
+      "ALL": "Sees data about every employee in the company.",
+      "DEPARTMENT": "Sees only employees in their own department.",
+      "TEAM": "Sees everyone below them in the org chart, whatever department they are in.",
+      "SELF": "Sees only their own data."
+    }
   }
 }

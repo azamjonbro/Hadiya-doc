@@ -7,8 +7,23 @@ export const rolesApi = {
   list() {
     return http.get('/roles').then((r) => r.data.data)
   },
-  create(name) {
-    return http.post('/roles', { name }).then((r) => r.data.data)
+  create(name, scope) {
+    return http.post('/roles', { name, ...(scope ? { scope } : {}) }).then((r) => r.data.data)
+  },
+  // The catalogue the permission grid renders its columns from, grouped by
+  // module.
+  permissions() {
+    return http.get('/roles/permissions').then((r) => r.data.data)
+  },
+  // The permission list is the complete set for the role, not a delta — a
+  // grid of checkboxes has no notion of "unchanged".
+  update(id, { permissions, scope }) {
+    return http
+      .patch(`/roles/${id}`, {
+        ...(permissions === undefined ? {} : { permissions }),
+        ...(scope === undefined ? {} : { scope }),
+      })
+      .then((r) => r.data.data)
   },
   remove(id) {
     return http.delete(`/roles/${id}`).then((r) => r.data.data)

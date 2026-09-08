@@ -65,7 +65,9 @@
     "pagination": {
       "range": "{total} tadan {from}–{to}",
       "page": "Sahifa"
-    }
+    },
+    "edit": "Tahrirlash",
+    "delete": "O'chirish"
   },
   "auth": {
     "login": {
@@ -1649,5 +1651,40 @@
     "network": "Serverga ulanib bo'lmadi. Internet aloqasini tekshiring.",
     "timeout": "Server javob bermadi. Qaytadan urinib ko'ring.",
     "unknown": "Xatolik yuz berdi. Qaytadan urinib ko'ring."
+  },
+  "roles": {
+    "title": "Rollar va ruxsatlar",
+    "hint": "Har bir rol nima qila olishini va qanchalik uzoqni ko'rishini shu yerda belgilaysiz. O'rnatilgan rollarni tahrirlab bo'lmaydi.",
+    "newRole": "Yangi rol",
+    "name": "Nomi",
+    "namePlaceholder": "masalan: SUPERVISOR",
+    "scope": "Ko'rish doirasi",
+    "create": "Yaratish",
+    "newRoleHint": "Yangi rol faqat asosiy ruxsatlar bilan va eng tor doira bilan boshlanadi — keyin shu yerdan kengaytirasiz.",
+    "builtIn": "O'rnatilgan",
+    "userCount": "{count} xodim",
+    "permissionCount": "{count} ruxsat",
+    "selectedCount": "{count} / {total} ruxsat tanlandi",
+    "saved": "Rol saqlandi.",
+    "saveFailed": "Rol saqlanmadi.",
+    "created": "Rol yaratildi.",
+    "createFailed": "Rol yaratilmadi.",
+    "deleted": "Rol o'chirildi.",
+    "deleteFailed": "Rol o'chirilmadi.",
+    "loadFailed": "Rollarni yuklab bo'lmadi.",
+    "confirmDeleteTitle": "Rolni o'chirish",
+    "confirmDelete": "«{name}» roli o'chirilsinmi? Bu amalni qaytarib bo'lmaydi.",
+    "scopes": {
+      "ALL": "Butun kompaniya",
+      "DEPARTMENT": "O'z bo'limi",
+      "TEAM": "O'z jamoasi",
+      "SELF": "Faqat o'zi"
+    },
+    "scopeHints": {
+      "ALL": "Kompaniyadagi hamma xodimning ma'lumotini ko'radi.",
+      "DEPARTMENT": "Faqat o'zi turgan bo'lim xodimlarini ko'radi.",
+      "TEAM": "Tashkiliy tuzilmada o'zidan pastdagi hammani ko'radi — bo'limdan qat'i nazar.",
+      "SELF": "Faqat o'z ma'lumotini ko'radi."
+    }
   }
 }
