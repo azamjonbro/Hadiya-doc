@@ -7,6 +7,7 @@ import { roleRepository } from '../repositories/role.repository.js'
 import { asyncHandler } from '../utils/asyncHandler.js'
 import { sendSuccess } from '../utils/apiResponse.js'
 import { ApiError } from '../utils/ApiError.js'
+import { resolveRoleScope } from '@lms/shared'
 
 export const userController = {
   me: asyncHandler(async (req, res) => {
@@ -34,6 +35,9 @@ export const userController = {
       avatar: user.avatar,
       role: role.name,
       permissions: role.permissions,
+      // The SPA routes on this: a scoped user landing on the company
+      // dashboard is sent to their team's instead of collecting a 403.
+      scope: resolveRoleScope(role),
       locale: user.locale ?? 'uz',
     })
   }),

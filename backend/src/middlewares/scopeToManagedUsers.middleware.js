@@ -1,4 +1,4 @@
-import { scopedUserIdsFor, hasUnscopedAccess } from '../services/access/actorScope.js'
+import { scopedUserIdsFor, hasUnscopedAccess, actorScope } from '../services/access/actorScope.js'
 import { cacheGet, cacheSet } from '../utils/cache.js'
 
 /**
@@ -11,13 +11,22 @@ import { cacheGet, cacheSet } from '../utils/cache.js'
  * always on the request, so "did this endpoint apply scope" is answerable by
  * reading one line of the handler.
  *
- * Cached for five minutes, keyed on the actor. The underlying org walk is
+ * Cached for five minutes. The underlying org walk is
  * cached too (orgHierarchy.service.js), but a DEPARTMENT actor's list comes
  * from a `distinct` over users, and that is worth not repeating on every
  * request a manager makes while paging through a list.
  */
 const CACHE_TTL_SECONDS = 5 * 60
-const key = (actorId) => `scope:userids:${actorId}`
+
+// Keyed on the scope as well as the person, not on the person alone.
+//
+// One actor can legitimately arrive with different scopes — a role edited in
+// the permission grid (2.3), a role reassigned, or simply an older token
+// still carrying the previous value for its remaining minutes. Keyed on the
+// id alone, the first request's answer is served to the second, and the
+// direction that goes wrong is the dangerous one: a DEPARTMENT list handed
+// to a TEAM request is wider than the caller is entitled to.
+const key = (actorId, scope) => `scope:userids:${scope}:${actorId}`
 
 export function scopeToManagedUsers(req, _res, next) {
   if (!req.user) {
@@ -31,7 +40,7 @@ export function scopeToManagedUsers(req, _res, next) {
     return
   }
 
-  const cacheKey = key(req.user.id)
+  const cacheKey = key(req.user.id, actorScope(req.user))
   cacheGet(cacheKey)
     .then(async (cached) => {
       if (cached) return cached

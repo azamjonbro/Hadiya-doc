@@ -137,6 +137,12 @@ export const router = createRouter({
           meta: { permission: 'report:export', titleKey: 'nav.reports' },
         },
         {
+          path: 'team',
+          name: 'admin-team-dashboard',
+          component: () => import('@/admin/views/ManagerDashboardView.vue'),
+          meta: { permission: 'analytics:view:all', titleKey: 'team.title' },
+        },
+        {
           path: 'roles',
           name: 'admin-roles',
           component: () => import('@/admin/views/RolesPermissionsView.vue'),
@@ -211,16 +217,23 @@ router.beforeEach(async (to) => {
     return { name: 'login', query: { redirect: to.fullPath } }
   }
 
-  // /bos is SUPERADMIN only. The path being unguessable is not a control, so
-  // this check is the control: ADMIN and MANAGER are refused here exactly like
-  // an ordinary employee. Their session survives — they are told no, not
-  // signed out.
-  //
-  // This guards the admin *UI*. It is not a substitute for the per-endpoint
-  // permission checks on the API, which still apply to every request the pages
-  // make (rbac.middleware.js).
-  if (to.meta.admin && !auth.isSuperAdmin) {
+  // Who may open /bos: anyone holding a permission that some admin page
+  // needs. Until 2.5 this was SUPERADMIN only, which made the UI narrower
+  // than the API — a manager could call the endpoints but not see the pages
+  // that call them, so the fence was in the wrong place and told them
+  // nothing. Each page below still enforces its own `meta.permission`, and
+  // each endpoint its own check (rbac.middleware.js); this only decides
+  // whether the door opens at all.
+  if (to.meta.admin && !auth.canUseAdminApp) {
     return { name: 'forbidden' }
+  }
+
+  // The company-wide dashboard answers 403 to anyone who is scoped — the
+  // cached payload covers every employee, which is exactly what their
+  // session is fenced away from. Send them to their team's instead of
+  // letting the page load and fail.
+  if (to.name === 'admin-dashboard' && auth.isScoped) {
+    return { name: 'admin-team-dashboard' }
   }
 
   if (to.meta.permission && !auth.hasPermission(to.meta.permission)) {

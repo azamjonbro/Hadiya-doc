@@ -67,7 +67,8 @@
       "page": "Page"
     },
     "edit": "Edit",
-    "delete": "Delete"
+    "delete": "Delete",
+    "refresh": "Refresh"
   },
   "auth": {
     "login": {
@@ -1685,6 +1686,33 @@
       "DEPARTMENT": "Sees only employees in their own department.",
       "TEAM": "Sees everyone below them in the org chart, whatever department they are in.",
       "SELF": "Sees only their own data."
+    }
+  },
+  "team": {
+    "title": "My team",
+    "hint": "The people you answer for — not the whole company, only your reports.",
+    "loadFailed": "Could not load your team's figures.",
+    "emptyTitle": "Nobody reports to you yet",
+    "emptyHint": "Once the org chart is filled in, your team appears here.",
+    "progress": "Team progress",
+    "progressHint": "Furthest behind first",
+    "needsAttention": "Needs attention",
+    "nobodyBehind": "Nobody is behind.",
+    "upcoming": "Upcoming deadlines",
+    "noDeadlines": "Nothing due in the next two weeks.",
+    "never": "never",
+    "cards": {
+      "teamSize": "Team size",
+      "completionRate": "Completion rate",
+      "overdue": "Overdue",
+      "activeLast30Days": "Active in 30 days",
+      "openTasks": "Open tasks"
+    },
+    "columns": {
+      "person": "Person",
+      "progress": "Progress",
+      "courses": "Courses",
+      "lastSeen": "Last active"
     }
   }
 }

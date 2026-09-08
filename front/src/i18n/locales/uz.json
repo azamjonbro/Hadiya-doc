@@ -67,7 +67,8 @@
       "page": "Sahifa"
     },
     "edit": "Tahrirlash",
-    "delete": "O'chirish"
+    "delete": "O'chirish",
+    "refresh": "Yangilash"
   },
   "auth": {
     "login": {
@@ -1685,6 +1686,33 @@
       "DEPARTMENT": "Faqat o'zi turgan bo'lim xodimlarini ko'radi.",
       "TEAM": "Tashkiliy tuzilmada o'zidan pastdagi hammani ko'radi — bo'limdan qat'i nazar.",
       "SELF": "Faqat o'z ma'lumotini ko'radi."
+    }
+  },
+  "team": {
+    "title": "Mening jamoam",
+    "hint": "Siz javob beradigan xodimlar bo'yicha manzara. Butun kompaniya emas — faqat sizga bo'ysunadiganlar.",
+    "loadFailed": "Jamoa ma'lumotini yuklab bo'lmadi.",
+    "emptyTitle": "Sizga hali hech kim bo'ysunmaydi",
+    "emptyHint": "Tashkiliy tuzilma to'ldirilgandan keyin bu sahifa jamoangizni ko'rsatadi.",
+    "progress": "Xodimlar progressi",
+    "progressHint": "Eng orqada qolgani birinchi",
+    "needsAttention": "E'tibor talab qiladi",
+    "nobodyBehind": "Hech kim orqada qolmagan.",
+    "upcoming": "Yaqinlashayotgan muddatlar",
+    "noDeadlines": "Ikki hafta ichida muddat yo'q.",
+    "never": "hech qachon",
+    "cards": {
+      "teamSize": "Jamoa hajmi",
+      "completionRate": "Tugatish darajasi",
+      "overdue": "Muddati o'tgan",
+      "activeLast30Days": "30 kunda faol",
+      "openTasks": "Ochiq vazifa"
+    },
+    "columns": {
+      "person": "Xodim",
+      "progress": "Progress",
+      "courses": "Kurs",
+      "lastSeen": "Oxirgi faollik"
     }
   }
 }
