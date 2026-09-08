@@ -1487,7 +1487,10 @@
     "rename": "Rename",
     "renameHint": "The new name is applied to every attached employee and course.",
     "delete": "Delete",
-    "undeclaredHint": "Not a record of its own: the name lives only on employee and course records. Move those employees to another branch for it to leave this list.",
+    "undeclaredHint": "Not a record of its own: the name lives only on employee and course records, so it cannot be renamed from here.",
+    "confirmDeleteInUse": "Delete the branch “{name}”? It will be cleared from {employees} employee record(s) and removed from the targeting of {courses} course(s) — a course with no other restriction then becomes visible to everyone.",
+    "deleted": "Branch “{name}” deleted.",
+    "deletedDetached": "Branch “{name}” deleted — cleared from {users} employee(s) and {courses} course(s).",
     "name": "Branch name",
     "renamed": "Renamed — moved {users} employee(s) and {courses} course(s)",
     "confirmDelete": "Delete the branch “{name}”?"

@@ -1487,7 +1487,10 @@
     "rename": "Nomini o'zgartirish",
     "renameHint": "Yangi nom barcha bog'langan xodim va kurslarga ham qo'llanadi.",
     "delete": "O'chirish",
-    "undeclaredHint": "Bu filial alohida yozuv emas: nom faqat xodim va kurs kartochkalarida turibdi. Ro'yxatdan yo'qolishi uchun xodimlarni boshqa filialga ko'chiring.",
+    "undeclaredHint": "Bu filial alohida yozuv emas: nom faqat xodim va kurs kartochkalarida turibdi, shuning uchun uni bu yerdan qayta nomlab bo'lmaydi.",
+    "confirmDeleteInUse": "«{name}» filiali o'chirilsinmi? U {employees} xodimning kartochkasidan olib tashlanadi va {courses} kursning mo'ljalidan chiqariladi — boshqa cheklovi yo'q kurslar shundan keyin barcha xodimlarga ochiladi.",
+    "deleted": "«{name}» filiali o'chirildi.",
+    "deletedDetached": "«{name}» filiali o'chirildi: {users} xodim va {courses} kursdan olib tashlandi.",
     "name": "Filial nomi",
     "renamed": "Nomi o'zgartirildi: {users} xodim, {courses} kurs ko'chirildi",
     "confirmDelete": "«{name}» filiali o'chirilsinmi?"
