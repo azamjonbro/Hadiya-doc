@@ -7,6 +7,15 @@ const courseSchema = new Schema(
     description: { type: String, default: '' },
     cover: { type: String, default: '' },
     banner: { type: String, default: '' },
+    // Which certificate is issued when this course is finished. Null means
+    // the course does not certify, which is most of them — a certificate for
+    // every course is a certificate worth nothing.
+    //
+    // The rest of the course metadata §3.4 describes (category, tags, level,
+    // prerequisites) lands in 3.4; this one field is here early because the
+    // issuing path in 3.2 has nothing to read without it.
+    certificateTemplateId: { type: Schema.Types.ObjectId, ref: 'CertificateTemplate', default: null },
+
     // What "finished" means for this course.
     //
     // Until 3.1 it meant "every published video is complete", decided inside

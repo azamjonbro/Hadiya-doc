@@ -8,6 +8,7 @@ import { courseAssignmentRepository } from '../../repositories/courseAssignment.
 import { courseRepository } from '../../repositories/course.repository.js'
 import { notificationService } from '../notifications/notification.service.js'
 import { logger } from '../../config/logger.js'
+import { queueCertificate } from '../../jobs/certificateQueue.js'
 
 /**
  * One definition of "this course is finished", and one place that acts on it.
@@ -174,6 +175,17 @@ export const courseCompletionService = {
           score: `${summary.completionPercent}%`,
         })
       }
+      // Queued on the transition, so finishing a course once queues one job.
+      // A course with no template configured is filtered out by the worker
+      // rather than here — that keeps "does this course certify" in one
+      // place instead of two.
+      await queueCertificate(userId, course._id, { score: `${summary.completionPercent}%` }).catch((error) => {
+        logger.warn('Could not queue the certificate', {
+          userId: String(userId),
+          courseId: String(course._id),
+          error: error.message,
+        })
+      })
     } else if (!complete && wasComplete) {
       // AT-04: a course that grows a new required lesson is not finished any
       // more. The assignment reopens and the learner is told why — silently

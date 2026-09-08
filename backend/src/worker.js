@@ -13,6 +13,10 @@ import {
 import { dashboardCacheService } from './services/analytics/dashboardCache.service.js'
 import { BACKUP_QUEUE, scheduleDailyBackup } from './jobs/backupQueue.js'
 import { DELIVERY_QUEUE, handleDeliveryFailure } from './jobs/deliveryQueue.js'
+import { CERTIFICATE_QUEUE } from './jobs/certificateQueue.js'
+import { certificateService } from './services/certificates/certificate.service.js'
+import { certificateRenderService } from './services/certificates/certificateRender.service.js'
+import { Certificate } from './models/certificate.model.js'
 import { mailService, isMailConfigured, closeTransport } from './services/notifications/mail.service.js'
 import { createBackup } from './services/backup/backup.service.js'
 import { env } from './config/env.js'
@@ -105,6 +109,41 @@ async function main() {
     })
   })
 
+  const certificateWorker = new Worker(
+    CERTIFICATE_QUEUE,
+    async (job) => {
+      if (job.name !== 'issue') return null
+      const { userId, courseId, score } = job.data
+
+      // Issue first, render second, and store the record before the PDF
+      // exists. If rendering fails the certificate is still issued and the
+      // retry only has to draw it — the alternative loses the issue itself
+      // to a font error.
+      const certificate = await certificateService.issueForCourse(userId, courseId, { score })
+      if (!certificate) return null
+
+      if (!certificate.pdfKey) {
+        const pdfKey = await certificateRenderService.render(certificate)
+        await Certificate.updateOne({ _id: certificate._id }, { $set: { pdfKey } })
+        await certificateService.announce(certificate)
+      }
+      return { serial: certificate.serial }
+    },
+    // Low concurrency: each job is a PDF with an embedded font and an S3
+    // upload, and a hundred at once on a 1.9 GB box is how the worker gets
+    // killed rather than how certificates get issued faster.
+    { connection: redisConnection, concurrency: 2 }
+  )
+
+  certificateWorker.on('failed', (job, err) => {
+    logger.error('Certificate job failed', {
+      jobId: job?.id,
+      userId: job?.data?.userId,
+      courseId: job?.data?.courseId,
+      error: err.message,
+    })
+  })
+
   await scheduleReminderChecks()
   await scheduleDashboardAggregation()
   const backupsScheduled = await scheduleDailyBackup()
@@ -112,6 +151,7 @@ async function main() {
   logger.info('Video processing worker started')
   logger.info('Reminder worker started (deadline checks every 15 minutes)')
   logger.info('Dashboard aggregation worker started (recomputes every 5 minutes)')
+  logger.info('Certificate worker started (issue + render on course completion)')
   logger.info(
     isMailConfigured()
       ? `Delivery worker started (SMTP ${env.SMTP_HOST}:${env.SMTP_PORT})`
@@ -131,6 +171,7 @@ async function main() {
       dashboardWorker.close(),
       backupWorker.close(),
       deliveryWorker.close(),
+      certificateWorker.close(),
     ])
     closeTransport()
     process.exit(0)
