@@ -2,7 +2,7 @@ name: corporate-lms-prod
 
 # Production stack — see docs/deployment.md for the full setup (env vars,
 # TLS certs, first-boot, backups). Every application service (backend,
-# worker, front, admin) is on the internal `lms-internal` network only;
+# worker, front) is on the internal `lms-internal` network only;
 # `nginx` is the sole container with a host-exposed port, terminating TLS
 # and reverse-proxying to the rest (nginx/reverse-proxy.conf).
 #
@@ -111,19 +111,10 @@ services:
     restart: unless-stopped
     networks: [lms-internal]
 
-  admin:
-    build:
-      context: .
-      dockerfile: admin/Dockerfile
-      args:
-        VITE_API_BASE_URL: ${ADMIN_API_BASE_URL}
-    restart: unless-stopped
-    networks: [lms-internal]
-
   nginx:
     image: nginx:1.27-alpine
     restart: unless-stopped
-    depends_on: [backend, front, admin]
+    depends_on: [backend, front]
     ports:
       - '80:80'
       - '443:443'

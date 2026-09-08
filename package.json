@@ -5,8 +5,7 @@
   "workspaces": [
     "packages/shared",
     "backend",
-    "front",
-    "admin"
+    "front"
   ],
   "engines": {
     "node": ">=20"
@@ -15,7 +14,6 @@
     "dev:backend": "npm run dev --workspace backend",
     "dev:worker": "npm run worker --workspace backend",
     "dev:front": "npm run dev --workspace front",
-    "dev:admin": "npm run dev --workspace admin",
     "build": "npm run build --workspaces --if-present",
     "lint": "npm run lint --workspaces --if-present",
     "infra:up": "docker compose up -d",

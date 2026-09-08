@@ -2,9 +2,9 @@
 // or single-VM deploy where Docker isn't wanted. Assumes: Node 20+, ffmpeg
 // on PATH, and Nginx already reverse-proxying to 127.0.0.1:4000 (see
 // nginx/reverse-proxy.conf — point its `proxy_pass` targets at
-// 127.0.0.1:4000 instead of the `backend`/`front`/`admin` service names
-// when not using Docker; front/admin become `nginx root` directives
-// pointing at their `dist/` folders instead of separate containers).
+// 127.0.0.1:4000 instead of the `backend`/`front` service names when not
+// using Docker; front becomes an `nginx root` directive pointing at its
+// `dist/` folder instead of a separate container).
 //
 // Usage (from the repo root, after `npm ci && npm run build`):
 //   pm2 start ecosystem.config.cjs --env production

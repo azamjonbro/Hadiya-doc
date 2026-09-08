@@ -5,7 +5,7 @@ Two supported paths — pick one, both reverse-proxy through the same
 
 | | Docker | PM2 (bare metal) |
 |---|---|---|
-| Files | `docker-compose.prod.yml`, `backend/Dockerfile`, `front/Dockerfile`, `admin/Dockerfile` | `ecosystem.config.cjs` |
+| Files | `docker-compose.prod.yml`, `backend/Dockerfile`, `front/Dockerfile` | `ecosystem.config.cjs` |
 | Best for | Anything with a container runtime available | A single VM with no Docker |
 | Mongo/Redis/MinIO | Included as services (or point at managed equivalents) | Bring your own (managed or self-hosted) |
 
@@ -13,15 +13,16 @@ Everything below applies to both — start there.
 
 ## 1. Prerequisites
 
-- A domain with three hostnames pointed at the server: the apex (front),
-  `admin.`, and `api.` (edit `nginx/reverse-proxy.conf` if your domain
-  layout differs — it's plain nginx, not templated).
+- A domain with two hostnames pointed at the server: the apex (front) and
+  `api.` (edit `nginx/reverse-proxy.conf` if your domain layout differs —
+  it's plain nginx, not templated). The admin panel is not a third host: it
+  is part of the employee SPA, at `/bos`.
 - TLS is **mandatory** (spec §48) — no plain-HTTP path serves app content;
   `nginx/reverse-proxy.conf`'s port-80 server block only ever redirects.
-  Get a cert covering all three hostnames, e.g.:
+  Get a cert covering both hostnames, e.g.:
   ```sh
   certbot certonly --standalone \
-    -d lms.example.com -d admin.lms.example.com -d api.lms.example.com
+    -d lms.example.com -d api.lms.example.com
   ```
   Mount/copy `fullchain.pem` + `privkey.pem` into `nginx/certs/` (Docker
   path) — matches the `TLS_CERT_DIR` volume in `docker-compose.prod.yml`.
@@ -41,15 +42,14 @@ production specifically:
   `VIDEO_TOKEN_SECRET`) — generate fresh ones, never reuse the dev values:
   `node -e "console.log(require('crypto').randomBytes(48).toString('hex'))"`
 - `NODE_ENV=production`
-- `ALLOWED_ORIGINS` — the real front/admin origins only, no wildcard
+- `ALLOWED_ORIGINS` — the real front origin only, no wildcard
   (spec §33 — a wildcard here is a CORS misconfiguration, not a
   convenience)
 - `COOKIE_DOMAIN` — the real apex domain (e.g. `.lms.example.com`) so the
-  refresh-token cookie is readable across the `admin.` subdomain too if
-  your deploy needs that
+  refresh-token cookie is readable across the `api.` subdomain too
 - `CAPTCHA_SECRET` — leaving this blank bypasses captcha verification
   entirely (logged as a warning on every boot); only acceptable in dev
-- `SUPERADMIN_EMAIL` / `SUPERADMIN_USERNAME` / `SUPERADMIN_PASSWORD` — a
+- `SUPERADMIN_EMAIL` / `SUPERADMIN_JSHSHIR` / `SUPERADMIN_PASSWORD` — a
   real password, not the one in this repo's dev `.env`. Seeded once on
   first boot only if no SUPERADMIN exists yet — rotate the password via
   the app afterward rather than editing these and redeploying.
@@ -65,11 +65,11 @@ production specifically:
 - `ANTHROPIC_API_KEY` — optional; AI chat (Phase 13) returns a clean
   `AI_CHAT_UNAVAILABLE` error without it rather than failing to boot.
 
-`front/`'s and `admin/`'s API base URL (`VITE_API_BASE_URL`, e.g.
+`front/`'s API base URL (`VITE_API_BASE_URL`, e.g.
 `https://api.lms.example.com/api/v1`) is a **build-time** Vite env var —
-set it via `--build-arg` (Docker) or a `.env.production` file in each
-app's directory before `npm run build` (PM2 path). Changing it always
-requires a rebuild, never just a restart.
+set it via `--build-arg` (Docker) or a `.env.production` file in `front/`
+before `npm run build` (PM2 path). Changing it always requires a rebuild,
+never just a restart.
 
 ## 3. First boot
 
@@ -82,7 +82,7 @@ docker compose -f docker-compose.prod.yml logs -f backend worker
 PM2:
 ```sh
 npm ci
-npm run build                       # builds front/ and admin/ dist/
+npm run build                       # builds front/dist
 pm2 start ecosystem.config.cjs --env production
 pm2 save && pm2 startup
 ```

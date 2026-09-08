@@ -75,13 +75,12 @@ paketlar (`@tensorflow/tfjs-node`, `@vladmandic/face-api`) workspace root'dan
 Serverning `.env`da hali bironta `FACE_*` kaliti yo'q — kod ishlab turibdi, lekin
 funksiya butunlay o'chiq (default false). Yoqish uchun avval `docs/face-verification.md`
 dagi Rollout bosqichlarini bajarish kerak. `springadmin.techinfo.uz` allaqachon
-`spring.techinfo.uz`ga 301 qilar ekan (repodagi `admin/` papkasi va `deploy/spring/`
-hujjatlari eskirgan — build/deploy qilinmaydi).
+`spring.techinfo.uz`ga 301 qilar ekan. (2026-09-08: `admin/` papkasi o'chirildi,
+`deploy/` hujjatlari `docs/archive/deploy/` ga ko'chirildi — checklist 0.8.)
 
 ## Hali ochiq qolgan masalalar
 
 - **Material yuklab olish buzilgan** (hali materiallar yo'q, birinchi yuklanganda chiqadi): presigned URL loopback manzil (`127.0.0.1:9000`) ustidan imzolanadi, brauzerda ishlamaydi. To'g'ri yechim — MinIO uchun alohida ochiq host (masalan `media.techinfo.uz`) yoki materiallarni API orqali uzatish.
-- Repodagi ishlatilmaydigan `admin/` papkasi hali o'chirilmagan (front ichiga birlashtirilgandan keyin qoldi) — o'chirish yoki qoldirish hal qilinmagan.
 - ADMIN/MANAGER rollarining API ruxsatlari qisqartirilmagan — `/bos` UI faqat SUPERADMIN'ga ko'rinadi, lekin ADMIN/MANAGER API'ni to'g'ridan-to'g'ri hali ham chaqira oladi (ataylab, hal qilinmagan qaror sifatida qoldirilgan).
 - Attention-monitoring (kamera CPU) haqiqiy kamera bilan tekshirilmagan — faqat build tekshirildi, headless test 0% chiqaradi.
 - Proctoring 2-bosqichi (o'quvchi o'rniga boshqa odam — yuz tanish) qilinmagan, faqat 1-bosqich (begona yuz borligini aniqlash).
