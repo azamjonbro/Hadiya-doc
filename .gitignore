@@ -53,3 +53,8 @@ front/public/pdfjs/
 # face-api.js detection/recognition models for face verification (~12MB).
 # Staged by: npm run assets:face-models --workspace backend
 backend/models/face-api/
+
+# Redis writes a snapshot into whatever directory it was started from, and
+# `redis-server --port 6380` for local dev is usually started from the repo
+# root. It is a database file, not source.
+dump.rdb

@@ -10,6 +10,13 @@ export const ROLES = Object.freeze({
   EMPLOYEE: 'EMPLOYEE',
   CALL_OPERATOR: 'CALL_OPERATOR',
   SELLER: 'SELLER',
+  // §8.2's three specialist roles. Each does one job with courses and is
+  // never a general admin — which is the point: until now the only way to
+  // let somebody write a course was to make them an ADMIN, and that hands
+  // them every employee record with it.
+  AUTHOR: 'AUTHOR',
+  INSTRUCTOR: 'INSTRUCTOR',
+  MENTOR: 'MENTOR',
 })
 
 export const SYSTEM_ROLE_NAMES = Object.values(ROLES)
@@ -49,6 +56,13 @@ export const DEFAULT_ROLE_SCOPES = Object.freeze({
   [ROLES.EMPLOYEE]: ROLE_SCOPES.SELF,
   [ROLES.CALL_OPERATOR]: ROLE_SCOPES.SELF,
   [ROLES.SELLER]: ROLE_SCOPES.SELF,
+  // AUTHOR and INSTRUCTOR work on content, not on people: §8.2 gives them
+  // no user:read at all, so there is nothing for a wider scope to widen.
+  [ROLES.AUTHOR]: ROLE_SCOPES.SELF,
+  [ROLES.INSTRUCTOR]: ROLE_SCOPES.SELF,
+  // MENTOR is the one that reads employee records, and TEAM is what makes
+  // that safe — their mentees, not the company.
+  [ROLES.MENTOR]: ROLE_SCOPES.TEAM,
 })
 
 /**
