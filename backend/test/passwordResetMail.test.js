@@ -111,9 +111,18 @@ describe('AT-14 · password reset by email', () => {
   })
 
   test('an unknown identifier is silently accepted — no enumeration', async () => {
-    const before = await MailLog.countDocuments()
+    // Scoped to reset mails written from here on. A bare countDocuments()
+    // counts every MailLog in the database, and `node --test` runs the
+    // suite's files concurrently — another file queueing anything at the
+    // wrong moment made this fail for a reason that had nothing to do with
+    // enumeration.
+    const since = new Date()
     await authService.requestPasswordReset('00000000000000')
-    assert.equal(await MailLog.countDocuments(), before, 'a mail was queued for an account that does not exist')
+    const queued = await MailLog.countDocuments({
+      templateKey: 'PASSWORD_RESET',
+      createdAt: { $gte: since },
+    })
+    assert.equal(queued, 0, 'a mail was queued for an account that does not exist')
   })
 
   test('a request queues a reset mail with a working link', async () => {

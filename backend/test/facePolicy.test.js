@@ -38,6 +38,20 @@ describe('resolveFacePolicy', () => {
 describe('verifiedRecentlyEnough', () => {
   const minutesAgo = (n) => new Date(Date.now() - n * 60_000)
 
+  // How far into the current APP_TIMEZONE day we are. Used to build a
+  // timestamp that is reliably "earlier today" whatever hour the suite runs.
+  function msIntoLocalDay() {
+    const parts = new Intl.DateTimeFormat('en-GB', {
+      timeZone: env.APP_TIMEZONE,
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+      hour12: false,
+    }).formatToParts(new Date())
+    const get = (type) => Number(parts.find((part) => part.type === type).value)
+    return ((get('hour') * 60 + get('minute')) * 60 + get('second')) * 1000
+  }
+
   test('never verified is never current, in either mode', () => {
     assert.equal(verifiedRecentlyEnough(null, DAILY), false)
     assert.equal(verifiedRecentlyEnough({ lastVerifiedAt: null }, DAILY), false)
@@ -46,8 +60,18 @@ describe('verifiedRecentlyEnough', () => {
 
   test('daily mode: a check from earlier today still counts', () => {
     assert.equal(verifiedRecentlyEnough({ lastVerifiedAt: new Date() }, DAILY), true)
-    // Hours old, but the same local day — the point of the default cadence.
-    assert.equal(verifiedRecentlyEnough({ lastVerifiedAt: minutesAgo(120) }, DAILY), true)
+
+    // Older, but still the same local day — the point of the default
+    // cadence. Derived from how long the local day has actually been
+    // running rather than a flat 120 minutes: run at 01:00 in Tashkent, a
+    // fixed two hours ago is *yesterday*, and the assertion inverts. A
+    // suite that fails between midnight and 02:00 teaches people to ignore
+    // it, which costs more than the case it was checking.
+    const msSinceLocalMidnight = msIntoLocalDay()
+    if (msSinceLocalMidnight > 60_000) {
+      const earlierToday = new Date(Date.now() - Math.floor(msSinceLocalMidnight / 2))
+      assert.equal(verifiedRecentlyEnough({ lastVerifiedAt: earlierToday }, DAILY), true)
+    }
   })
 
   test('daily mode: yesterday does not count', () => {
