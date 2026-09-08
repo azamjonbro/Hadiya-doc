@@ -272,12 +272,37 @@
     xatni navbatga qo'yish — bu endpoint qiladigan yagona ish, shuning
     uchun xatolik 200 ortida yashirinmasligi kerak.
 
-- [ ] **1.6** **Hisob yaratish e-maili + yetishmayotgan trigger'lar**
+- [x] **1.6** **Hisob yaratish e-maili + yetishmayotgan trigger'lar**
   · `ACCOUNT_CREATED` (`user.service.js:302` dan keyin)
   · `COURSE_COMPLETED` (`videoEventProcessor.js:250` — 2.1 dan keyin)
   · `QUIZ_PASSED` / `QUIZ_FAILED` (`quiz.service.js:125`)
   · `NEWS_PUBLISHED` (`news.service.js` publish)
   · `LOGIN_FROM_NEW_DEVICE` (`auth.service.js` issueSession)
+  · Bajarildi (`d7c945a`) — beshtasi ham. 11 test, hammasi bitta qoidaga
+  qurilgan: **ikki marta chiqadigan bildirishnoma umuman chiqmaydiganidan
+  yomonroq** — ikkinchisi birinchisini e'tiborsiz qoldirishga o'rgatadi.
+  · `ACCOUNT_CREATED` JSHSHIR ni olib yuradi, **parolni hech qachon emas** —
+  pochtadagi parol undan foydalanuvchi odamdan uzoqroq yashaydi.
+  · `LOGIN_FROM_NEW_DEVICE`: qurilma `userAgent` bo'yicha aniqlanadi va
+  savol **sessiya yozilishidan oldin** beriladi — aks holda hozir
+  yaratilayotgan yozuvning o'zi "bu qurilma tanish" dalili bo'lib qolardi.
+  `refresh` chiqarib tashlangan: u har 15 daqiqada bir xil mashinada
+  sodir bo'ladi va ogohlantirishni ma'nosizlantirardi.
+  · `NEWS_PUBLISHED` faqat `DRAFT → PUBLISHED` o'tishida. Chop etilgan
+  maqoladagi xatoni tuzatish uni qayta e'lon qilmaydi.
+  · Chetlanishlar:
+    1. `COURSE_COMPLETED` uchun checklistda "2.1 dan keyin" deb yozilgan
+    edi, lekin trigger nuqtasi (`videoEventProcessor.js` dagi
+    `ACTIVE → COMPLETED`) allaqachon mavjud va `managerId` ga bog'liq emas —
+    shuning uchun hozir qo'shildi. 3.1 (yagona tugatish servisi) kelganda
+    bu chaqiruv o'sha yerga ko'chishi kerak.
+    2. Test uchun `sessionRepository.hasSeenUserAgent()` va
+    `userRepository.listActiveByNewsTargets()` qo'shildi — yangilik
+    **ro'yxatlarni** (bir nechta bo'lim, bir nechta rol) mo'ljallaydi,
+    kursning bitta bo'limidan farqli; bo'sh ro'yxat "hamma" degani.
+    3. `NEWS_PUBLISHED` fan-out — har bir xodim uchun alohida sikl. Bu
+    ataylab: hammaga e'lon hammaga bildirishnoma degani. Qabul qiluvchilar
+    soni log qilinadi — batching kerak bo'lsa birinchi qaraladigan raqam.
 
 - [ ] **1.7** `[P]` **Web push**
   · `models/pushSubscription.model.js`, `services/notifications/push.service.js` (VAPID)
