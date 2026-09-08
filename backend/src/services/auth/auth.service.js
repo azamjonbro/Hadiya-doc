@@ -16,6 +16,13 @@ import { isSameLocalDay } from '../../utils/timezone.js'
 import { ApiError } from '../../utils/ApiError.js'
 import { env } from '../../config/env.js'
 import { logger } from '../../config/logger.js'
+import { notificationService } from '../notifications/notification.service.js'
+import { isMailConfigured } from '../notifications/mail.service.js'
+
+// One hour (AT-14). Long enough to survive a mail queue retrying and a
+// person reading it later in the day; short enough that a link left in an
+// inbox is not a standing key to the account.
+const PASSWORD_RESET_TTL_MINUTES = 60
 
 // Exported so faceVerification.service.js can complete a login the exact
 // same way (mint access + refresh tokens) once the extra face check passes
@@ -206,13 +213,38 @@ export const authService = {
 
     const rawToken = generateOpaqueToken()
     const tokenHash = hashOpaqueToken(rawToken)
-    const expiresAt = new Date(Date.now() + 30 * 60 * 1000)
+    const expiresAt = new Date(Date.now() + PASSWORD_RESET_TTL_MINUTES * 60 * 1000)
     await userRepository.setPasswordResetToken(user._id, tokenHash, expiresAt)
 
-    // No email/SMS provider is wired up yet — logged so the flow is usable
-    // in dev. Swap this for a real notifier when Phase 12 (Notifications)
-    // lands; the token/expiry logic here doesn't need to change.
-    logger.info('Password reset token issued', { userId: user._id.toString(), rawToken })
+    // PASSWORD_RESET is mandatory (§9.3), so this reaches the person
+    // whatever their preferences say — a notification nobody can switch off
+    // is precisely the one that gets them back into their account.
+    //
+    // Awaited, unlike most notify() calls: the queueing is what makes this
+    // endpoint do anything at all, and a failure here should surface rather
+    // than leave the caller with a 200 and no mail.
+    await notificationService.notify({
+      userId: user._id,
+      type: 'PASSWORD_RESET',
+      vars: {
+        resetUrl: `${env.APP_URL}/reset-password?token=${rawToken}`,
+        expiryMinutes: PASSWORD_RESET_TTL_MINUTES,
+      },
+      severity: 'WARNING',
+      relatedEntityType: 'User',
+      relatedEntityId: user._id.toString(),
+    })
+
+    // Without a relay there is no other way to obtain the token, and a
+    // developer who cannot reset a password cannot test the flow. Never in
+    // production, and never once SMTP is configured: a reset token in a log
+    // is a password in a log.
+    if (!isMailConfigured() && !env.isProduction) {
+      logger.warn('SMTP is not configured — password reset token logged for local use only', {
+        userId: user._id.toString(),
+        rawToken,
+      })
+    }
   },
 
   async confirmPasswordReset(rawToken, newPassword) {

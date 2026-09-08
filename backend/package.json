@@ -8,7 +8,7 @@
     "start": "node src/server.js",
     "worker": "node --watch src/worker.js",
     "worker:start": "node src/worker.js",
-    "test": "node --test test/security.test.js test/faceVerification.test.js test/facePolicy.test.js test/backup.test.js test/errorTracking.test.js test/socketCluster.test.js test/mailDelivery.test.js test/notificationTemplates.test.js test/notificationPrefs.test.js",
+    "test": "node --test test/security.test.js test/faceVerification.test.js test/facePolicy.test.js test/backup.test.js test/errorTracking.test.js test/socketCluster.test.js test/mailDelivery.test.js test/notificationTemplates.test.js test/notificationPrefs.test.js test/passwordResetMail.test.js",
     "migrate:chat": "node src/scripts/migrateLegacyChat.js",
     "migrate:jshshir": "node src/scripts/migrateUsernameToJshshir.js",
     "migrate:names": "node src/scripts/backfillEmployeeNames.js",
