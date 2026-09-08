@@ -304,9 +304,32 @@
     ataylab: hammaga e'lon hammaga bildirishnoma degani. Qabul qiluvchilar
     soni log qilinadi — batching kerak bo'lsa birinchi qaraladigan raqam.
 
-- [ ] **1.7** `[P]` **Web push**
+- [x] **1.7** `[P]` **Web push**
   · `models/pushSubscription.model.js`, `services/notifications/push.service.js` (VAPID)
   · `POST|DELETE /push/subscribe`
+  · Bajarildi (`44a64ca`) — VAPID kalitlari bo'lmasa o'chiq (SMTP kabi);
+  bitta kalit ikkinchisisiz bo'lsa boot rad etiladi. 15 test + endpointlar
+  HTTP orqali sinaldi (401, 400, subscribe, list, unsubscribe).
+  · Fikrning ko'p qismi **obunani qachon tashlash kerak** degan savolda.
+  Noto'g'ri sababdan o'chirilsa, odam bildirishnoma olishni jimgina
+  to'xtatadi va buni bilishning yo'li yo'q. Shuning uchun:
+  `404`/`410` (vendor "yo'q" dedi) → o'chiriladi; boshqasi (503, timeout,
+  liftdagi telefon) → qoladi va sanaladi; ketma-ket 20 marta → baribir
+  o'chiriladi.
+  · `subscribe()` **endpoint bo'yicha** upsert qiladi, foydalanuvchi bo'yicha
+  emas: brauzer o'z jadvali bilan qayta obuna bo'ladi va har safar takror
+  qator qolib, ikki marta push kelardi. Qayta obuna `failureCount` ni ham
+  nolga tushiradi — brauzer o'zi tirikligini aytyapti.
+  · `unsubscribe` endpoint berilganda ham `userId` bilan cheklangan —
+  endpoint bearer'ga o'xshash satr, va bir hisob boshqasining brauzerini
+  o'chira olmasligi kerak.
+  · Chetlanishlar:
+    1. **Brauzer tomoni kirmadi** — service worker va ruxsat so'rovi. U
+    PWA ishiga (12.1) tegishli. Shu paytgacha API tayyor va
+    `GET /push/public-key` `enabled:false` qaytaradi, ya'ni klient hali
+    ishlatib bo'lmaydigan ruxsatni so'ramaydi.
+    2. Har bir push `tag: type` bilan yuboriladi — ikkinchi "muddat
+    yaqinlashdi" ekranda birinchisining o'rniga tushadi, ustiga emas.
 
 - [ ] **1.8** `[P]` **Telegram kanali** — mahalliy sharoitda e-maildan ishonchliroq
   · `services/notifications/telegram.service.js` + ulash oqimi
