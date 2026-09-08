@@ -5,6 +5,7 @@ import { userRepository } from '../../repositories/user.repository.js'
 import { courseRepository } from '../../repositories/course.repository.js'
 import { auditLogRepository } from '../../repositories/auditLog.repository.js'
 import { ApiError } from '../../utils/ApiError.js'
+import { escapeRegex } from '../../utils/escapeRegex.js'
 
 /**
  * Branches are named, not referenced: User.branch and Course.branches store
@@ -102,19 +103,48 @@ export const branchService = {
   },
 
   /**
-   * Only an empty branch can go. Deleting one that is still in use would leave
-   * users and courses tagged with a name that no longer exists — which reads
-   * as working right up until someone wonders why a course reaches nobody.
+   * Deleting a branch, with or without the records that are still in it.
+   *
+   * Default (`force` off) only an empty branch can go: deleting one that is
+   * still in use would leave users and courses tagged with a name that no
+   * longer exists — which reads as working right up until someone wonders why
+   * a course reaches nobody.
+   *
+   * With `force` the same delete is allowed, but the tag goes with it: the
+   * employees are moved to no branch and the name is pulled out of every
+   * course that targets it. That is the destructive half, and it is why the
+   * admin page asks for confirmation naming both counts first — a course left
+   * with an empty `branches` array is no longer branch-restricted at all, so
+   * it becomes visible to everyone rather than to nobody.
+   *
+   * `id` addresses a declared branch. `name` addresses one by name, which is
+   * the only handle an undeclared branch has: a name that only ever existed
+   * on employee and course records has no Branch document to delete, and
+   * without this there was no way to clear it from this page at all.
    */
-  async remove(actor, id) {
-    const branch = await Branch.findById(id)
-    if (!branch) throw ApiError.notFound('Branch not found')
+  async remove(actor, { id, name, force = false }) {
+    const branch = id
+      ? await Branch.findById(id)
+      : await Branch.findOne({ nameKey: (name ?? '').trim().toLowerCase() })
 
+    // Prefer the declared spelling; fall back to what the caller asked for,
+    // which is all an undeclared branch has.
+    const branchName = branch?.name ?? (name ?? '').trim()
+    if (!branchName) throw ApiError.notFound('Branch not found')
+    if (id && !branch) throw ApiError.notFound('Branch not found')
+
+    // Case-insensitively, the same way the overview groups them and the same
+    // way the unique index treats the name: a record tagged "toshkent" is in
+    // the branch named "Toshkent". Counting exact-case here would let a branch
+    // the page shows as occupied be deleted, and the name would stay on those
+    // records — the row would simply come back as an undeclared branch.
+    const nameMatch = new RegExp(`^${escapeRegex(branchName)}$`, 'i')
     const [users, courses] = await Promise.all([
-      User.countDocuments({ branch: branch.name }),
-      Course.countDocuments({ branches: branch.name, deletedAt: null }),
+      User.countDocuments({ branch: nameMatch }),
+      Course.countDocuments({ branches: nameMatch, deletedAt: null }),
     ])
-    if (users || courses) {
+
+    if (!force && (users || courses)) {
       throw ApiError.conflict(
         `Branch is still in use: ${users} employee(s), ${courses} course(s)`,
         'BRANCH_IN_USE',
@@ -122,14 +152,30 @@ export const branchService = {
       )
     }
 
-    await branch.deleteOne()
+    // Nothing declared and nothing tagged: the row the caller is looking at
+    // does not exist any more, which is worth saying rather than reporting a
+    // delete that removed nothing.
+    if (!branch && !users && !courses) throw ApiError.notFound('Branch not found')
+
+    let detachedUsers = 0
+    let detachedCourses = 0
+    if (force && (users || courses)) {
+      const [userResult, courseResult] = await Promise.all([
+        User.updateMany({ branch: nameMatch }, { $set: { branch: '' } }),
+        Course.updateMany({ branches: nameMatch, deletedAt: null }, { $pull: { branches: nameMatch } }),
+      ])
+      detachedUsers = userResult.modifiedCount
+      detachedCourses = courseResult.modifiedCount
+    }
+
+    if (branch) await branch.deleteOne()
     await auditLogRepository.record({
       actor: actor.id,
       action: 'BRANCH_DELETED',
       entity: 'Branch',
-      entityId: id,
-      metadata: { name: branch.name },
+      entityId: branch?._id.toString() ?? null,
+      metadata: { name: branchName, force, detachedUsers, detachedCourses, declared: Boolean(branch) },
     })
-    return { id }
+    return { id: branch?._id.toString() ?? null, name: branchName, detachedUsers, detachedCourses }
   },
 }

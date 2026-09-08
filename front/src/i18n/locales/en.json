@@ -1487,6 +1487,7 @@
     "rename": "Rename",
     "renameHint": "The new name is applied to every attached employee and course.",
     "delete": "Delete",
+    "undeclaredHint": "Not a record of its own: the name lives only on employee and course records. Move those employees to another branch for it to leave this list.",
     "name": "Branch name",
     "renamed": "Renamed — moved {users} employee(s) and {courses} course(s)",
     "confirmDelete": "Delete the branch “{name}”?"

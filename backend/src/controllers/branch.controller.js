@@ -15,7 +15,15 @@ export const branchController = {
     sendSuccess(res, await branchService.rename(req.user, req.params.id, req.body.name), 'Branch renamed')
   }),
 
+  // `?force=1` means the caller has already been told what is attached and
+  // said yes anyway; without it the service refuses a branch still in use.
   remove: asyncHandler(async (req, res) => {
-    sendSuccess(res, await branchService.remove(req.user, req.params.id), 'Branch deleted')
+    const { force } = req.validatedQuery
+    sendSuccess(res, await branchService.remove(req.user, { id: req.params.id, force }), 'Branch deleted')
+  }),
+
+  removeByName: asyncHandler(async (req, res) => {
+    const { name, force } = req.validatedQuery
+    sendSuccess(res, await branchService.remove(req.user, { name, force }), 'Branch deleted')
   }),
 }

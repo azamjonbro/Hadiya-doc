@@ -13,7 +13,18 @@ export const branchesApi = {
   rename(id, name) {
     return http.patch(`/branches/${id}`, { name }).then((r) => r.data.data)
   },
-  remove(id) {
-    return http.delete(`/branches/${id}`).then((r) => r.data.data)
+  // `force` deletes a branch that still has employees or courses in it: they
+  // are detached first (employees left with no branch, the name pulled out of
+  // every course that targets it). Without it the server refuses with
+  // BRANCH_IN_USE. The admin page confirms the counts before passing it.
+  remove(id, { force = false } = {}) {
+    return http.delete(`/branches/${id}`, { params: force ? { force: 1 } : {} }).then((r) => r.data.data)
+  },
+  // A branch that was only ever typed into an employee's record has no id;
+  // its name is the only handle there is.
+  removeByName(name, { force = false } = {}) {
+    return http
+      .delete('/branches/by-name', { params: { name, ...(force ? { force: 1 } : {}) } })
+      .then((r) => r.data.data)
   },
 }

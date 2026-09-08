@@ -32,6 +32,9 @@ const toast = useToast()
 const items = ref([])
 const loading = ref(true)
 const errorMessage = ref('')
+// Name of the branch a delete is in flight for — the row is keyed by name and
+// an undeclared one has nothing else to key it by.
+const removing = ref('')
 
 const totals = computed(() => ({
   branches: items.value.length,
@@ -96,15 +99,50 @@ async function submitDialog() {
   }
 }
 
+/**
+ * Delete, with the confirmation carrying the consequence.
+ *
+ * An empty branch is a plain yes/no. One that still has employees or courses
+ * in it is not: deleting it leaves those employees with no branch and pulls
+ * the name out of every course targeting it — and a course left with no
+ * branches at all is no longer branch-restricted, so it goes from reaching
+ * that one office to reaching everybody. The counts are already on the card,
+ * so the dialog can say all of that before anything is touched, and the
+ * `force` flag is only sent once it has been read and accepted.
+ */
 async function removeBranch(branch) {
-  if (!(await confirm({ message: t('branchesPage.confirmDelete', { name: branch.name }) }))) return
+  const attached = branch.employees || branch.courses
+  const message = attached
+    ? t('branchesPage.confirmDeleteInUse', {
+        name: branch.name,
+        employees: branch.employees,
+        courses: branch.courses,
+      })
+    : t('branchesPage.confirmDelete', { name: branch.name })
+
+  if (!(await confirm.ask({ message, confirmLabel: t('branchesPage.delete') }))) return
+
+  removing.value = branch.name
   try {
-    await branchesApi.remove(branch.id)
+    const result = branch.id
+      ? await branchesApi.remove(branch.id, { force: true })
+      : await branchesApi.removeByName(branch.name, { force: true })
+    toast.success(
+      result.detachedUsers || result.detachedCourses
+        ? t('branchesPage.deletedDetached', {
+            name: result.name,
+            users: result.detachedUsers,
+            courses: result.detachedCourses,
+          })
+        : t('branchesPage.deleted', { name: result.name })
+    )
     await load()
   } catch (error) {
     // The server refuses a branch that is still in use and says how much is
     // attached; that message is the useful part, so pass it straight through.
     toast.error(apiErrorText(error))
+  } finally {
+    removing.value = ''
   }
 }
 
@@ -166,21 +204,25 @@ onMounted(load)
             </Badge>
           </div>
 
-          <!-- Only branches that exist as a record can be renamed or removed.
-               A name that is merely in use on employee records has nothing to
-               act on — creating it here first is what gives it one. -->
-          <div v-if="branch.id" class="flex shrink-0 gap-1">
+          <!-- Renaming needs a record to rename, so it stays disabled for a
+               name that only exists on employee and course records — with the
+               reason in the tooltip, because a button that is simply absent
+               reads as "this branch is special somehow". Deleting works
+               either way: there the name itself is the handle. -->
+          <div class="flex shrink-0 gap-1">
             <button
               type="button"
-              class="grid h-7 w-7 place-items-center rounded text-ink-faint transition-default hover:bg-surface-2 hover:text-ink"
-              :title="t('branchesPage.rename')"
+              :disabled="!branch.id"
+              class="grid h-7 w-7 place-items-center rounded text-ink-faint transition-default hover:bg-surface-2 hover:text-ink disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent disabled:hover:text-ink-faint"
+              :title="branch.id ? t('branchesPage.rename') : t('branchesPage.undeclaredHint')"
               @click="openRename(branch)"
             >
               <Icon name="pencil" size="14" />
             </button>
             <button
               type="button"
-              class="grid h-7 w-7 place-items-center rounded text-ink-faint transition-default hover:bg-danger-subtle hover:text-danger"
+              :disabled="removing === branch.name"
+              class="grid h-7 w-7 place-items-center rounded text-ink-faint transition-default hover:bg-danger-subtle hover:text-danger disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent disabled:hover:text-ink-faint"
               :title="t('branchesPage.delete')"
               @click="removeBranch(branch)"
             >

@@ -2,9 +2,13 @@ import { Router } from 'express'
 import { PERMISSIONS } from '@lms/shared'
 import { authenticate } from '../../middlewares/auth.middleware.js'
 import { requirePermission } from '../../middlewares/rbac.middleware.js'
-import { validateBody } from '../../middlewares/validate.middleware.js'
+import { validateBody, validateQuery } from '../../middlewares/validate.middleware.js'
 import { branchController } from '../../controllers/branch.controller.js'
-import { branchNameSchema } from '../../validators/branch.validator.js'
+import {
+  branchNameSchema,
+  branchDeleteQuerySchema,
+  branchDeleteByNameQuerySchema,
+} from '../../validators/branch.validator.js'
 
 export const branchesRouter = Router()
 
@@ -16,4 +20,16 @@ branchesRouter.use(authenticate)
 branchesRouter.get('/', requirePermission(PERMISSIONS.USER_READ), branchController.overview)
 branchesRouter.post('/', requirePermission(PERMISSIONS.USER_UPDATE), validateBody(branchNameSchema), branchController.create)
 branchesRouter.patch('/:id', requirePermission(PERMISSIONS.USER_UPDATE), validateBody(branchNameSchema), branchController.rename)
-branchesRouter.delete('/:id', requirePermission(PERMISSIONS.USER_UPDATE), branchController.remove)
+// Before '/:id', or the literal path would be read as a branch id.
+branchesRouter.delete(
+  '/by-name',
+  requirePermission(PERMISSIONS.USER_UPDATE),
+  validateQuery(branchDeleteByNameQuerySchema),
+  branchController.removeByName
+)
+branchesRouter.delete(
+  '/:id',
+  requirePermission(PERMISSIONS.USER_UPDATE),
+  validateQuery(branchDeleteQuerySchema),
+  branchController.remove
+)

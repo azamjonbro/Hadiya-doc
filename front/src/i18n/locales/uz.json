@@ -1487,6 +1487,7 @@
     "rename": "Nomini o'zgartirish",
     "renameHint": "Yangi nom barcha bog'langan xodim va kurslarga ham qo'llanadi.",
     "delete": "O'chirish",
+    "undeclaredHint": "Bu filial alohida yozuv emas: nom faqat xodim va kurs kartochkalarida turibdi. Ro'yxatdan yo'qolishi uchun xodimlarni boshqa filialga ko'chiring.",
     "name": "Filial nomi",
     "renamed": "Nomi o'zgartirildi: {users} xodim, {courses} kurs ko'chirildi",
     "confirmDelete": "«{name}» filiali o'chirilsinmi?"
