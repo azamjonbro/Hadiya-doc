@@ -476,10 +476,37 @@
   · Yo'l-yo'lakay: `dump.rdb` (Redis snapshot'i) `.gitignore` ga qo'shildi —
   u repo ildizidan ishga tushirilgan `redis-server` dan qolib ketardi.
 
-- [ ] **2.5** **Manager dashboard**
+- [x] **2.5** **Manager dashboard**
   · `GET /dashboard/team`, `front/src/admin/views/ManagerDashboardView.vue`
   · `/bos` guard'ini qayta ko'rib chiqish: MANAGER o'z bo'limi sahifalarini ko'radi
   · Qabul: MANAGER UI'da ko'rgani = API'da ola olgani
+  · Bajarildi (`c92de0c`) — **0.3 dagi chetlanish shu bilan yopildi**:
+  hisobotlar scope'langan, dashboard esa yo'q edi va scope'li chaqiruvchi
+  403 olardi, ketadigan joyi yo'q.
+  · Jamoa dashboardi **jonli hisoblanadi**, umumiy keshdan o'qilmaydi.
+  Kompaniya dashboardi oldindan agregatlanadi, chunki hamma admin bir xil
+  javobni xohlaydi; jamoa esa o'nlab odam va **har bir rahbar boshqacha
+  javob** kutadi — keshlash har bir rahbarga bitta yozuv, har biri 5
+  daqiqagacha eskirgan, va bu millisekundlik so'rovni tejash uchun.
+  · U ataylab **kichikroq** narsa: rahbarga kim orqada qolgani va nima
+  muddati o'tgani kerak; "eng ko'p pauza qilingan video" — kontent muallifi
+  savoli, boshqaruv savoli emas. Xodimlar **eng orqada qolgani birinchi**
+  tartibida — sahifa aynan shu savol uchun ochiladi.
+  · **Eshik ham ko'chdi:** `/bos` faqat SUPERADMIN uchun edi, ya'ni UI
+  API'dan tor edi — rahbar endpointlarni chaqira olardi, lekin ularni
+  chaqiradigan sahifalarni ocha olmasdi. Endi kirish "biror admin sahifasi
+  talab qiladigan ruxsat bormi" bo'yicha, har bir sahifa esa o'z
+  `meta.permission` ini tekshiradi. Qabul sharti aynan shu.
+  · Chetlanishlar:
+    1. Scope'li foydalanuvchi kompaniya dashboardiga tushsa **jamoa
+    sahifasiga yo'naltiriladi** — 403 beradigan sahifani yuklashiga yo'l
+    qo'yilmaydi.
+    2. **Test yozayotganda haqiqiy imtiyoz xatosi topildi:** scope
+    middleware'i ro'yxatni faqat aktyor `id` si bo'yicha keshlardi. Bitta
+    odam turli scope bilan kelishi mumkin (2.3 da rol tahrirlangan, rol
+    almashtirilgan, yoki eski token) — va keshlangan `DEPARTMENT` ro'yxati
+    `TEAM` so'roviga qaytarilardi, ya'ni **haqli bo'lganidan kengroq**.
+    Kalitga scope qo'shildi.
 
 - [ ] **2.6** **Bulk XLSX import**
   · `services/users/userImport.service.js` (dry-run + commit, `exceljs` mavjud)
