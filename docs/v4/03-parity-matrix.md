@@ -45,7 +45,7 @@
 | Tashqi kutubxona integratsiyasi | ✓ | Yo'q | N/A | — | — | §24 |
 | Nested papkalar | ✓ | Faqat Course→Topic (2 daraja) | PARTIAL | 50 | `topic.model.js` | Kategoriya daraxti buni qoplaydi |
 | Tavsiya etilgan kurslar | — | Yo'q | NONE | 0 | — | `recommendation.service` |
-| **D02 jami: 8 capability (+2 N/A)** | | | **FULL 3 · OURS+ 1 · PARTIAL 1 · NONE 2 · VERIFY 1 · N/A 2** | **56** | | |
+| **D02 jami: 10 capability (+2 N/A)** | | | **FULL 3 · OURS+ 1 · PARTIAL 1 · NONE 2 · VERIFY 1 · N/A 2** | **56** | | |
 
 ## D03 · COURSE STRUCTURE
 
@@ -197,20 +197,20 @@
 | Filial | ✓ (organization) | `Branch` kolleksiyasi | FULL | 100 | `branch.model.js` | — |
 | Bo'linma (subdivision) | ? | Bor | OURS+ | 100 | `user.model.js:44` | — |
 | **Organization = mustaqil administratsiya** | ✓ | Yo'q — tenant izolyatsiyasi yo'q | NONE | 0 | — | §24 da baholanadi |
-| **Rahbar (manager) maydoni** | ✓ | **Yo'q** | NONE | 0 | `user.model.js` — `managerId` yo'q | `managerId` + `$graphLookup` |
+| **Rahbar (manager) maydoni** | ✓ | Bor — `managerId`, tranzitiv `$graphLookup`, tsikl himoyasi | FULL | 100 | `user.model.js:32`, `orgHierarchy.service.js` | — |
 | **Interaktiv org chart** | ✓ | Yo'q | NONE | 0 | — | `OrgChartView` |
 | People / hamkasb profillari | ✓ | Chat kontaktlari + `useOrgDirectory` | PARTIAL | 50 | `useOrgDirectory.js`, `chat/contacts` | Profil sahifasi |
-| Rollar (tayyor) | ✓ (5+Supervisor) | 6 ta seed, amalda 4 daraja | PARTIAL | 75 | `roles.js`, `permissions.js:96-98` | AUTHOR/INSTRUCTOR/MENTOR |
+| Rollar (tayyor) | ✓ (5+Supervisor) | 9 ta seed — AUTHOR/INSTRUCTOR/MENTOR qo'shildi | FULL | 100 | `roles.js`, `permissions.js` (§8.2) | — |
 | **Custom rollar** | ✓ | Bor — kod o'zgartirmasdan | FULL | 100 | `role.model.js`, `POST /roles` | — |
-| **Rolni tahrirlash** | ✓ | **Yo'q** — `PATCH /roles/:id` yo'q | NONE | 0 | `roles.routes.js` | Endpoint + UI |
+| **Rolni tahrirlash** | ✓ | Bor — `PATCH /roles/:id` + ruxsat grid'i | FULL | 100 | `roles.routes.js`, `RolesPermissionsView.vue` | — |
 | Granular ruxsatlar | ✓ | 24 kalit | PARTIAL | 50 | `permissions.js` | +45 kalit |
 | Ruxsat matritsasi UI | ✓ | Yo'q | NONE | 0 | — | `RolesPermissionsView` |
-| Bo'lim scope'i (majburlanadi) | ✓ | 5 domenda bor | PARTIAL | 75 | `user.service.js:87`, `task.service.js:62`, `group.service.js:58`, `courseAssignment.service.js:28`, `points.service.js:79` | Hisobot+dashboard'ga yoyish |
-| Scope custom rolga ham qo'llanishi | ✓ | **Yo'q** — `roleName === 'MANAGER'` | NONE | 0 | 14 joyda | `role.scope` |
+| Bo'lim scope'i (majburlanadi) | ✓ | Hamma domenda, hisobot va dashboard ham | FULL | 100 | `actorScope.js`, `scopeToManagedUsers.middleware.js` | — |
+| Scope custom rolga ham qo'llanishi | ✓ | Bor — `role.scope` (ALL/DEPARTMENT/TEAM/SELF) | FULL | 100 | `actorScope.js`, AT-21 | — |
 | IDOR himoyasi | ? | Bor + testlar | OURS+ | 100 | `rbac.middleware.js`, `security.test.js` | — |
 | Tug'ilgan kun tabrigi | ✓ | Yo'q | NONE | 0 | — | LOW |
 | Yangi xodim kartasi | ✓ | Yo'q | NONE | 0 | — | LOW |
-| **D30–D36 jami: 25 capability** | | | **FULL 5 · OURS+ 3 · PARTIAL 7 · NONE 10** | **47** | | |
+| **D30–D36 jami: 25 capability** | | | **FULL 10 · OURS+ 3 · PARTIAL 5 · NONE 7** | **61** | | |
 
 ## D37–D38 · ONBOARDING / ASSIGNMENTS
 
@@ -325,7 +325,7 @@
 | Filtr: sana | ✓ | Bor | FULL | 100 | `reportData.service.js:47-53` | — |
 | Filtr: bo'lim / guruh / filial | ✓ | **Yo'q** | NONE | 0 | — | — |
 | Filtr: kurs / foydalanuvchi / rol | ✓ | Bor | FULL | 100 | `reportData.service.js:361-366` | — |
-| **Hisobot scope'i (majburlanadi)** | ✓ | **Yo'q — MANAGER butun kompaniyani eksport qiladi** | NONE | 0 | `report.controller.js:20` — `actor` uzatilmaydi | 🔴 P0 |
+| **Hisobot scope'i (majburlanadi)** | ✓ | Bor — `build(actor,…)`, scope role'dan | FULL | 100 | `reportData.service.js:376`, `actorScope.js` | — |
 | Async eksport (katta hajm) | ? | Yo'q — `MAX_ROWS 5000` jimgina kesadi | VERIFY | 0 | `reportData.service.js:16` | `exportJob` |
 | Eksport auditi | ? | Yo'q | VERIFY | 0 | — | `REPORT_EXPORTED` |
 | Supervisor dashboard | ✓ | **Yo'q** | NONE | 0 | — | `GET /dashboard/team` |
@@ -337,7 +337,7 @@
 | Compliance: takroriy o'qitish | ✓ | Yo'q | NONE | 0 | — | `RecurringAssignment` |
 | Compliance dashboard | ✓ | Yo'q | NONE | 0 | — | Kurs × xodim matritsasi |
 | **Audit pack** (transcript + timestamped log, bir klik eksport) | ✓ | Yo'q | NONE | 0 | — | — |
-| **D60–D62 jami: 21 capability** | | | **FULL 5 · OURS+ 3 · PARTIAL 2 · NONE 9 · VERIFY 2** | **42** | | |
+| **D60–D62 jami: 21 capability** | | | **FULL 6 · OURS+ 3 · PARTIAL 2 · NONE 8 · VERIFY 2** | **46** | | |
 
 ## D63–D65 · NOTIFICATIONS / EMAIL / PUSH
 
@@ -345,20 +345,20 @@
 |---|:--:|---|:--:|:--:|---|---|
 | In-app bildirishnoma | ✓ | Bor | FULL | 100 | `notification.service.js:22-48` | — |
 | Realtime (socket) push | ? | Bor | OURS+ | 100 | `realtime/socket.js`, `emitNotification` | — |
-| **E-mail bildirishnoma** | ✓ | **Yo'q** — `nodemailer`/`smtp` kod bazasida yo'q | NONE | 0 | — | `mail.service` + `deliveryQueue` |
-| Kurs tugatish e-maili | ✓ | Yo'q | NONE | 0 | — | — |
-| Test o'tish e-maili | ✓ | Yo'q | NONE | 0 | — | — |
+| **E-mail bildirishnoma** | ✓ | Bor — SMTP, 5× eksponensial retry, `mailLogs` | FULL | 100 | `mail.service.js`, `deliveryQueue.js` | SMTP hisobi kerak (INF-4) |
+| Kurs tugatish e-maili | ✓ | Bor — `COURSE_COMPLETED`, o'tishda bir marta | FULL | 100 | `videoEventProcessor.js:250` | — |
+| Test o'tish e-maili | ✓ | Bor — `QUIZ_PASSED` / `QUIZ_FAILED` | FULL | 100 | `quiz.service.js` | — |
 | O'qilmagan chat e-maili | ✓ | Yo'q | NONE | 0 | — | — |
 | Tadbir taklifi va eslatmasi | ✓ | Yo'q | NONE | 0 | `event.service.js` | — |
-| **Mobil push** | ✓ | Yo'q | NONE | 0 | — | Web Push (VAPID) |
-| Bildirishnoma shabloni | ✓ | Yo'q — matn kodda **inglizcha** | NONE | 0 | `reminderJob.js:22` | `NotificationTemplate` |
-| Bildirishnoma tili | ✓ | Yo'q (UI 3 tilli, xabarlar inglizcha) | NONE | 0 | — | `user.locale` |
-| Foydalanuvchi sozlamasi | ✓ (360 chastotasi) | Yo'q | NONE | 0 | — | `notificationPrefs` |
-| Retry / xato boshqaruvi | ? | Yo'q (in-app'da kerak emas) | VERIFY | 0 | — | BullMQ 5× |
+| **Mobil push** | ✓ | Web Push API bor, brauzer tomoni (SW) yo'q | PARTIAL | 50 | `push.service.js`, `pushSubscription.model.js` | Service worker (12.1) |
+| Bildirishnoma shabloni | ✓ | Bor — 27 tur × 3 til × 3 kanal, admin tahrirlaydi | FULL | 100 | `notificationTemplate.model.js`, M9 | — |
+| Bildirishnoma tili | ✓ | Bor — `user.locale`, o'zbekchaga fallback | FULL | 100 | `user.model.js:56`, `notificationTemplate.service.js` | — |
+| Foydalanuvchi sozlamasi | ✓ (360 chastotasi) | Bor — kanal × tur, majburiy turlar qulflangan | FULL | 100 | `notificationPrefs.js`, `SettingsView.vue` | — |
+| Retry / xato boshqaruvi | ? | Bor — BullMQ 5×, `mailLogs.attempts/status/error` | OURS+ | 100 | `deliveryQueue.js`, AT-17 | — |
 | Deadline eslatmasi | ✓ | Bor (24 soat, bir marta) | PARTIAL | 50 | `reminderJob.js:9-31` | Bosqichli 7/3/1 |
 | Kechikish eslatmasi | ✓ | Task uchun bor, kurs uchun yo'q | PARTIAL | 50 | `reminderJob.js:71-85` | — |
-| Hodisa qamrovi | ✓ (40+ taxminan) | **9 tur** | PARTIAL | 25 | `grep "type: '"` | 52 turga |
-| **D63–D65 jami: 15 capability** | | | **FULL 1 · OURS+ 1 · PARTIAL 3 · NONE 9 · VERIFY 1** | **22** | | |
+| Hodisa qamrovi | ✓ (40+ taxminan) | **27 tur** shablonda, 14 tasi ulangan | PARTIAL | 50 | `notificationTemplates.seed.js` | Qolgan trigger'lar |
+| **D63–D65 jami: 15 capability** | | | **FULL 7 · OURS+ 2 · PARTIAL 4 · NONE 2** | **73** | | |
 
 ## D66–D67 · MOBILE / OFFLINE
 
@@ -375,7 +375,7 @@
 | Mobil chat + ovozli xabar | ✓ | Bor | OURS+ | 100 | `VoiceRecorder.vue` | — |
 | Mobil push | ✓ | Yo'q | NONE | 0 | — | D65 |
 | White-label mobil ilova | ✓ | Yo'q | N/A | — | — | §24 |
-| **D66–D67 jami: 9 capability (+2 N/A)** | | | **FULL 4 · OURS+ 1 · NONE 4 · N/A 2** | **56** | | |
+| **D66–D67 jami: 11 capability (+2 N/A)** | | | **FULL 4 · OURS+ 1 · NONE 4 · N/A 2** | **56** | | |
 
 ## D68–D69 · SEARCH / MULTILINGUAL
 
@@ -390,11 +390,11 @@
 | Autocomplete | ? | Chat kontaktlarida | PARTIAL | 25 | — | — |
 | UI lokalizatsiyasi | ✓ **30 til** | **3 til** (uz/ru/en) | PARTIAL | 50 | `i18n/locales/*.json` (1393 kalit) | — |
 | Kontent ko'p tilli | ✓ | **Yo'q** — kontent bir tilli | NONE | 0 | — | `ContentTranslation` |
-| Bildirishnoma ko'p tilli | ✓ | Yo'q — inglizcha hardcoded | NONE | 0 | `reminderJob.js:22` | — |
+| Bildirishnoma ko'p tilli | ✓ | Bor — uz/ru/en shablonlar, hisobga bog'langan til | FULL | 100 | `notificationTemplates.seed.js` | — |
 | Sertifikat ko'p tilli | ✓ | Yo'q (sertifikat yo'q) | NONE | 0 | — | — |
 | Hisobot ko'p tilli | ? | **3 tilli** | OURS+ | 100 | `reportI18n.js` | — |
 | Tashkilot bo'yicha til | ✓ | Yo'q | NONE | 0 | — | — |
-| **D68–D69 jami: 13 capability** | | | **FULL 1 · OURS+ 2 · PARTIAL 4 · NONE 6** | **33** | | |
+| **D68–D69 jami: 13 capability** | | | **FULL 2 · OURS+ 2 · PARTIAL 4 · NONE 5** | **40** | | |
 
 ## D70–D73 · INTEGRATIONS / API / WEBHOOKS / SSO
 
@@ -417,7 +417,7 @@
 | Albato / Zapier tipidagi | ✓ | Yo'q | NONE | 0 | — | Public API'dan keyin |
 | Storage provider abstraksiyasi | ? | Bor (Local + S3) | OURS+ | 100 | `storage/S3StorageProvider.js` | — |
 | Domain alias | ✓ | Nginx darajasida qo'lda | PARTIAL | 50 | — | — |
-| **D70–D73 jami: 16 capability (+1 N/A)** | | | **FULL 1 · OURS+ 2 · PARTIAL 2 · NONE 8 · VERIFY 3 · N/A 1** | **23** | | |
+| **D70–D73 jami: 17 capability (+1 N/A)** | | | **FULL 1 · OURS+ 2 · PARTIAL 2 · NONE 8 · VERIFY 3 · N/A 1** | **23** | | |
 
 ## D74–D79 · SECURITY / AUDIT / ADMIN / BRANDING / MEDIA / FILES
 
@@ -435,11 +435,11 @@
 | Server shifrlash (at-rest) | ✓ | Faqat backup (AES-256-GCM); jonli DB va S3 shifrlanmagan | PARTIAL | 50 | `backupCrypto.js` | DB/S3 at-rest |
 | On-premise o'rnatish | ✓ | Bor (o'z serverimizda) | FULL | 100 | `docs/deployment.md` | — |
 | IDOR himoyasi | ? | Bor + 3 test | OURS+ | 100 | `security.test.js` | — |
-| **Hisobot PII scope'i** | ✓ | ❌ Buzilgan | NONE | 0 | `report.controller.js:20` | 🔴 P0 |
-| **Leaderboard PII** | ? | ❌ JSHSHIR oshkor | NONE | 0 | `points.service.js:104` | 🔴 P0 |
+| **Hisobot PII scope'i** | ✓ | Tuzatildi — eksport chaqiruvchining doirasi bilan kesiladi | FULL | 100 | `report.controller.js:26`, `reportData.service.js` | — |
+| **Leaderboard PII** | ? | Tuzatildi — JSHSHIR faqat `analytics:view:all` bilan | OURS+ | 100 | `points.service.js:116` | — |
 | **Audit jurnali (yozuv)** | ? | 60+ action | OURS+ | 100 | `auditLog.model.js` | — |
-| **Audit jurnali (ko'rish)** | ? | **Yo'q** — route va UI yo'q | NONE | 0 | `routes/v1/index.js` | `GET /audit-logs` |
-| Audit TTL | ? | Yo'q — cheksiz o'sadi | VERIFY | 0 | `auditLog.model.js` | TTL 730 kun |
+| **Audit jurnali (ko'rish)** | ? | Bor — filtr, CSV eksport (oqim), o'zi ham auditlanadi | OURS+ | 100 | `audit.routes.js`, `AuditLogView.vue` | — |
+| Audit TTL | ? | Bor — 730 kun | FULL | 100 | `auditLog.model.js:27` | — |
 | **Backup / restore** | ✓ (SaaS) | Kunlik shifrlangan dump + 30 kun + tiklash sinovi | FULL | 100 | `jobs/backupQueue.js`, `backup.service.js`, `test/backup.test.js` | — |
 | Tizim sozlamalari (DB'da) | ✓ | 2 siyosat modeli bor, umumiysi yo'q | PARTIAL | 50 | `attentionPolicy.model.js`, `facePolicy.model.js` | `Settings` singleton |
 | Logo / favicon / rang | ✓ | Yo'q (Tailwind token tizimi bor) | NONE | 0 | — | `branding{}` |
@@ -449,7 +449,7 @@
 | Orphan fayl tozalash | ? | Yo'q — kodda tan olingan qarz | VERIFY | 0 | `course.service.js:378-381` | `mediaCleanupQueue` |
 | Rasm optimizatsiyasi | ? | Yo'q | VERIFY | 0 | — | `sharp` → webp |
 | Storage sarfi ko'rsatkichi | ? | Yo'q | VERIFY | 0 | — | — |
-| **D74–D79 jami: 26 capability** | | | **FULL 3 · OURS+ 9 · PARTIAL 2 · NONE 7 · VERIFY 5** | **50** | | |
+| **D74–D79 jami: 26 capability** | | | **FULL 5 · OURS+ 11 · PARTIAL 2 · NONE 4 · VERIFY 4** | **65** | | |
 
 ## D80–D95 · PERFORMANCE / A11Y / AUTOMATION / RECOMMENDATIONS / STANDARDS / SUITE / E-COM / ENTERPRISE
 
@@ -479,4 +479,4 @@
 | E-commerce | ? | Yo'q | N/A | — | — | §24 |
 | Multi-tenant (organization izolyatsiyasi) | ✓ | Yo'q | N/A | — | — | §24 |
 | 24/7 support + SLA | ✓ | — | N/A | — | — | Mahsulot emas, xizmat |
-| **D80–D95 jami: 19 capability (+5 N/A)** | | | **OURS+ 5 · PARTIAL 4 · NONE 5 · VERIFY 5 · N/A 5** | **33** | | |
+| **D80–D95 jami: 24 capability (+5 N/A)** | | | **OURS+ 5 · PARTIAL 4 · NONE 5 · VERIFY 5 · N/A 5** | **33** | | |
