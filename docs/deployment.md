@@ -103,11 +103,10 @@ Either way, watch the first boot log for:
   your log aggregation already points (Loki, CloudWatch, etc.) via the
   container runtime's log driver. PM2: `pm2 logs`, and consider
   `pm2-logrotate` since PM2's own log files aren't rotated by default.
-- **Backups**: `mongodump`/`mongorestore` (or your managed Mongo
-  provider's snapshot feature) for the database; the S3/MinIO buckets
-  hold processed video and should be backed up or replicated separately
-  — losing `lms-processed` means re-transcoding every video from
-  `lms-originals`, which still exists but costs worker time to redo.
+- **Backups**: automated — see §5 below. The S3/MinIO buckets are *not*
+  covered by it and should be backed up or replicated separately; losing
+  `lms-processed` means re-transcoding every video from `lms-originals`,
+  which still exists but costs worker time to redo.
 - **Scaling the API** is safe to do horizontally (JWT auth is stateless,
   no sticky sessions) — multiple `backend` replicas behind nginx, or PM2
   cluster mode (`ecosystem.config.cjs` already sets `instances: 'max'`
@@ -120,3 +119,102 @@ Either way, watch the first boot log for:
   `upstream` with more than one backend replica is what actually avoids a
   request-dropping gap — a single-replica deploy always has a brief gap
   while the new container starts.
+
+## 5. Backup and restore
+
+The worker takes one encrypted `mongodump` a night and uploads it to the
+`S3_BUCKET_BACKUPS` bucket, keeping `BACKUP_RETENTION_DAYS` (30) of
+archives. It is **off until an operator turns it on**, because it needs an
+encryption key that only a human can generate and store somewhere that
+survives the machine.
+
+### Turning it on
+
+1. Generate a key and put it in the password manager **before** putting it
+   in `.env` — every archive is unreadable without it:
+   ```sh
+   node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
+   ```
+2. In `backend/.env`:
+   ```
+   BACKUP_ENABLED=true
+   BACKUP_ENCRYPTION_KEY=<the 64 hex characters>
+   S3_BUCKET_BACKUPS=lms-backups
+   ```
+   The backend refuses to boot if the flag is on and the key is missing or
+   the wrong length.
+3. Create the bucket and confirm it is **private** — it holds every
+   JSHSHIR, password hash and proctoring record in the system:
+   ```sh
+   mc mb local/lms-backups && mc anonymous set none local/lms-backups
+   ```
+4. Make sure `mongodump` and `mongorestore` are on the worker's PATH
+   (`apt install mongodb-database-tools`, `brew install mongodb-database-tools`).
+   PM2 processes often inherit a shorter PATH than the shell — set
+   `MONGODUMP_BIN`/`MONGORESTORE_BIN` to absolute paths if the first run
+   reports "not found on PATH".
+5. Restart the worker and prove it end to end without waiting for 03:20:
+   ```sh
+   pm2 reload qollanma-worker
+   npm --prefix backend run backup:now
+   npm --prefix backend run backup:list
+   ```
+   The worker's boot log states the schedule it registered, or says
+   `BACKUP_ENABLED=false` if the flag never took.
+
+### Restoring
+
+Backups are AES-256-GCM envelopes (`QLMSBK01` magic, 96-bit IV, auth tag at
+the end), so a truncated or altered archive fails at decrypt instead of
+restoring a half database.
+
+**Drill** — restore into a scratch database and compare, never into the
+live one. The tool refuses the live database name unless `--force`:
+
+```sh
+npm --prefix backend run backup:restore -- --latest   --target mongodb://localhost:27018/qollanma_restore_check
+```
+
+Then check that the restore is actually complete, e.g.:
+
+```sh
+mongosh mongodb://localhost:27018/qollanma_restore_check   --eval 'db.getCollectionNames().map(c => [c, db[c].countDocuments()])'
+```
+
+and drop the scratch database when done.
+
+**Real recovery** — after confirming a drill restore looks right:
+
+```sh
+pm2 stop qollanma qollanma-worker
+npm --prefix backend run backup:restore -- --key <object-key>   --target "$MONGO_URI" --force        # --force implies --drop
+pm2 start qollanma qollanma-worker
+```
+
+`--force` is what lets a restore overwrite the running deployment's own
+database, and it drops each restored collection first. Without it the
+command stops rather than touching production.
+
+### What is verified, and how
+
+`backend/test/backup.test.js` runs the whole chain against a live MongoDB —
+seed, `mongodump`, encrypt, store, download, decrypt, `mongorestore` into a
+differently-named database, then compares documents, dates and a unique
+index. It also covers the failure modes worth having: a flipped byte, the
+wrong key, a file that is not a backup, and the retention sweep's rule that
+it never deletes the last remaining archive.
+
+```sh
+npm --prefix backend test
+```
+
+Two notes on how the restore is invoked, both learned the hard way:
+
+- The archive remembers the database it came from, so restoring under a
+  different name needs `--nsFrom/--nsTo`, and the target URI must then
+  carry **no** database — mongorestore reads a database in the URI as
+  `--db`, filters the archive by the *original* namespace, finds nothing,
+  and exits 0 having restored zero documents. `restoreBackup()` strips it.
+- The retention sweep keeps the newest archive whatever its age. A month
+  of failed backups otherwise ends with the sweep deleting the last good
+  one — a broken job turning into data loss.

@@ -36,6 +36,24 @@ export function databaseNameFromUri(uri) {
   return decodeURIComponent(name)
 }
 
+/**
+ * The same URI with the database name removed, query string kept.
+ *
+ * mongorestore treats a database in the URI as `--db`, and `--db` filters
+ * the archive by the ORIGINAL namespace — so combining it with a namespace
+ * rewrite matches nothing and exits 0 having restored zero documents. The
+ * only visible symptom is an empty target database, which is exactly the
+ * kind of silence a restore drill exists to catch.
+ */
+export function withoutDatabase(uri) {
+  const schemeEnd = uri.indexOf('//') + 2
+  const rest = uri.slice(schemeEnd)
+  const pathStart = rest.indexOf('/')
+  if (pathStart === -1) return `${uri}/`
+  const query = rest.slice(pathStart).split('?')[1]
+  return `${uri.slice(0, schemeEnd)}${rest.slice(0, pathStart)}/${query ? `?${query}` : ''}`
+}
+
 function run(bin, args, label) {
   return new Promise((resolve, reject) => {
     // No shell: the URI carries a password, and a shell would also make the
@@ -167,13 +185,14 @@ export async function restoreBackup({
     await pipeline(await storage.getObject(objectKey), createWriteStream(encryptedPath))
     await decryptFile(encryptedPath, archivePath, key)
 
+    const rewriting = sourceDb !== targetDb
     const args = [
       '--uri',
-      targetUri,
+      rewriting ? withoutDatabase(targetUri) : targetUri,
       `--archive=${archivePath}`,
       '--gzip',
       ...(drop ? ['--drop'] : []),
-      ...(sourceDb === targetDb ? [] : [`--nsFrom=${sourceDb}.*`, `--nsTo=${targetDb}.*`]),
+      ...(rewriting ? [`--nsFrom=${sourceDb}.*`, `--nsTo=${targetDb}.*`] : []),
     ]
     await run(env.MONGORESTORE_BIN, args, 'MONGORESTORE')
     logger.info('Database backup restored', { key: objectKey, targetDb, drop })

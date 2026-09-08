@@ -12,6 +12,9 @@ import {
   runDashboardAggregationNow,
 } from './jobs/dashboardAggregationQueue.js'
 import { dashboardCacheService } from './services/analytics/dashboardCache.service.js'
+import { BACKUP_QUEUE, scheduleDailyBackup } from './jobs/backupQueue.js'
+import { createBackup } from './services/backup/backup.service.js'
+import { env } from './config/env.js'
 
 async function main() {
   await connectDatabase()
@@ -65,17 +68,44 @@ async function main() {
     logger.error('Dashboard aggregation job failed', { jobId: job?.id, error: err.message })
   })
 
+  const backupWorker = new Worker(
+    BACKUP_QUEUE,
+    async (job) => {
+      if (job.name === 'dump') {
+        return createBackup()
+      }
+    },
+    { connection: redisConnection, concurrency: 1 }
+  )
+
+  backupWorker.on('failed', (job, err) => {
+    // Loud on purpose: a backup nobody notices failing is the reason a
+    // restore is discovered to be impossible on the day it is needed.
+    logger.error('Database backup failed', { jobId: job?.id, error: err.message })
+  })
+
   await scheduleReminderChecks()
   await scheduleDashboardAggregation()
   await runDashboardAggregationNow()
+  const backupsScheduled = await scheduleDailyBackup()
 
   logger.info('Video processing worker started')
   logger.info('Reminder worker started (deadline checks every 15 minutes)')
   logger.info('Dashboard aggregation worker started (recomputes every 5 minutes)')
+  logger.info(
+    backupsScheduled
+      ? `Backup worker started (nightly dump at "${env.BACKUP_SCHEDULE_CRON}" ${env.APP_TIMEZONE}, ${env.BACKUP_RETENTION_DAYS}-day retention)`
+      : 'Backup worker started — no schedule registered (BACKUP_ENABLED=false)'
+  )
 
   const shutdown = async (signal) => {
     logger.info(`Received ${signal}, shutting down worker`)
-    await Promise.all([videoWorker.close(), reminderWorker.close(), dashboardWorker.close()])
+    await Promise.all([
+      videoWorker.close(),
+      reminderWorker.close(),
+      dashboardWorker.close(),
+      backupWorker.close(),
+    ])
     process.exit(0)
   }
   process.on('SIGTERM', () => shutdown('SIGTERM'))
