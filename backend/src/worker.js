@@ -12,6 +12,8 @@ import {
 } from './jobs/dashboardAggregationQueue.js'
 import { dashboardCacheService } from './services/analytics/dashboardCache.service.js'
 import { BACKUP_QUEUE, scheduleDailyBackup } from './jobs/backupQueue.js'
+import { DELIVERY_QUEUE, handleDeliveryFailure } from './jobs/deliveryQueue.js'
+import { mailService, isMailConfigured, closeTransport } from './services/notifications/mail.service.js'
 import { createBackup } from './services/backup/backup.service.js'
 import { env } from './config/env.js'
 
@@ -83,6 +85,26 @@ async function main() {
     logger.error('Database backup failed', { jobId: job?.id, error: err.message })
   })
 
+  const deliveryWorker = new Worker(
+    DELIVERY_QUEUE,
+    async (job) => {
+      if (job.name === 'mail') {
+        // attemptsMade is the count of attempts that have already finished,
+        // so the attempt now running is one past it.
+        return mailService.send({ ...job.data, attempt: job.attemptsMade + 1 })
+      }
+    },
+    // Low concurrency on purpose: relays rate-limit, and a burst of parallel
+    // connections from one IP is how a sender gets throttled or blocked.
+    { connection: redisConnection, concurrency: 5 }
+  )
+
+  deliveryWorker.on('failed', (job, err) => {
+    handleDeliveryFailure(job, err).catch((error) => {
+      logger.error('Could not record mail failure', { error: error.message })
+    })
+  })
+
   await scheduleReminderChecks()
   await scheduleDashboardAggregation()
   const backupsScheduled = await scheduleDailyBackup()
@@ -90,6 +112,11 @@ async function main() {
   logger.info('Video processing worker started')
   logger.info('Reminder worker started (deadline checks every 15 minutes)')
   logger.info('Dashboard aggregation worker started (recomputes every 5 minutes)')
+  logger.info(
+    isMailConfigured()
+      ? `Delivery worker started (SMTP ${env.SMTP_HOST}:${env.SMTP_PORT})`
+      : 'Delivery worker started — SMTP not configured, mail will be recorded as SKIPPED'
+  )
   logger.info(
     backupsScheduled
       ? `Backup worker started (nightly dump at "${env.BACKUP_SCHEDULE_CRON}" ${env.APP_TIMEZONE}, ${env.BACKUP_RETENTION_DAYS}-day retention)`
@@ -103,7 +130,9 @@ async function main() {
       reminderWorker.close(),
       dashboardWorker.close(),
       backupWorker.close(),
+      deliveryWorker.close(),
     ])
+    closeTransport()
     process.exit(0)
   }
   process.on('SIGTERM', () => shutdown('SIGTERM'))

@@ -128,6 +128,21 @@ const envSchema = z.object({
   // the reader may leave open, and a 2-minute URL would break on scroll-up.
   CHAT_ATTACHMENT_URL_TTL: z.coerce.number().int().positive().default(3600),
 
+  // Outbound email. Empty SMTP_HOST = mail is not configured: every send is
+  // recorded as SKIPPED and nothing else changes, so a laptop and a day-one
+  // install both work. It is not an error state.
+  SMTP_HOST: z.string().optional().default(''),
+  SMTP_PORT: z.coerce.number().int().positive().default(587),
+  // true = implicit TLS (port 465). false = start plaintext on 587 and
+  // upgrade with STARTTLS, which is what most relays want.
+  SMTP_SECURE: booleanFlag(false),
+  SMTP_USER: z.string().optional().default(''),
+  SMTP_PASSWORD: z.string().optional().default(''),
+  // The From: header. Required alongside SMTP_HOST — a relay will reject a
+  // message with no sender, and finding that out per-message in a retry loop
+  // is worse than finding it out at boot.
+  MAIL_FROM: z.string().optional().default(''),
+
   // Error tracking (Sentry or a self-hosted GlitchTip — same ingest API).
   // Empty = disabled, which is the default: no DSN, no outbound calls.
   SENTRY_DSN: z.string().optional().default(''),
@@ -243,6 +258,17 @@ if (parsed.data.S3_SIGNING_ENDPOINT) {
         'Verify with: node src/scripts/checkStorageSigning.js'
     )
   }
+}
+
+// Half-configured SMTP is the worst of both: the app believes it can send,
+// every message is attempted, and the relay rejects all of them. Refuse the
+// half state at boot; refusing to send at all (SMTP_HOST empty) stays fine.
+if (parsed.data.SMTP_HOST && !parsed.data.MAIL_FROM) {
+  console.error(
+    'Invalid environment configuration: SMTP_HOST is set but MAIL_FROM is empty. ' +
+      'Set the From: address the relay will accept, e.g. MAIL_FROM="Qo\'llanma <no-reply@example.uz>".'
+  )
+  process.exit(1)
 }
 
 // A backup job with no key encrypts nothing and uploads nothing; it would
