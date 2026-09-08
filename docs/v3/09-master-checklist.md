@@ -134,12 +134,31 @@
 > Eng ko'p boshqa ishni ochadi: parol tiklash, hisob yaratish, deadline,
 > tadbir, compliance, sertifikat — hammasi shundan o'tadi.
 
-- [ ] **1.1** **`mail.service` + `deliveryQueue`**
+- [x] **1.1** **`mail.service` + `deliveryQueue`**
   · `services/notifications/mail.service.js` (nodemailer/SES)
   · `jobs/deliveryQueue.js` — BullMQ, 5× exponential retry
   · `models/mailLog.model.js` (TTL 90 kun)
   · `config/env.js` — `SMTP_*`
   · Qabul: **AT-17**
+  · Bajarildi (`ed07e2c`) — nodemailer, SMTP orqali. 5 urinish, 30s dan
+  eksponensial (~7,5 daqiqa). `MailLog` yozuvi **navbatga qo'yilganda**
+  yaziladi, urinish paytida emas — Redis ishni yo'qotsa ham iz qoladi.
+  Manzil va mavzu saqlanadi, **matn saqlanmaydi** (90 kunlik arxiv xavf).
+  · AT-17 tekshirildi — soxta transport emas, haqiqiy soketdagi haqiqiy SMTP
+  suhbati. Relay `fail` so'zi bor manzilni rad etadi, qolganini qabul qiladi,
+  shuning uchun bitta server ikkala yo'lni ham qamraydi: `attempts=5`,
+  `status=FAILED`, `error` ichida relayning o'z `500` i; muvaffaqiyat yo'lida
+  `SENT` + `messageId`. 6 test o'tdi.
+  · Chetlanishlar:
+    1. Urinish **siyosati** (5×, eksponensial, 30s) prod `enqueueMail()`
+    yaratgan ishda tekshiriladi; urinish **xatti-harakati** esa 25ms backoff
+    bilan alohida navbatda — haqiqiy 7,5 daqiqani kutadigan testni hech kim
+    ishga tushirmaydi.
+    2. SMTP sozlanmagan bo'lsa bu **xato emas, holat**: yuborish `SKIPPED`
+    deb yoziladi, `FAILED` emas. Lekin `SMTP_HOST` bor-u `MAIL_FROM` yo'q
+    bo'lsa boot rad etiladi — yarim sozlangan holat eng yomoni.
+    3. AT-17 ning "in-app bildirishnoma baribir yetkazilgan" qismi hali
+    tekshirilmadi — `notify()` navbatga **1.4** da ulanadi.
 
 - [ ] **1.2** **`NotificationTemplate` + i18n**
   · `models/notificationTemplate.model.js` (`{type, channel, lang}` unique)
