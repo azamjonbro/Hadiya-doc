@@ -12,34 +12,44 @@
 > Yangi feature emas. Beshta CRITICAL xavfsizlik teshigi va uchta
 > infratuzilma qarzi. Hammasi bog'liqliksiz — bir kunda ham bo'linadi.
 
-- [ ] **0.1** `[P]` **Leaderboard'dan JSHSHIR'ni olib tashlash**
+- [x] **0.1** `[P]` **Leaderboard'dan JSHSHIR'ni olib tashlash**
   · `services/gamification/points.service.js:104` — `jshshir` ni `merged` dan
   chiqarish; `ANALYTICS_VIEW_ALL` bo'lganda shartli qo'shish
   (`quiz.service.js:22-36` `includeAnswers` naqshi)
   · Qabul: **AT-23**
 
-- [ ] **0.2** `[P]` **Kurs qidiruvidagi ReDoS**
+- [x] **0.2** `[P]` **Kurs qidiruvidagi ReDoS**
   · `repositories/course.repository.js:91` — `user.repository.js:101` dagi
   escape'ni qo'llash (vaqtinchalik), `$text` gacha
   · `repositories/news.repository.js:42` — xuddi shunday
   · Qabul: **AT-25**
 
-- [ ] **0.3** **Hisobot va dashboard scope'i**
+- [x] **0.3** **Hisobot va dashboard scope'i**
   · `services/reports/reportData.service.js` — `build(actor, type, filters, lang)`;
   har builder boshida `scopeUserIds(actor)` → mavjud `intersectIds()` (`:33-45`)
   · `controllers/report.controller.js:20` — `req.user` uzatish
   · `analytics/dashboardAggregation.js` — `scope` parametri
   · `routes/v1/dashboard.routes.js` — `?scope=` validatsiyasi
   · Qabul: **AT-19, AT-20**
+  · Bajarildi (`dfd80c6`, `b6e0379`) — bir farq bilan: hisobotlar haqiqatan
+  scope'lanadi, dashboard esa hozircha scope'lanmaydi, balki `analytics:view:all`
+  bo'lmagan chaqiruvchiga **403** qaytaradi. Bo'limga qisqartirilgan dashboard
+  alohida endpoint sifatida **2.5 (Manager dashboard)** da quriladi.
 
-- [ ] **0.4** **Eksportni audit qilish**
+- [x] **0.4** **Eksportni audit qilish**
   · `report.controller.js` — `REPORT_EXPORTED` (tur, filtr, qatorlar soni)
   · Qabul: **AT-30**
 
-- [ ] **0.5** `[P]` **Presigned URL host**
+- [x] **0.5** `[P]` **Presigned URL host**
   · `config/env.js` — `S3_PUBLIC_ENDPOINT`
   · `storage/S3StorageProvider.js` — `getSignedUrl` shu host ustidan imzolaydi
   · Qabul: audio material prod'da o'ynaydi; yuklab olish ishlaydi
+  · Bajarildi (`9e7114a`) — o'zgaruvchi allaqachon `S3_SIGNING_ENDPOINT` deb
+  atalgan edi, lekin `backend/.env.example` da yo'q edi va serverda domen
+  ko'chgach eski `qollanma.techinfo.uz` bo'lib qolgandi. Endi: hujjatlashtirildi,
+  boot noto'g'ri/loopback qiymatni rad etadi va domen mos kelmasa ogohlantiradi,
+  `npm --prefix backend run check:signing` esa haqiqiy obyektga imzolangan
+  havolani olib tekshiradi (prod'da `lms-materials` → 200).
 
 - [ ] **0.6** `[P]` **Backup + tiklash sinovi**
   · `jobs/backupQueue.js` — kunlik `mongodump` → shifrlash → S3 (30 kun)
