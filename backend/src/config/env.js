@@ -158,6 +158,61 @@ if (parsed.data.COOKIE_SAMESITE === 'none' && !isProduction) {
   process.exit(1)
 }
 
+// A presigned URL is signed for one host, and nothing downstream re-checks
+// that the host is still ours: the link is minted happily, the browser gets a
+// 200-shaped promise, and the request dies in DNS. That is how every audio
+// material and every download button broke after the deploy moved domains —
+// the signing host kept pointing at the retired one for a week without a
+// single log line. So: refuse an unparseable value, refuse a loopback one in
+// production (that is the bug this variable exists to prevent), and warn when
+// it shares no registrable domain with the origins the app is served on,
+// which is what a stale host looks like.
+if (parsed.data.S3_SIGNING_ENDPOINT) {
+  let signingUrl
+  try {
+    signingUrl = new URL(parsed.data.S3_SIGNING_ENDPOINT)
+  } catch {
+    console.error(
+      'Invalid environment configuration: S3_SIGNING_ENDPOINT must be an absolute URL ' +
+        `(got "${parsed.data.S3_SIGNING_ENDPOINT}"), e.g. https://api.example.com`
+    )
+    process.exit(1)
+  }
+
+  const isLoopback = ['localhost', '127.0.0.1', '::1', '0.0.0.0'].includes(signingUrl.hostname)
+  if (isProduction && isLoopback) {
+    console.error(
+      'Invalid environment configuration: S3_SIGNING_ENDPOINT points at ' +
+        `${signingUrl.hostname}, which no browser can reach. Set it to the public host ` +
+        'that proxies the storage buckets, or leave it empty to sign with S3_ENDPOINT.'
+    )
+    process.exit(1)
+  }
+
+  const registrableDomain = (hostname) => hostname.split('.').slice(-2).join('.')
+  const appDomains = new Set(
+    parsed.data.ALLOWED_ORIGINS.split(',')
+      .map((origin) => origin.trim())
+      .filter(Boolean)
+      .map((origin) => {
+        try {
+          return registrableDomain(new URL(origin).hostname)
+        } catch {
+          return ''
+        }
+      })
+      .filter(Boolean)
+  )
+  if (isProduction && appDomains.size && !appDomains.has(registrableDomain(signingUrl.hostname))) {
+    console.warn(
+      `Warning: S3_SIGNING_ENDPOINT (${signingUrl.host}) shares no domain with ALLOWED_ORIGINS ` +
+        `(${[...appDomains].join(', ')}). If this is not a deliberate CDN, presigned links for ` +
+        'materials and chat attachments are being signed for the wrong host and will not load. ' +
+        'Verify with: node src/scripts/checkStorageSigning.js'
+    )
+  }
+}
+
 if (parsed.data.FACE_VERIFICATION_REQUIRED && !parsed.data.FACE_VERIFICATION_ENABLED) {
   console.error(
     'Invalid environment configuration: FACE_VERIFICATION_REQUIRED=true requires ' +
