@@ -253,9 +253,24 @@
   in-app versiyadan farqli o'laroq olib yuradigan yagona narsa, chunki
   o'quvchi ilovada emas.
 
-- [ ] **1.5** **Parolni tiklash e-maili**
+- [x] **1.5** **Parolni tiklash e-maili**
   · `services/auth/auth.service.js:204-215` — `logger.info` o'rniga `notify()`
   · Qabul: **AT-14**
+  · Bajarildi (`2697b34`) — AT-14 haqiqiy SMTP suhbati bilan uchidan-uchiga
+  tekshirildi: noma'lum identifikator hech narsa navbatga qo'ymaydi
+  (enumeration yo'q), mavzu hisobning tilida (`locale='ru'` → ruscha),
+  havola 1 soat, bazada token emas sha-256 hash, relay xatni oladi va yozuv
+  `SENT` ga o'tadi, ikkinchi marta ishlatilsa 400. 8 test.
+  · Chetlanishlar:
+    1. **Muddat 30 daqiqadan 1 soatga uzaytirildi** — AT-14 shuni talab
+    qiladi, va 30 daqiqa navbat qayta urinishi + odam xatni yig'ilishdan
+    keyin o'qishi uchun yetmaydi.
+    2. **Token endi shartsiz log qilinmaydi** — logdagi reset token bu
+    logdagi parol. SMTP sozlanmagan va prod bo'lmagan holatdagina
+    chiqariladi, va nima uchun chiqarilayotgani yozib qo'yilgan.
+    3. Bu `notify()` chaqiruvi **await qilinadi** (boshqalaridan farqli):
+    xatni navbatga qo'yish — bu endpoint qiladigan yagona ish, shuning
+    uchun xatolik 200 ortida yashirinmasligi kerak.
 
 - [ ] **1.6** **Hisob yaratish e-maili + yetishmayotgan trigger'lar**
   · `ACCOUNT_CREATED` (`user.service.js:302` dan keyin)
