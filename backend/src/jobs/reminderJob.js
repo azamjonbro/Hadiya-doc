@@ -3,6 +3,7 @@ import { Course } from '../models/course.model.js'
 import { Task } from '../models/task.model.js'
 import { notificationService } from '../services/notifications/notification.service.js'
 import { logger } from '../config/logger.js'
+import { formatNotificationDate, daysUntil } from '../utils/notificationFormat.js'
 
 const DEADLINE_WARNING_WINDOW_MS = 24 * 60 * 60 * 1000
 
@@ -20,8 +21,11 @@ export async function runDeadlineChecks() {
     await notificationService.notify({
       userId: assignment.userId,
       type: 'COURSE_DEADLINE_APPROACHING',
-      title: `Deadline approaching: ${course?.title ?? 'Course'}`,
-      message: `Due ${assignment.deadline.toLocaleDateString()}`,
+      vars: {
+        courseTitle: course?.title ?? '',
+        deadline: formatNotificationDate(assignment.deadline),
+        daysLeft: daysUntil(assignment.deadline, now),
+      },
       relatedEntityType: 'Course',
       relatedEntityId: assignment.courseId.toString(),
       severity: 'WARNING',
@@ -40,7 +44,7 @@ export async function runDeadlineChecks() {
     await notificationService.notify({
       userId: assignment.userId,
       type: 'COURSE_EXPIRED',
-      title: `Course access expired: ${course?.title ?? 'Course'}`,
+      vars: { courseTitle: course?.title ?? '', deadline: formatNotificationDate(assignment.deadline) },
       relatedEntityType: 'Course',
       relatedEntityId: assignment.courseId.toString(),
       severity: 'WARNING',
@@ -58,8 +62,11 @@ export async function runDeadlineChecks() {
     await notificationService.notify({
       userId: task.assignedTo,
       type: 'TASK_DEADLINE_APPROACHING',
-      title: `Task deadline approaching: ${task.title}`,
-      message: `Due ${task.deadline.toLocaleDateString()}`,
+      vars: {
+        taskTitle: task.title,
+        deadline: formatNotificationDate(task.deadline),
+        daysLeft: daysUntil(task.deadline, now),
+      },
       relatedEntityType: 'Task',
       relatedEntityId: task._id.toString(),
       severity: 'WARNING',
@@ -77,7 +84,7 @@ export async function runDeadlineChecks() {
     await notificationService.notify({
       userId: task.assignedTo,
       type: 'TASK_OVERDUE',
-      title: `Task overdue: ${task.title}`,
+      vars: { taskTitle: task.title, deadline: formatNotificationDate(task.deadline) },
       relatedEntityType: 'Task',
       relatedEntityId: task._id.toString(),
       severity: 'WARNING',

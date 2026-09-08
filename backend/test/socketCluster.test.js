@@ -59,7 +59,7 @@ function startNode(port) {
     }
     child.on('message', onMessage)
     child.on('exit', (code) => reject(new Error(`node on :${port} exited (${code})\n${stderr}`)))
-    setTimeout(() => reject(new Error(`node on :${port} did not start\n${stderr}`)), 10_000).unref()
+    setTimeout(() => reject(new Error(`node on :${port} did not start\n${stderr}`)), 20_000).unref()
   })
 }
 
@@ -86,7 +86,12 @@ function connectClient(port) {
   })
 }
 
-function nextEvent(socket, name, timeoutMs = 5000) {
+// 15s, not 5: `node --test` runs the suite's files concurrently, and forking
+// two API processes while five other files compete for the CPU has taken
+// longer than five seconds on a loaded laptop. The assertion is unchanged —
+// if the adapter never bridges the nodes this still fails, just not because
+// the machine was busy.
+function nextEvent(socket, name, timeoutMs = 15_000) {
   return new Promise((resolve, reject) => {
     const timer = setTimeout(
       () => reject(new Error(`no "${name}" within ${timeoutMs}ms — the adapter did not bridge the two nodes`)),

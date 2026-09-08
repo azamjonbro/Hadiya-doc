@@ -7,6 +7,7 @@ import { ApiError } from '../../utils/ApiError.js'
 import { computeAccessFlags } from './courseAssignmentAccess.js'
 import { notificationService } from '../notifications/notification.service.js'
 import { isCourseVisibleToActor } from './courseVisibility.js'
+import { formatNotificationDate } from '../../utils/notificationFormat.js'
 
 function toPublicAssignment(assignment) {
   return {
@@ -83,8 +84,7 @@ export const courseAssignmentService = {
     await notificationService.notify({
       userId: payload.userId,
       type: 'COURSE_ASSIGNED',
-      title: `Course assigned: ${course.title}`,
-      message: payload.deadline ? `Deadline: ${new Date(payload.deadline).toLocaleDateString()}` : '',
+      vars: { courseTitle: course.title, deadline: formatNotificationDate(payload.deadline) },
       relatedEntityType: 'Course',
       relatedEntityId: courseId,
     })

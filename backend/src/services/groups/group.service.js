@@ -7,6 +7,7 @@ import { auditLogRepository } from '../../repositories/auditLog.repository.js'
 import { notificationService } from '../notifications/notification.service.js'
 import { ApiError } from '../../utils/ApiError.js'
 import { logger } from '../../config/logger.js'
+import { formatNotificationDate } from '../../utils/notificationFormat.js'
 
 function toPublicGroup(group) {
   return {
@@ -110,8 +111,10 @@ async function notifyEnrolments(rows) {
       await notificationService.notify({
         userId: row.userId,
         type: 'COURSE_ASSIGNED',
-        title: `Course assigned: ${titleById.get(row.courseId.toString()) ?? ''}`,
-        message: '',
+        vars: {
+          courseTitle: titleById.get(row.courseId.toString()) ?? '',
+          deadline: formatNotificationDate(row.deadline),
+        },
         relatedEntityType: 'Course',
         relatedEntityId: row.courseId.toString(),
       })

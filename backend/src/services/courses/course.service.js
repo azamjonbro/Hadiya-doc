@@ -18,6 +18,7 @@ import { computeLockState, orderedCourseVideos } from './courseSequence.js'
 import { topicListCacheKey } from './topic.service.js'
 import { effectiveCacheKey as attentionPolicyCacheKey } from './attentionPolicy.service.js'
 import { notificationService } from '../notifications/notification.service.js'
+import { formatNotificationDate } from '../../utils/notificationFormat.js'
 
 // Course metadata is read on every catalog/detail page view and written
 // rarely (spec §39) — cached actor-independently (the DTO doesn't vary by
@@ -184,8 +185,7 @@ async function autoAssignIfNeeded(actor, course, autoAssign) {
       await notificationService.notify({
         userId: row.userId,
         type: 'COURSE_ASSIGNED',
-        title: `Course assigned: ${course.title}`,
-        message: '',
+        vars: { courseTitle: course.title, deadline: formatNotificationDate(row.deadline) },
         relatedEntityType: 'Course',
         relatedEntityId: course._id.toString(),
       })
