@@ -86,10 +86,34 @@
   `AUDIT_LOG_EXPORTED` sifatida yoziladi. TTL 730 kun + `{action, timestamp}`
   indeksi qo'shildi.
 
-- [ ] **0.8** `[P]` **Error tracking + Socket.io Redis adapter + dead code**
+- [x] **0.8** `[P]` **Error tracking + Socket.io Redis adapter + dead code**
   · Sentry/GlitchTip `config/logger.js` yoniga
   · `realtime/socket.js` — `socket.io-redis-adapter`
   · `admin/` papkasini o'chirish; `deploy/spring/`, `deploy/qollanma.techinfo.uz/` arxivga
+  · Bajarildi — uchta mustaqil ish bo'lgani uchun **uchta commit**:
+  `03c9fc0` (error tracking), `f8d7502` (realtime), `3dba3e6` (o'lik kod).
+  · **Error tracking** — `config/errorTracking.js` + winston transport'i.
+  Har bir `logger.error(...)` Sentry yoki GlitchTip'ga ketadi. `@sentry/node`
+  olinmadi: uning qiymati auto-instrumentation'da, u esa http/express'ni
+  patch qiladi — yonida oltita begona sayt turgan serverda kerak emas.
+  Envelope formati testda tasdiqlangan (`test/errorTracking.test.js`, 21 test),
+  chunki noto'g'ri format 200 oladi va hodisa jimgina yo'qoladi.
+  `SENTRY_DSN` bo'lmasa butunlay o'chiq.
+  · **Realtime** — `@socket.io/redis-adapter`. Bu haqiqiy prod xatosi edi:
+  `ecosystem.config.cjs` cluster rejimida ishlaydi, xabar POST'ni qabul
+  qilgan worker'dagi socket'largagina yetardi. Presence ham xuddi shunday
+  buzilgan edi va adapter uni tuzatmaydi — `isUserOnline()` sinxron
+  bo'lishi shart, shuning uchun 15 soniyalik sweep butun klaster ko'rinishini
+  qayta yig'adi. Ikkita jarayonda tekshirildi (`test/socketCluster.test.js`):
+  adapter'siz 4 testdan 2 tasi tushadi, adapter bilan 4/4.
+  · **O'lik kod** — `admin/` (143 fayl, 25 MB) o'chirildi, `deploy/` →
+  `docs/archive/deploy/`. Yonida nginx, docker-compose, workspace va hujjat
+  havolalari ham tozalandi.
+  · Chetlanish: `admin/` ni o'chirish **yashirin xatoni ochdi** —
+  `front/src/composables/useVideoUpload.js` `tus-js-client` ni import
+  qiladi, lekin `front/package.json` uni e'lon qilmagan edi; u faqat
+  `admin/` e'lon qilgani uchun hoisting orqali topilardi. Endi front'da
+  e'lon qilingan, build o'tadi.
 
 - [ ] **0.9** `[P]` **N+1 tuzatishlar**
   · `jobs/reminderJob.js:18-50` — kurslarni `$in` bilan bir so'rovda; `bulkWrite`
