@@ -160,12 +160,37 @@
     3. AT-17 ning "in-app bildirishnoma baribir yetkazilgan" qismi hali
     tekshirilmadi — `notify()` navbatga **1.4** da ulanadi.
 
-- [ ] **1.2** **`NotificationTemplate` + i18n**
+- [x] **1.2** **`NotificationTemplate` + i18n**
   · `models/notificationTemplate.model.js` (`{type, channel, lang}` unique)
   · `services/notifications/notificationTemplate.service.js` — placeholder allowlist
   · Migratsiya **M9**: 25 tur × 3 til × 3 kanal seed
   · `jobs/reminderJob.js` — hardcoded inglizcha matnlarni `templateKey` ga almashtirish
   · `services/courses/course.service.js:186-196`, `courseAssignment.service.js:79` — xuddi shunday
+  · Bajarildi (`85ac0f9`) — M9 lokalda ishga tushirildi, 225 qator
+  (25 × 3 × 3). Takroriy ishga tushirish xavfsiz; admin tahrirlagan qator
+  `customized: true` oladi va qayta yozilmaydi.
+  · **Placeholder allowlist — bu xavfsizlik chorasi**, hujjat emas. Shablon
+  adminlar tahrirlaydigan qator, `vars` esa chaqiruvchi servis uzatgan
+  narsa (ko'pincha Mongoose hujjati). Allowlist bo'lmasa shablonni
+  tahrirlay oladigan odam `{{passwordHash}}` ni xatga chiqarardi.
+  · Chaqiruv joylari ko'chirildi: `reminderJob.js` (to'rttasi ham),
+  `course.service.js`, `courseAssignment.service.js` va **`group.service.js`**
+  — oxirgisi checklistda yo'q edi, lekin xuddi shu inglizcha satrni ishlatardi.
+  · Chetlanishlar:
+    1. **Fallback tili — o'zbekcha, ingliz emas.** Ruscha tarjima yo'q bo'lsa
+    hamma o'qiydigan tilga tushadi.
+    2. Har bir til uchun **default qiymat** qo'shildi (`belgilanmagan`,
+    `не указан`). Muddatsiz kurs biriktirilganda sodda variant
+    "Tugatish muddati: ." deb chiqardi. Default — bu ibora, shuning uchun
+    kodda emas, har bir tilda turadi. Modelda `defaults` maydoni.
+    3. Sanalar `utils/notificationFormat.js` orqali `APP_TIMEZONE` da
+    formatlanadi. Ilgari `toLocaleDateString()` argumentsiz chaqirilardi —
+    u **serverning** zonasida formatlaydi, ya'ni `2026-10-01T20:00Z`
+    Toshkentda allaqachon 2-oktabr; muddat qaysi mashina yuborganiga qarab
+    boshqacha o'qilardi.
+    4. `notify()` ga `templateKey` + `vars` qo'shildi va IN_APP render
+    qilinadi. **EMAIL qismi 1.4 da.** Aniq `title` berilsa u baribir
+    ustun — shablon hali ifodalay olmaydigan chaqiruv joylari buzilmasin.
 
 - [ ] **1.3** **Foydalanuvchi sozlamalari**
   · `models/user.model.js` — `+locale`, `+notificationPrefs`, `+telegramChatId`
