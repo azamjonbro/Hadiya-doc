@@ -553,7 +553,7 @@
 
 ## BLOK 3 — Tugatish va sertifikat (Zanjir D, 4 hafta)
 
-- [ ] **3.1** 🔴 **Yagona tugatish servisi**
+- [x] **3.1** 🔴 **Yagona tugatish servisi**
   · `services/courses/courseCompletion.service.js` — yagona `evaluate(userId, courseId)`
   · `models/course.model.js` — `+completionRule{}`
   · `analytics/videoEventProcessor.js:238-252` — blokni **olib tashlab**,
@@ -561,6 +561,39 @@
   · `services/materials/materialProgress.service.js` va
   `services/assessments/assessment.service.js` (`gradeAndRecord`) — shu servisni chaqirish
   · Qabul: **AT-01, AT-02, AT-03, AT-04**
+  · Bajarildi (`3eb0b23`) — 12 test. To'rtala qabul testi **bitta xatoning
+  uch tomoni** edi: tugatish ikki joyda hisoblanardi va ular kelishmasdi.
+  · `videoEventProcessor` faqat videolardan hal qilardi, `publishedVideoIds
+  .length > 0` sharti ostida — shuning uchun taqdimot va testdan iborat kurs
+  **hech qachon** tugamasdi (AT-01), videolari bitgan kurs esa majburiy
+  testi yiqilgan holda tugardi (AT-02), va o'quvchi 100% ni ko'rib turib
+  `ACTIVE` assignment ushlab turardi (AT-03).
+  · Endi `courseCompletion.service.js` yagona javob. Video protsessoridagi
+  blok **o'chirildi**, material progressi va baholash ham shu servisni
+  chaqiradi, `course.service` esa foizni ikkinchi marta hisoblamaydi —
+  **AT-03 shuning uchun kelishuv bilan emas, konstruksiya bilan to'g'ri**.
+  · `course.completionRule`: `minPercent` (kursning qanchasi) va
+  `requireAllRequired` (foizdan qat'i nazar bajarilishi shart bo'lganlar).
+  Kurs 60% da o'tishi va baribir xavfsizlik testini talab qilishi mumkin.
+  Ikkalasi ham qat'iy holatga default, ya'ni mavjud kurslarda hech narsa
+  o'zgarmaydi.
+  · Chetlanishlar:
+    1. **Bo'sh kurs tugallanmaydi.** Bu hech narsa uchun sertifikat berish
+    bo'lardi — AT-01 ga teskari xato, va xuddi shunday noto'g'ri.
+    2. Tugatish **faqat published** elementlar bo'yicha hal qilinadi.
+    Qoralama dars o'quvchini 80% da ushlab turmasligi kerak.
+    3. **Qayta ochilganda (AT-04) o'quvchiga sababi aytiladi.** Jimgina
+    orqaga qaytarish platformа progressni yo'qotgandek ko'rinardi. Berilgan
+    sertifikat **bekor qilinmaydi**: u berilgan paytdagi haqiqatni yozgan,
+    va o'quvchi aralashmagan o'zgarish uchun uni orqaga qaytarish insofsizlik
+    bo'lardi. Qayta tugatganda yangisi beriladi.
+    4. `completedAt` qayta ochilganda tozalanadi — tugallanmagan kursdagi
+    tugatish sanasi keyinchalik hisobot takrorlaydigan kichik yolg'on.
+    5. Dars nashr qilinganda **butun kurs bo'yicha qayta hisoblanadi**, chunki
+    bu so'rov yubormayotgan odamlar uchun ham javobni o'zgartiradi. Faqat
+    `PUBLISHED` ga o'tishda yoki `required` o'zgarganda — videoning nomini
+    tahrirlash hamma o'quvchini aylanib chiqmasligi kerak.
+    6. Yangi `COURSE_REOPENED` bildirishnoma turi qo'shildi (27 → 28 tur).
 
 - [ ] **3.2** **Sertifikat modellari va render**
   · `models/certificateTemplate.model.js`, `certificate.model.js`, `externalCertificate.model.js`
