@@ -6,6 +6,8 @@ import { notificationTemplateService } from './notificationTemplate.service.js'
 import { DEFAULT_LANG } from '../../models/notificationTemplate.model.js'
 import { userRepository } from '../../repositories/user.repository.js'
 import { isChannelEnabled } from '@lms/shared'
+import { enqueueMail } from '../../jobs/deliveryQueue.js'
+import { env } from '../../config/env.js'
 
 function toPublicNotification(n) {
   return {
@@ -40,6 +42,47 @@ async function loadRecipient(userId) {
     return await userRepository.findById(String(userId))
   } catch (error) {
     logger.warn('Could not read notification recipient', { userId: String(userId), error: error.message })
+    return null
+  }
+}
+
+/**
+ * Queues the email half of a notification, if there is one to send.
+ *
+ * Four separate reasons not to send, each of them ordinary rather than an
+ * error: no account, no address on it, the person switched this type's email
+ * off, or no EMAIL template exists for the type. Only the third is a
+ * decision; the rest are just facts about the deployment.
+ */
+async function queueEmail({ recipient, type, templateKey, vars, lang, prefs }) {
+  if (!recipient?.email) return null
+  if (!isChannelEnabled(prefs, type, 'email')) return null
+
+  try {
+    const rendered = await notificationTemplateService.render({
+      type: templateKey,
+      channel: 'EMAIL',
+      lang,
+      vars: { userName: recipient.fullName ?? '', appUrl: env.APP_URL, ...vars },
+    })
+    if (!rendered) return null
+
+    return await enqueueMail({
+      to: recipient.email,
+      subject: rendered.subject,
+      text: rendered.body,
+      templateKey,
+      userId: recipient._id,
+    })
+  } catch (error) {
+    // Logged, not thrown: the in-app notification has already been written
+    // and pushed, and losing the email is strictly better than rolling back
+    // the thing that caused it.
+    logger.error('Could not queue notification email', {
+      type,
+      userId: String(recipient._id),
+      error: error.message,
+    })
     return null
   }
 }
@@ -128,6 +171,12 @@ export const notificationService = {
     // poll. Every caller of notify() gets this for free — deliberately
     // done here rather than at each call site.
     emitNotification(String(userId), toPublicNotification(notification))
+
+    // Mail is queued, never awaited, and never allowed to fail the caller.
+    // It is the slowest and least reliable thing the platform does, and the
+    // in-app notification above is already delivered: a relay being down
+    // must not undo a course assignment.
+    await queueEmail({ recipient, type, templateKey: templateKey ?? type, vars, lang: language, prefs })
 
     return notification
   },

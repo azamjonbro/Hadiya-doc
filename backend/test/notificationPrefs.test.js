@@ -5,11 +5,10 @@
 //   AT-16  PUT {PASSWORD_RESET: {email: false}}
 //          -> 400 MANDATORY_NOTIFICATION, and nothing is saved
 //
-// The email half of AT-15 cannot be asserted here: notify() does not enqueue
-// mail until 1.4. What is asserted is everything 1.3 is responsible for —
-// the preference is stored, it is honoured for the channel that exists, a
-// mandatory type cannot be switched off, and a rejected request writes
-// nothing at all. The 1.4 test picks up the EMAIL side.
+// Both halves are covered now that 1.4 has notify() enqueuing mail: the
+// preference is stored, honoured for in-app, and honoured for email — and
+// AT-17's other clause, that the in-app notification arrives even when
+// delivery fails, is asserted here too, since it is the same code path.
 //
 // Runs against a live backend (TEST_BASE_URL) like security.test.js, because
 // the status code and error code are the assertion in AT-16.
@@ -29,6 +28,8 @@ import { Role } from '../src/models/role.model.js'
 import { Notification } from '../src/models/notification.model.js'
 import { hashPassword } from '../src/utils/hash.js'
 import { notificationService } from '../src/services/notifications/notification.service.js'
+import { MailLog } from '../src/models/mailLog.model.js'
+import { deliveryQueue } from '../src/jobs/deliveryQueue.js'
 import { redisConnection } from '../src/config/redis.js'
 
 const BASE_URL = process.env.TEST_BASE_URL ?? 'http://localhost:4000/api/v1'
@@ -109,7 +110,10 @@ describe('AT-15 / AT-16 · notification preferences over HTTP', () => {
 
   after(async () => {
     await Notification.deleteMany({ userId: user._id })
+    await MailLog.deleteMany({ userId: user._id })
     await User.deleteOne({ _id: user._id })
+    await deliveryQueue.obliterate({ force: true }).catch(() => {})
+    await deliveryQueue.close()
     await mongoose.connection.close()
     redisConnection.disconnect()
   })
@@ -268,5 +272,89 @@ describe('AT-15 / AT-16 · notification preferences over HTTP', () => {
   test('/users/me reports the locale, so the SPA can preselect it', async () => {
     const { body } = await api('/users/me', { headers: auth() })
     assert.equal(body.data.locale, 'ru')
+  })
+
+  // ---- 1.4: notify() now queues the email half ----
+
+  test('AT-15 · with email switched off, the in-app notification arrives and no mail is queued', async () => {
+    await User.updateOne({ _id: user._id }, { $set: { email: `prefs-${jshshir}@test.local`, locale: 'uz', notificationPrefs: {} } })
+    await api('/users/me/notification-prefs', {
+      method: 'PUT',
+      headers: auth(),
+      body: JSON.stringify({ COURSE_ASSIGNED: { email: false } }),
+    })
+    await MailLog.deleteMany({ userId: user._id })
+    await Notification.deleteMany({ userId: user._id })
+
+    const written = await notificationService.notify({
+      userId: user._id,
+      type: 'COURSE_ASSIGNED',
+      vars: { courseTitle: 'Mehnat xavfsizligi' },
+    })
+
+    assert.ok(written, 'the in-app notification was not delivered')
+    assert.equal(await MailLog.countDocuments({ userId: user._id }), 0, 'mail was queued for a switched-off channel')
+  })
+
+  test('with email left on, the same notification does queue mail', async () => {
+    await User.updateOne({ _id: user._id }, { $set: { notificationPrefs: {} } })
+    await MailLog.deleteMany({ userId: user._id })
+
+    await notificationService.notify({
+      userId: user._id,
+      type: 'COURSE_ASSIGNED',
+      vars: { courseTitle: 'Mehnat xavfsizligi' },
+    })
+
+    const logs = await MailLog.find({ userId: user._id }).lean()
+    assert.equal(logs.length, 1)
+    assert.equal(logs[0].status, 'QUEUED')
+    assert.equal(logs[0].templateKey, 'COURSE_ASSIGNED')
+    assert.match(logs[0].subject, /Yangi kurs/, `expected the Uzbek subject, got: ${logs[0].subject}`)
+    assert.equal(logs[0].to, `prefs-${jshshir}@test.local`)
+  })
+
+  test('an account with no email address queues nothing, and is not an error', async () => {
+    await User.updateOne({ _id: user._id }, { $unset: { email: 1 } })
+    await MailLog.deleteMany({ userId: user._id })
+    const written = await notificationService.notify({
+      userId: user._id,
+      type: 'TASK_ASSIGNED',
+      vars: { taskTitle: 'Hisobot' },
+    })
+    assert.ok(written, 'the in-app notification should still be written')
+    assert.equal(await MailLog.countDocuments({ userId: user._id }), 0)
+  })
+
+  test('AT-17 · a mail that cannot be delivered does not cost the in-app notification', async () => {
+    // The clause AT-17 makes about the *other* side of a failed send. There
+    // is no SMTP configured in this run, so the queued job will be recorded
+    // SKIPPED rather than sent — either way the notification is already
+    // written and pushed before delivery is even attempted.
+    await User.updateOne({ _id: user._id }, { $set: { email: `prefs-${jshshir}@test.local` } })
+    await MailLog.deleteMany({ userId: user._id })
+    await Notification.deleteMany({ userId: user._id })
+
+    const written = await notificationService.notify({
+      userId: user._id,
+      type: 'COURSE_DEADLINE_APPROACHING',
+      vars: { courseTitle: 'X', deadline: '01.10.2026', daysLeft: 2 },
+    })
+
+    assert.ok(written)
+    assert.equal(await Notification.countDocuments({ userId: user._id }), 1)
+    assert.equal(await MailLog.countDocuments({ userId: user._id }), 1)
+  })
+
+  test('a mandatory type is mailed even when the stored preference says otherwise', async () => {
+    await User.updateOne({ _id: user._id }, { $set: { notificationPrefs: { PASSWORD_RESET: { email: false } } } })
+    await MailLog.deleteMany({ userId: user._id })
+    await notificationService.notify({
+      userId: user._id,
+      type: 'PASSWORD_RESET',
+      vars: { resetUrl: 'https://example.uz/reset', expiryMinutes: 30 },
+    })
+    assert.equal(await MailLog.countDocuments({ userId: user._id }), 1, 'a password reset email was suppressed')
+    await User.updateOne({ _id: user._id }, { $set: { notificationPrefs: {} } })
   })
 })

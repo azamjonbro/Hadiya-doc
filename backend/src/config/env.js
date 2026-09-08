@@ -128,6 +128,12 @@ const envSchema = z.object({
   // the reader may leave open, and a 2-minute URL would break on scroll-up.
   CHAT_ATTACHMENT_URL_TTL: z.coerce.number().int().positive().default(3600),
 
+  // Where the SPA is served. Notification emails end with a link to it —
+  // the one thing a mail must carry that the in-app version does not, since
+  // the reader is not already in the app. Empty renders the link as nothing
+  // rather than as a broken localhost URL.
+  APP_URL: z.string().optional().default(''),
+
   // Outbound email. Empty SMTP_HOST = mail is not configured: every send is
   // recorded as SKIPPED and nothing else changes, so a laptop and a day-one
   // install both work. It is not an error state.
