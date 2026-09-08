@@ -219,7 +219,13 @@ describe('AT-15 / AT-16 · notification preferences over HTTP', () => {
     })
     assert.ok(kept, 'switching off one type silenced another')
 
-    const rows = await Notification.find({ userId: user._id }).lean()
+    // Scoped to the two types under test: logging in during `before` now
+    // also writes a LOGIN_FROM_NEW_DEVICE alert (1.6), and this assertion is
+    // about which of these two was suppressed, not about the inbox total.
+    const rows = await Notification.find({
+      userId: user._id,
+      type: { $in: ['COURSE_ASSIGNED', 'TASK_ASSIGNED'] },
+    }).lean()
     assert.equal(rows.length, 1)
     assert.equal(rows[0].type, 'TASK_ASSIGNED')
   })

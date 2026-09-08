@@ -18,6 +18,7 @@ import { env } from '../../config/env.js'
 import { logger } from '../../config/logger.js'
 import { notificationService } from '../notifications/notification.service.js'
 import { isMailConfigured } from '../notifications/mail.service.js'
+import { formatNotificationDateTime } from '../../utils/notificationFormat.js'
 
 // One hour (AT-14). Long enough to survive a mail queue retrying and a
 // person reading it later in the day; short enough that a link left in an
@@ -46,6 +47,10 @@ export function toPublicUser(user, role) {
 }
 
 export async function issueSession(user, meta, replacesSessionId = null) {
+  // Asked before the session is written, or the row we are about to create
+  // would itself be the "already seen" evidence.
+  const seenBefore = await sessionRepository.hasSeenUserAgent(user._id, meta.userAgent)
+
   const refreshToken = generateOpaqueToken()
   const session = await sessionRepository.create({
     userId: user._id,
@@ -57,6 +62,28 @@ export async function issueSession(user, meta, replacesSessionId = null) {
   if (replacesSessionId) {
     await sessionRepository.markReplaced(replacesSessionId, session._id)
   }
+
+  // A refresh reuses the device that is already signed in, so only a fresh
+  // login can be from somewhere new — `replacesSessionId` is what tells them
+  // apart, and alerting on every token refresh would train people to ignore
+  // the alert entirely.
+  if (!seenBefore && !replacesSessionId) {
+    // Never awaited and never allowed to throw: a notification failure must
+    // not stop someone signing in.
+    notificationService
+      .notify({
+        userId: user._id,
+        type: 'LOGIN_FROM_NEW_DEVICE',
+        vars: {
+          device: meta.userAgent || 'noma\'lum qurilma',
+          ipAddress: meta.ip || '',
+          loginAt: formatNotificationDateTime(new Date()),
+        },
+        severity: 'WARNING',
+      })
+      .catch((error) => logger.warn('Could not send new-device alert', { error: error.message }))
+  }
+
   return { refreshToken, session }
 }
 

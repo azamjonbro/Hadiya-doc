@@ -16,6 +16,7 @@ import { chatService } from '../chat/chat.service.js'
 import { taskService } from '../tasks/task.service.js'
 import { logger } from '../../config/logger.js'
 import { TEMPLATE_TYPES } from '../notifications/notificationTemplates.seed.js'
+import { notificationService } from '../notifications/notification.service.js'
 
 const EMPLOYEE_TIER_ROLES = [ROLES.EMPLOYEE, ROLES.CALL_OPERATOR, ROLES.SELLER]
 
@@ -385,6 +386,24 @@ export const userService = {
       entityId: user._id.toString(),
       metadata: { jshshir: user.jshshir, role: role.name },
     })
+
+    // Mandatory (§9.3): without it the employee has an account nobody told
+    // them about. It carries the JSHSHIR to sign in with and never the
+    // password — a password in an inbox outlives the person who leaves.
+    try {
+      await notificationService.notify({
+        userId: user._id,
+        type: 'ACCOUNT_CREATED',
+        vars: { jshshir: user.jshshir },
+      })
+    } catch (error) {
+      // Best-effort, like the assignments below: a mail relay being down
+      // must not undo an account an admin has just created.
+      logger.warn('Could not send the account-created notification', {
+        userId: user._id.toString(),
+        error: error.message,
+      })
+    }
 
     // Best-effort: a course that no longer exists shouldn't roll back the
     // account that was just created, so failures here are logged, not thrown.

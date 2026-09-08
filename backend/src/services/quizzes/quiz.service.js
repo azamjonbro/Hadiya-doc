@@ -6,6 +6,8 @@ import { videoProgressRepository } from '../../repositories/videoProgress.reposi
 import { auditLogRepository } from '../../repositories/auditLog.repository.js'
 import { pointsService } from '../gamification/points.service.js'
 import { ApiError } from '../../utils/ApiError.js'
+import { notificationService } from '../notifications/notification.service.js'
+import { logger } from '../../config/logger.js'
 
 function canManage(actor) {
   return Boolean(actor.permissions?.includes(PERMISSIONS.VIDEO_MANAGE))
@@ -129,6 +131,33 @@ export const quizService = {
       passed,
       pointsAwarded,
     })
+
+    // After the attempt is stored, so a notification can never claim a
+    // result that was not recorded. Best-effort for the same reason as
+    // everywhere else in this chain: the attempt is the fact, the message
+    // about it is not.
+    try {
+      await notificationService.notify({
+        userId: actor.id,
+        type: passed ? 'QUIZ_PASSED' : 'QUIZ_FAILED',
+        vars: {
+          // A quiz has no title of its own — it belongs to a video, and
+          // that is the name the learner recognises.
+          quizTitle: video.title,
+          score: `${scorePercent}%`,
+          passingScore: `${quiz.passScorePercent}%`,
+        },
+        severity: passed ? 'INFO' : 'WARNING',
+        relatedEntityType: 'Course',
+        relatedEntityId: String(video.courseId),
+      })
+    } catch (error) {
+      logger.warn('Could not send the quiz result notification', {
+        userId: actor.id,
+        quizId: String(quiz._id),
+        error: error.message,
+      })
+    }
 
     return { scorePercent, passed, pointsAwarded, passScorePercent: quiz.passScorePercent, correctOptionIndexByQuestion }
   },

@@ -5,6 +5,8 @@ import { roleRepository } from '../../repositories/role.repository.js'
 import { auditLogRepository } from '../../repositories/auditLog.repository.js'
 import { ApiError } from '../../utils/ApiError.js'
 import { cacheGet, cacheSet, cacheDel } from '../../utils/cache.js'
+import { notificationService } from '../notifications/notification.service.js'
+import { logger } from '../../config/logger.js'
 
 const NEWS_CACHE_TTL = 5 * 60
 const newsCacheKey = (id) => `news:${id}`
@@ -30,6 +32,47 @@ function toPublicNews(news) {
     createdAt: news.createdAt,
     updatedAt: news.updatedAt,
   }
+}
+
+/**
+ * Tells the article's audience about it, once.
+ *
+ * Fan-out is sequential and best-effort, the same shape group.service.js
+ * uses for enrolments: one recipient failing must not stop the rest, and the
+ * article is already published either way. It is genuinely a per-employee
+ * loop — an announcement to everyone means a notification for everyone — so
+ * the count is logged, which is the number to look at first if this ever
+ * needs batching.
+ */
+async function announcePublished(actor, news) {
+  const recipients = await userRepository.listActiveByNewsTargets({
+    departments: news.departmentTargets ?? [],
+    roleNames: news.roleTargets ?? [],
+  })
+  const author = await userRepository.findById(actor.id)
+
+  let sent = 0
+  for (const recipient of recipients) {
+    // The author does not need telling about their own article.
+    if (String(recipient._id) === String(actor.id)) continue
+    try {
+      await notificationService.notify({
+        userId: recipient._id,
+        type: 'NEWS_PUBLISHED',
+        vars: { newsTitle: news.title, authorName: author?.fullName ?? '' },
+        relatedEntityType: 'News',
+        relatedEntityId: String(news._id),
+      })
+      sent += 1
+    } catch (error) {
+      logger.warn('Could not notify a recipient about published news', {
+        newsId: String(news._id),
+        userId: String(recipient._id),
+        error: error.message,
+      })
+    }
+  }
+  logger.info('News published', { newsId: String(news._id), recipients: sent })
 }
 
 export const newsService = {
@@ -87,6 +130,7 @@ export const newsService = {
       entityId: news._id.toString(),
       metadata: { title: news.title },
     })
+    if (news.status === 'PUBLISHED') await announcePublished(actor, news)
     return toPublicNews(news)
   },
 
@@ -102,6 +146,11 @@ export const newsService = {
       entityId: id,
       metadata: { fields: Object.keys(payload) },
     })
+    // Only on the DRAFT -> PUBLISHED transition. Editing a typo in an
+    // article that is already out must not announce it a second time.
+    if (existing.status !== 'PUBLISHED' && updated.status === 'PUBLISHED') {
+      await announcePublished(actor, updated)
+    }
     return toPublicNews(updated)
   },
 

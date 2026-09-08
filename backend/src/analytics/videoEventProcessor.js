@@ -10,6 +10,7 @@ import { mergeSegments, subtractSegments, sumSegmentSeconds } from './watchedSeg
 import { pointsService } from '../services/gamification/points.service.js'
 import { attentionPolicyService } from '../services/courses/attentionPolicy.service.js'
 import { attentionReportService } from '../services/courses/attentionReport.service.js'
+import { notificationService } from '../services/notifications/notification.service.js'
 import { logger } from '../config/logger.js'
 import { ApiError } from '../utils/ApiError.js'
 
@@ -247,6 +248,27 @@ export async function processVideoEvents({ userId, sessionId, videoId, events, d
       const assignment = await courseAssignmentRepository.findByUserAndCourse(userId, video.courseId)
       if (assignment && assignment.status === 'ACTIVE') {
         await courseAssignmentRepository.updateById(assignment._id, { status: 'COMPLETED' })
+        // Inside the ACTIVE check on purpose: the transition happens once,
+        // so the congratulation does too. Re-watching a finished course must
+        // not send it again.
+        try {
+          const course = await courseRepository.findById(video.courseId)
+          await notificationService.notify({
+            userId,
+            type: 'COURSE_COMPLETED',
+            vars: { courseTitle: course?.title ?? '' },
+            relatedEntityType: 'Course',
+            relatedEntityId: String(video.courseId),
+          })
+        } catch (error) {
+          // The completion is already recorded; losing the notification is
+          // strictly better than losing that.
+          logger.warn('Could not send the course-completed notification', {
+            userId: String(userId),
+            courseId: String(video.courseId),
+            error: error.message,
+          })
+        }
       }
     }
   }

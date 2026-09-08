@@ -133,6 +133,23 @@ export const userRepository = {
     return User.find(filter)
   },
 
+  /**
+   * Everyone an article is aimed at.
+   *
+   * News targeting is a pair of *lists* (several departments, several
+   * roles), unlike a course's single department — and an empty list means
+   * "everyone", which is why neither clause is added when it is empty.
+   */
+  async listActiveByNewsTargets({ departments = [], roleNames = [] } = {}) {
+    const filter = { isActive: true }
+    if (departments.length) filter.department = { $in: departments }
+    if (roleNames.length) {
+      const roles = await Role.find({ name: { $in: roleNames.map((name) => name.toUpperCase()) } }, { _id: 1 })
+      filter.roleId = { $in: roles.map((role) => role._id) }
+    }
+    return User.find(filter, { _id: 1 })
+  },
+
   // Shared by listPage and count so a page and its total can never be
   // computed from two subtly different filters.
   buildFilter({ search, roleId, branch, department, subdivision, country, position, employment }) {
