@@ -377,13 +377,40 @@
     yopish xodimga o'z boshlig'ini ko'rishni taqiqlardi — bu maxfiy
     ma'lumot emas, shartnomasida yozilgan.
 
-- [ ] **2.2** **Scope'ni rol nomidan ruxsatga ko'chirish** 🔴
+- [x] **2.2** **Scope'ni rol nomidan ruxsatga ko'chirish** 🔴
   · `models/role.model.js` — `+scope: 'ALL'|'DEPARTMENT'|'TEAM'|'SELF'`
   · `middlewares/scopeToManagedUsers.middleware.js` — `req.scopedUserIds` (Redis 5 daq)
   · 14 joyda `actor.roleName === ROLES.MANAGER` → `actor.scope !== 'ALL'`
   (fayllar: `user.service.js`, `task.service.js`, `group.service.js`,
   `courseAssignment.service.js`, `points.service.js`)
   · Qabul: **AT-21**
+  · Bajarildi (`b4da574`) — 11 chaqiruv joyi `hasUnscopedAccess(actor)` ga
+  ko'chdi; endi kodda hech qayerda rolning **nomini** bilish shart emas.
+  · **AT-21 HTTP orqali tekshirildi**: shu maqsadda yaratilgan rol bilan —
+  `DEPARTMENT` faqat o'z bo'limini ko'radi, xuddi shu ruxsat `ALL` da
+  hammani ko'radi, bo'lim ro'yxati ham xuddi shunday cheklanadi.
+  · **Eng muhim xavfsizlik xossasi: mavjud hech kimning chegarasi
+  siljimadi.** `MANAGER` `DEPARTMENT` sifatida seed qilinadi — bu qattiq
+  yozilgan tekshiruvlar aynan qilgan ishi — va `security.test.js` dagi
+  manager-scope testlari o'zgarishsiz o'tadi.
+  · **Hamma default tor tomonga**, chunki bu yerdagi har bir default
+  "sizib chiqadi" bilan "bezovta qiladi" o'rtasidagi tanlov:
+    - scope aytilmagan yangi rol — `SELF`, `ALL` emas;
+    - 2.2 dan oldin yozilgan rol hujjatida maydon umuman yo'q →
+    `resolveRoleScope` uni **nomidan** hal qiladi, notanish nom → `SELF`;
+    - 2.2 dan oldin berilgan tokenda `scope` da'vosi yo'q va ular yana 15
+    daqiqa amal qiladi → o'sha tor yo'l bilan hal qilinadi, `ALL` emas;
+    - `ALL` dan boshqa har bir scope **fail-closed**: bo'limi yo'q
+    `DEPARTMENT` aktyor hech kimga emas, hammaga emas, cheklanadi.
+  · `TEAM` — 2.1 ning foydasi shu yerda: u bo'lim maydonidan emas, org
+  chartdan hal qilinadi, ya'ni boshqa bo'limdagi jamoa rahbari ham o'z
+  odamlarini ko'radi.
+  · Chetlanish: `scopeToManagedUsers` middleware'i **faqat hisobot
+  router'iga** ulandi, hamma joyga emas. `reportData.build` chegarani o'zi
+  ham hisoblab oladi (middleware bermаsa) — u yerdagi mavjud izoh "yangi
+  hisobot buni qo'llashni unuta olmaydi" deydi, va bu route'ning
+  middleware'ni ulashni eslab qolishidan **kuchliroq kafolat**. Uni
+  tartib uchun zaiflashtirish noto'g'ri savdo bo'lardi.
 
 - [ ] **2.3** **`PATCH /roles/:id` + ruxsat matritsasi UI**
   · `routes/v1/roles.routes.js` — `PATCH` (tizim rollari qulflangan)
