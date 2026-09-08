@@ -19,6 +19,7 @@ import { newsAnalyticsRouter } from './newsAnalytics.routes.js'
 import { tasksRouter } from './tasks.routes.js'
 import { eventsRouter } from './events.routes.js'
 import { notificationsRouter } from './notifications.routes.js'
+import { pushRouter } from './push.routes.js'
 import { aiChatRouter } from './aiChat.routes.js'
 import { dashboardRouter } from './dashboard.routes.js'
 import { branchesRouter } from './branches.routes.js'
@@ -55,6 +56,7 @@ v1Router.use('/news-analytics', newsAnalyticsRouter)
 v1Router.use('/tasks', tasksRouter)
 v1Router.use('/events', eventsRouter)
 v1Router.use('/notifications', notificationsRouter)
+v1Router.use('/push', pushRouter)
 v1Router.use('/ai-chat', aiChatRouter)
 v1Router.use('/dashboard', dashboardRouter)
 v1Router.use('/branches', branchesRouter)

@@ -128,6 +128,17 @@ const envSchema = z.object({
   // the reader may leave open, and a 2-minute URL would break on scroll-up.
   CHAT_ATTACHMENT_URL_TTL: z.coerce.number().int().positive().default(3600),
 
+  // Web push (VAPID). Empty = push is off, like SMTP: no keys, no attempt.
+  // Generate a pair once with:
+  //   node -e "console.log(require('web-push').generateVAPIDKeys())"
+  // The public key is handed to browsers; the private one never leaves the
+  // server, and rotating it invalidates every existing subscription.
+  VAPID_PUBLIC_KEY: z.string().optional().default(''),
+  VAPID_PRIVATE_KEY: z.string().optional().default(''),
+  // Identifies us to the push service so it has someone to contact about
+  // abuse. The spec wants a mailto: or an https: URL.
+  VAPID_SUBJECT: z.string().optional().default(''),
+
   // Where the SPA is served. Notification emails end with a link to it —
   // the one thing a mail must carry that the in-app version does not, since
   // the reader is not already in the app. Empty renders the link as nothing
@@ -264,6 +275,17 @@ if (parsed.data.S3_SIGNING_ENDPOINT) {
         'Verify with: node src/scripts/checkStorageSigning.js'
     )
   }
+}
+
+// One VAPID key without the other cannot sign anything, and the failure
+// would appear per-notification rather than at boot.
+if (Boolean(parsed.data.VAPID_PUBLIC_KEY) !== Boolean(parsed.data.VAPID_PRIVATE_KEY)) {
+  console.error(
+    'Invalid environment configuration: VAPID_PUBLIC_KEY and VAPID_PRIVATE_KEY must be set together. ' +
+      'Generate a pair with:\n' +
+      '  node -e "console.log(require(\'web-push\').generateVAPIDKeys())"'
+  )
+  process.exit(1)
 }
 
 // Half-configured SMTP is the worst of both: the app believes it can send,

@@ -7,6 +7,7 @@ import { DEFAULT_LANG } from '../../models/notificationTemplate.model.js'
 import { userRepository } from '../../repositories/user.repository.js'
 import { isChannelEnabled } from '@lms/shared'
 import { enqueueMail } from '../../jobs/deliveryQueue.js'
+import { pushService, isPushConfigured } from './push.service.js'
 import { env } from '../../config/env.js'
 
 function toPublicNotification(n) {
@@ -79,6 +80,46 @@ async function queueEmail({ recipient, type, templateKey, vars, lang, prefs }) {
     // and pushed, and losing the email is strictly better than rolling back
     // the thing that caused it.
     logger.error('Could not queue notification email', {
+      type,
+      userId: String(recipient._id),
+      error: error.message,
+    })
+    return null
+  }
+}
+
+/**
+ * Pushes to the person's browsers, if they have any and want this type.
+ *
+ * Deliberately after the mail: push is a nudge, mail is the record, and if
+ * something is going to be slow it should be the one that is not blocking
+ * the queue behind it. Failures never reach the caller — sendToUser already
+ * swallows per-subscription errors, and this catches the rest.
+ */
+async function sendPush({ recipient, type, templateKey, vars, lang, prefs }) {
+  if (!isPushConfigured() || !recipient) return null
+  if (!isChannelEnabled(prefs, type, 'push')) return null
+
+  try {
+    const rendered = await notificationTemplateService.render({
+      type: templateKey,
+      channel: 'PUSH',
+      lang,
+      vars: { userName: recipient.fullName ?? '', appUrl: env.APP_URL, ...vars },
+    })
+    if (!rendered) return null
+
+    return await pushService.sendToUser(recipient._id, {
+      title: rendered.subject,
+      body: rendered.body,
+      url: env.APP_URL,
+      // One notification of a given type replaces the previous one on the
+      // lock screen instead of stacking: three "deadline approaching"
+      // banners are not three times as useful.
+      tag: type,
+    })
+  } catch (error) {
+    logger.error('Could not push notification', {
       type,
       userId: String(recipient._id),
       error: error.message,
@@ -177,6 +218,7 @@ export const notificationService = {
     // in-app notification above is already delivered: a relay being down
     // must not undo a course assignment.
     await queueEmail({ recipient, type, templateKey: templateKey ?? type, vars, lang: language, prefs })
+    await sendPush({ recipient, type, templateKey: templateKey ?? type, vars, lang: language, prefs })
 
     return notification
   },
