@@ -449,7 +449,7 @@
 | Orphan fayl tozalash | ? | Yo'q — kodda tan olingan qarz | VERIFY | 0 | `course.service.js:378-381` | `mediaCleanupQueue` |
 | Rasm optimizatsiyasi | ? | Yo'q | VERIFY | 0 | — | `sharp` → webp |
 | Storage sarfi ko'rsatkichi | ? | Yo'q | VERIFY | 0 | — | — |
-| **D74–D79 jami: 26 capability** | | | **FULL 2 · OURS+ 9 · PARTIAL 1 · NONE 9 · VERIFY 5** | **44** | | |
+| **D74–D79 jami: 26 capability** | | | **FULL 3 · OURS+ 9 · PARTIAL 2 · NONE 7 · VERIFY 5** | **50** | | |
 
 ## D80–D95 · PERFORMANCE / A11Y / AUTOMATION / RECOMMENDATIONS / STANDARDS / SUITE / E-COM / ENTERPRISE
 
