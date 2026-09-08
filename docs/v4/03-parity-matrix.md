@@ -432,7 +432,7 @@
 | **Proctoring (begona yuz)** | — | Bor | OURS+ | 100 | `proctorSnapshot.service.js` | — |
 | **Kamera diqqat monitoringi** | — | Bor, 8 maydonli siyosat | OURS+ | 100 | `attentionPolicy.model.js` | — |
 | Fayl darajasida kirish nazorati | ✓ | Bor | FULL | 100 | `materialAccess.service.js:19-43` | — |
-| Server shifrlash (at-rest) | ✓ | Yo'q | NONE | 0 | — | Backup shifrlash |
+| Server shifrlash (at-rest) | ✓ | Faqat backup (AES-256-GCM); jonli DB va S3 shifrlanmagan | PARTIAL | 50 | `backupCrypto.js` | DB/S3 at-rest |
 | On-premise o'rnatish | ✓ | Bor (o'z serverimizda) | FULL | 100 | `docs/deployment.md` | — |
 | IDOR himoyasi | ? | Bor + 3 test | OURS+ | 100 | `security.test.js` | — |
 | **Hisobot PII scope'i** | ✓ | ❌ Buzilgan | NONE | 0 | `report.controller.js:20` | 🔴 P0 |
@@ -440,7 +440,7 @@
 | **Audit jurnali (yozuv)** | ? | 60+ action | OURS+ | 100 | `auditLog.model.js` | — |
 | **Audit jurnali (ko'rish)** | ? | **Yo'q** — route va UI yo'q | NONE | 0 | `routes/v1/index.js` | `GET /audit-logs` |
 | Audit TTL | ? | Yo'q — cheksiz o'sadi | VERIFY | 0 | `auditLog.model.js` | TTL 730 kun |
-| **Backup / restore** | ✓ (SaaS) | **Yo'q** | NONE | 0 | — | Kunlik + sinov |
+| **Backup / restore** | ✓ (SaaS) | Kunlik shifrlangan dump + 30 kun + tiklash sinovi | FULL | 100 | `jobs/backupQueue.js`, `backup.service.js`, `test/backup.test.js` | — |
 | Tizim sozlamalari (DB'da) | ✓ | 2 siyosat modeli bor, umumiysi yo'q | PARTIAL | 50 | `attentionPolicy.model.js`, `facePolicy.model.js` | `Settings` singleton |
 | Logo / favicon / rang | ✓ | Yo'q (Tailwind token tizimi bor) | NONE | 0 | — | `branding{}` |
 | White-label | ✓ | Yo'q | NONE | 0 | — | — |

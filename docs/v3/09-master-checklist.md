@@ -51,10 +51,28 @@
   `npm --prefix backend run check:signing` esa haqiqiy obyektga imzolangan
   havolani olib tekshiradi (prod'da `lms-materials` → 200).
 
-- [ ] **0.6** `[P]` **Backup + tiklash sinovi**
+- [x] **0.6** `[P]` **Backup + tiklash sinovi**
   · `jobs/backupQueue.js` — kunlik `mongodump` → shifrlash → S3 (30 kun)
   · `docs/deployment.md` — tiklash tartibi
   · Qabul: bitta tiklash **haqiqatan sinovdan o'tgan** va hujjatlashtirilgan
+  · Bajarildi — `mongodump --archive --gzip` → AES-256-GCM (`backupCrypto.js`)
+  → `S3_BUCKET_BACKUPS`, kunlik 03:20 (Asia/Tashkent), 30 kun saqlash.
+  Tiklash sinovi hujjatda emas, `test/backup.test.js` da: jonli MongoDB'ga
+  seed → dump → shifrlash → saqlash → deshifrlash → **boshqa nomdagi bazaga
+  `mongorestore`** → hujjat, sana va unique indeks solishtiriladi (17 test
+  o'tdi). `npm run backup:now/list/restore` operator skriptlari qo'shildi;
+  `backup:restore` jonli baza nomiga `--force` siz tiklashdan bosh tortadi.
+  · Chetlanishlar:
+    1. **Standart holatda o'chirilgan** (`BACKUP_ENABLED=false`) — kalitsiz
+    ishlaydigan backup har kecha jimgina xato beradi, shuning uchun
+    `BACKUP_ENABLED=true` + noto'g'ri kalit = boot rad etiladi, prod'da esa
+    o'chiq bo'lsa boot ogohlantirishi chiqadi.
+    2. S3 legi lokal sinalmadi (MinIO Docker'siz ko'tarilmaydi) — testda
+    `S3StorageProvider` bilan bir xil shakldagi fayl-tizim stub'i ishlatilgan.
+    Serverda `npm run backup:now` bilan haqiqiy MinIO'ga tekshirish kerak.
+    3. Saqlash tozalash eng yangi arxivni **hech qachon** o'chirmaydi — aks
+    holda bir oy ishlamagan backup oxirgi yaroqli nusxani ham o'chirib
+    yuborardi.
 
 - [x] **0.7** `[P]` **Audit log ko'rish**
   · `routes/v1/audit.routes.js` (`GET /audit-logs`, `GET /audit-logs/export`)
