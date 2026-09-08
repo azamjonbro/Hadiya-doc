@@ -32,6 +32,29 @@
 > Ballar `docs/v4/03-parity-matrix.md` faylidan **skript bilan** hisoblangan,
 > qo'lda emas — qayta hisoblash mumkin.
 
+### Qayta hisob — 2026-09-08, kechqurun (Blok 0 ishidan keyin)
+
+Matritsa qayta o'qildi va 9 ta qator kodga qarab yangilandi (checklist
+0.1–0.5, 0.7 bajarilgani uchun): leaderboard PII, kurs qidiruvidagi ReDoS,
+presigned yuklab olish, hisobot + dashboard scope'i, eksport auditi, audit
+jurnalini ko'rish, audit TTL.
+
+| Metrika | Ertalab | Hozir |
+|---|:--:|:--:|
+| Vaznsiz (337 capability) | 34,1 | **36,3** |
+| Vaznlangan (domen guruhi) | 35,3 | **37,3** |
+| **PARITY GAP** | ≈66% | **≈64%** |
+
+Eng ko'p o'sgan domenlar: xavfsizlik/audit **44,2 → 59,6**, hisobot
+**41,7 → 51,2**, kontent **55,7 → 59,1**.
+
+> **Metodologiya eslatmasi.** Yuqoridagi 36,8 raqamini qayta hisoblab
+> bo'lmaydi: na hisoblash skripti, na vazn jadvali repozitoriyda yo'q.
+> Bu jadvaldagi vaznlangan ustun §18 dagi ochiq qoida bilan hisoblangan
+> (yadro domen ×3, muhim ×2, tor ×1 — vaznlar domen guruhi darajasida),
+> shuning uchun raqam takrorlanadi. Vaznsiz ustun esa matritsadan
+> to'g'ridan-to'g'ri chiqadi va ikkala usulda ham bir xil.
+
 ## 1.2 Bir jumlada
 
 Biz **o'qishni isbotlash** bo'yicha iSpring'dan oldindamiz va **o'quv
