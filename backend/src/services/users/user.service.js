@@ -17,6 +17,7 @@ import { taskService } from '../tasks/task.service.js'
 import { logger } from '../../config/logger.js'
 import { TEMPLATE_TYPES } from '../notifications/notificationTemplates.seed.js'
 import { notificationService } from '../notifications/notification.service.js'
+import { orgHierarchyService } from '../org/orgHierarchy.service.js'
 
 const EMPLOYEE_TIER_ROLES = [ROLES.EMPLOYEE, ROLES.CALL_OPERATOR, ROLES.SELLER]
 
@@ -362,6 +363,10 @@ export const userService = {
         branch: payload.branch ?? '',
         department: payload.department ?? '',
         subdivision: payload.subdivision ?? '',
+        employeeNumber: payload.employeeNumber || undefined,
+        // No cycle check on create: a brand-new document has no reports, so
+        // nothing can already be pointing at it.
+        managerId: payload.managerId || null,
         position: payload.position ?? '',
         country: payload.country ?? '',
         address: payload.address ?? '',
@@ -459,6 +464,14 @@ export const userService = {
     if (payload.branch !== undefined) updateData.branch = payload.branch
     if (payload.department !== undefined) updateData.department = payload.department
     if (payload.subdivision !== undefined) updateData.subdivision = payload.subdivision
+    if (payload.managerId !== undefined) {
+      // Checked before the write, so the collection can simply never hold a
+      // reporting loop. A cycle is one mistyped row in an HR export, and
+      // every traversal after it either hangs or truncates silently.
+      const managerId = payload.managerId || null
+      await orgHierarchyService.assertNoCycle(id, managerId)
+      updateData.managerId = managerId
+    }
     if (payload.position !== undefined) updateData.position = payload.position
     if (payload.country !== undefined) updateData.country = payload.country
     if (payload.address !== undefined) updateData.address = payload.address
@@ -482,7 +495,7 @@ export const userService = {
     // not write '' — a blank string is indexed by the partial unique index and
     // the next employee cleared the same way would collide with this one.
     const unsetData = {}
-    for (const field of ['passportSeries', 'email']) {
+    for (const field of ['passportSeries', 'email', 'employeeNumber']) {
       if (payload[field] === undefined) continue
       if (payload[field]) updateData[field] = payload[field]
       else unsetData[field] = ''
@@ -494,6 +507,14 @@ export const userService = {
     } catch (error) {
       if (error.code === 11000) throw duplicateIdentityError(error)
       throw error
+    }
+
+    // Moving someone changes what their old manager and their new one can
+    // see, and the same for every manager above either — so both chains are
+    // dropped, not just the one that exists now.
+    if (payload.managerId !== undefined && String(existing.managerId ?? '') !== String(updateData.managerId ?? '')) {
+      await orgHierarchyService.invalidateFor(id)
+      if (existing.managerId) await orgHierarchyService.invalidateFor(existing.managerId)
     }
 
     await auditLogRepository.record({

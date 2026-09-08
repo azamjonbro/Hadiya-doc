@@ -48,6 +48,16 @@ const optionalGender = z.union([z.enum(GENDER_VALUES), z.literal('')])
 
 const password = z.string().min(PASSWORD_MIN_LENGTH, `Password must be at least ${PASSWORD_MIN_LENGTH} characters`)
 
+// Reporting line and HR key. `''` clears them, like the other optional
+// identity fields — see the comment at the top of this file.
+export const hierarchyFields = {
+  managerId: z
+    .string()
+    .regex(/^[a-f\d]{24}$|^$/i, 'managerId must be a user id')
+    .optional(),
+  employeeNumber: z.string().trim().max(64).optional(),
+}
+
 export const createUserSchema = z.object({
   firstName: z.string().trim().min(1, 'First name is required'),
   lastName: z.string().trim().min(1, 'Last name is required'),
@@ -69,10 +79,12 @@ export const createUserSchema = z.object({
   password,
   isActive: z.boolean().optional().default(true),
   courseIds: z.array(z.string().min(1)).optional().default([]),
+  ...hierarchyFields,
 })
 
 export const updateUserSchema = z
   .object({
+    ...hierarchyFields,
     firstName: z.string().trim().min(1).optional(),
     lastName: z.string().trim().min(1).optional(),
     jshshir: jshshir.optional(),

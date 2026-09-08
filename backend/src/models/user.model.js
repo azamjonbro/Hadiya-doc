@@ -23,6 +23,20 @@ const userSchema = new Schema(
     phone: { type: String, default: '' },
     passwordHash: { type: String, required: true },
     roleId: { type: Schema.Types.ObjectId, ref: 'Role', required: true },
+    // Who this person reports to. The org chart's only edge — department
+    // and subdivision say *where* someone sits, this says who answers for
+    // them, and the two disagree often enough (a matrix report, a team lead
+    // in another department) that neither can be derived from the other.
+    //
+    // Null for the people at the top, and for everyone until M2 has run.
+    managerId: { type: Schema.Types.ObjectId, ref: 'User', default: null },
+
+    // HR's own identifier for the employee. Not an identity we authenticate
+    // against — that is the JSHSHIR — but the column every HR export is
+    // keyed by, which is what makes a bulk import (2.6) able to match rows
+    // to accounts without guessing at names.
+    employeeNumber: { type: String, default: undefined, trim: true },
+
     // Which office the employee belongs to — a separate axis from
     // `department`. A branch is *where* ("Toshkent"), a department is *what*
     // ("Marketing"), and a course can target either or both.
@@ -87,5 +101,17 @@ userSchema.index(
   { unique: true, partialFilterExpression: { passportSeries: { $type: 'string' } } }
 )
 userSchema.index({ email: 1 }, { unique: true, partialFilterExpression: { email: { $type: 'string' } } })
+
+// Partial like the two above, and for the same reason: employeeNumber is
+// optional, and a plain unique index would make the second employee without
+// one collide with the first.
+userSchema.index(
+  { employeeNumber: 1 },
+  { unique: true, partialFilterExpression: { employeeNumber: { $type: 'string' } } }
+)
+
+// "Who reports to this person" is the query the whole hierarchy is built
+// from — $graphLookup walks it once per level.
+userSchema.index({ managerId: 1 })
 
 export const User = model('User', userSchema)
