@@ -9,6 +9,7 @@ import { Task } from '../../models/task.model.js'
 import { roleRepository } from '../../repositories/role.repository.js'
 import { ApiError } from '../../utils/ApiError.js'
 import { DEFAULT_REPORT_LANG, reportTranslator } from './reportI18n.js'
+import { scopedUserIdsFor } from '../access/actorScope.js'
 
 // Hard cap on exported rows — an admin exporting the whole org is a
 // legitimate, expected use, but an unbounded export is still a resource-
@@ -360,10 +361,24 @@ export const REPORT_TYPES = Object.keys(REPORT_BUILDERS)
 export const reportDataService = {
   // `lang` decides the language of every header and enum value in the file;
   // the data itself (names, course titles) is whatever was typed into it.
-  async build(type, filters = {}, lang = DEFAULT_REPORT_LANG) {
+  //
+  // `actor` is not optional in practice: every builder narrows its population
+  // through `roleUserIds`, and the caller's own scope is folded into that same
+  // list here. Doing it in this one place is deliberate — each builder already
+  // intersects `roleUserIds` with its other filters, so the fence lands on all
+  // of them at once and a new report cannot forget to apply it.
+  async build(actor, type, filters = {}, lang = DEFAULT_REPORT_LANG) {
     const builder = REPORT_BUILDERS[type]
     if (!builder) throw ApiError.badRequest('Unknown report type', 'UNKNOWN_REPORT_TYPE')
-    const roleUserIds = filters.role ? await resolveRoleUserIds(filters.role) : null
-    return builder({ ...filters, roleUserIds }, reportTranslator(lang))
+
+    const [roleUserIds, scopeUserIds] = await Promise.all([
+      filters.role ? resolveRoleUserIds(filters.role) : null,
+      scopedUserIdsFor(actor),
+    ])
+
+    // Both are "must be one of these" lists, so they combine the same way the
+    // builders combine their own: intersect, and treat null as no constraint.
+    const population = intersectIds(roleUserIds, scopeUserIds)
+    return builder({ ...filters, roleUserIds: population }, reportTranslator(lang))
   },
 }

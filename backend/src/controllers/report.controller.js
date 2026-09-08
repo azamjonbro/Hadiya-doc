@@ -1,4 +1,5 @@
 import { REPORT_TYPES, reportDataService } from '../services/reports/reportData.service.js'
+import { auditLogRepository } from '../repositories/auditLog.repository.js'
 import { reportExportService } from '../services/reports/reportExport.service.js'
 import { reportTranslator } from '../services/reports/reportI18n.js'
 import { asyncHandler } from '../utils/asyncHandler.js'
@@ -22,7 +23,21 @@ export const reportController = {
     // start arriving with mangled names.
     const title = t(`type.${type}`, type)
 
-    const { columns, rows } = await reportDataService.build(type, filters, lang)
+    const { columns, rows } = await reportDataService.build(req.user, type, filters, lang)
+
+    // An export leaves the system with employee data in it, so it is recorded
+    // the way every other write is. Without this there was no way to answer
+    // "who took a copy of the staff list, and when" after the fact.
+    await auditLogRepository.record({
+      actor: req.user.id,
+      action: 'REPORT_EXPORTED',
+      entity: 'Report',
+      entityId: type,
+      metadata: { format, lang, filters, rowCount: rows.length },
+      ip: req.ip,
+      userAgent: req.headers['user-agent'] ?? '',
+    })
+
     const filename = filenameFor(type, format)
     res.setHeader('Content-Disposition', `attachment; filename="${filename}"`)
 
