@@ -1,4 +1,5 @@
 import { News } from '../models/news.model.js'
+import { containsRegex } from '../utils/escapeRegex.js'
 
 export const newsRepository = {
   findById(id) {
@@ -39,7 +40,7 @@ export const newsRepository = {
 
   listPage({ search, status, cursor, limit }) {
     const filter = { deletedAt: null }
-    if (search) filter.title = new RegExp(search.trim(), 'i')
+    if (search) filter.title = containsRegex(search)
     if (status) filter.status = status
     if (cursor) filter._id = { $gt: cursor }
 

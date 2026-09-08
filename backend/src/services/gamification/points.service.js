@@ -100,12 +100,19 @@ export const pointsService = {
     const totals = await pointsLedgerRepository.totalsForUsers({ userIds, since: periodStart(period) })
     const totalsByUserId = new Map(totals.map((row) => [row.userId, row]))
 
+    // The board is readable by every signed-in employee, so a row carries only
+    // what a colleague may see: a name, a face and a score. The JSHSHIR is a
+    // national identity number — it used to be sent to everyone here, which
+    // turned a motivational widget into a company-wide directory of identity
+    // documents. It now rides along only for the management view, which is
+    // already gated on analytics:view:all and needs it to line rows up with
+    // the employee records.
     const merged = candidates.map((user) => {
       const points = totalsByUserId.get(user._id.toString())
       return {
         userId: user._id.toString(),
         fullName: user.fullName,
-        jshshir: user.jshshir,
+        ...(canFilter ? { jshshir: user.jshshir } : {}),
         avatar: user.avatar,
         department: user.department,
         position: user.position,

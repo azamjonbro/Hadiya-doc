@@ -1,4 +1,5 @@
 import { Group } from '../models/group.model.js'
+import { containsRegex } from '../utils/escapeRegex.js'
 
 export const groupRepository = {
   findById(id) {
@@ -11,7 +12,7 @@ export const groupRepository = {
 
   listAll({ search, department } = {}) {
     const filter = {}
-    if (search) filter.name = new RegExp(search.trim(), 'i')
+    if (search) filter.name = containsRegex(search)
     if (department) filter.department = department
     return Group.find(filter).sort({ name: 1 })
   },

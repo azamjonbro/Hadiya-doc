@@ -1,4 +1,5 @@
 import { Course } from '../models/course.model.js'
+import { containsRegex } from '../utils/escapeRegex.js'
 
 export const courseRepository = {
   // Trashed courses are invisible to every normal read. The trash page uses
@@ -88,7 +89,7 @@ export const courseRepository = {
   // computed from two subtly different filters.
   buildFilter({ search, status, branch, visibleToRoleName, visibleToBranch, visibleToDepartment, assignedCourseIds }) {
     const filter = { deletedAt: null }
-    if (search) filter.title = new RegExp(search.trim(), 'i')
+    if (search) filter.title = containsRegex(search)
     if (status) filter.status = status
     if (branch) filter.branches = branch
     if (visibleToRoleName !== undefined) {

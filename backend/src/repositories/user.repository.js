@@ -1,6 +1,7 @@
 import { isJshshir, isPassportSeries, normalizeJshshir, normalizePassportSeries } from '@lms/shared'
 import { User } from '../models/user.model.js'
 import { Role } from '../models/role.model.js'
+import { containsRegex } from '../utils/escapeRegex.js'
 
 export const userRepository = {
   // One login box, three accepted handles: JSHSHIR, passport series, or email.
@@ -98,7 +99,7 @@ export const userRepository = {
     const filter = { isActive: true }
     if (excludeId) filter._id = { $ne: excludeId }
     if (search.trim()) {
-      const regex = new RegExp(search.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i')
+      const regex = containsRegex(search)
       filter.$or = [
         { fullName: regex },
         { jshshir: regex },
@@ -137,7 +138,7 @@ export const userRepository = {
   buildFilter({ search, roleId, branch, department, subdivision, country, position, employment }) {
     const filter = {}
     if (search) {
-      const regex = new RegExp(search.trim(), 'i')
+      const regex = containsRegex(search)
       filter.$or = [{ fullName: regex }, { jshshir: regex }, { passportSeries: regex }, { email: regex }]
     }
     if (roleId) filter.roleId = roleId
