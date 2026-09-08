@@ -333,6 +333,15 @@
 
 - [ ] **1.8** `[P]` **Telegram kanali** — mahalliy sharoitda e-maildan ishonchliroq
   · `services/notifications/telegram.service.js` + ulash oqimi
+  · ⏸️ **2026-09-09: foydalanuvchi so'rovi bilan to'xtatildi** — "telegram
+  bog'lama shartmas". Yozilgan kod commit qilinmadi, `git stash` da turibdi:
+  `stash@{0}` "1.8 Telegram channel — parked at the user's request".
+  · Ichida bor edi: `telegram.service.js` (bot API, kod bilan ulash oqimi),
+  `telegram.controller.js`, `POST /telegram/webhook` (Telegram echo qiladigan
+  maxfiy sarlavha bilan himoyalangan), `TELEGRAM` to'rtinchi kanal sifatida
+  (27 × 3 × 4 = 324 shablon qatori), va sozlamalar ekranidagi to'rtinchi
+  ustun. Bazadagi 81 ta `TELEGRAM` qatori ham qaytarib olindi (324 → 243).
+  · Qayta boshlansa: `git stash pop` va `npm run migrate:templates`.
 
 ---
 
