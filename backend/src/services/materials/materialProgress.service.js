@@ -1,11 +1,31 @@
 import { materialProgressRepository } from '../../repositories/materialProgress.repository.js'
 import { materialRepository } from '../../repositories/material.repository.js'
 import { ApiError } from '../../utils/ApiError.js'
+import { courseCompletionService } from '../courses/courseCompletion.service.js'
+import { logger } from '../../config/logger.js'
 
 // A document with more pages than this is almost certainly a viewer bug
 // rather than a real deck, and an inflated denominator would silently peg
 // everyone's progress near zero.
 const MAX_PAGES = 5000
+
+// Reading a document can be the last thing a course was waiting for — a
+// course made only of presentations has nothing else that would ever
+// finish it (AT-01). Best-effort, like the other call sites: the reading
+// progress is already saved, and losing the status update is the smaller
+// loss.
+async function evaluateCourse(userId, courseId) {
+  if (!courseId) return
+  try {
+    await courseCompletionService.evaluate(userId, courseId)
+  } catch (error) {
+    logger.warn('Course completion evaluation failed after material progress', {
+      userId: String(userId),
+      courseId: String(courseId),
+      error: error.message,
+    })
+  }
+}
 
 export const materialProgressService = {
   /**
@@ -56,6 +76,7 @@ export const materialProgressService = {
     if (row.completedAt) row.completionPercent = 100
 
     await materialProgressRepository.save(row)
+    await evaluateCourse(actor.id, row.courseId)
 
     return {
       materialId,
@@ -92,6 +113,7 @@ export const materialProgressService = {
       row.completionPercent = 100
       row.lastViewedAt = new Date()
       await materialProgressRepository.save(row)
+      await evaluateCourse(actor.id, row.courseId)
     }
 
     return {

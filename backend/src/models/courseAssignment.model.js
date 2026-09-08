@@ -16,6 +16,11 @@ const courseAssignmentSchema = new Schema(
     deadline: { type: Date, default: null },
     expiresAt: { type: Date, default: null },
     status: { type: String, enum: ['ACTIVE', 'COMPLETED', 'CANCELLED'], default: 'ACTIVE' },
+    // When the course was finished. Null while ACTIVE, and cleared again if
+    // the assignment reopens because the course gained a required lesson
+    // (AT-04) — a completion date for a course that is not complete is the
+    // kind of small lie a report later repeats as fact.
+    completedAt: { type: Date, default: null },
     // Dedup markers for the scheduled reminder job — set once so the same
     // assignment never generates the same reminder twice.
     deadlineReminderSentAt: { type: Date, default: null },

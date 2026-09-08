@@ -19,6 +19,7 @@ import { topicListCacheKey } from './topic.service.js'
 import { effectiveCacheKey as attentionPolicyCacheKey } from './attentionPolicy.service.js'
 import { notificationService } from '../notifications/notification.service.js'
 import { formatNotificationDate } from '../../utils/notificationFormat.js'
+import { collectCourseItems, summarize } from './courseCompletion.service.js'
 
 // Course metadata is read on every catalog/detail page view and written
 // rarely (spec §39) — cached actor-independently (the DTO doesn't vary by
@@ -112,20 +113,22 @@ async function computeCourseProgress(actor, id, targetUserId) {
     assessmentProgress[assessmentId] = { completed: passedAssessmentIds.has(assessmentId) }
   }
 
-  const shares = [
-    ...visibleVideos.map((v) => (videoProgress[v._id.toString()].completed ? 1 : 0)),
-    ...visibleMaterials.map((m) => materialProgress[m._id.toString()].completionPercent / 100),
-    ...visibleAssessments.map((a) => (assessmentProgress[a._id.toString()].completed ? 1 : 0)),
-  ]
-
-  const totalItems = shares.length
-  const earned = shares.reduce((sum, share) => sum + share, 0)
-  const completedItems = shares.filter((share) => share >= 1).length
+  // The percentage comes from the completion service, not from a second
+  // calculation here (3.1). Two implementations of "how far through is this
+  // person" is how the progress endpoint and the assignment status came to
+  // disagree in the first place — a learner could read 100% and hold an
+  // ACTIVE assignment, or the reverse. One call, one answer (AT-03).
+  //
+  // Staff previewing a course see draft items in the per-item maps above,
+  // but the headline number is always the learner's: completion is judged on
+  // published content, and a draft lesson must not drag a course to 80% on
+  // the page that says whether it is finished.
+  const summary = summarize(await collectCourseItems(id, targetUserId, { publishedOnly: true }))
 
   return {
-    completionPercent: totalItems ? Math.round((earned / totalItems) * 100) : 0,
-    completedItems,
-    totalItems,
+    completionPercent: summary.completionPercent,
+    completedItems: summary.completedItems,
+    totalItems: summary.totalItems,
     // Kept for the callers that still speak in videos (the sequencing UI, the
     // admin's per-course table).
     completedVideos,

@@ -26,6 +26,7 @@ export const TEMPLATE_TYPES = [
   'COURSE_DEADLINE_APPROACHING',
   'COURSE_EXPIRED',
   'COURSE_COMPLETED',
+  'COURSE_REOPENED',
   'TASK_ASSIGNED',
   'TASK_DEADLINE_APPROACHING',
   'TASK_OVERDUE',
@@ -217,6 +218,25 @@ export const TEMPLATE_SEED = {
       body: 'Well done, {{userName}} — you finished "{{courseTitle}}". Score: {{score}}.',
       push: 'Completed: {{courseTitle}}',
       defaults: { score: 'not scored' },
+    },
+  },
+
+  COURSE_REOPENED: {
+    placeholders: ['userName', 'courseTitle', 'completionPercent', 'appUrl'],
+    uz: {
+      subject: 'Kursga yangi dars qo\'shildi: {{courseTitle}}',
+      body: '"{{courseTitle}}" kursiga yangi majburiy dars qo\'shildi, shuning uchun u yana ochildi. Hozirgi progress: {{completionPercent}}. Ilgari olingan sertifikat kuchida qoladi.',
+      push: 'Yangi dars: {{courseTitle}}',
+    },
+    ru: {
+      subject: 'В курс добавлен новый урок: {{courseTitle}}',
+      body: 'В курс «{{courseTitle}}» добавлен новый обязательный урок, поэтому он снова открыт. Текущий прогресс: {{completionPercent}}. Ранее выданный сертификат остаётся действительным.',
+      push: 'Новый урок: {{courseTitle}}',
+    },
+    en: {
+      subject: 'A lesson was added to {{courseTitle}}',
+      body: '"{{courseTitle}}" has a new required lesson, so it is open again. You are at {{completionPercent}}. A certificate you already have stays valid.',
+      push: 'New lesson: {{courseTitle}}',
     },
   },
 

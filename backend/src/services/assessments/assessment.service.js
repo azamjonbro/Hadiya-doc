@@ -9,6 +9,8 @@ import { faceGateService } from '../face/faceGate.service.js'
 import { auditLogRepository } from '../../repositories/auditLog.repository.js'
 import { pointsService } from '../gamification/points.service.js'
 import { ApiError } from '../../utils/ApiError.js'
+import { courseCompletionService } from '../courses/courseCompletion.service.js'
+import { logger } from '../../config/logger.js'
 
 function canManageCourses(actor) {
   return Boolean(actor.permissions?.includes(PERMISSIONS.COURSE_CREATE))
@@ -127,6 +129,17 @@ async function gradeAndRecord(actor, assessment, answers) {
     scorePercent,
     passed,
     pointsAwarded,
+  })
+
+  // After the attempt is stored, so the evaluation sees it. A pass can be
+  // the last thing a course was waiting for, and a fail can be what stops a
+  // course completing — both are the same call (3.1).
+  await courseCompletionService.evaluate(actor.id, assessment.courseId).catch((error) => {
+    logger.warn('Course completion evaluation failed after an assessment', {
+      userId: actor.id,
+      courseId: String(assessment.courseId),
+      error: error.message,
+    })
   })
 
   return {

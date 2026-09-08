@@ -5,6 +5,8 @@ import { auditLogRepository } from '../../repositories/auditLog.repository.js'
 import { S3StorageProvider } from '../../storage/S3StorageProvider.js'
 import { env } from '../../config/env.js'
 import { ApiError } from '../../utils/ApiError.js'
+import { courseCompletionService } from '../courses/courseCompletion.service.js'
+import { logger } from '../../config/logger.js'
 
 const originalsStorage = new S3StorageProvider(env.S3_BUCKET_ORIGINALS)
 
@@ -82,6 +84,23 @@ export const videoService = {
       entityId: id,
       metadata: { fields: Object.keys(payload) },
     })
+
+    // AT-04: publishing a lesson into a course changes what "finished" means
+    // for everyone already on it, and none of them is making a request at
+    // that moment. Only on the transition into PUBLISHED, and only when the
+    // requirement could actually have changed — re-titling a video must not
+    // walk every learner.
+    const nowPublished = existing.status !== 'PUBLISHED' && updated.status === 'PUBLISHED'
+    const requirementChanged = payload.required !== undefined && payload.required !== existing.required
+    if (nowPublished || requirementChanged) {
+      await courseCompletionService.evaluateCourse(updated.courseId).catch((error) => {
+        logger.warn('Re-evaluating completion after a video change failed', {
+          videoId: id,
+          error: error.message,
+        })
+      })
+    }
+
     return toPublicVideo(updated)
   },
 

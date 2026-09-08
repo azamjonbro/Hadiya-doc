@@ -11,6 +11,7 @@ import { pointsService } from '../services/gamification/points.service.js'
 import { attentionPolicyService } from '../services/courses/attentionPolicy.service.js'
 import { attentionReportService } from '../services/courses/attentionReport.service.js'
 import { notificationService } from '../services/notifications/notification.service.js'
+import { courseCompletionService } from '../services/courses/courseCompletion.service.js'
 import { logger } from '../config/logger.js'
 import { ApiError } from '../utils/ApiError.js'
 
@@ -229,48 +230,23 @@ export async function processVideoEvents({ userId, sessionId, videoId, events, d
     await pointsService.award(userId, videoId, video.courseId, video.points, 'COMPLETION')
   }
 
-  // Finishing the last video in the course is the only place course-level
-  // completion gets decided — nothing else ever flips an assignment out of
-  // ACTIVE, so without this a course can be fully watched and still show as
-  // "in progress" forever.
   if (isNewlyCompleted) {
-    const [courseVideos, courseProgressRows] = await Promise.all([
-      videoRepository.listByCourse(video.courseId),
-      videoProgressRepository.listByUserAndCourse(userId, video.courseId),
-    ])
-    const publishedVideoIds = courseVideos.filter((v) => v.status === 'PUBLISHED').map((v) => v._id.toString())
-    const completedVideoIds = new Set(
-      courseProgressRows.filter((p) => p.completedAt).map((p) => p.videoId.toString())
-    )
-    const allCompleted = publishedVideoIds.length > 0 && publishedVideoIds.every((id) => completedVideoIds.has(id))
-
-    if (allCompleted) {
-      const assignment = await courseAssignmentRepository.findByUserAndCourse(userId, video.courseId)
-      if (assignment && assignment.status === 'ACTIVE') {
-        await courseAssignmentRepository.updateById(assignment._id, { status: 'COMPLETED' })
-        // Inside the ACTIVE check on purpose: the transition happens once,
-        // so the congratulation does too. Re-watching a finished course must
-        // not send it again.
-        try {
-          const course = await courseRepository.findById(video.courseId)
-          await notificationService.notify({
-            userId,
-            type: 'COURSE_COMPLETED',
-            vars: { courseTitle: course?.title ?? '' },
-            relatedEntityType: 'Course',
-            relatedEntityId: String(video.courseId),
-          })
-        } catch (error) {
-          // The completion is already recorded; losing the notification is
-          // strictly better than losing that.
-          logger.warn('Could not send the course-completed notification', {
-            userId: String(userId),
-            courseId: String(video.courseId),
-            error: error.message,
-          })
-        }
-      }
-    }
+    // Completion is not decided here any more (3.1). This block used to
+    // walk the course's videos and flip the assignment when they were all
+    // done — which meant a course of a presentation and a test could never
+    // finish, and a course whose videos were done finished with its
+    // mandatory test failed. One service now answers that for every kind of
+    // content, and this is simply one of the things that can change the
+    // answer.
+    await courseCompletionService.evaluate(userId, video.courseId).catch((error) => {
+      // The watch progress is already recorded; losing the status update is
+      // strictly better than losing that.
+      logger.warn('Course completion evaluation failed after a video event', {
+        userId: String(userId),
+        courseId: String(video.courseId),
+        error: error.message,
+      })
+    })
   }
 
   if (sessionStart && sessionEnd) {

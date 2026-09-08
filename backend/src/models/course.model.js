@@ -7,6 +7,24 @@ const courseSchema = new Schema(
     description: { type: String, default: '' },
     cover: { type: String, default: '' },
     banner: { type: String, default: '' },
+    // What "finished" means for this course.
+    //
+    // Until 3.1 it meant "every published video is complete", decided inside
+    // the video event processor — so a course made of a presentation and a
+    // test could never finish (there were no videos to complete, and the
+    // guard was `publishedVideoIds.length > 0`), while a course whose videos
+    // were done finished even with its mandatory test failed. Both are now
+    // one rule, on the course, evaluated in one place.
+    completionRule: {
+      // The share of the course's items that must be complete. 100 is
+      // "everything"; a lower number lets a course finish on most of it,
+      // which is what a long optional library wants.
+      minPercent: { type: Number, min: 1, max: 100, default: 100 },
+      // Items marked required must be complete whatever minPercent says.
+      // A course can be 90%-to-pass and still insist on the safety test.
+      requireAllRequired: { type: Boolean, default: true },
+    },
+
     status: { type: String, enum: ['DRAFT', 'PUBLISHED', 'ARCHIVED'], default: 'DRAFT' },
     // Empty targetRoles + empty branches + empty department means "no
     // restriction" (visible to everyone) — the default, backward-compatible
