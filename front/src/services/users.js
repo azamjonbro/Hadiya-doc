@@ -16,6 +16,31 @@ export const usersApi = {
     return http.put('/users/me/locale', { locale }).then((r) => r.data.data)
   },
 
+  // Bulk import, in two steps. The dry run parses and validates; the commit
+  // works from what the dry run stored, so what is created is exactly what
+  // was reviewed.
+  importDryRun(file) {
+    const form = new FormData()
+    form.append('file', file)
+    return http.post('/users/import/dry-run', form).then((r) => r.data.data)
+  },
+  importCommit(jobId) {
+    return http.post('/users/import/commit', { jobId }).then((r) => r.data.data)
+  },
+  // Downloaded rather than rendered: the operator fixes the errors in the
+  // same spreadsheet they uploaded, so the report has to be one too.
+  async downloadImportErrors(jobId) {
+    const response = await http.get(`/users/import/${jobId}/errors`, { responseType: 'blob' })
+    const url = URL.createObjectURL(new Blob([response.data]))
+    const link = document.createElement('a')
+    link.href = url
+    link.download = `import-errors-${jobId}.xlsx`
+    document.body.appendChild(link)
+    link.click()
+    link.remove()
+    URL.revokeObjectURL(url)
+  },
+
   learningStats(userId) {
     return http.get(`/users/${userId}/learning-stats`).then((r) => r.data.data)
   },

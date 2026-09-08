@@ -1,10 +1,12 @@
 import { Router } from 'express'
+import multer from 'multer'
 import { PERMISSIONS } from '@lms/shared'
 import { authenticate } from '../../middlewares/auth.middleware.js'
 import { requirePermission, requireSelfOrPermission } from '../../middlewares/rbac.middleware.js'
 import { validateBody, validateQuery } from '../../middlewares/validate.middleware.js'
 import { chatSendRateLimiter } from '../../middlewares/chatRateLimit.middleware.js'
 import { userController } from '../../controllers/user.controller.js'
+import { userImportController } from '../../controllers/userImport.controller.js'
 import {
   createUserSchema,
   updateUserSchema,
@@ -14,11 +16,22 @@ import {
   bulkUserIdsSchema,
   notificationPrefsSchema,
   updateLocaleSchema,
+  importCommitSchema,
 } from '../../validators/user.validator.js'
+import { ApiError } from '../../utils/ApiError.js'
 
 export const usersRouter = Router()
 
 usersRouter.use(authenticate)
+
+// 5 MB holds a few thousand rows of a spreadsheet; anything larger is a
+// different problem than this endpoint solves. In memory rather than on
+// disk: the file holds everyone's identity details and there is no reason
+// for a copy of it to outlive the request.
+const uploadSpreadsheet = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 5 * 1024 * 1024 },
+}).single('file')
 
 usersRouter.get('/me', userController.me)
 
@@ -32,6 +45,30 @@ usersRouter.put(
   userController.updateNotificationPrefs
 )
 usersRouter.put('/me/locale', validateBody(updateLocaleSchema), userController.updateLocale)
+
+// Import is its own permission (§8.2): creating one account and creating
+// three hundred are different decisions, and MANAGER holds the first
+// without the second. Declared before '/:id' like the other literals.
+usersRouter.post(
+  '/import/dry-run',
+  requirePermission(PERMISSIONS.USER_IMPORT),
+  (req, res, next) =>
+    uploadSpreadsheet(req, res, (error) =>
+      error ? next(ApiError.badRequest(error.message, 'IMPORT_UPLOAD_ERROR')) : next()
+    ),
+  userImportController.dryRun
+)
+usersRouter.post(
+  '/import/commit',
+  requirePermission(PERMISSIONS.USER_IMPORT),
+  validateBody(importCommitSchema),
+  userImportController.commit
+)
+usersRouter.get(
+  '/import/:jobId/errors',
+  requirePermission(PERMISSIONS.USER_IMPORT),
+  userImportController.errorReport
+)
 
 usersRouter.get('/', requirePermission(PERMISSIONS.USER_READ), validateQuery(listUsersQuerySchema), userController.list)
 usersRouter.post('/', requirePermission(PERMISSIONS.USER_CREATE), validateBody(createUserSchema), userController.create)

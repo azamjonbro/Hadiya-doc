@@ -1714,5 +1714,41 @@
       "courses": "Kurs",
       "lastSeen": "Oxirgi faollik"
     }
+  },
+  "userImport": {
+    "open": "XLSX import",
+    "title": "Xodimlarni XLSX dan import qilish",
+    "pickHint": "Avval fayl tekshiriladi — hech narsa yozilmaydi. Siz nima bo'lishini ko'rasiz, keyin tasdiqlaysiz.",
+    "columnsRequired": "Majburiy ustunlar: JSHSHIR, Ism, Familiya",
+    "columnsOptional": "Ixtiyoriy: Email, Telefon, Passport, Tabel raqami, Rol, Rahbar (JSHSHIR)",
+    "columnsCurated": "Filial, Bo'lim, Bo'linma va Lavozim ro'yxatlarda mavjud bo'lishi kerak — aks holda xato deb ko'rsatiladi",
+    "check": "Tekshirish",
+    "willCreate": "Yaratiladi",
+    "willUpdate": "Yangilanadi",
+    "errors": "Xato",
+    "reviewHint": "Fayldagi {total} satr o'qildi.",
+    "problems": "Muammoli satrlar",
+    "downloadReport": "Hisobotni yuklab olish",
+    "moreErrors": "va yana {count} ta",
+    "nothingToDo": "Bu fayldan yaratiladigan yoki yangilanadigan hech narsa yo'q.",
+    "commitWarning": "Tasdiqlangandan keyin hisoblar yaratiladi.",
+    "commit": "{count} ta hisob yaratish",
+    "pickAnother": "Boshqa fayl",
+    "done": "{count} ta hisob yaratildi.",
+    "passwordsOnce": "Parollar faqat shu yerda, faqat bir marta ko'rsatiladi. Oynani yopsangiz ularni qayta olib bo'lmaydi — parolni tiklashdan boshqa yo'l qolmaydi.",
+    "someFailed": "Yozib bo'lmagan satrlar",
+    "copyAll": "Hammasini nusxalash",
+    "copied": "Nusxalandi.",
+    "copyFailed": "Nusxalab bo'lmadi.",
+    "dryRunFailed": "Faylni tekshirib bo'lmadi.",
+    "commitFailed": "Import bajarilmadi.",
+    "reportFailed": "Hisobotni yuklab bo'lmadi.",
+    "columns": {
+      "row": "Satr",
+      "field": "Maydon",
+      "problem": "Muammo",
+      "person": "Xodim",
+      "password": "Parol"
+    }
   }
 }

@@ -29,6 +29,7 @@ import UserBulkActionsBar from '@/admin/components/users/UserBulkActionsBar.vue'
 import BulkMessageModal from '@/admin/components/users/BulkMessageModal.vue'
 import BulkGroupCreateModal from '@/admin/components/users/BulkGroupCreateModal.vue'
 import BulkGroupMembersModal from '@/admin/components/users/BulkGroupMembersModal.vue'
+import UserImportWizard from '@/admin/components/users/UserImportWizard.vue'
 import { apiErrorText } from '@/utils/apiError'
 
 const { t, locale } = useI18n()
@@ -83,6 +84,7 @@ const rangeStart = computed(() => (total.value === 0 ? 0 : (page.value - 1) * PA
 const rangeEnd = computed(() => Math.min(page.value * PAGE_SIZE, total.value))
 
 const showCreateModal = ref(false)
+const showImportWizard = ref(false)
 const createSubmitting = ref(false)
 const createError = ref('')
 const BLANK_USER = {
@@ -333,8 +335,22 @@ onMounted(() => {
   <div class="mx-auto max-w-7xl px-6 py-8">
     <div class="flex flex-wrap items-center justify-between gap-3">
       <h1 class="text-h1 text-ink">{{ t('users.title') }}</h1>
-      <AppButton v-if="auth.hasPermission('user:create')" icon="plus" @click="showCreateModal = true">{{ t('users.newUser') }}</AppButton>
+      <div class="flex items-center gap-2">
+        <!-- Its own permission (§8.2): creating one account and creating
+             three hundred are different decisions. -->
+        <AppButton
+          v-if="auth.hasPermission('user:import')"
+          variant="outline"
+          icon="upload"
+          @click="showImportWizard = true"
+        >
+          {{ t('userImport.open') }}
+        </AppButton>
+        <AppButton v-if="auth.hasPermission('user:create')" icon="plus" @click="showCreateModal = true">{{ t('users.newUser') }}</AppButton>
+      </div>
     </div>
+
+    <UserImportWizard v-model="showImportWizard" @imported="loadFirstPage" />
 
     <!-- items-center, not items-end: none of these controls has a label, and
          the button is 4px shorter than the fields, so bottom alignment left

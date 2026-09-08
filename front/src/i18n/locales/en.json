@@ -1714,5 +1714,41 @@
       "courses": "Courses",
       "lastSeen": "Last active"
     }
+  },
+  "userImport": {
+    "open": "Import XLSX",
+    "title": "Import employees from a spreadsheet",
+    "pickHint": "The file is checked first — nothing is written. You see what would happen, then confirm.",
+    "columnsRequired": "Required columns: JSHSHIR, First name, Last name",
+    "columnsOptional": "Optional: Email, Phone, Passport, Employee number, Role, Manager (JSHSHIR)",
+    "columnsCurated": "Branch, Department, Subdivision and Position must already be on their lists — anything else is reported as an error",
+    "check": "Check the file",
+    "willCreate": "Will create",
+    "willUpdate": "Will update",
+    "errors": "Errors",
+    "reviewHint": "{total} rows read from the file.",
+    "problems": "Rows with problems",
+    "downloadReport": "Download the report",
+    "moreErrors": "and {count} more",
+    "nothingToDo": "There is nothing to create or update from this file.",
+    "commitWarning": "Confirming creates the accounts.",
+    "commit": "Create {count} accounts",
+    "pickAnother": "Choose another file",
+    "done": "{count} accounts created.",
+    "passwordsOnce": "These passwords appear here and only once. Close this and they cannot be retrieved — the only way back is a password reset.",
+    "someFailed": "Rows that could not be written",
+    "copyAll": "Copy all",
+    "copied": "Copied.",
+    "copyFailed": "Could not copy.",
+    "dryRunFailed": "The file could not be checked.",
+    "commitFailed": "The import did not run.",
+    "reportFailed": "The report could not be downloaded.",
+    "columns": {
+      "row": "Row",
+      "field": "Field",
+      "problem": "Problem",
+      "person": "Person",
+      "password": "Password"
+    }
   }
 }

@@ -176,3 +176,10 @@ export const notificationPrefsSchema = z.record(
 export const updateLocaleSchema = z.object({
   locale: z.enum(['uz', 'ru', 'en']),
 })
+
+// POST /users/import/commit — the dry run's id, nothing else. The rows are
+// already on the server; sending them again would let the committed list
+// differ from the reviewed one.
+export const importCommitSchema = z.object({
+  jobId: z.string().regex(/^[a-f\d]{24}$/i, 'jobId must be an import id'),
+})
