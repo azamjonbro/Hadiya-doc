@@ -192,13 +192,42 @@
     qilinadi. **EMAIL qismi 1.4 da.** Aniq `title` berilsa u baribir
     ustun — shablon hali ifodalay olmaydigan chaqiruv joylari buzilmasin.
 
-- [ ] **1.3** **Foydalanuvchi sozlamalari**
+- [x] **1.3** **Foydalanuvchi sozlamalari**
   · `models/user.model.js` — `+locale`, `+notificationPrefs`, `+telegramChatId`
   · Migratsiya **M4** (`locale='uz'`, default prefs)
   · `GET|PUT /users/me/notification-prefs`
   · `mandatory` turlar ro'yxati (§9.3)
   · `front/src/views/SettingsView.vue` — bildirishnoma tab'i
   · Qabul: **AT-15, AT-16**
+  · Bajarildi (`63828b2`) — M4 lokalda ishga tushirildi (4 hisob).
+  `PUT /users/me/locale` ham qo'shildi: til brauzerda emas, **hisobda**
+  turishi kerak, chunki bildirishnoma serverda, ko'pincha cron ichida
+  yig'iladi — u yerda brauzer yo'q.
+  · §9.3 ro'yxati `packages/shared/src/notificationPrefs.js` da: ikkala
+  tomonga ham kerak — API o'chirishni rad etadi, sozlamalar ekrani esa
+  o'sha tugmani qulflab ko'rsatishi kerak. Ikkita nusxa bir-biridan
+  uzoqlashardi va bu UI xatosiga o'xshab ko'rinardi.
+  · **AT-16 tekshirildi** — HTTP 400, `MANDATORY_NOTIFICATION`, va hech
+  narsa saqlanmaydi (rad etilgan so'rovning to'g'ri yarmi ham emas).
+  · **AT-15 qisman** — sozlama saqlanadi, kanalni qayta yoqish qatorni
+  o'chiradi (`true` saqlanmaydi), in-app o'chirilsa yetkazilmaydi.
+  **E-mail qismi 1.4 da** — `notify()` hali navbatga qo'ymaydi.
+  · UI brauzerda jonli API bilan tekshirildi: 27 qator, 8 tasi qulfli va
+  o'chirilgan, toggle ikkala yo'nalishda ham bazaga yetib bordi.
+  · Chetlanishlar:
+    1. Sozlamalar **faqat chetlanish** sifatida saqlanadi
+    (`{COURSE_ASSIGNED:{email:false}}`), to'liq matritsa emas — yangi tur
+    qo'shilganda u hamma uchun avtomatik yoqiq bo'ladi.
+    2. **1.2 seed'i §9.3 bilan solishtirildi** (1.2 uni o'qimagan edi):
+    `COMPLIANCE_REASSIGNED` → `COMPLIANCE_RETRAINING_DUE`, va
+    `CERTIFICATE_EXPIRED` + `EVENT_RESCHEDULED` qo'shildi. **25 tur → 27.**
+    Majburiy turda shablon bo'lmasa xat "PASSWORD_RESET" sarlavhasi bilan
+    kelardi. Migratsiya endi tashlab yuborilgan turning qatorlarini ham
+    o'chiradi (qo'lda tahrirlanganini qoldiradi).
+    3. `notify()` endi har bir bildirishnoma uchun qabul qiluvchini o'qiydi
+    (til + sozlama). Bu bulk sikllarda qo'shimcha so'rov — ataylab: muqobili
+    "bu odam e-mail xohlaydimi" degan savolni buni bilishi shart bo'lmagan
+    servislarga tarqatish edi. Kerak bo'lsa yechim `notifyMany()`.
 
 - [ ] **1.4** **`notify()` ni queue'ga ulash**
   · `services/notifications/notification.service.js:22-48` — oxiriga
