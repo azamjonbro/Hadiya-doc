@@ -2,6 +2,7 @@ import crypto from 'node:crypto'
 import jwt from 'jsonwebtoken'
 import ms from 'ms'
 import { env } from '../config/env.js'
+import { resolveRoleScope } from '@lms/shared'
 
 export function generateAccessToken(user, role) {
   return jwt.sign(
@@ -10,6 +11,10 @@ export function generateAccessToken(user, role) {
       roleId: role._id.toString(),
       roleName: role.name,
       permissions: role.permissions,
+      // Carried on the token so scope costs no query per request. An older
+      // token has no `scope`; auth.middleware resolves that from the role
+      // name instead, and narrowly (see resolveRoleScope).
+      scope: resolveRoleScope(role),
     },
     env.JWT_ACCESS_SECRET,
     { expiresIn: env.JWT_ACCESS_TTL }

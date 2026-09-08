@@ -1,4 +1,10 @@
-import { DEFAULT_ROLE_PERMISSIONS, ROLES, ALL_PERMISSIONS } from '@lms/shared'
+import {
+  DEFAULT_ROLE_PERMISSIONS,
+  ROLES,
+  ALL_PERMISSIONS,
+  DEFAULT_ROLE_SCOPES,
+  ROLE_SCOPES,
+} from '@lms/shared'
 import { Role } from '../models/role.model.js'
 import { Permission } from '../models/permission.model.js'
 import { User } from '../models/user.model.js'
@@ -26,7 +32,14 @@ async function seedRoles() {
     // granted a system role by hand must survive a restart.
     const role = await Role.findOneAndUpdate(
       { name },
-      { $setOnInsert: { name, isSystem: true }, $addToSet: { permissions: { $each: permissions } } },
+      {
+        $setOnInsert: { name, isSystem: true },
+        $addToSet: { permissions: { $each: permissions } },
+        // $set, not $setOnInsert: an install that predates 2.2 has roles with
+        // no scope, and leaving them at the schema default would silence
+        // every manager. The seeded roles' scopes are decided in code.
+        $set: { scope: DEFAULT_ROLE_SCOPES[name] ?? ROLE_SCOPES.SELF },
+      },
       { upsert: true, new: true }
     )
     roleIdsByName[name] = role._id

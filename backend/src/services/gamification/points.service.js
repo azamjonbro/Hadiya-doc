@@ -1,9 +1,10 @@
-import { PERMISSIONS, ROLES } from '@lms/shared'
+import { PERMISSIONS } from '@lms/shared'
 import { pointsLedgerRepository } from '../../repositories/pointsLedger.repository.js'
 import { userRepository } from '../../repositories/user.repository.js'
 import { groupRepository } from '../../repositories/group.repository.js'
 import { computeEarnedBadges } from '../../gamification/badgeDefinitions.js'
 import { ApiError } from '../../utils/ApiError.js'
+import { hasUnscopedAccess } from '../access/actorScope.js'
 
 const DAY_MS = 24 * 60 * 60 * 1000
 const PERIOD_DAYS = { week: 7, month: 30, quarter: 90 }
@@ -76,7 +77,7 @@ export const pointsService = {
     if (groupId) {
       const group = await groupRepository.findById(groupId)
       if (!group) throw ApiError.notFound('Group not found')
-      if (actor?.roleName === ROLES.MANAGER) {
+      if (actor && !hasUnscopedAccess(actor)) {
         const actorUser = await userRepository.findById(actor.id)
         if (group.department !== actorUser?.department) {
           throw ApiError.forbidden('Managers can only view groups in their own department', 'DEPARTMENT_SCOPE_FORBIDDEN')
@@ -87,7 +88,7 @@ export const pointsService = {
     } else {
       // A manager's board never reaches outside their own department, the
       // same fence applied to users, tasks and assignments.
-      if (actor?.roleName === ROLES.MANAGER) {
+      if (actor && !hasUnscopedAccess(actor)) {
         const actorUser = await userRepository.findById(actor.id)
         department = actorUser?.department ?? ''
       }

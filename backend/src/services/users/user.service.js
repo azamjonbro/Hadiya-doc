@@ -18,6 +18,7 @@ import { logger } from '../../config/logger.js'
 import { TEMPLATE_TYPES } from '../notifications/notificationTemplates.seed.js'
 import { notificationService } from '../notifications/notification.service.js'
 import { orgHierarchyService } from '../org/orgHierarchy.service.js'
+import { hasUnscopedAccess } from '../access/actorScope.js'
 
 const EMPLOYEE_TIER_ROLES = [ROLES.EMPLOYEE, ROLES.CALL_OPERATOR, ROLES.SELLER]
 
@@ -79,10 +80,11 @@ async function resolveRole(roleName) {
   return role
 }
 
-// A MANAGER may only create/update/deactivate EMPLOYEE-tier accounts within
-// their own department — enforced here, not just hidden in the admin UI.
+// A scoped actor may only create/update/deactivate EMPLOYEE-tier accounts
+// within their own department — enforced here, not just hidden in the admin
+// UI. Keyed on role.scope since 2.2, so a custom role is fenced too.
 async function assertManagerCanManage(actor, role, department) {
-  if (actor.roleName !== ROLES.MANAGER) return
+  if (hasUnscopedAccess(actor)) return
 
   if (!EMPLOYEE_TIER_ROLES.includes(role.name)) {
     throw ApiError.forbidden('Managers can only manage employee-tier accounts', 'ROLE_SCOPE_FORBIDDEN')
@@ -94,7 +96,7 @@ async function assertManagerCanManage(actor, role, department) {
 }
 
 async function assertManagerCanView(actor, department) {
-  if (actor.roleName !== ROLES.MANAGER) return
+  if (hasUnscopedAccess(actor)) return
   const actorUser = await userRepository.findById(actor.id)
   if (department !== actorUser.department) {
     throw ApiError.forbidden('Managers can only view users within their own department', 'DEPARTMENT_SCOPE_FORBIDDEN')
@@ -116,8 +118,7 @@ async function partitionBulkTargets(actor, userIds, { requireActive = false } = 
 
   // A manager is fenced to their own department; loaded once rather than
   // per row, which is what assertManagerCanManage would have done.
-  const actorDepartment =
-    actor.roleName === ROLES.MANAGER ? (await userRepository.findById(actor.id))?.department : null
+  const actorDepartment = hasUnscopedAccess(actor) ? null : (await userRepository.findById(actor.id))?.department
 
   const eligible = []
   const failed = []
@@ -135,7 +136,7 @@ async function partitionBulkTargets(actor, userIds, { requireActive = false } = 
     }
 
     const role = roleById.get(user.roleId.toString())
-    if (actor.roleName === ROLES.MANAGER) {
+    if (!hasUnscopedAccess(actor)) {
       if (!role || !EMPLOYEE_TIER_ROLES.includes(role.name)) {
         failed.push({ id, code: 'ROLE_SCOPE_FORBIDDEN', message: 'Managers can only manage employee-tier accounts' })
         continue
@@ -232,7 +233,7 @@ export const userService = {
     const roleFilter = query.role ? await roleRepository.findByName(query.role) : null
     let department = query.department
 
-    if (actor.roleName === ROLES.MANAGER) {
+    if (!hasUnscopedAccess(actor)) {
       const actorUser = await userRepository.findById(actor.id)
       department = actorUser.department
     }
@@ -283,7 +284,7 @@ export const userService = {
   // offering them any other department here would be a filter that can
   // only ever return nothing.
   async listDepartments(actor) {
-    if (actor.roleName === ROLES.MANAGER) {
+    if (!hasUnscopedAccess(actor)) {
       const actorUser = await userRepository.findById(actor.id)
       return actorUser?.department ? [actorUser.department] : []
     }
@@ -326,7 +327,7 @@ export const userService = {
   // assign inside their own department, so they are offered the job titles
   // that exist there — anything else would resolve to zero recipients.
   async listPositions(actor) {
-    if (actor.roleName === ROLES.MANAGER) {
+    if (!hasUnscopedAccess(actor)) {
       const actorUser = await userRepository.findById(actor.id)
       return actorUser?.department ? userRepository.listPositions({ department: actorUser.department }) : []
     }

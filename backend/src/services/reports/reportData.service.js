@@ -367,13 +367,19 @@ export const reportDataService = {
   // list here. Doing it in this one place is deliberate — each builder already
   // intersects `roleUserIds` with its other filters, so the fence lands on all
   // of them at once and a new report cannot forget to apply it.
-  async build(actor, type, filters = {}, lang = DEFAULT_REPORT_LANG) {
+  //
+  // `scopedUserIds` may be supplied by scopeToManagedUsers.middleware, which
+  // has already computed and cached it for this request. It is an
+  // optimisation, never a requirement: `undefined` means nobody handed one
+  // over and the fence is computed here, so a route that forgets the
+  // middleware is still fenced. `null` is a real answer — no constraint.
+  async build(actor, type, filters = {}, lang = DEFAULT_REPORT_LANG, { scopedUserIds } = {}) {
     const builder = REPORT_BUILDERS[type]
     if (!builder) throw ApiError.badRequest('Unknown report type', 'UNKNOWN_REPORT_TYPE')
 
     const [roleUserIds, scopeUserIds] = await Promise.all([
       filters.role ? resolveRoleUserIds(filters.role) : null,
-      scopedUserIdsFor(actor),
+      scopedUserIds === undefined ? scopedUserIdsFor(actor) : scopedUserIds,
     ])
 
     // Both are "must be one of these" lists, so they combine the same way the

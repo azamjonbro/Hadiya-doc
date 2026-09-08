@@ -1,5 +1,4 @@
 import { Types } from 'mongoose'
-import { ROLES } from '@lms/shared'
 import { taskRepository } from '../../repositories/task.repository.js'
 import { userRepository } from '../../repositories/user.repository.js'
 import { auditLogRepository } from '../../repositories/auditLog.repository.js'
@@ -7,6 +6,7 @@ import { ApiError } from '../../utils/ApiError.js'
 import { notificationService } from '../notifications/notification.service.js'
 import { chatService } from '../chat/chat.service.js'
 import { logger } from '../../config/logger.js'
+import { hasUnscopedAccess } from '../access/actorScope.js'
 
 function toPublicTask(task, assignee) {
   const now = new Date()
@@ -59,7 +59,7 @@ async function resolveRecipients(actor, payload) {
   // the recipients so a later hire can be matched against the same scope
   // instead of a company-wide broadcast reaching them too.
   let department
-  if (actor.roleName === ROLES.MANAGER) {
+  if (!hasUnscopedAccess(actor)) {
     const actorUser = await userRepository.findById(actor.id)
     department = actorUser?.department
     if (!department) {
@@ -83,7 +83,7 @@ async function resolveRecipients(actor, payload) {
 }
 
 async function assertManagerScopeForAssignee(actor, assignedToId) {
-  if (actor.roleName !== ROLES.MANAGER) return
+  if (hasUnscopedAccess(actor)) return
   const [actorUser, targetUser] = await Promise.all([
     userRepository.findById(actor.id),
     userRepository.findById(assignedToId),
@@ -311,7 +311,7 @@ export const taskService = {
     const task = await taskRepository.findById(id)
     if (!task) throw ApiError.notFound('Task not found')
     const isParty = task.assignedTo.toString() === actor.id || task.assignedBy.toString() === actor.id
-    if (!isParty && actor.roleName !== ROLES.MANAGER) {
+    if (!isParty && !hasUnscopedAccess(actor)) {
       throw ApiError.forbidden()
     }
     return toPublicTask(task)

@@ -1,4 +1,10 @@
-import { DEFAULT_ROLE_PERMISSIONS, ROLES, SYSTEM_ROLE_NAMES } from '@lms/shared'
+import {
+  DEFAULT_ROLE_PERMISSIONS,
+  ROLES,
+  SYSTEM_ROLE_NAMES,
+  ROLE_SCOPES,
+  resolveRoleScope,
+} from '@lms/shared'
 import { Role } from '../../models/role.model.js'
 import { User } from '../../models/user.model.js'
 import { auditLogRepository } from '../../repositories/auditLog.repository.js'
@@ -24,12 +30,16 @@ export const roleService = {
     return roles.map((role) => ({
       id: role._id.toString(),
       name: role.name,
+      // resolveRoleScope, not role.scope: a document written before 2.2 has
+      // no field, and the resolver reads that as narrowly as the name allows
+      // rather than as ALL.
+      scope: resolveRoleScope(role),
       isSystem: role.isSystem || SYSTEM_ROLE_NAMES.includes(role.name),
       users: usersByRoleId.get(role._id.toString()) ?? 0,
     }))
   },
 
-  async create(actor, name) {
+  async create(actor, name, scope = ROLE_SCOPES.SELF) {
     // Role names are the uppercase keys the RBAC layer compares, so normalise
     // here rather than trusting the form to have done it.
     const normalized = name.trim().toUpperCase().replace(/\s+/g, '_')
@@ -43,16 +53,21 @@ export const roleService = {
     const existing = await Role.findOne({ name: normalized })
     if (existing) throw ApiError.conflict('A role with this name already exists', 'ROLE_EXISTS')
 
-    const role = await Role.create({ name: normalized, permissions: NEW_ROLE_PERMISSIONS, isSystem: false })
+    const role = await Role.create({
+      name: normalized,
+      permissions: NEW_ROLE_PERMISSIONS,
+      scope,
+      isSystem: false,
+    })
     await auditLogRepository.record({
       actor: actor.id,
       action: 'ROLE_CREATED',
       entity: 'Role',
       entityId: role._id.toString(),
-      metadata: { name: normalized },
+      metadata: { name: normalized, scope },
     })
 
-    return { id: role._id.toString(), name: role.name, isSystem: false, users: 0 }
+    return { id: role._id.toString(), name: role.name, scope: role.scope, isSystem: false, users: 0 }
   },
 
   async remove(actor, id) {

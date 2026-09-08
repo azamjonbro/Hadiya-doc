@@ -23,7 +23,9 @@ export const reportController = {
     // start arriving with mangled names.
     const title = t(`type.${type}`, type)
 
-    const { columns, rows } = await reportDataService.build(req.user, type, filters, lang)
+    const { columns, rows } = await reportDataService.build(req.user, type, filters, lang, {
+      scopedUserIds: req.scopedUserIds,
+    })
 
     // An export leaves the system with employee data in it, so it is recorded
     // the way every other write is. Without this there was no way to answer

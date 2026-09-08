@@ -1,4 +1,3 @@
-import { ROLES } from '@lms/shared'
 import { courseAssignmentRepository } from '../../repositories/courseAssignment.repository.js'
 import { courseRepository } from '../../repositories/course.repository.js'
 import { userRepository } from '../../repositories/user.repository.js'
@@ -8,6 +7,7 @@ import { computeAccessFlags } from './courseAssignmentAccess.js'
 import { notificationService } from '../notifications/notification.service.js'
 import { isCourseVisibleToActor } from './courseVisibility.js'
 import { formatNotificationDate } from '../../utils/notificationFormat.js'
+import { hasUnscopedAccess } from '../access/actorScope.js'
 
 function toPublicAssignment(assignment) {
   return {
@@ -26,7 +26,7 @@ function toPublicAssignment(assignment) {
 }
 
 async function assertManagerScopeForUser(actor, targetUserId) {
-  if (actor.roleName !== ROLES.MANAGER) return
+  if (hasUnscopedAccess(actor)) return
   const [actorUser, targetUser] = await Promise.all([
     userRepository.findById(actor.id),
     userRepository.findById(targetUserId),
@@ -136,7 +136,7 @@ export const courseAssignmentService = {
     const course = await courseRepository.findById(courseId)
     if (!course) throw ApiError.notFound('Course not found')
     const rows = await courseAssignmentRepository.listByCourse(courseId)
-    const scoped = actor.roleName === ROLES.MANAGER ? await filterToManagerDepartment(actor, rows) : rows
+    const scoped = hasUnscopedAccess(actor) ? rows : await filterToManagerDepartment(actor, rows)
     return scoped.map(toPublicAssignment)
   },
 

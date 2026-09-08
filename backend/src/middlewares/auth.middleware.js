@@ -1,5 +1,6 @@
 import { verifyAccessToken } from '../utils/tokens.js'
 import { ApiError } from '../utils/ApiError.js'
+import { resolveRoleScope } from '@lms/shared'
 
 export function authenticate(req, res, next) {
   const header = req.headers.authorization ?? ''
@@ -17,6 +18,10 @@ export function authenticate(req, res, next) {
       roleId: payload.roleId,
       roleName: payload.roleName,
       permissions: payload.permissions,
+      // A token issued before 2.2 carries no scope. Resolved from the role
+      // name rather than defaulted to ALL: for the fifteen minutes those
+      // tokens stay valid, an unknown role has to read as narrow, not wide.
+      scope: payload.scope ?? resolveRoleScope(payload.roleName),
     }
     next()
   } catch {

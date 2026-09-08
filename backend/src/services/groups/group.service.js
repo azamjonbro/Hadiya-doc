@@ -1,4 +1,3 @@
-import { ROLES } from '@lms/shared'
 import { groupRepository } from '../../repositories/group.repository.js'
 import { userRepository } from '../../repositories/user.repository.js'
 import { courseRepository } from '../../repositories/course.repository.js'
@@ -8,6 +7,7 @@ import { notificationService } from '../notifications/notification.service.js'
 import { ApiError } from '../../utils/ApiError.js'
 import { logger } from '../../config/logger.js'
 import { formatNotificationDate } from '../../utils/notificationFormat.js'
+import { hasUnscopedAccess } from '../access/actorScope.js'
 
 function toPublicGroup(group) {
   return {
@@ -56,14 +56,14 @@ async function actorDepartment(actor) {
 // the same department fence the rest of the admin app applies to users,
 // assignments and tasks.
 async function assertManagerScopeForGroup(actor, group) {
-  if (actor.roleName !== ROLES.MANAGER) return
+  if (hasUnscopedAccess(actor)) return
   if (group.department !== (await actorDepartment(actor))) {
     throw ApiError.forbidden('Managers can only manage groups in their own department', 'DEPARTMENT_SCOPE_FORBIDDEN')
   }
 }
 
 async function assertManagerScopeForUsers(actor, users) {
-  if (actor.roleName !== ROLES.MANAGER) return
+  if (hasUnscopedAccess(actor)) return
   const department = await actorDepartment(actor)
   const outsider = users.find((user) => user.department !== department)
   if (outsider) {
@@ -126,7 +126,7 @@ async function notifyEnrolments(rows) {
 
 export const groupService = {
   async list(actor, query = {}) {
-    const department = actor.roleName === ROLES.MANAGER ? await actorDepartment(actor) : query.department
+    const department = hasUnscopedAccess(actor) ? query.department : await actorDepartment(actor)
     const groups = await groupRepository.listAll({ search: query.search, department })
     return groups.map(toPublicGroup)
   },
@@ -149,7 +149,7 @@ export const groupService = {
 
   async create(actor, payload) {
     const department =
-      actor.roleName === ROLES.MANAGER ? await actorDepartment(actor) : payload.department ?? ''
+      hasUnscopedAccess(actor) ? payload.department ?? '' : await actorDepartment(actor)
 
     let group
     try {
@@ -193,7 +193,7 @@ export const groupService = {
     if (payload.name !== undefined) updateData.name = payload.name
     if (payload.description !== undefined) updateData.description = payload.description
     // A manager can't move a group out of their own department.
-    if (payload.department !== undefined && actor.roleName !== ROLES.MANAGER) {
+    if (payload.department !== undefined && hasUnscopedAccess(actor)) {
       updateData.department = payload.department
     }
 
