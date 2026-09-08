@@ -1,4 +1,10 @@
-import { ROLES, composeFullName } from '@lms/shared'
+import {
+  ROLES,
+  composeFullName,
+  MANDATORY_NOTIFICATION_TYPES,
+  isMandatoryNotificationType,
+  resolveNotificationPrefs,
+} from '@lms/shared'
 import { userRepository } from '../../repositories/user.repository.js'
 import { courseRepository } from '../../repositories/course.repository.js'
 import { roleRepository } from '../../repositories/role.repository.js'
@@ -9,6 +15,7 @@ import { courseAssignmentService } from '../courses/courseAssignment.service.js'
 import { chatService } from '../chat/chat.service.js'
 import { taskService } from '../tasks/task.service.js'
 import { logger } from '../../config/logger.js'
+import { TEMPLATE_TYPES } from '../notifications/notificationTemplates.seed.js'
 
 const EMPLOYEE_TIER_ROLES = [ROLES.EMPLOYEE, ROLES.CALL_OPERATOR, ROLES.SELLER]
 
@@ -156,6 +163,69 @@ async function partitionBulkTargets(actor, userIds, { requireActive = false } = 
 }
 
 export const userService = {
+  /**
+   * The settings screen's view of notification preferences: every type the
+   * platform can send, expanded from the sparse stored deviations, with the
+   * mandatory ones flagged so the UI can lock them with an explanation
+   * instead of letting someone flip a toggle and collect a 400.
+   */
+  async getNotificationPrefs(actor) {
+    const user = await userRepository.findById(actor.id)
+    if (!user) throw ApiError.notFound('User not found')
+    return {
+      locale: user.locale ?? 'uz',
+      mandatoryTypes: MANDATORY_NOTIFICATION_TYPES,
+      prefs: resolveNotificationPrefs(user.notificationPrefs ?? {}, TEMPLATE_TYPES),
+    }
+  },
+
+  /**
+   * Replaces the stored deviations.
+   *
+   * Two rules, both here rather than in the zod schema because they are
+   * domain rules:
+   *
+   * - A mandatory type may not be switched off on any channel (§9.3). It
+   *   answers 400 MANDATORY_NOTIFICATION, and nothing at all is saved — a
+   *   partial save would leave the user believing the rest went through.
+   * - `true` is pruned. Storage holds deviations from "everything on", so
+   *   writing an explicit true is how a channel is turned back on, and
+   *   keeping it would slowly rebuild the full matrix this design avoids.
+   */
+  async updateNotificationPrefs(actor, incoming) {
+    for (const [type, channels] of Object.entries(incoming)) {
+      if (!isMandatoryNotificationType(type)) continue
+      const offChannel = Object.entries(channels).find(([, enabled]) => enabled === false)
+      if (offChannel) {
+        throw ApiError.badRequest(
+          `${type} cannot be switched off — it is required for account access, security or compliance`,
+          'MANDATORY_NOTIFICATION'
+        )
+      }
+    }
+
+    const stored = {}
+    for (const [type, channels] of Object.entries(incoming)) {
+      const off = Object.fromEntries(Object.entries(channels).filter(([, enabled]) => enabled === false))
+      if (Object.keys(off).length) stored[type] = off
+    }
+
+    const user = await userRepository.updateById(actor.id, { notificationPrefs: stored })
+    if (!user) throw ApiError.notFound('User not found')
+    return {
+      locale: user.locale ?? 'uz',
+      mandatoryTypes: MANDATORY_NOTIFICATION_TYPES,
+      prefs: resolveNotificationPrefs(stored, TEMPLATE_TYPES),
+    }
+  },
+
+  /** The language this person is written to in — notifications and mail. */
+  async updateLocale(actor, locale) {
+    const user = await userRepository.updateById(actor.id, { locale })
+    if (!user) throw ApiError.notFound('User not found')
+    return { locale: user.locale }
+  },
+
   async list(actor, query) {
     const roleFilter = query.role ? await roleRepository.findByName(query.role) : null
     let department = query.department

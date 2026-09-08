@@ -675,6 +675,7 @@
     "tabs": {
       "profile": "Profile",
       "activity": "Activity",
+      "notifications": "Notifications",
       "preferences": "Preferences"
     },
     "sections": {
@@ -702,6 +703,49 @@
       "backToUser": "Back to user panel",
       "userTitle": "Employee panel",
       "userHint": "Back to the ordinary view — courses, tasks, news. The session stays as it is."
+    },
+    "notifications": {
+      "title": "Notifications",
+      "hint": "Choose which events reach you, and through which channel. Locked rows cannot be switched off.",
+      "event": "Event",
+      "mandatory": "This type cannot be switched off: account access, security or a compliance requirement.",
+      "channels": {
+        "inApp": "In-app",
+        "email": "Email",
+        "push": "Push"
+      },
+      "loadFailed": "Could not load your settings.",
+      "saveFailed": "The setting was not saved.",
+      "localeSaveFailed": "Language not saved — notifications may still arrive in the previous language.",
+      "types": {
+        "ACCOUNT_CREATED": "Account created",
+        "PASSWORD_RESET": "Password reset",
+        "PASSWORD_CHANGED": "Password changed",
+        "LOGIN_FROM_NEW_DEVICE": "Sign-in from a new device",
+        "COURSE_ASSIGNED": "Course assigned",
+        "COURSE_DEADLINE_APPROACHING": "Course deadline approaching",
+        "COURSE_EXPIRED": "Course expired",
+        "COURSE_COMPLETED": "Course completed",
+        "TASK_ASSIGNED": "Task assigned",
+        "TASK_DEADLINE_APPROACHING": "Task deadline approaching",
+        "TASK_OVERDUE": "Task overdue",
+        "TASK_STATUS_CHANGED": "Task status changed",
+        "QUIZ_ASSIGNED": "Quiz assigned",
+        "QUIZ_PASSED": "Quiz passed",
+        "QUIZ_FAILED": "Quiz not passed",
+        "NEWS_PUBLISHED": "News published",
+        "CERTIFICATE_ISSUED": "Certificate issued",
+        "CERTIFICATE_EXPIRING": "Certificate expiring",
+        "CERTIFICATE_EXPIRED": "Certificate expired",
+        "EVENT_INVITATION": "Event invitation",
+        "EVENT_REMINDER": "Event reminder",
+        "EVENT_CANCELLED": "Event cancelled",
+        "EVENT_RESCHEDULED": "Event rescheduled",
+        "PATH_ASSIGNED": "Learning path assigned",
+        "COMPLIANCE_RETRAINING_DUE": "Mandatory retraining",
+        "ATTENTION_ALERT": "Low attention",
+        "PROCTORING_FOREIGN_FACE": "Proctoring alert"
+      }
     }
   },
   "reviews": {

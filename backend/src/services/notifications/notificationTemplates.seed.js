@@ -36,11 +36,13 @@ export const TEMPLATE_TYPES = [
   'NEWS_PUBLISHED',
   'CERTIFICATE_ISSUED',
   'CERTIFICATE_EXPIRING',
+  'CERTIFICATE_EXPIRED',
   'EVENT_INVITATION',
   'EVENT_REMINDER',
   'EVENT_CANCELLED',
+  'EVENT_RESCHEDULED',
   'PATH_ASSIGNED',
-  'COMPLIANCE_REASSIGNED',
+  'COMPLIANCE_RETRAINING_DUE',
   'ATTENTION_ALERT',
   'PROCTORING_FOREIGN_FACE',
 ]
@@ -426,6 +428,25 @@ export const TEMPLATE_SEED = {
     },
   },
 
+  CERTIFICATE_EXPIRED: {
+    placeholders: ['userName', 'courseTitle', 'certificateNumber', 'validUntil', 'appUrl'],
+    uz: {
+      subject: 'Sertifikat muddati tugadi: {{courseTitle}}',
+      body: '"{{courseTitle}}" sertifikatining ({{certificateNumber}}) muddati {{validUntil}} da tugadi. Amaldagi sertifikat talab qilinadigan ishlarga qayta o\'qimasdan qo\'yilmaysiz.',
+      push: 'Sertifikat muddati tugadi: {{courseTitle}}',
+    },
+    ru: {
+      subject: 'Сертификат истёк: {{courseTitle}}',
+      body: 'Сертификат № {{certificateNumber}} по курсу «{{courseTitle}}» истёк {{validUntil}}. К работам, требующим действующего сертификата, без переобучения не допускают.',
+      push: 'Сертификат истёк: {{courseTitle}}',
+    },
+    en: {
+      subject: 'Certificate expired: {{courseTitle}}',
+      body: 'Certificate {{certificateNumber}} for "{{courseTitle}}" expired on {{validUntil}}. Work requiring a valid certificate is not permitted until you retrain.',
+      push: 'Certificate expired: {{courseTitle}}',
+    },
+  },
+
   EVENT_INVITATION: {
     placeholders: ['userName', 'eventTitle', 'startsAt', 'location', 'appUrl'],
     uz: {
@@ -492,6 +513,28 @@ export const TEMPLATE_SEED = {
     },
   },
 
+  EVENT_RESCHEDULED: {
+    placeholders: ['userName', 'eventTitle', 'startsAt', 'previousStartsAt', 'location', 'appUrl'],
+    uz: {
+      subject: 'Tadbir vaqti o\'zgardi: {{eventTitle}}',
+      body: '"{{eventTitle}}" tadbiri {{previousStartsAt}} dan {{startsAt}} ga ko\'chirildi. Joyi: {{location}}.',
+      push: 'Yangi vaqt: {{eventTitle}} — {{startsAt}}',
+      defaults: { location: 'keyinroq e\'lon qilinadi', previousStartsAt: 'oldingi vaqt' },
+    },
+    ru: {
+      subject: 'Мероприятие перенесено: {{eventTitle}}',
+      body: '«{{eventTitle}}» перенесено с {{previousStartsAt}} на {{startsAt}}. Место: {{location}}.',
+      push: 'Новое время: {{eventTitle}} — {{startsAt}}',
+      defaults: { location: 'будет объявлено позже', previousStartsAt: 'прежнего времени' },
+    },
+    en: {
+      subject: 'Event rescheduled: {{eventTitle}}',
+      body: '"{{eventTitle}}" has moved from {{previousStartsAt}} to {{startsAt}}. Location: {{location}}.',
+      push: 'New time: {{eventTitle}} — {{startsAt}}',
+      defaults: { location: 'to be announced', previousStartsAt: 'its previous time' },
+    },
+  },
+
   PATH_ASSIGNED: {
     placeholders: ['userName', 'pathTitle', 'courseCount', 'deadline', 'appUrl'],
     uz: {
@@ -514,7 +557,7 @@ export const TEMPLATE_SEED = {
     },
   },
 
-  COMPLIANCE_REASSIGNED: {
+  COMPLIANCE_RETRAINING_DUE: {
     placeholders: ['userName', 'courseTitle', 'deadline', 'periodLabel', 'appUrl'],
     uz: {
       subject: 'Majburiy qayta o\'qish: {{courseTitle}}',

@@ -675,6 +675,7 @@
     "tabs": {
       "profile": "Profil",
       "activity": "Faollik",
+      "notifications": "Bildirishnomalar",
       "preferences": "Ko'rinish"
     },
     "sections": {
@@ -702,6 +703,49 @@
       "backToUser": "User paneliga o'tish",
       "userTitle": "Xodim paneli",
       "userHint": "Oddiy foydalanuvchi ko'rinishiga qaytasiz — kurslar, vazifalar, yangiliklar. Sessiya o'zgarmaydi."
+    },
+    "notifications": {
+      "title": "Bildirishnomalar",
+      "hint": "Qaysi hodisa haqida qaysi kanal orqali xabar olishni tanlang. Qulfli qatorlarni o'chirib bo'lmaydi.",
+      "event": "Hodisa",
+      "mandatory": "Bu turni o'chirib bo'lmaydi: hisobga kirish, xavfsizlik yoki majburiy talab.",
+      "channels": {
+        "inApp": "Ilovada",
+        "email": "E-mail",
+        "push": "Push"
+      },
+      "loadFailed": "Sozlamalarni yuklab bo'lmadi.",
+      "saveFailed": "Sozlama saqlanmadi.",
+      "localeSaveFailed": "Til saqlanmadi — bildirishnomalar eski tilda kelishi mumkin.",
+      "types": {
+        "ACCOUNT_CREATED": "Hisob yaratildi",
+        "PASSWORD_RESET": "Parolni tiklash",
+        "PASSWORD_CHANGED": "Parol o'zgartirildi",
+        "LOGIN_FROM_NEW_DEVICE": "Yangi qurilmadan kirish",
+        "COURSE_ASSIGNED": "Kurs biriktirildi",
+        "COURSE_DEADLINE_APPROACHING": "Kurs muddati yaqinlashdi",
+        "COURSE_EXPIRED": "Kurs muddati tugadi",
+        "COURSE_COMPLETED": "Kurs tugallandi",
+        "TASK_ASSIGNED": "Vazifa berildi",
+        "TASK_DEADLINE_APPROACHING": "Vazifa muddati yaqinlashdi",
+        "TASK_OVERDUE": "Vazifa muddati o'tdi",
+        "TASK_STATUS_CHANGED": "Vazifa holati o'zgardi",
+        "QUIZ_ASSIGNED": "Test tayinlandi",
+        "QUIZ_PASSED": "Test topshirildi",
+        "QUIZ_FAILED": "Test topshirilmadi",
+        "NEWS_PUBLISHED": "Yangilik chiqdi",
+        "CERTIFICATE_ISSUED": "Sertifikat berildi",
+        "CERTIFICATE_EXPIRING": "Sertifikat muddati tugayapti",
+        "CERTIFICATE_EXPIRED": "Sertifikat muddati tugadi",
+        "EVENT_INVITATION": "Tadbirga taklif",
+        "EVENT_REMINDER": "Tadbir eslatmasi",
+        "EVENT_CANCELLED": "Tadbir bekor qilindi",
+        "EVENT_RESCHEDULED": "Tadbir vaqti o'zgardi",
+        "PATH_ASSIGNED": "O'quv yo'li tayinlandi",
+        "COMPLIANCE_RETRAINING_DUE": "Majburiy qayta o'qish",
+        "ATTENTION_ALERT": "Diqqat pasaydi",
+        "PROCTORING_FOREIGN_FACE": "Proctoring ogohlantirishi"
+      }
     }
   },
   "reviews": {

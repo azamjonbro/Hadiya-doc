@@ -49,6 +49,35 @@ const userSchema = new Schema(
     lockedUntil: { type: Date, default: null },
     passwordResetTokenHash: { type: String, default: null },
     passwordResetExpiresAt: { type: Date, default: null },
+
+    // Which language this person is written to in. Separate from whatever
+    // the browser is set to: a notification is composed on the server, often
+    // hours later by a cron job with no browser anywhere in sight.
+    locale: { type: String, enum: ['uz', 'ru', 'en'], default: 'uz' },
+
+    // Only the channels this person has actually switched off, keyed by
+    // notification type: { COURSE_ASSIGNED: { email: false } }.
+    //
+    // Not a full matrix of every type × channel. That would be rows that all
+    // say the same thing, and it goes stale the moment a type is added —
+    // every existing user would be missing the new row and the code would
+    // have to guess whether missing means on or off. Storing deviations makes
+    // a new type default to on for everyone, which is what we want. See
+    // isChannelEnabled in @lms/shared.
+    // Mixed rather than a Map-of-Maps: Mongoose does not nest Maps cleanly,
+    // and the shape is validated where it is written (the zod schema on
+    // PUT /users/me/notification-prefs) rather than by the ODM.
+    //
+    // An empty object is stripped on save (Mongoose's `minimize`), so a
+    // fresh account has no field at all while a migrated one has `{}`. Both
+    // mean the same thing and every reader goes through isChannelEnabled,
+    // which treats absent as "nothing switched off" — the design already
+    // depends on that, so the two states are not worth reconciling.
+    notificationPrefs: { type: Schema.Types.Mixed, default: () => ({}) },
+
+    // Set when the employee links their Telegram account (1.8). Null means
+    // not linked, which is the only state that exists until then.
+    telegramChatId: { type: String, default: null },
   },
   { timestamps: true }
 )

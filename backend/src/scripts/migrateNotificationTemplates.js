@@ -189,6 +189,28 @@ async function main() {
     console.log('Nothing to do')
   }
 
+  // Rows for a type the seed no longer has — left behind by a rename, which
+  // is how COMPLIANCE_REASSIGNED became COMPLIANCE_RETRAINING_DUE. Reported
+  // always; removed only when nobody has edited them, because a customized
+  // orphan is somebody's work and deleting it silently is not this script's
+  // decision to make.
+  const orphans = await NotificationTemplate.find({ type: { $nin: TEMPLATE_TYPES } }, { type: 1, customized: 1 }).lean()
+  if (orphans.length) {
+    const types = [...new Set(orphans.map((row) => row.type))]
+    const editedTypes = [...new Set(orphans.filter((row) => row.customized).map((row) => row.type))]
+    console.log(`${orphans.length} row(s) for retired type(s): ${types.join(', ')}`)
+    if (!dryRun) {
+      const removable = orphans.filter((row) => !row.customized).map((row) => row._id)
+      if (removable.length) {
+        await NotificationTemplate.deleteMany({ _id: { $in: removable } })
+        console.log(`Removed ${removable.length} unedited orphan row(s)`)
+      }
+    }
+    if (editedTypes.length) {
+      console.log(`Kept (edited by hand — delete by hand if they are truly gone): ${editedTypes.join(', ')}`)
+    }
+  }
+
   const total = await NotificationTemplate.countDocuments()
   console.log(`Templates in the database: ${total}`)
 

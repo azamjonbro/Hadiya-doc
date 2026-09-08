@@ -5,6 +5,9 @@ import { useAuthStore } from '@/stores/auth'
 import { useThemeStore } from '@/stores/theme'
 import { setLocale, availableLocales } from '@/i18n'
 import { gamificationApi } from '@/services/gamification'
+import { usersApi } from '@/services/users'
+import { useToast } from '@/composables/useToast'
+import { apiErrorText } from '@/utils/apiError'
 import { BADGE_ICONS } from '@/gamification/badgeIcons'
 import AppCard from '@/components/ui/AppCard.vue'
 import PanelSwitchCard from '@/components/ui/PanelSwitchCard.vue'
@@ -12,22 +15,96 @@ import AppSelect from '@/components/ui/AppSelect.vue'
 import Avatar from '@/components/ui/Avatar.vue'
 import Icon from '@/components/ui/Icon.vue'
 import Tabs from '@/components/ui/Tabs.vue'
+import Skeleton from '@/components/ui/Skeleton.vue'
+import AppButton from '@/components/ui/AppButton.vue'
 
 const { t, locale } = useI18n()
 const auth = useAuthStore()
 const theme = useThemeStore()
+const toast = useToast()
 
 const activeTab = ref('profile')
 const tabs = computed(() => [
   { value: 'profile', label: t('settings.tabs.profile') },
   { value: 'activity', label: t('settings.tabs.activity') },
+  { value: 'notifications', label: t('settings.tabs.notifications') },
   { value: 'preferences', label: t('settings.tabs.preferences') },
 ])
 
 const languageOptions = computed(() => availableLocales.map((code) => ({ value: code, label: t(`locales.${code}`) })))
 
-function onLocaleChange(code) {
+// Two things happen here, and they are genuinely separate. setLocale changes
+// the language of the page in front of the reader. The API call changes the
+// language their *notifications* are written in — those are composed on the
+// server, often hours later by a cron job, where no browser exists to ask.
+async function onLocaleChange(code) {
   setLocale(code)
+  try {
+    await usersApi.updateLocale(code)
+  } catch (error) {
+    // The page is already translated; only the server-side half failed.
+    toast.error(apiErrorText(error, t('settings.notifications.localeSaveFailed')))
+  }
+}
+
+// ---- notification preferences ----
+
+const CHANNELS = ['inApp', 'email', 'push']
+
+const prefs = ref(null)
+const prefsLoading = ref(false)
+const prefsError = ref(false)
+const savingKey = ref('')
+
+async function loadPrefs() {
+  prefsLoading.value = true
+  prefsError.value = false
+  try {
+    prefs.value = await usersApi.notificationPrefs()
+  } catch {
+    prefsError.value = true
+  } finally {
+    prefsLoading.value = false
+  }
+}
+
+// Types in the order the server sent them — grouped by domain in the seed,
+// which reads better than alphabetical.
+const prefRows = computed(() =>
+  Object.entries(prefs.value?.prefs ?? {}).map(([type, channels]) => ({ type, ...channels }))
+)
+
+/**
+ * Sends the whole picture, not just the toggle that changed.
+ *
+ * The endpoint replaces the stored deviations rather than merging them, so a
+ * partial body would silently switch everything else back on. The server
+ * prunes the `true` entries itself.
+ */
+async function toggleChannel(row, channel) {
+  if (row.mandatory) return
+  const key = `${row.type}.${channel}`
+  savingKey.value = key
+  const next = Object.fromEntries(
+    prefRows.value
+      .filter((entry) => !entry.mandatory)
+      .map((entry) => [
+        entry.type,
+        Object.fromEntries(
+          CHANNELS.map((name) => [
+            name,
+            entry.type === row.type && name === channel ? !entry[name] : entry[name],
+          ])
+        ),
+      ])
+  )
+  try {
+    prefs.value = await usersApi.updateNotificationPrefs(next)
+  } catch (error) {
+    toast.error(apiErrorText(error, t('settings.notifications.saveFailed')))
+  } finally {
+    savingKey.value = ''
+  }
 }
 
 const gamification = ref(null)
@@ -40,7 +117,10 @@ async function loadGamification() {
   }
 }
 
-onMounted(loadGamification)
+onMounted(() => {
+  loadGamification()
+  loadPrefs()
+})
 </script>
 
 <template>
@@ -100,6 +180,59 @@ onMounted(loadGamification)
             </span>
           </div>
           <p v-else class="mt-3 text-small text-ink-faint">{{ t('gamification.noBadgesYet') }}</p>
+        </AppCard>
+      </template>
+
+      <template v-else-if="activeTab === 'notifications'">
+        <AppCard>
+          <h2 class="text-small font-semibold text-ink">{{ t('settings.notifications.title') }}</h2>
+          <p class="mt-1 text-small text-ink-muted">{{ t('settings.notifications.hint') }}</p>
+
+          <Skeleton v-if="prefsLoading" class="mt-4 h-40 w-full" />
+          <div v-else-if="prefsError" class="mt-4 flex items-center justify-between gap-3 rounded-md border border-border bg-surface-2 px-3 py-2">
+            <span class="text-small text-ink-muted">{{ t('settings.notifications.loadFailed') }}</span>
+            <AppButton size="sm" variant="ghost" @click="loadPrefs">{{ t('common.retry') }}</AppButton>
+          </div>
+
+          <div v-else class="mt-4 overflow-x-auto">
+            <table class="w-full min-w-[26rem] border-collapse text-small">
+              <thead>
+                <tr class="border-b border-border text-ink-muted">
+                  <th class="py-2 pr-3 text-left font-medium">{{ t('settings.notifications.event') }}</th>
+                  <th v-for="channel in CHANNELS" :key="channel" class="w-20 py-2 text-center font-medium">
+                    {{ t(`settings.notifications.channels.${channel}`) }}
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="row in prefRows" :key="row.type" class="border-b border-border/60 last:border-0">
+                  <td class="py-2 pr-3 text-ink">
+                    <span>{{ t(`settings.notifications.types.${row.type}`) }}</span>
+                    <!-- Locked rather than hidden: someone who wonders why they
+                         keep getting password-reset mail deserves the answer
+                         on the same screen, not a 400 after clicking. -->
+                    <Icon
+                      v-if="row.mandatory"
+                      name="lock"
+                      class="ml-1.5 inline h-3.5 w-3.5 align-text-bottom text-ink-faint"
+                      :aria-label="t('settings.notifications.mandatory')"
+                    />
+                  </td>
+                  <td v-for="channel in CHANNELS" :key="channel" class="py-2 text-center">
+                    <input
+                      type="checkbox"
+                      class="h-4 w-4 cursor-pointer accent-primary disabled:cursor-not-allowed disabled:opacity-40"
+                      :checked="row[channel]"
+                      :disabled="row.mandatory || savingKey === `${row.type}.${channel}`"
+                      :title="row.mandatory ? t('settings.notifications.mandatory') : ''"
+                      :aria-label="`${t(`settings.notifications.types.${row.type}`)} — ${t(`settings.notifications.channels.${channel}`)}`"
+                      @change="toggleChannel(row, channel)"
+                    />
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
         </AppCard>
       </template>
 

@@ -27,6 +27,7 @@ import {
   TEMPLATE_SEED,
   TEMPLATE_TYPES,
 } from '../src/services/notifications/notificationTemplates.seed.js'
+import { MANDATORY_NOTIFICATION_TYPES } from '@lms/shared'
 import {
   validateSeed,
   buildAllRows,
@@ -49,10 +50,22 @@ describe('the seed itself', () => {
     assert.deepEqual(validateSeed(), [])
   })
 
-  test('25 types × 3 languages × 3 channels', () => {
-    assert.equal(TEMPLATE_TYPES.length, 25)
+  test('every type is expanded across all languages and channels', () => {
+    // Derived rather than a hardcoded 225: the type list grows (1.3 added
+    // CERTIFICATE_EXPIRED and EVENT_RESCHEDULED for §9.3), and a count that
+    // has to be edited on every addition is a count nobody trusts.
     assert.equal(NOTIFICATION_LANGS.length, 3)
-    assert.equal(buildAllRows().length, 225)
+    assert.equal(buildAllRows().length, TEMPLATE_TYPES.length * 3 * 3)
+    assert.ok(TEMPLATE_TYPES.length >= 25, 'the checklist asked for at least 25 types')
+  })
+
+  test('every type that may not be switched off has wording to send', () => {
+    // The one that would actually hurt: a mandatory type with no template
+    // renders as its own name, so a password reset would arrive titled
+    // "PASSWORD_RESET".
+    for (const type of MANDATORY_NOTIFICATION_TYPES) {
+      assert.ok(TEMPLATE_SEED[type], `${type} is mandatory (§9.3) but has no template`)
+    }
   })
 
   test('the three channels are not the same text three times', () => {
@@ -132,7 +145,7 @@ describe('stored templates', () => {
     // Every assertion below reads seeded rows; without them the failures
     // would look like template bugs rather than a missing migration.
     const count = await NotificationTemplate.countDocuments()
-    assert.equal(count, 225, 'run: npm --prefix backend run migrate:templates')
+    assert.equal(count, buildAllRows().length, 'run: npm --prefix backend run migrate:templates')
   })
 
   test('an Uzbek employee gets Uzbek, not English', async () => {

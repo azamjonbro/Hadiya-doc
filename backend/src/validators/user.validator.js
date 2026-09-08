@@ -1,6 +1,7 @@
 import { z } from 'zod'
 import {
   GENDER_VALUES,
+  NOTIFICATION_CHANNELS,
   JSHSHIR_PATTERN,
   PASSPORT_SERIES_PATTERN,
   PASSWORD_MIN_LENGTH,
@@ -138,4 +139,28 @@ export const bulkUserIdsSchema = z.object({
 export const bulkMessageSchema = z.object({
   userIds: bulkUserIds,
   message: z.string().trim().min(1, 'Message cannot be empty').max(4000),
+})
+
+// PUT /users/me/notification-prefs.
+//
+// Only the channels someone has actually switched off are stored, so the
+// body is a sparse map: { COURSE_ASSIGNED: { email: false } }. `true` is
+// accepted too — that is how a channel is switched back on, by writing the
+// value that is then pruned away as a non-deviation.
+//
+// Shape only. Which types may not be switched off is a domain rule, not a
+// property of the request, and it is enforced in user.service.js so it can
+// answer with its own error code (AT-16 expects MANDATORY_NOTIFICATION, not
+// a generic VALIDATION_ERROR).
+const notificationChannelPrefs = z
+  .object(Object.fromEntries(NOTIFICATION_CHANNELS.map((channel) => [channel, z.boolean().optional()])))
+  .strict()
+
+export const notificationPrefsSchema = z.record(
+  z.string().regex(/^[A-Z][A-Z0-9_]*$/, 'Notification type must be an UPPER_SNAKE_CASE key'),
+  notificationChannelPrefs
+)
+
+export const updateLocaleSchema = z.object({
+  locale: z.enum(['uz', 'ru', 'en']),
 })

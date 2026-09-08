@@ -675,6 +675,7 @@
     "tabs": {
       "profile": "Профиль",
       "activity": "Активность",
+      "notifications": "Уведомления",
       "preferences": "Настройки экрана"
     },
     "sections": {
@@ -702,6 +703,49 @@
       "backToUser": "Перейти в панель пользователя",
       "userTitle": "Панель сотрудника",
       "userHint": "Возврат к обычному виду — курсы, задачи, новости. Сессия сохраняется."
+    },
+    "notifications": {
+      "title": "Уведомления",
+      "hint": "Выберите, о каких событиях и по каким каналам вас уведомлять. Строки с замком отключить нельзя.",
+      "event": "Событие",
+      "mandatory": "Этот тип нельзя отключить: доступ к аккаунту, безопасность или обязательное требование.",
+      "channels": {
+        "inApp": "В приложении",
+        "email": "E-mail",
+        "push": "Push"
+      },
+      "loadFailed": "Не удалось загрузить настройки.",
+      "saveFailed": "Настройка не сохранена.",
+      "localeSaveFailed": "Язык не сохранён — уведомления могут приходить на прежнем языке.",
+      "types": {
+        "ACCOUNT_CREATED": "Учётная запись создана",
+        "PASSWORD_RESET": "Восстановление пароля",
+        "PASSWORD_CHANGED": "Пароль изменён",
+        "LOGIN_FROM_NEW_DEVICE": "Вход с нового устройства",
+        "COURSE_ASSIGNED": "Назначен курс",
+        "COURSE_DEADLINE_APPROACHING": "Приближается срок курса",
+        "COURSE_EXPIRED": "Срок курса истёк",
+        "COURSE_COMPLETED": "Курс завершён",
+        "TASK_ASSIGNED": "Назначена задача",
+        "TASK_DEADLINE_APPROACHING": "Приближается срок задачи",
+        "TASK_OVERDUE": "Задача просрочена",
+        "TASK_STATUS_CHANGED": "Изменён статус задачи",
+        "QUIZ_ASSIGNED": "Назначен тест",
+        "QUIZ_PASSED": "Тест сдан",
+        "QUIZ_FAILED": "Тест не сдан",
+        "NEWS_PUBLISHED": "Опубликована новость",
+        "CERTIFICATE_ISSUED": "Выдан сертификат",
+        "CERTIFICATE_EXPIRING": "Сертификат истекает",
+        "CERTIFICATE_EXPIRED": "Сертификат истёк",
+        "EVENT_INVITATION": "Приглашение на мероприятие",
+        "EVENT_REMINDER": "Напоминание о мероприятии",
+        "EVENT_CANCELLED": "Мероприятие отменено",
+        "EVENT_RESCHEDULED": "Мероприятие перенесено",
+        "PATH_ASSIGNED": "Назначена траектория",
+        "COMPLIANCE_RETRAINING_DUE": "Обязательное переобучение",
+        "ATTENTION_ALERT": "Снижение внимания",
+        "PROCTORING_FOREIGN_FACE": "Предупреждение прокторинга"
+      }
     }
   },
   "reviews": {

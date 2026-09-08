@@ -1,6 +1,21 @@
 import { http } from './http'
 
 export const usersApi = {
+  // Own settings. Separate from the admin endpoints below: these act on the
+  // caller's own account, so they carry no id and need no permission.
+  notificationPrefs() {
+    return http.get('/users/me/notification-prefs').then((r) => r.data.data)
+  },
+  // Sparse: only the types whose channels differ from "everything on".
+  updateNotificationPrefs(prefs) {
+    return http.put('/users/me/notification-prefs', prefs).then((r) => r.data.data)
+  },
+  // The language notifications and mail are written in — composed on the
+  // server, so the browser's own language setting cannot answer for it.
+  updateLocale(locale) {
+    return http.put('/users/me/locale', { locale }).then((r) => r.data.data)
+  },
+
   learningStats(userId) {
     return http.get(`/users/${userId}/learning-stats`).then((r) => r.data.data)
   },

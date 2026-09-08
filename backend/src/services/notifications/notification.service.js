@@ -4,6 +4,8 @@ import { ApiError } from '../../utils/ApiError.js'
 import { logger } from '../../config/logger.js'
 import { notificationTemplateService } from './notificationTemplate.service.js'
 import { DEFAULT_LANG } from '../../models/notificationTemplate.model.js'
+import { userRepository } from '../../repositories/user.repository.js'
+import { isChannelEnabled } from '@lms/shared'
 
 function toPublicNotification(n) {
   return {
@@ -26,6 +28,22 @@ function toPublicNotification(n) {
  * assigned. The caller falls back to whatever title it was given, and the
  * gap is logged rather than swallowed.
  */
+/**
+ * The recipient's locale and channel preferences.
+ *
+ * Never throws: a notification for an account that has since been deleted
+ * should be a no-op with a log line, not an exception that rolls back the
+ * course assignment that triggered it.
+ */
+async function loadRecipient(userId) {
+  try {
+    return await userRepository.findById(String(userId))
+  } catch (error) {
+    logger.warn('Could not read notification recipient', { userId: String(userId), error: error.message })
+    return null
+  }
+}
+
 async function renderInApp({ templateKey, vars, lang }) {
   if (!templateKey) return null
   try {
@@ -55,14 +73,42 @@ export const notificationService = {
     // string — while leaving room for a type that needs more than one wording.
     templateKey,
     vars = {},
-    // 1.3 puts a locale on the user and this reads it. Until then everyone
-    // gets Uzbek, which is still an improvement on everyone getting English.
-    lang = DEFAULT_LANG,
+    // Overrides the recipient's own locale. Only passed by callers that
+    // already know it; otherwise it is read from the account below.
+    lang,
     relatedEntityType = null,
     relatedEntityId = null,
     severity = 'INFO',
   }) {
-    const rendered = await renderInApp({ templateKey: templateKey ?? type, vars, lang })
+    // One read per notification, answering both questions: which language to
+    // write in, and which channels this person still wants. A notification is
+    // composed on the server — often hours later by a cron job — so there is
+    // no browser whose language could be used instead.
+    //
+    // It is a read per recipient in the bulk-assignment loops, which is a
+    // cost worth naming: the alternative is passing prefs down from every
+    // call site, which puts "does this person want email" into services that
+    // have no business knowing. If those loops become hot, the fix is a
+    // notifyMany() that loads the recipients in one query — not spreading
+    // this decision outwards.
+    const recipient = await loadRecipient(userId)
+    const language = lang ?? recipient?.locale ?? DEFAULT_LANG
+    const prefs = recipient?.notificationPrefs ?? {}
+
+    const rendered = await renderInApp({
+      templateKey: templateKey ?? type,
+      // userName is in almost every template and no call site has it to
+      // hand; filling it here keeps the callers about their own domain.
+      vars: { userName: recipient?.fullName ?? '', ...vars },
+      lang: language,
+    })
+
+    // In-app is a preference like any other channel — except that switching
+    // it off must not lose the record, only the delivery. Mandatory types
+    // ignore this entirely (isChannelEnabled returns true for them).
+    if (!isChannelEnabled(prefs, type, 'inApp')) {
+      return null
+    }
 
     const notification = await notificationRepository.create({
       userId,

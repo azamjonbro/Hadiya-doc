@@ -34,7 +34,20 @@ export const userController = {
       avatar: user.avatar,
       role: role.name,
       permissions: role.permissions,
+      locale: user.locale ?? 'uz',
     })
+  }),
+
+  notificationPrefs: asyncHandler(async (req, res) => {
+    sendSuccess(res, await userService.getNotificationPrefs(req.user))
+  }),
+
+  updateNotificationPrefs: asyncHandler(async (req, res) => {
+    sendSuccess(res, await userService.updateNotificationPrefs(req.user, req.body))
+  }),
+
+  updateLocale: asyncHandler(async (req, res) => {
+    sendSuccess(res, await userService.updateLocale(req.user, req.body.locale))
   }),
 
   list: asyncHandler(async (req, res) => {

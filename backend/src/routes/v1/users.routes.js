@@ -12,6 +12,8 @@ import {
   activityQuerySchema,
   bulkMessageSchema,
   bulkUserIdsSchema,
+  notificationPrefsSchema,
+  updateLocaleSchema,
 } from '../../validators/user.validator.js'
 
 export const usersRouter = Router()
@@ -19,6 +21,17 @@ export const usersRouter = Router()
 usersRouter.use(authenticate)
 
 usersRouter.get('/me', userController.me)
+
+// Own settings. No permission gate beyond authenticate: these act on the
+// caller's own account by definition — `actor.id` is the only id involved,
+// so there is nothing to authorise against.
+usersRouter.get('/me/notification-prefs', userController.notificationPrefs)
+usersRouter.put(
+  '/me/notification-prefs',
+  validateBody(notificationPrefsSchema),
+  userController.updateNotificationPrefs
+)
+usersRouter.put('/me/locale', validateBody(updateLocaleSchema), userController.updateLocale)
 
 usersRouter.get('/', requirePermission(PERMISSIONS.USER_READ), validateQuery(listUsersQuerySchema), userController.list)
 usersRouter.post('/', requirePermission(PERMISSIONS.USER_CREATE), validateBody(createUserSchema), userController.create)
