@@ -21,7 +21,8 @@
     "groupManagement": "Management",
     "groups": "Groups",
     "trash": "Trash",
-    "branches": "Branches"
+    "branches": "Branches",
+    "auditLog": "Audit log"
   },
   "shell": {
     "searchPlaceholder": "Search courses, news, tasks..."
@@ -1029,6 +1030,38 @@
       "dateTo": "To",
       "clear": "Clear filters",
       "datePlaceholder": "Select date"
+    }
+  },
+  "audit": {
+    "title": "Audit log",
+    "subtitle": "Who did what in the system — sign-ins, changes, exports. Entries are kept for 2 years.",
+    "empty": "No entries match these filters",
+    "error": "Could not load the audit log",
+    "export": "Export CSV",
+    "exportError": "Export failed",
+    "systemActor": "System",
+    "columns": {
+      "time": "Time",
+      "actor": "Actor",
+      "action": "Action",
+      "entity": "Entity",
+      "details": "Details"
+    },
+    "filters": {
+      "action": "Action",
+      "allActions": "All actions",
+      "actor": "Actor",
+      "actorPlaceholder": "Search by name...",
+      "dateFrom": "From",
+      "dateTo": "To",
+      "datePlaceholder": "Pick a date",
+      "clear": "Clear filters"
+    },
+    "detail": {
+      "title": "Entry details",
+      "ip": "IP address",
+      "userAgent": "Browser",
+      "metadata": "Metadata"
     }
   },
   "users": {

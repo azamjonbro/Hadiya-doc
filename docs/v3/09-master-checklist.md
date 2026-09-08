@@ -56,12 +56,17 @@
   · `docs/deployment.md` — tiklash tartibi
   · Qabul: bitta tiklash **haqiqatan sinovdan o'tgan** va hujjatlashtirilgan
 
-- [ ] **0.7** `[P]` **Audit log ko'rish**
+- [x] **0.7** `[P]` **Audit log ko'rish**
   · `routes/v1/audit.routes.js` (`GET /audit-logs`, `GET /audit-logs/export`)
   · `controllers/auditLog.controller.js`, `services/audit/auditLog.service.js`
   · `models/auditLog.model.js` — `{action:1, timestamp:-1}` indeksi + TTL 730 kun
   · `front/src/admin/views/AuditLogView.vue` + nav
   · Qabul: **AT-30**
+  · Bajarildi — `audit:read` (ADMIN + SUPERADMIN) bilan yopilgan; filtr:
+  amal, kim, sana oralig'i; CSV eksport kursor bilan oqim sifatida yoziladi
+  (butun kolleksiya xotiraga yig'ilmaydi) va eksportning o'zi
+  `AUDIT_LOG_EXPORTED` sifatida yoziladi. TTL 730 kun + `{action, timestamp}`
+  indeksi qo'shildi.
 
 - [ ] **0.8** `[P]` **Error tracking + Socket.io Redis adapter + dead code**
   · Sentry/GlitchTip `config/logger.js` yoniga

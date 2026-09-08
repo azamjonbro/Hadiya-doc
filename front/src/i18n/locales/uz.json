@@ -21,7 +21,8 @@
     "groupManagement": "Boshqaruv",
     "groups": "Guruhlar",
     "trash": "Karzinka",
-    "branches": "Filiallar"
+    "branches": "Filiallar",
+    "auditLog": "Audit jurnali"
   },
   "shell": {
     "searchPlaceholder": "Kurslar, yangiliklar, vazifalarni qidirish..."
@@ -1029,6 +1030,38 @@
       "dateTo": "Gacha",
       "clear": "Filtrlarni tozalash",
       "datePlaceholder": "Sanani tanlang"
+    }
+  },
+  "audit": {
+    "title": "Audit jurnali",
+    "subtitle": "Tizimda kim nima qilgani — kirishlar, o'zgartirishlar, eksportlar. Yozuvlar 2 yil saqlanadi.",
+    "empty": "Bu filtrlar bo'yicha yozuv topilmadi",
+    "error": "Audit jurnalini yuklab bo'lmadi",
+    "export": "CSV eksport",
+    "exportError": "Eksport qilib bo'lmadi",
+    "systemActor": "Tizim",
+    "columns": {
+      "time": "Vaqt",
+      "actor": "Kim",
+      "action": "Amal",
+      "entity": "Obyekt",
+      "details": "Tafsilotlar"
+    },
+    "filters": {
+      "action": "Amal",
+      "allActions": "Barcha amallar",
+      "actor": "Kim",
+      "actorPlaceholder": "Ism bo'yicha qidirish...",
+      "dateFrom": "Dan",
+      "dateTo": "Gacha",
+      "datePlaceholder": "Sanani tanlang",
+      "clear": "Filtrlarni tozalash"
+    },
+    "detail": {
+      "title": "Yozuv tafsilotlari",
+      "ip": "IP manzil",
+      "userAgent": "Brauzer",
+      "metadata": "Qo'shimcha ma'lumot"
     }
   },
   "users": {

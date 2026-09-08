@@ -137,6 +137,12 @@ export const router = createRouter({
           meta: { permission: 'report:export', titleKey: 'nav.reports' },
         },
         {
+          path: 'audit-logs',
+          name: 'admin-audit-logs',
+          component: () => import('@/admin/views/AuditLogView.vue'),
+          meta: { permission: 'audit:read', titleKey: 'nav.auditLog' },
+        },
+        {
           path: 'chat',
           name: 'admin-chat-inbox',
           component: () => import('@/admin/views/ChatInboxView.vue'),

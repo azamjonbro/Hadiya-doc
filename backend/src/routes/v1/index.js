@@ -26,6 +26,7 @@ import { rolesRouter } from './roles.routes.js'
 import { orgListsRouter } from './orgLists.routes.js'
 import { proctorRouter } from './proctor.routes.js'
 import { reportsRouter } from './reports.routes.js'
+import { auditRouter } from './audit.routes.js'
 import { uploadsRouter } from './uploads.routes.js'
 import { gamificationRouter } from './gamification.routes.js'
 import { chatRouter } from './chat.routes.js'
@@ -61,6 +62,7 @@ v1Router.use('/roles', rolesRouter)
 v1Router.use('/org-lists', orgListsRouter)
 v1Router.use('/proctor', proctorRouter)
 v1Router.use('/reports', reportsRouter)
+v1Router.use('/audit-logs', auditRouter)
 v1Router.use('/uploads', uploadsRouter)
 v1Router.use('/gamification', gamificationRouter)
 v1Router.use('/chat', chatRouter)
