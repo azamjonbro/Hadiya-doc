@@ -347,11 +347,35 @@
 
 ## BLOK 2 — Shaxs, ierarxiya va scope (Zanjir A, 3 hafta · BLOK 1 bilan parallel)
 
-- [ ] **2.1** **`users.managerId` + ierarxiya**
+- [x] **2.1** **`users.managerId` + ierarxiya**
   · `models/user.model.js` — `+managerId`, `+employeeNumber`, indeks `{managerId:1}`
   · Migratsiya **M2** (HR ma'lumoti yoki XLSX'dan backfill)
   · `services/org/orgHierarchy.service.js` — `$graphLookup`, `managedUserIds(actorId)`
   · `GET /org/hierarchy`, `GET /org/chart`
+  · Bajarildi (`c234587`) — 21 test, endpointlar HTTP orqali, M2 ning ikkala
+  yo'li ham sinaldi (dry-run mos kelmagan qatorni ko'rsatdi, tsiklli variant
+  yozishdan bosh tortdi va nol bo'lmagan kod bilan chiqdi).
+  · `managedUserIds` **tranzitiv** — direktor o'z lidlarini *va* ular
+  ostidagi hammani boshqaradi. Bir bosqichli versiya butun bo'limni o'z
+  direktoridan yashirardi. Bu 2.2 dagi scope'ning poydevori, ya'ni bu
+  yerdagi xato — ruxsat xatosi.
+  · Kesh 5 daqiqa. Odam ko'chirilganda **ikkala zanjir** (eski va yangi
+  boshliqlar) tozalanadi, faqat odamning o'zi emas — javob har ikki uchning
+  ustidagi barcha boshliqlar uchun o'zgardi.
+  · Chetlanishlar:
+    1. **Tsikllarga alohida e'tibor.** Bir-biriga bo'ysunadigan ikki odam —
+    bu HR eksportidagi bitta xato satr, va undan keyingi har bir yurish
+    yo ilib qoladi yo jimgina `maxDepth` da kesiladi. Yozish yo'li ularni
+    rad etadi (kolleksiyada hech qachon bo'lmaydi), `$graphLookup` da esa
+    baribir `maxDepth: 15` turadi — ilib qoladigan o'qishni faqat yozish
+    yo'liga ishonib qoldirib bo'lmaydi.
+    2. M2 **butun rejani** tsiklga tekshiradi, satrma-satr emas: `A→B` va
+    `B→A` alohida-alohida to'g'ri, faqat juftlik xato.
+    3. `GET /org/*` route darajasida emas, **controller ichida** yopilgan:
+    ikkalasi ham standart holatda chaqiruvchining o'zi haqida javob beradi
+    va `user:read` faqat boshqa odam so'ralganda tekshiriladi. Route'ni
+    yopish xodimga o'z boshlig'ini ko'rishni taqiqlardi — bu maxfiy
+    ma'lumot emas, shartnomasida yozilgan.
 
 - [ ] **2.2** **Scope'ni rol nomidan ruxsatga ko'chirish** 🔴
   · `models/role.model.js` — `+scope: 'ALL'|'DEPARTMENT'|'TEAM'|'SELF'`
