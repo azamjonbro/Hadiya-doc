@@ -9,7 +9,6 @@ import { runDeadlineChecks } from './jobs/reminderJob.js'
 import {
   DASHBOARD_AGGREGATION_QUEUE,
   scheduleDashboardAggregation,
-  runDashboardAggregationNow,
 } from './jobs/dashboardAggregationQueue.js'
 import { dashboardCacheService } from './services/analytics/dashboardCache.service.js'
 import { BACKUP_QUEUE, scheduleDailyBackup } from './jobs/backupQueue.js'
@@ -86,7 +85,6 @@ async function main() {
 
   await scheduleReminderChecks()
   await scheduleDashboardAggregation()
-  await runDashboardAggregationNow()
   const backupsScheduled = await scheduleDailyBackup()
 
   logger.info('Video processing worker started')
