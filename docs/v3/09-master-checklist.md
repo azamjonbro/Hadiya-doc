@@ -595,11 +595,54 @@
     tahrirlash hamma o'quvchini aylanib chiqmasligi kerak.
     6. Yangi `COURSE_REOPENED` bildirishnoma turi qo'shildi (27 → 28 tur).
 
-- [ ] **3.2** **Sertifikat modellari va render**
+- [x] **3.2** **Sertifikat modellari va render**
   · `models/certificateTemplate.model.js`, `certificate.model.js`, `externalCertificate.model.js`
   · `services/certificates/certificateRender.service.js` (`pdfkit` + DejaVu — mavjud)
   · `jobs/certificateQueue.js`
   · Qabul: **AT-10, AT-11**
+  · Bajarildi (`ef84b79`) — 19 test. 3.1 shuni mumkin qildi: "kurs tugadi"
+  endi ishonchli hodisa, unga narsa osish mumkin.
+  · **Uchta model orasidagi chegara — dizaynning o'zi:**
+    - `Certificate` ism va kurs nomini **berilgan paytda ko'chirib oladi**,
+    render paytida qo'shmaydi. Sertifikat o'zi berilgan kundagi haqiqatni
+    bildiradi; ikki yildan keyin qayta nomlangan kurs hammaning sertifikatini
+    jimgina qayta yozmasligi kerak.
+    - `CertificateTemplate` — fon rasmi + **foizda joylashgan** maydonlar.
+    Hujjat formati emas: HR tayyor JPEG beradi va keyin ismni ikki santimetr
+    chapga surishni xohlaydi; buni `.docx` shabloni bilan ifodalashga har bir
+    urinish oxiri XML tahrirlashga olib keladi. Foiz A4 ni A5 ga
+    almashtirilganda ham omon qoladi.
+    - `ExternalCertificate` — **ataylab alohida kolleksiya**. Bizniki
+    platforma ishlab chiqargan va tekshira oladigan dalil; u esa kimdir
+    qo'lda kiritgan va rasm biriktirgan da'vo. Ularni birlashtirish
+    tasdiqlanmagan yuklamani compliance hisobotida platforma bergandek
+    ko'rsatardi.
+  · **AT-11 unique partial indeks bilan majburlanadi**, `check-then-write`
+  bilan emas: chaqiruvchi qayta uriniladigan navbat, va ikkita worker bir
+  millisekundda tekshiruvdan o'tishi mumkin. Duplicate-key xatosi qayta
+  urinishning **kutilgan** natijasi va mavjud sertifikatni qaytaradi.
+  `revokedAt: null` bo'yicha partial — bekor qilingan sertifikat qayta
+  berishni to'smaydi (kurs qayta ochilib, qayta tugatilganda aynan shu
+  kerak). **O'nta bir vaqtdagi urinish bittani beradi** — test shuni
+  tekshiradi.
+  · Chetlanishlar:
+    1. **Serial tasodifiy, ketma-ket emas.** U QR ichida, tekshirish
+    havolasida va qog'ozda — hisoblagich bo'lsa, login talab qilmaydigan
+    sahifa orqali butun shtatni sanab chiqish mumkin bo'lardi. `0/O` va
+    `1/I/L` ishlatilmaydi: skanerlay olmagan odam uni qog'ozdan ko'chiradi.
+    2. **Avval beriladi, keyin render qilinadi**, va yozuv PDF paydo
+    bo'lishidan oldin saqlanadi. Render yiqilsa sertifikat baribir berilgan
+    va qayta urinish faqat chizishi kerak; teskari tartib shrift xatosi
+    tufayli berishning o'zini yo'qotardi.
+    3. `toPublicVerification` — **ataylab proyeksiya**, qator emas:
+    `userId`, `courseId`, `pdfKey` yo'q. Faqat so'rovchi allaqachon
+    qo'lida ushlab turgan qog'ozdagi ism. AT-12 endpointi 3.3 da shunga
+    quriladi.
+    4. **S3 yuklash lokal sinalmadi** (MinIO Docker'siz ko'tarilmaydi) —
+    `renderCertificatePdf` baytlari bo'yicha sinaldi, `render()` esa uning
+    ustiga faqat `putObject` qo'shadi.
+    5. `course.certificateTemplateId` maydoni 3.4 ro'yxatidan **erta**
+    qo'shildi — 3.2 dagi berish yo'lida o'qiydigan narsa bo'lmasdi.
 
 - [ ] **3.3** **Sertifikat API va UI**
   · `routes/v1/certificates.routes.js` (9 endpoint)
