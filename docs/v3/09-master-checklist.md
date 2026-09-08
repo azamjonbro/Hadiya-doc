@@ -229,9 +229,29 @@
     "bu odam e-mail xohlaydimi" degan savolni buni bilishi shart bo'lmagan
     servislarga tarqatish edi. Kerak bo'lsa yechim `notifyMany()`.
 
-- [ ] **1.4** **`notify()` ni queue'ga ulash**
+- [x] **1.4** **`notify()` ni queue'ga ulash**
   · `services/notifications/notification.service.js:22-48` — oxiriga
   `deliveryQueue.add()`; imzo o'zgarmaydi (`templateKey`, `payload` qo'shiladi)
+  · Bajarildi (`06eb619`) — imzo haqiqatan o'zgarmadi, mavjud chaqiruvchilar
+  tegilmadi. Yubormaslikning to'rtta sababi bor va faqat bittasi qaror:
+  hisob yo'q, manzil yo'q, foydalanuvchi shu turni o'chirgan, yoki EMAIL
+  shabloni yo'q. Qolganlari xato emas, deployment holati.
+  · **Tartib ataylab:** in-app avval yoziladi va push qilinadi, keyin xat
+  navbatga qo'yiladi va u `try/catch` ichida. Xat — tizimdagi eng sekin va
+  eng ishonchsiz narsa; relay o'chgan bo'lsa u kurs biriktirishni bekor
+  qilmasligi kerak.
+  · **Shu band ikkita ochiq qolgan bandni yopdi:**
+    - **AT-15** e-mail yarmi — `COURSE_ASSIGNED.email=false` bo'lsa in-app
+    keladi, `MailLog` yozuvi yozilmaydi; yoqiq bo'lsa yoziladi va mavzu
+    hisobning tilida render qilinadi.
+    - **AT-17** ikkinchi yarmi — yetkazib bo'lmaydigan xat in-app
+    bildirishnomani yo'qotmaydi.
+  · Yana tekshirildi: majburiy tur bazadagi sozlama teskari bo'lsa ham
+  yuboriladi. API bunday qatorni yozishdan bosh tortadi, lekin eski
+  build yoki qo'lda tahrir yozgan qator parolni tiklashni o'chirmasligi kerak.
+  · `APP_URL` qo'shildi — EMAIL shablonlarining yakuniy havolasi. Bu xat
+  in-app versiyadan farqli o'laroq olib yuradigan yagona narsa, chunki
+  o'quvchi ilovada emas.
 
 - [ ] **1.5** **Parolni tiklash e-maili**
   · `services/auth/auth.service.js:204-215` — `logger.info` o'rniga `notify()`
