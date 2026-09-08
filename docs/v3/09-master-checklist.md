@@ -441,9 +441,40 @@
     tavsif bor va u har boot'da o'sha konstantadan seed qilinadi, ya'ni
     ikkalasi bir-biridan uzoqlasha olmaydi.
 
-- [ ] **2.4** **Yangi rollar** — `AUTHOR`, `INSTRUCTOR`, `MENTOR`
+- [x] **2.4** **Yangi rollar** — `AUTHOR`, `INSTRUCTOR`, `MENTOR`
   · `packages/shared/src/roles.js`, `permissions.js` (+45 kalit, §8.2 matritsasi)
   · `seed/seedRolesAndSuperAdmin.js`
+  · Bajarildi (`c33d8f8`) — 15 test; ishga tushirilgan serverga qarshi
+  tekshirildi: 9 rol seed qilindi, 71 katalog qatori, AUTHOR 30 /
+  INSTRUCTOR 27 / MENTOR 22 ruxsat, to'g'ri scope bilan.
+  · **Nima uchun kerak edi:** ilgari birovga kurs yozdirishning yagona yo'li
+  uni ADMIN qilish edi — bu esa unga har bir xodim yozuvini ham beradi.
+  · `AUTHOR` materialni yozadi (kurs, path, savol banki, media, AI), lekin
+  **`course:publish` va `course:delete` yo'q**: kurs yozish va uni butun
+  kompaniyaga majburiy qilish — boshqa-boshqa qarorlar. `user:read` umuman
+  yo'q.
+  · `INSTRUCTOR` o'qitadi (tadbir, davomat, baholash, biriktirish), lekin
+  `course:create` yo'q — o'zi o'qitadigan materialni yozmaydi.
+  · `MENTOR` — uchtasidan **yagona** xodim yozuvini o'qiy oladigani, va
+  aynan shuning uchun **yagona `TEAM` scope'lisi**: chegarasiz `user:read`
+  bu butun kompaniya.
+  · Chetlanishlar:
+    1. **45 emas, 42 kalit qo'shildi** — API key / webhook / SSO ni bitta
+    `integration:manage` ga birlashtirdim (ular bir xil qaror: kompaniyadan
+    tashqaridagi narsaga gapirish huquqi), va allaqachon mavjud kalitlarni
+    takrorlamadim. Jami 71 kalit.
+    2. Kalitlarning bir qismi **keyingi bloklardagi** funksiyalarni
+    qo'riqlaydi (path, savol banki, sertifikat, KB, 360°, OJT, compliance,
+    automation). Ular hozir yozildi, chunki rollar hozir yozildi — teshigi
+    bor ruxsat ro'yxati keyinroq esga olinishi kerak bo'ladigan qarz.
+    Hech narsa tekshirmaydigan kalit hech narsa bermaydi: ruxsat faqat
+    uni so'raydigan route tomonidan o'qiladi.
+    3. Mavjud rollar ham matritsaga moslandi: `ADMIN` §8.2 SUPERADMIN'ga
+    ajratgan **to'rtta kalitdan** boshqa hammasini oldi; `MANAGER` `~`
+    qatorlarini oldi (chegara `role.scope` orqali, alohida kalit orqali
+    emas); `EMPLOYEE` faqat o'z o'qishiga tegishlilarini oldi.
+  · Yo'l-yo'lakay: `dump.rdb` (Redis snapshot'i) `.gitignore` ga qo'shildi —
+  u repo ildizidan ishga tushirilgan `redis-server` dan qolib ketardi.
 
 - [ ] **2.5** **Manager dashboard**
   · `GET /dashboard/team`, `front/src/admin/views/ManagerDashboardView.vue`
