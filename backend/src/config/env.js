@@ -128,6 +128,17 @@ const envSchema = z.object({
   // the reader may leave open, and a 2-minute URL would break on scroll-up.
   CHAT_ATTACHMENT_URL_TTL: z.coerce.number().int().positive().default(3600),
 
+  // Error tracking (Sentry or a self-hosted GlitchTip — same ingest API).
+  // Empty = disabled, which is the default: no DSN, no outbound calls.
+  SENTRY_DSN: z.string().optional().default(''),
+  // Defaults to NODE_ENV. Set it when several deployments share one project
+  // and you need "staging" separated from "production" in the issue list.
+  SENTRY_ENVIRONMENT: z.string().optional().default(''),
+  // A build identifier (commit sha) so an issue says which deploy it came
+  // from. Optional — without it every event lands in one undifferentiated
+  // stream, which is still useful, just harder to bisect.
+  SENTRY_RELEASE: z.string().optional().default(''),
+
   // Nightly encrypted mongodump to object storage. Off by default: it needs
   // a key an operator has to generate, and a backup job that runs without
   // one would only produce a nightly error, which is worse than an explicit
