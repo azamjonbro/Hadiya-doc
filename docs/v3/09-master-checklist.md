@@ -1203,10 +1203,36 @@
 
 ## BLOK 7 — Qidiruv, KB, compliance, gamification (4 hafta)
 
-- [ ] **7.1** **Global qidiruv** — `$text` indekslar (`courses`, `users`,
+- [x] **7.1** **Global qidiruv** — `$text` indekslar (`courses`, `users`,
   `kbArticles`), `services/search/globalSearch.service.js` (kirish huquqi
   bo'yicha filtr), `ui/CommandPalette.vue`
   · Qabul: **AT-24**
+  → Qidiruv natijasi **o'zi ham sizib chiqish**: ro'yxatdagi «Maxfiy
+    strategiya» xodimga kurs borligini, taxminan nima haqidaligini va
+    kimlar uchunligini aytadi — u kursni ochmasdan ham. Shuning uchun
+    AT-24 detal sahifasini yashirishdan qattiqroq.
+  → Filtr **so'rovdan keyin, har qator uchun** qo'llanadi va kataloglar
+    ishlatadigan **aynan o'sha funksiyalarni** chaqiradi
+    (`isCourseVisibleToActor`, `isVisibleToActor`). So'rov ichida
+    filtrlash — ko'rinish qoidasining ikkinchi implementatsiyasi, va
+    ular vaqt o'tib bir-biridan uzoqlashadi; o'shanda qidiruv qutisi
+    to'siqni aylanib o'tish yo'liga aylanadi.
+  → Shu sabab `limit × 4` olib kelinadi: ko'rinish tekshiruvi qatorlarni
+    tashlaydi, aniq `limit` so'ralsa, o'ntadan yettitasi filtrlanib,
+    uchtasi qaytardi.
+  → `$text` emas, substring: command palette harf-harf yoziladi, to'liq
+    matn indeksi esa butun so'zga mos keladi — «mehn» hech narsa
+    topmasdi.
+  → Odamlar bo'yicha **ikkita** to'siq: `user:read` huquqi «umuman
+    qidira oladimi» degan savolga, scope esa «kimlarni» degan savolga
+    javob beradi — TEAM scope'li rahbar familiya yozib butun
+    kompaniyani ochib olmasligi kerak (2.2).
+  → **JSHSHIR va pasport bo'yicha qidirilmaydi.** Ular identifikator,
+    qidiruv atamasi emas; ular bo'yicha moslashtirish palette'ni
+    birovning JSHSHIR'ini bittalab taxmin qilib tasdiqlash vositasiga
+    aylantirardi.
+  → AT-25 ham shu yerda tekshiriladi: `(a+)+$` literal matn sifatida
+    qaraladi (`escapeRegex`), 2 soniyadan kam vaqtda bo'sh natija.
 
 - [x] **7.2** **Knowledge base** — `kbCategory`, `kbArticle`, `kbArticleVersion`,
   `kbView`, `kbComment`; `sanitize-html` allowlist; `NewsView` naqshi analitika uchun

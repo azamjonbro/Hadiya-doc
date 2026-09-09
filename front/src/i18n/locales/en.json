@@ -2316,5 +2316,16 @@
       "GRADED": "Marked",
       "RETURNED": "Returned"
     }
+  },
+  "search": {
+    "placeholder": "A course, path, article or person…",
+    "nothing": "Nothing found",
+    "hint": "Type at least two characters",
+    "type": {
+      "COURSE": "Courses",
+      "PATH": "Paths",
+      "KB": "Knowledge base",
+      "USER": "People"
+    }
   }
 }

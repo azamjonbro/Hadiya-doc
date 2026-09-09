@@ -2316,5 +2316,16 @@
       "GRADED": "Baholangan",
       "RETURNED": "Qaytarilgan"
     }
+  },
+  "search": {
+    "placeholder": "Kurs, yo‘nalish, maqola yoki xodim…",
+    "nothing": "Hech narsa topilmadi",
+    "hint": "Qidirish uchun kamida 2 ta harf yozing",
+    "type": {
+      "COURSE": "Kurslar",
+      "PATH": "Yo‘nalishlar",
+      "KB": "Bilimlar bazasi",
+      "USER": "Xodimlar"
+    }
   }
 }
