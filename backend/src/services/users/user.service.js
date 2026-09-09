@@ -15,6 +15,7 @@ import { courseAssignmentService } from '../courses/courseAssignment.service.js'
 import { chatService } from '../chat/chat.service.js'
 import { taskService } from '../tasks/task.service.js'
 import { logger } from '../../config/logger.js'
+import { queueUserEvaluation } from '../../jobs/enrollmentRuleQueue.js'
 import { TEMPLATE_TYPES } from '../notifications/notificationTemplates.seed.js'
 import { notificationService } from '../notifications/notification.service.js'
 import { orgHierarchyService } from '../org/orgHierarchy.service.js'
@@ -393,6 +394,17 @@ export const userService = {
       metadata: { jshshir: user.jshshir, role: role.name },
     })
 
+    // Enrolment rules (5.3). Queued rather than run here: it walks every
+    // active rule, and nobody creating an employee should wait for that.
+    // Without it a new hire spends their first day with an empty course
+    // list until the nightly sweep.
+    await queueUserEvaluation(user._id).catch((error) => {
+      logger.warn('Could not queue the enrolment-rule evaluation', {
+        userId: String(user._id),
+        error: error.message,
+      })
+    })
+
     // Mandatory (§9.3): without it the employee has an account nobody told
     // them about. It carries the JSHSHIR to sign in with and never the
     // password — a password in an inbox outlives the person who leaves.
@@ -525,6 +537,16 @@ export const userService = {
       entityId: id,
       metadata: { fields: Object.keys(updateData) },
     })
+
+    // Only when one of the four things a rule matches on actually moved.
+    // Re-evaluating on every edit would queue a job for a phone-number
+    // change, and the sweep already covers anything missed.
+    const rulesMayApply = ['roleId', 'department', 'branch', 'position'].some((field) => field in updateData)
+    if (rulesMayApply) {
+      await queueUserEvaluation(id).catch((error) => {
+        logger.warn('Could not queue the enrolment-rule evaluation', { userId: String(id), error: error.message })
+      })
+    }
 
     return toPublicUser(updated, role)
   },

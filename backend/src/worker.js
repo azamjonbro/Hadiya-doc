@@ -14,6 +14,8 @@ import { dashboardCacheService } from './services/analytics/dashboardCache.servi
 import { BACKUP_QUEUE, scheduleDailyBackup } from './jobs/backupQueue.js'
 import { DELIVERY_QUEUE, handleDeliveryFailure } from './jobs/deliveryQueue.js'
 import { CERTIFICATE_QUEUE } from './jobs/certificateQueue.js'
+import { ENROLLMENT_RULE_QUEUE, scheduleEnrollmentRuleSweep } from './jobs/enrollmentRuleQueue.js'
+import { enrollmentRuleService } from './services/enrollment/enrollmentRule.service.js'
 import { certificateService } from './services/certificates/certificate.service.js'
 import { certificateRenderService } from './services/certificates/certificateRender.service.js'
 import { Certificate } from './models/certificate.model.js'
@@ -150,7 +152,27 @@ async function main() {
     })
   })
 
+  const enrollmentRuleWorker = new Worker(
+    ENROLLMENT_RULE_QUEUE,
+    async (job) => {
+      // 'user' is one person, queued when their role or posting changed.
+      // 'sweep' is the nightly pass over every active rule, which is the
+      // only thing that catches changes made outside the platform.
+      if (job.name === 'user') return enrollmentRuleService.applyToOneUser(job.data.userId)
+      return enrollmentRuleService.applyAll()
+    },
+    // One at a time: the sweep walks every rule against every matching
+    // person, and two of them running concurrently would race on the
+    // "already assigned?" check that keeps it idempotent.
+    { connection: redisConnection, concurrency: 1 }
+  )
+
+  enrollmentRuleWorker.on('failed', (job, err) => {
+    logger.error('Enrollment rule job failed', { jobId: job?.id, name: job?.name, error: err.message })
+  })
+
   await scheduleReminderChecks()
+  await scheduleEnrollmentRuleSweep()
   await scheduleDashboardAggregation()
   const backupsScheduled = await scheduleDailyBackup()
 
@@ -158,6 +180,7 @@ async function main() {
   logger.info('Reminder worker started (deadline checks every 15 minutes)')
   logger.info('Dashboard aggregation worker started (recomputes every 5 minutes)')
   logger.info('Certificate worker started (issue + render on course completion)')
+  logger.info('Enrollment rule worker started (nightly sweep + per-user evaluation)')
   logger.info(
     isMailConfigured()
       ? `Delivery worker started (SMTP ${env.SMTP_HOST}:${env.SMTP_PORT})`
@@ -173,6 +196,7 @@ async function main() {
     logger.info(`Received ${signal}, shutting down worker`)
     await Promise.all([
       videoWorker.close(),
+      enrollmentRuleWorker.close(),
       reminderWorker.close(),
       dashboardWorker.close(),
       backupWorker.close(),
