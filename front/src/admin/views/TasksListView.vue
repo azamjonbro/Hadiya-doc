@@ -9,6 +9,8 @@ import AppCard from '@/components/ui/AppCard.vue'
 import AppButton from '@/components/ui/AppButton.vue'
 import AppInput from '@/components/ui/AppInput.vue'
 import AppSelect from '@/components/ui/AppSelect.vue'
+import SortableList from '@/components/ui/SortableList.vue'
+import UserPicker from '@/components/ui/UserPicker.vue'
 import AppDatePicker from '@/components/ui/AppDatePicker.vue'
 import Avatar from '@/components/ui/Avatar.vue'
 import Modal from '@/components/ui/Modal.vue'
@@ -39,8 +41,6 @@ const emptyCreateForm = () => ({
   deadline: '',
 })
 const createForm = reactive(emptyCreateForm())
-const userSearch = ref('')
-const userResults = ref([])
 const positions = ref([])
 
 const priorityOptions = [
@@ -124,9 +124,6 @@ const columns = computed(() =>
   }))
 )
 
-const draggedCardKey = ref(null)
-const dragOverStatus = ref(null)
-
 // Hovering a fan-out card opens its roster — who has it, and where each of
 // them stands — without leaving the board.
 const hoveredCard = ref(null)
@@ -189,25 +186,8 @@ watch(
     createError.value = ''
     createForm.assignedTo = ''
     createForm.position = ''
-    userSearch.value = ''
-    userResults.value = []
   }
 )
-
-async function onUserSearch() {
-  if (!userSearch.value) {
-    userResults.value = []
-    return
-  }
-  const { items: users } = await usersApi.list({ search: userSearch.value, limit: 5 })
-  userResults.value = users
-}
-
-function pickAssignee(user) {
-  createForm.assignedTo = user.id
-  userSearch.value = user.fullName
-  userResults.value = []
-}
 
 async function onCreateSubmit() {
   if (createForm.assigneeType === 'USER' && !createForm.assignedTo) {
@@ -232,8 +212,6 @@ async function onCreateSubmit() {
     })
     showCreateModal.value = false
     Object.assign(createForm, emptyCreateForm())
-    userSearch.value = ''
-    userResults.value = []
     await load()
   } catch (error) {
     createError.value = apiErrorText(error)
@@ -242,29 +220,16 @@ async function onCreateSubmit() {
   }
 }
 
-function onDragStart(card) {
-  draggedCardKey.value = card.key
-}
-
-function onDragEnd() {
-  draggedCardKey.value = null
-  dragOverStatus.value = null
-}
-
-function onDragEnterColumn(status) {
-  dragOverStatus.value = status
-}
-
-async function onDrop(status) {
-  const key = draggedCardKey.value
-  dragOverStatus.value = null
-  draggedCardKey.value = null
-  const card = cards.value.find((item) => item.key === key)
-  if (!card || card.status === status) return
+// A card dropped in another column: SortableList reports which column it came
+// from and which it landed in, and the status change is a server fact, so
+// nothing moves on screen until the reload confirms it.
+async function onCardMoved({ item: card, from, to }) {
+  if (!card || from === to) return
 
   // A fan-out moves as a whole, but only the copies in the column it was
   // dragged out of: a card in "To do" stands for the people who had not
   // started, and must not drag the finished ones backwards.
+  const status = to
   try {
     if (card.batchId) {
       await tasksApi.updateBatch(card.batchId, { status, fromStatus: card.status })
@@ -338,87 +303,90 @@ onMounted(() => {
     </div>
 
     <div v-else-if="items.length" class="mt-6 flex gap-4 overflow-x-auto pb-2">
-      <div
-        v-for="col in columns"
-        :key="col.status"
-        class="w-72 shrink-0 rounded-lg"
-        :class="dragOverStatus === col.status ? 'bg-primary-subtle/40' : ''"
-        @dragover.prevent="onDragEnterColumn(col.status)"
-        @dragleave="dragOverStatus === col.status && (dragOverStatus = null)"
-        @drop.prevent="onDrop(col.status)"
-      >
+      <div v-for="col in columns" :key="col.status" class="w-72 shrink-0">
         <div class="mb-3 flex items-center gap-2 px-1">
           <h2 class="text-small font-semibold text-ink">{{ col.label }}</h2>
           <span class="rounded-full bg-surface-2 px-2 py-0.5 text-caption font-medium text-ink-faint">{{ col.items.length }}</span>
         </div>
 
-        <div class="min-h-[80px] space-y-2.5">
-          <AppCard
-            v-for="task in col.items"
-            :key="task.key"
-            padding="sm"
-            draggable="true"
-            class="group cursor-grab border-l-4 active:cursor-grabbing"
-            :class="[priorityBorder[task.priority], draggedCardKey === task.key ? 'opacity-40' : '']"
-            @dragstart="onDragStart(task)"
-            @dragend="onDragEnd"
-            @mouseenter="openRoster(task, $event)"
-            @mouseleave="closeRoster"
-          >
-            <div class="flex items-start justify-between gap-2">
-              <p class="text-small font-medium text-ink" :class="task.status === 'COMPLETED' ? 'text-ink-faint line-through' : ''">{{ task.title }}</p>
-              <button
-                type="button"
-                class="shrink-0 rounded p-1 text-ink-faint opacity-0 transition-default hover:bg-surface-2 hover:text-danger group-hover:opacity-100"
-                @click="requestDelete(task)"
-              >
-                <Icon name="trash" size="14" />
-              </button>
-            </div>
-            <p v-if="task.description" class="mt-1 line-clamp-2 text-caption text-ink-muted">{{ task.description }}</p>
+        <!-- reorderable="false": a column's internal order says nothing —
+             the board's meaning is which column a card is in, and letting
+             cards be shuffled inside one would imply a priority that is not
+             stored anywhere. -->
+        <SortableList
+          :model-value="col.items"
+          group="task-board"
+          :name="col.status"
+          item-key="key"
+          :reorderable="false"
+          list-class="min-h-[80px] space-y-2.5 rounded-lg"
+          @move="onCardMoved"
+        >
+          <template #item="{ item: task, dragging }">
+            <AppCard
+              padding="sm"
+              class="group cursor-grab border-l-4 active:cursor-grabbing"
+              :class="[priorityBorder[task.priority], dragging ? 'opacity-40' : '']"
+              @mouseenter="openRoster(task, $event)"
+              @mouseleave="closeRoster"
+            >
+              <div class="flex items-start justify-between gap-2">
+                <p class="text-small font-medium text-ink" :class="task.status === 'COMPLETED' ? 'text-ink-faint line-through' : ''">{{ task.title }}</p>
+                <button
+                  type="button"
+                  class="shrink-0 rounded p-1 text-ink-faint opacity-0 transition-default hover:bg-surface-2 hover:text-danger group-hover:opacity-100"
+                  @click="requestDelete(task)"
+                >
+                  <Icon name="trash" size="14" />
+                </button>
+              </div>
+              <p v-if="task.description" class="mt-1 line-clamp-2 text-caption text-ink-muted">{{ task.description }}</p>
 
-            <div class="mt-3 flex items-center justify-between gap-2">
-              <Badge :variant="priorityVariant[task.priority]" size="sm">{{ t('tasks.priority.' + task.priority) }}</Badge>
-              <span
-                v-if="task.deadline"
-                class="flex items-center gap-1 text-caption"
-                :class="task.effectiveStatus === 'OVERDUE' ? 'font-medium text-danger' : 'text-ink-faint'"
-              >
-                <Icon name="clock" size="12" />
-                {{ deadlineLabel(task.deadline) }}
-              </span>
-            </div>
-
-            <!-- One card stands for the whole fan-out: its audience, how many
-                 people carry it, and how many are done. -->
-            <div v-if="task.batchId" class="mt-3 border-t border-border pt-2.5">
-              <div class="flex items-center gap-1.5">
-                <span class="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary-subtle text-primary">
-                  <Icon name="users" size="11" />
-                </span>
-                <span class="min-w-0 flex-1 truncate text-caption text-ink-faint">
-                  {{ task.audienceType === 'POSITION' ? task.audienceValue : t('tasks.audience.ALL') }}
-                </span>
-                <span class="shrink-0 text-caption font-medium text-ink-muted">
-                  {{ task.doneCount }}/{{ task.recipientCount }}
+              <div class="mt-3 flex items-center justify-between gap-2">
+                <Badge :variant="priorityVariant[task.priority]" size="sm">{{ t('tasks.priority.' + task.priority) }}</Badge>
+                <span
+                  v-if="task.deadline"
+                  class="flex items-center gap-1 text-caption"
+                  :class="task.effectiveStatus === 'OVERDUE' ? 'font-medium text-danger' : 'text-ink-faint'"
+                >
+                  <Icon name="clock" size="12" />
+                  {{ deadlineLabel(task.deadline) }}
                 </span>
               </div>
-              <div class="mt-1.5 h-1 w-full overflow-hidden rounded-full bg-surface-2">
-                <div
-                  class="h-full rounded-full bg-primary transition-default"
-                  :style="{ width: `${Math.round((task.doneCount / task.recipientCount) * 100)}%` }"
-                />
+
+              <!-- One card stands for the whole fan-out: its audience, how
+                   many people carry it, and how many are done. -->
+              <div v-if="task.batchId" class="mt-3 border-t border-border pt-2.5">
+                <div class="flex items-center gap-1.5">
+                  <span class="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary-subtle text-primary">
+                    <Icon name="users" size="11" />
+                  </span>
+                  <span class="min-w-0 flex-1 truncate text-caption text-ink-faint">
+                    {{ task.audienceType === 'POSITION' ? task.audienceValue : t('tasks.audience.ALL') }}
+                  </span>
+                  <span class="shrink-0 text-caption font-medium text-ink-muted">
+                    {{ task.doneCount }}/{{ task.recipientCount }}
+                  </span>
+                </div>
+                <div class="mt-1.5 h-1 w-full overflow-hidden rounded-full bg-surface-2">
+                  <div
+                    class="h-full rounded-full bg-primary transition-default"
+                    :style="{ width: `${Math.round((task.doneCount / task.recipientCount) * 100)}%` }"
+                  />
+                </div>
               </div>
-            </div>
 
-            <div v-else-if="task.assigneeName" class="mt-3 flex items-center gap-1.5 border-t border-border pt-2.5">
-              <Avatar :name="task.assigneeName" size="xs" />
-              <span class="truncate text-caption text-ink-faint">{{ task.assigneeName }}</span>
-            </div>
-          </AppCard>
+              <div v-else-if="task.assigneeName" class="mt-3 flex items-center gap-1.5 border-t border-border pt-2.5">
+                <Avatar :name="task.assigneeName" size="xs" />
+                <span class="truncate text-caption text-ink-faint">{{ task.assigneeName }}</span>
+              </div>
+            </AppCard>
+          </template>
 
-          <p v-if="col.items.length === 0" class="rounded-lg border border-dashed border-border py-8 text-center text-caption text-ink-faint">—</p>
-        </div>
+          <template #empty>
+            <p class="rounded-lg border border-dashed border-border py-8 text-center text-caption text-ink-faint">—</p>
+          </template>
+        </SortableList>
       </div>
     </div>
 
@@ -496,14 +464,11 @@ onMounted(() => {
         </div>
         <AppSelect v-model="createForm.assigneeType" :label="t('tasks.audienceLabel')" :options="audienceOptions" />
 
-        <div v-if="createForm.assigneeType === 'USER'" class="relative">
-          <AppInput v-model="userSearch" icon="search" :label="t('tasks.assignee')" @input="onUserSearch" />
-          <ul v-if="userResults.length > 0" class="absolute z-10 mt-1 w-full rounded-md border border-border bg-surface text-small shadow-md">
-            <li v-for="user in userResults" :key="user.id" class="cursor-pointer px-3 py-2 transition-default hover:bg-surface-2" @click="pickAssignee(user)">
-              {{ user.fullName }} <span class="text-ink-faint">({{ user.jshshir }})</span>
-            </li>
-          </ul>
-        </div>
+        <UserPicker
+          v-if="createForm.assigneeType === 'USER'"
+          v-model="createForm.assignedTo"
+          :label="t('tasks.assignee')"
+        />
 
         <div v-else-if="createForm.assigneeType === 'POSITION'">
           <AppSelect

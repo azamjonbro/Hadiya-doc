@@ -9,11 +9,7 @@ import { usersApi } from '@/services/users'
 import { useOrgDirectory } from '@/composables/useOrgDirectory'
 import { coursesApi } from '@/services/courses'
 import { useToast } from '@/composables/useToast'
-import AppCard from '@/components/ui/AppCard.vue'
 import AppButton from '@/components/ui/AppButton.vue'
-import AppInput from '@/components/ui/AppInput.vue'
-import AppSelect from '@/components/ui/AppSelect.vue'
-import BranchSelect from '@/components/ui/BranchSelect.vue'
 import EmployeeFormFields from '@/admin/components/employee/EmployeeFormFields.vue'
 import GeneratedPasswordField from '@/components/ui/GeneratedPasswordField.vue'
 import Modal from '@/components/ui/Modal.vue'
@@ -22,9 +18,8 @@ import Avatar from '@/components/ui/Avatar.vue'
 import Badge from '@/components/ui/Badge.vue'
 import ProgressBar from '@/components/ui/ProgressBar.vue'
 import Pagination from '@/components/ui/Pagination.vue'
-import Skeleton from '@/components/ui/Skeleton.vue'
-import EmptyState from '@/components/ui/EmptyState.vue'
-import Icon from '@/components/ui/Icon.vue'
+import DataTable from '@/components/ui/DataTable.vue'
+import FilterBar from '@/components/ui/FilterBar.vue'
 import UserBulkActionsBar from '@/admin/components/users/UserBulkActionsBar.vue'
 import BulkMessageModal from '@/admin/components/users/BulkMessageModal.vue'
 import BulkGroupCreateModal from '@/admin/components/users/BulkGroupCreateModal.vue'
@@ -52,13 +47,6 @@ const branchOptions = ref([])
 const EMPTY_FILTERS = { search: '', role: '', branch: '', department: '', subdivision: '', country: '', status: '' }
 const filters = reactive({ ...EMPTY_FILTERS, branch: route.query.branch ?? '' })
 
-const hasActiveFilters = computed(() => Object.keys(EMPTY_FILTERS).some((key) => filters[key]))
-
-function clearFilters() {
-  Object.assign(filters, EMPTY_FILTERS)
-  loadFirstPage()
-}
-
 // Three answers to "who works here", not two: archived is someone who left,
 // which is a different thing from an account switched off while the person is
 // still on the payroll.
@@ -67,6 +55,43 @@ const statusOptions = computed(() => [
   { value: 'archived', label: t('users.filters.archived') },
   { value: 'active', label: t('users.filters.active') },
   { value: 'inactive', label: t('users.filters.inactive') },
+])
+
+// One list, read twice: FilterBar renders the controls from it and derives
+// "is anything filtered" from the same keys, so a filter added here cannot
+// end up uncleaarable because someone forgot the second list.
+const filterFields = computed(() => [
+  { key: 'search', type: 'search', width: 'w-56', placeholder: t('users.filters.search') },
+  { key: 'role', type: 'select', placeholder: t('users.filters.allRoles'), options: directory.roleOptions.value },
+  { key: 'branch', type: 'branch', placeholder: t('users.filters.allBranches'), options: branchOptions.value },
+  {
+    key: 'department',
+    type: 'select',
+    placeholder: t('users.filters.allDepartments'),
+    options: directory.optionsFor(ORG_LIST_TYPES.DEPARTMENT),
+  },
+  {
+    key: 'subdivision',
+    type: 'select',
+    placeholder: t('users.filters.allSubdivisions'),
+    options: directory.optionsFor(ORG_LIST_TYPES.SUBDIVISION),
+  },
+  {
+    key: 'country',
+    type: 'select',
+    placeholder: t('users.filters.allCountries'),
+    options: directory.optionsFor(ORG_LIST_TYPES.COUNTRY),
+  },
+  { key: 'status', type: 'select', placeholder: t('users.filters.allStatuses'), options: statusOptions.value },
+])
+
+const columns = computed(() => [
+  { key: 'fullName', label: t('users.fields.fullName'), skeletonWidth: 'w-40' },
+  { key: 'role', label: t('users.role'), skeletonWidth: 'w-20' },
+  { key: 'branch', label: t('users.fields.branch') },
+  { key: 'department', label: t('users.fields.department') },
+  { key: 'progress', label: t('users.columns.progress'), skeletonWidth: 'w-16' },
+  { key: 'status', label: t('users.status'), skeletonWidth: 'w-16' },
 ])
 const PAGE_SIZE = 15
 
@@ -141,16 +166,6 @@ async function loadProgressForVisibleUsers(users) {
   progressByUserId.value = { ...progressByUserId.value, ...Object.fromEntries(entries) }
 }
 
-const allSelected = computed(() => items.value.length > 0 && selected.value.size === items.value.length)
-
-function toggleAll() {
-  selected.value = allSelected.value ? new Set() : new Set(items.value.map((u) => u.id))
-}
-function toggleOne(id) {
-  const next = new Set(selected.value)
-  next.has(id) ? next.delete(id) : next.add(id)
-  selected.value = next
-}
 function clearSelection() {
   selected.value = new Set()
 }
@@ -352,61 +367,14 @@ onMounted(() => {
 
     <UserImportWizard v-model="showImportWizard" @imported="loadFirstPage" />
 
-    <!-- items-center, not items-end: none of these controls has a label, and
-         the button is 4px shorter than the fields, so bottom alignment left
-         it visibly sunk below the row. -->
-    <div class="mt-5 flex flex-wrap items-center gap-3">
-      <div class="w-56">
-        <AppInput v-model="filters.search" icon="search" :placeholder="t('users.filters.search')" @keyup.enter="loadFirstPage" />
-      </div>
-      <div class="w-44">
-        <AppSelect v-model="filters.role" :placeholder="t('users.filters.allRoles')" :options="directory.roleOptions.value" @update:model-value="loadFirstPage" />
-      </div>
-      <div class="w-44">
-        <BranchSelect
-          v-model="filters.branch"
-          :options="branchOptions"
-          :placeholder="t('users.filters.allBranches')"
-          @update:model-value="loadFirstPage"
-        />
-      </div>
-      <div class="w-44">
-        <AppSelect
-          v-model="filters.department"
-          :placeholder="t('users.filters.allDepartments')"
-          :options="directory.optionsFor(ORG_LIST_TYPES.DEPARTMENT)"
-          @update:model-value="loadFirstPage"
-        />
-      </div>
-      <div class="w-44">
-        <AppSelect
-          v-model="filters.subdivision"
-          :placeholder="t('users.filters.allSubdivisions')"
-          :options="directory.optionsFor(ORG_LIST_TYPES.SUBDIVISION)"
-          @update:model-value="loadFirstPage"
-        />
-      </div>
-      <div class="w-44">
-        <AppSelect
-          v-model="filters.country"
-          :placeholder="t('users.filters.allCountries')"
-          :options="directory.optionsFor(ORG_LIST_TYPES.COUNTRY)"
-          @update:model-value="loadFirstPage"
-        />
-      </div>
-      <div class="w-44">
-        <AppSelect
-          v-model="filters.status"
-          :placeholder="t('users.filters.allStatuses')"
-          :options="statusOptions"
-          @update:model-value="loadFirstPage"
-        />
-      </div>
-      <AppButton variant="outline" icon="search" @click="loadFirstPage">{{ t('users.filters.apply') }}</AppButton>
-      <AppButton v-if="hasActiveFilters" variant="ghost" icon="close" @click="clearFilters">
-        {{ t('users.filters.clear') }}
-      </AppButton>
-    </div>
+    <FilterBar
+      v-model="filters"
+      class="mt-5"
+      :fields="filterFields"
+      :apply-label="t('users.filters.apply')"
+      :clear-label="t('users.filters.clear')"
+      @apply="loadFirstPage"
+    />
 
     <Transition enter-active-class="transition-default" enter-from-class="opacity-0 -translate-y-1">
       <div v-if="selected.size > 0" class="mt-4">
@@ -428,76 +396,55 @@ onMounted(() => {
 
     <p v-if="errorMessage" class="mt-4 text-small text-danger">{{ errorMessage }}</p>
 
-    <div class="mt-4 overflow-x-auto rounded-lg border border-border bg-surface">
-      <table class="w-full text-left">
-        <thead>
-          <tr class="border-b border-border text-caption font-semibold uppercase tracking-wide text-ink-faint">
-            <th class="w-10 px-4 py-3"><input type="checkbox" :checked="allSelected" class="h-4 w-4 rounded border-border-strong" @change="toggleAll" /></th>
-            <th class="px-2 py-3">{{ t('users.fields.fullName') }}</th>
-            <th class="px-4 py-3">{{ t('users.role') }}</th>
-            <th class="px-4 py-3">{{ t('users.fields.branch') }}</th>
-            <th class="px-4 py-3">{{ t('users.fields.department') }}</th>
-            <th class="px-4 py-3">{{ t('users.columns.progress') }}</th>
-            <th class="px-4 py-3">{{ t('users.status') }}</th>
-            <th class="w-10 px-4 py-3" />
-          </tr>
-        </thead>
-        <tbody>
-          <template v-if="loading">
-            <tr v-for="i in 6" :key="i" class="border-b border-border last:border-0">
-              <td class="px-4 py-3"><Skeleton class="h-4 w-4" /></td>
-              <td class="px-2 py-3"><Skeleton class="h-4 w-40" /></td>
-              <td class="px-4 py-3"><Skeleton class="h-4 w-20" /></td>
-              <td class="px-4 py-3"><Skeleton class="h-4 w-24" /></td>
-              <td class="px-4 py-3"><Skeleton class="h-4 w-24" /></td>
-              <td class="px-4 py-3"><Skeleton class="h-4 w-16" /></td>
-              <td class="px-4 py-3" />
-            </tr>
-          </template>
-          <tr
-            v-for="user in items"
-            :key="user.id"
-            class="cursor-pointer border-b border-border text-small transition-default last:border-0 hover:bg-surface-2"
-            @click="router.push(`/bos/users/${user.id}`)"
-          >
-            <td class="px-4 py-3" @click.stop>
-              <input type="checkbox" :checked="selected.has(user.id)" class="h-4 w-4 rounded border-border-strong" @change="toggleOne(user.id)" />
-            </td>
-            <td class="px-2 py-3">
-              <div class="flex items-center gap-2.5">
-                <Avatar :name="user.fullName" :src="user.avatar" size="sm" />
-                <div class="min-w-0">
-                  <p class="truncate font-medium text-ink">{{ user.fullName }}</p>
-                  <p class="truncate text-caption text-ink-faint">{{ user.jshshir }}</p>
-                </div>
-              </div>
-            </td>
-            <td class="px-4 py-3"><Badge variant="neutral" size="sm">{{ user.role }}</Badge></td>
-            <td class="px-4 py-3 text-ink-muted">{{ user.branch || '—' }}</td>
-            <td class="px-4 py-3 text-ink-muted">{{ user.department || '—' }}</td>
-            <td class="px-4 py-3">
-              <div class="flex items-center gap-2">
-                <div class="w-20"><ProgressBar :value="userProgress(user.id)" size="sm" /></div>
-                <span class="text-caption text-ink-faint">{{ userProgress(user.id) }}%</span>
-              </div>
-            </td>
-            <td class="px-4 py-3">
-              <!-- Archived outranks inactive: both accounts are switched off,
-                   but only one of them is a person who left, and that is the
-                   distinction this column is asked about. -->
-              <Badge v-if="user.isArchived" variant="neutral" dot size="sm">
-                {{ t('users.filters.archived') }}
-              </Badge>
-              <Badge v-else :variant="user.isActive ? 'success' : 'danger'" dot size="sm">
-                {{ user.isActive ? t('users.filters.active') : t('users.filters.inactive') }}
-              </Badge>
-            </td>
-            <td class="px-4 py-3 text-ink-faint"><Icon name="chevron-right" size="15" /></td>
-          </tr>
-        </tbody>
-      </table>
-      <EmptyState v-if="!loading && items.length === 0" icon="users" :title="t('users.empty')" />
-    </div>
+    <DataTable
+      v-model:selected="selected"
+      class="mt-4"
+      :columns="columns"
+      :rows="items"
+      :loading="loading"
+      selectable
+      clickable-rows
+      chevron
+      empty-icon="users"
+      :empty-title="t('users.empty')"
+      @row-click="router.push(`/bos/users/${$event.id}`)"
+    >
+      <template #cell-fullName="{ row }">
+        <div class="flex items-center gap-2.5">
+          <Avatar :name="row.fullName" :src="row.avatar" size="sm" />
+          <div class="min-w-0">
+            <p class="truncate font-medium text-ink">{{ row.fullName }}</p>
+            <p class="truncate text-caption text-ink-faint">{{ row.jshshir }}</p>
+          </div>
+        </div>
+      </template>
+
+      <template #cell-role="{ row }">
+        <Badge variant="neutral" size="sm">{{ row.role }}</Badge>
+      </template>
+
+      <template #cell-branch="{ row }"><span class="text-ink-muted">{{ row.branch || '—' }}</span></template>
+      <template #cell-department="{ row }"><span class="text-ink-muted">{{ row.department || '—' }}</span></template>
+
+      <template #cell-progress="{ row }">
+        <div class="flex items-center gap-2">
+          <div class="w-20"><ProgressBar :value="userProgress(row.id)" size="sm" /></div>
+          <span class="text-caption text-ink-faint">{{ userProgress(row.id) }}%</span>
+        </div>
+      </template>
+
+      <template #cell-status="{ row }">
+        <!-- Archived outranks inactive: both accounts are switched off, but
+             only one of them is a person who left, and that is the
+             distinction this column is asked about. -->
+        <Badge v-if="row.isArchived" variant="neutral" dot size="sm">
+          {{ t('users.filters.archived') }}
+        </Badge>
+        <Badge v-else :variant="row.isActive ? 'success' : 'danger'" dot size="sm">
+          {{ row.isActive ? t('users.filters.active') : t('users.filters.inactive') }}
+        </Badge>
+      </template>
+    </DataTable>
 
     <!-- Kept mounted whenever there are results, even for a single page, so
          the count stays visible and the table does not jump between pages. -->
