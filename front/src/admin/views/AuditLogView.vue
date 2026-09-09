@@ -177,113 +177,52 @@ onMounted(() => {
       </div>
     </div>
 
-    <div class="mt-6 flex flex-wrap items-end gap-3 rounded-lg border border-border bg-surface p-4">
-      <div class="w-56">
-        <AppSelect
-          v-model="filters.action"
-          :label="t('audit.filters.action')"
-          :placeholder="t('audit.filters.allActions')"
-          :options="actionOptions"
-        />
-      </div>
-      <div class="relative w-56">
-        <label class="mb-1.5 block text-small font-medium text-ink">{{ t('audit.filters.actor') }}</label>
-        <AppInput
-          v-model="actorSearch"
-          icon="search"
-          :placeholder="t('audit.filters.actorPlaceholder')"
-          @input="onActorSearch"
-        >
-          <template v-if="filters.actor" #suffix>
-            <button type="button" class="text-ink-faint hover:text-ink-muted" @click="clearActor">
-              <Icon name="close" size="15" />
-            </button>
-          </template>
-        </AppInput>
-        <ul v-if="actorResults.length > 0" class="absolute z-10 mt-1 w-full rounded-md border border-border bg-surface text-small shadow-md">
-          <li
-            v-for="user in actorResults"
-            :key="user.id"
-            class="cursor-pointer px-3 py-2 transition-default hover:bg-surface-2"
-            @click="pickActor(user)"
-          >
-            {{ user.fullName }} <span class="text-ink-faint">({{ user.jshshir }})</span>
-          </li>
-        </ul>
-      </div>
-      <div class="w-44">
-        <AppDatePicker
-          v-model="filters.dateFrom"
-          :label="t('audit.filters.dateFrom')"
-          :placeholder="t('audit.filters.datePlaceholder')"
-        />
-      </div>
-      <div class="w-44">
-        <AppDatePicker
-          v-model="filters.dateTo"
-          :label="t('audit.filters.dateTo')"
-          :placeholder="t('audit.filters.datePlaceholder')"
-        />
-      </div>
-      <AppButton v-if="hasActiveFilters" variant="outline" icon="close" @click="clearFilters">
-        {{ t('audit.filters.clear') }}
-      </AppButton>
-    </div>
+    <FilterBar
+      v-model="filters"
+      class="mt-6 rounded-lg border border-border bg-surface p-4"
+      align="end"
+      :fields="filterFields"
+      :clear-label="t('audit.filters.clear')"
+    />
 
     <p v-if="error" class="mt-4 text-small text-danger">{{ error }}</p>
 
-    <div class="mt-4 overflow-x-auto rounded-lg border border-border bg-surface">
-      <table class="w-full text-left">
-        <thead>
-          <tr class="border-b border-border text-caption font-semibold uppercase tracking-wide text-ink-faint">
-            <th class="px-4 py-3">{{ t('audit.columns.time') }}</th>
-            <th class="px-4 py-3">{{ t('audit.columns.actor') }}</th>
-            <th class="px-4 py-3">{{ t('audit.columns.action') }}</th>
-            <th class="px-4 py-3">{{ t('audit.columns.entity') }}</th>
-            <th class="px-4 py-3">{{ t('audit.columns.details') }}</th>
-            <th class="w-10 px-4 py-3" />
-          </tr>
-        </thead>
-        <tbody>
-          <template v-if="loading">
-            <tr v-for="i in 8" :key="i" class="border-b border-border last:border-0">
-              <td class="px-4 py-3"><Skeleton class="h-4 w-24" /></td>
-              <td class="px-4 py-3"><Skeleton class="h-4 w-32" /></td>
-              <td class="px-4 py-3"><Skeleton class="h-4 w-36" /></td>
-              <td class="px-4 py-3"><Skeleton class="h-4 w-20" /></td>
-              <td class="px-4 py-3"><Skeleton class="h-4 w-48" /></td>
-              <td class="px-4 py-3" />
-            </tr>
-          </template>
-          <tr
-            v-for="entry in items"
-            :key="entry.id"
-            class="cursor-pointer border-b border-border text-small transition-default last:border-0 hover:bg-surface-2"
-            @click="detail = entry"
-          >
-            <td class="whitespace-nowrap px-4 py-3">
-              <p class="font-medium text-ink">{{ formatTime(entry.timestamp) }}</p>
-              <p class="text-caption text-ink-faint">{{ formatDate(entry.timestamp) }}</p>
-            </td>
-            <td class="px-4 py-3">
-              <!-- An entry outlives the account that made it, and a deleted
-                   actor is itself worth seeing rather than hiding as a blank. -->
-              <span v-if="entry.actor" class="font-medium text-ink">{{ entry.actor.fullName }}</span>
-              <span v-else class="text-ink-faint">{{ t('audit.systemActor') }}</span>
-            </td>
-            <td class="px-4 py-3">
-              <Badge :variant="actionVariant(entry.action)" size="sm">{{ actionLabel(entry.action) }}</Badge>
-            </td>
-            <td class="px-4 py-3 text-ink-muted">{{ entry.entity }}</td>
-            <td class="max-w-md px-4 py-3 text-ink-muted">
-              <span class="line-clamp-1 break-all">{{ summarize(entry.metadata) || '—' }}</span>
-            </td>
-            <td class="px-4 py-3 text-ink-faint"><Icon name="chevron-right" size="15" /></td>
-          </tr>
-        </tbody>
-      </table>
-      <EmptyState v-if="!loading && items.length === 0" icon="file-text" :title="t('audit.empty')" />
-    </div>
+    <DataTable
+      class="mt-4"
+      :columns="columns"
+      :rows="items"
+      :loading="loading"
+      :skeleton-rows="8"
+      clickable-rows
+      chevron
+      empty-icon="file-text"
+      :empty-title="t('audit.empty')"
+      @row-click="detail = $event"
+    >
+      <!-- Two-line stamp: the date repeats down a page of same-day entries,
+           so the time is what the eye actually scans for. -->
+      <template #cell-timestamp="{ row }">
+        <p class="font-medium text-ink">{{ formatTime(row.timestamp) }}</p>
+        <p class="text-caption text-ink-faint">{{ formatDate(row.timestamp) }}</p>
+      </template>
+
+      <template #cell-actor="{ row }">
+        <!-- An entry outlives the account that made it, and a deleted actor
+             is itself worth seeing rather than hiding as a blank. -->
+        <span v-if="row.actor" class="font-medium text-ink">{{ row.actor.fullName }}</span>
+        <span v-else class="text-ink-faint">{{ t('audit.systemActor') }}</span>
+      </template>
+
+      <template #cell-action="{ row }">
+        <Badge :variant="actionVariant(row.action)" size="sm">{{ actionLabel(row.action) }}</Badge>
+      </template>
+
+      <template #cell-entity="{ row }">{{ row.entity }}</template>
+
+      <template #cell-details="{ row }">
+        <span class="line-clamp-1 break-all">{{ summarize(row.metadata) || '—' }}</span>
+      </template>
+    </DataTable>
 
     <div v-if="total > 0" class="mt-4 flex flex-wrap items-center justify-between gap-3">
       <p class="text-small text-ink-muted">

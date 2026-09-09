@@ -5,6 +5,7 @@ import { useMaterialUpload } from '@/composables/useMaterialUpload'
 import AppButton from '@/components/ui/AppButton.vue'
 import AppInput from '@/components/ui/AppInput.vue'
 import ProgressBar from '@/components/ui/ProgressBar.vue'
+import FileDropzone from '@/components/ui/FileDropzone.vue'
 import Icon from '@/components/ui/Icon.vue'
 
 const props = defineProps({
@@ -26,10 +27,10 @@ const ACCEPT_BY_TYPE = {
 const selectedFile = ref(null)
 const form = reactive({ title: '', description: '' })
 
-function onFileInputChange(event) {
-  const file = event.target.files?.[0]
-  if (!file) return
+function onFileSelected(file) {
   selectedFile.value = file
+  // The file name is nearly always the title the admin would have typed, so
+  // it is offered rather than demanded — anything already typed stays.
   if (!form.title) form.title = file.name.replace(/\.[^.]+$/, '')
 }
 
@@ -49,12 +50,13 @@ async function submit() {
 <template>
   <div class="rounded-lg border border-border-strong bg-surface p-3">
     <template v-if="upload.status.value !== 'uploading'">
-      <label class="flex cursor-pointer items-center gap-2 text-small text-ink-muted">
-        <Icon name="upload" size="16" class="shrink-0 text-ink-faint" />
-        <span v-if="!selectedFile">{{ t('materials.browse') }}</span>
-        <span v-else class="truncate font-medium text-ink">{{ selectedFile.name }}</span>
-        <input type="file" :accept="ACCEPT_BY_TYPE[contentType]" class="hidden" @change="onFileInputChange" />
-      </label>
+      <FileDropzone :accept="ACCEPT_BY_TYPE[contentType]" class="!py-4" @select="onFileSelected">
+        <span class="flex items-center gap-2 text-small text-ink-muted">
+          <Icon name="upload" size="16" class="shrink-0 text-ink-faint" />
+          <span v-if="!selectedFile">{{ t('materials.browse') }}</span>
+          <span v-else class="truncate font-medium text-ink">{{ selectedFile.name }}</span>
+        </span>
+      </FileDropzone>
 
       <div v-if="selectedFile" class="mt-3 space-y-2">
         <AppInput v-model="form.title" required :label="t('materials.titleLabel')" />
