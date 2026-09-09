@@ -9,6 +9,7 @@ import { courseRepository } from '../../repositories/course.repository.js'
 import { notificationService } from '../notifications/notification.service.js'
 import { logger } from '../../config/logger.js'
 import { queueCertificate } from '../../jobs/certificateQueue.js'
+import { pathEnrollmentService } from '../paths/pathEnrollment.service.js'
 
 /**
  * One definition of "this course is finished", and one place that acts on it.
@@ -206,6 +207,19 @@ export const courseCompletionService = {
           completionPercent: `${summary.completionPercent}%`,
         })
       }
+    }
+
+    // A course is often a step in a programme. Re-evaluating here means
+    // finishing the last course of a path completes the path in the same
+    // request, rather than the next time somebody opens the page.
+    if (changed) {
+      await pathEnrollmentService.evaluateForCourse(userId, course._id).catch((error) => {
+        logger.warn('Could not re-evaluate the paths containing this course', {
+          courseId: String(course._id),
+          userId: String(userId),
+          error: error.message,
+        })
+      })
     }
 
     return { ...summary, complete, changed, status: complete ? 'COMPLETED' : 'ACTIVE' }

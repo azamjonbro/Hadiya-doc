@@ -2,6 +2,7 @@ import { randomBytes } from 'node:crypto'
 import { Certificate } from '../../models/certificate.model.js'
 import { CertificateTemplate } from '../../models/certificateTemplate.model.js'
 import { courseRepository } from '../../repositories/course.repository.js'
+import { LearningPath } from '../../models/learningPath.model.js'
 import { userRepository } from '../../repositories/user.repository.js'
 import { auditLogRepository } from '../../repositories/auditLog.repository.js'
 import { notificationService } from '../notifications/notification.service.js'
@@ -85,6 +86,51 @@ export const certificateService = {
           sourceId: course._id,
           revokedAt: null,
         })
+      }
+      throw error
+    }
+  },
+
+  /**
+   * The same, for a finished learning path.
+   *
+   * Separate from issueForCourse rather than generalised over a model: the
+   * two read different fields (a path carries its own validityDays, a
+   * course borrows the template's) and the unique index is on
+   * `sourceType`, so conflating them would let one person hold a course
+   * certificate and a path certificate that block each other.
+   */
+  async issueForPath(userId, pathId, { score = '' } = {}) {
+    const [user, path] = await Promise.all([
+      userRepository.findById(String(userId)),
+      LearningPath.findById(String(pathId)).lean(),
+    ])
+    if (!user || !path || !path.certificateTemplateId) return null
+
+    const template = await CertificateTemplate.findById(path.certificateTemplateId).lean()
+    const issuedAt = new Date()
+    // A path states its own validity; the template's is the fallback for a
+    // course, which has nowhere else to put it.
+    const validUntil = path.validityDays
+      ? new Date(issuedAt.getTime() + path.validityDays * 24 * 60 * 60 * 1000)
+      : expiryFrom(template, issuedAt)
+
+    try {
+      return await Certificate.create({
+        serial: generateSerial(issuedAt),
+        userId: user._id,
+        sourceType: 'PATH',
+        sourceId: path._id,
+        templateId: template?._id ?? null,
+        fullName: user.fullName,
+        sourceTitle: path.title,
+        score,
+        issuedAt,
+        validUntil,
+      })
+    } catch (error) {
+      if (error.code === 11000) {
+        return Certificate.findOne({ userId: user._id, sourceType: 'PATH', sourceId: path._id, revokedAt: null })
       }
       throw error
     }

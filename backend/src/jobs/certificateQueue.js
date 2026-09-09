@@ -19,12 +19,15 @@ export const certificateQueue = new Queue(CERTIFICATE_QUEUE, { connection: redis
  * database (AT-11); this only keeps the queue from filling with work that
  * will do nothing.
  */
-export function queueCertificate(userId, courseId, { score = '' } = {}) {
+export function queueCertificate(userId, sourceId, { score = '', sourceType = 'COURSE' } = {}) {
   return certificateQueue.add(
     'issue',
-    { userId: String(userId), courseId: String(courseId), score },
+    // `courseId` is kept alongside `sourceId` so jobs queued by the previous
+    // release — which are sitting in Redis right now — still carry the field
+    // the worker reads. It is dropped once the queue has drained.
+    { userId: String(userId), sourceId: String(sourceId), courseId: String(sourceId), sourceType, score },
     {
-      jobId: `course:${courseId}:${userId}`,
+      jobId: `${sourceType.toLowerCase()}:${sourceId}:${userId}`,
       attempts: 5,
       backoff: { type: 'exponential', delay: 10_000 },
       removeOnComplete: 100,

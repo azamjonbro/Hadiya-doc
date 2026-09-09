@@ -113,13 +113,19 @@ async function main() {
     CERTIFICATE_QUEUE,
     async (job) => {
       if (job.name !== 'issue') return null
-      const { userId, courseId, score } = job.data
+      // `sourceId` is the field from 5.1 onwards; `courseId` is what jobs
+      // queued by the previous release carry, and they are still in Redis.
+      const { userId, score, sourceType = 'COURSE' } = job.data
+      const sourceId = job.data.sourceId ?? job.data.courseId
 
       // Issue first, render second, and store the record before the PDF
       // exists. If rendering fails the certificate is still issued and the
       // retry only has to draw it — the alternative loses the issue itself
       // to a font error.
-      const certificate = await certificateService.issueForCourse(userId, courseId, { score })
+      const certificate =
+        sourceType === 'PATH'
+          ? await certificateService.issueForPath(userId, sourceId, { score })
+          : await certificateService.issueForCourse(userId, sourceId, { score })
       if (!certificate) return null
 
       if (!certificate.pdfKey) {
@@ -139,7 +145,7 @@ async function main() {
     logger.error('Certificate job failed', {
       jobId: job?.id,
       userId: job?.data?.userId,
-      courseId: job?.data?.courseId,
+      sourceId: job?.data?.sourceId ?? job?.data?.courseId,
       error: err.message,
     })
   })

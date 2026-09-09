@@ -35,6 +35,7 @@ export const TEMPLATE_TYPES = [
   'QUIZ_PASSED',
   'QUIZ_FAILED',
   'QUIZ_ATTEMPTS_EXHAUSTED',
+  'PATH_COMPLETED',
   'NEWS_PUBLISHED',
   'CERTIFICATE_ISSUED',
   'CERTIFICATE_EXPIRING',
@@ -263,6 +264,25 @@ export const TEMPLATE_SEED = {
       body: 'All {{maxAttempts}} attempts at "{{quizTitle}}" have been used. Ask the training team if you need another.',
       push: 'No attempts left: {{quizTitle}}',
       defaults: { userName: '' },
+    },
+  },
+
+  PATH_COMPLETED: {
+    placeholders: ['userName', 'pathTitle', 'appUrl'],
+    uz: {
+      subject: 'Yo\'nalish tugadi: {{pathTitle}}',
+      body: '"{{pathTitle}}" yo\'nalishidagi barcha majburiy bosqichlarni tugatdingiz. Tabriklaymiz!',
+      push: 'Yo\'nalish tugadi: {{pathTitle}}',
+    },
+    ru: {
+      subject: 'Траектория пройдена: {{pathTitle}}',
+      body: 'Вы завершили все обязательные этапы траектории «{{pathTitle}}». Поздравляем!',
+      push: 'Траектория пройдена: {{pathTitle}}',
+    },
+    en: {
+      subject: 'Path complete: {{pathTitle}}',
+      body: 'You have finished every required step of "{{pathTitle}}". Well done.',
+      push: 'Path complete: {{pathTitle}}',
     },
   },
 

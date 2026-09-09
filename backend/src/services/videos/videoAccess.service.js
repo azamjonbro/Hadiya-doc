@@ -4,6 +4,7 @@ import { videoRepository } from '../../repositories/video.repository.js'
 import { courseAssignmentRepository } from '../../repositories/courseAssignment.repository.js'
 import { computeAccessFlags } from '../courses/courseAssignmentAccess.js'
 import { assertVideoUnlocked } from '../courses/courseSequence.js'
+import { assertPathItemUnlocked } from '../paths/pathSequence.js'
 import { faceGateService } from '../face/faceGate.service.js'
 import { ApiError } from '../../utils/ApiError.js'
 import { env } from '../../config/env.js'
@@ -41,9 +42,14 @@ export const videoAccessService = {
       }
     }
 
-    // Lessons open one at a time. Checked here rather than only in the
-    // sidebar, since without a playback token there is nothing to play —
-    // typing the /videos/:id URL directly gets you the same refusal.
+    // Two locks, both checked here rather than only in the sidebar, since
+    // without a playback token there is nothing to play — typing the
+    // /videos/:id URL directly gets the same refusal.
+    //
+    // The path one first: being told "finish the previous course" is a more
+    // useful answer than "finish the previous lesson" of a course you are
+    // not supposed to have opened yet (AT-26).
+    await assertPathItemUnlocked(actor, video.courseId)
     await assertVideoUnlocked(actor, video)
 
     const token = jwt.sign({ sub: actor.id, videoId: video._id.toString() }, env.VIDEO_TOKEN_SECRET, {
