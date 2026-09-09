@@ -1117,8 +1117,24 @@
     placeholder'ni rad etadi. Offset **qachon** yuborilishini
     belgilaydi, matnni emas.
 
-- [ ] **6.3** **Tadbir UI** — `EventDetailView` (xodim, ro'yxatdan o'tish),
+- [x] **6.3** **Tadbir UI** — `EventDetailView` (xodim, ro'yxatdan o'tish),
   `EventsAdminView` (davomat). ⚠️ `PATCH`/`DELETE /events/:id` API **allaqachon bor**, UI yo'q (§1.14)
+  → §1.14 dagi qarz yopildi: tahrirlash formasi bu sahifaning davomat
+    varaqasi kabi asosiy qismi — tadbirni yaratib, keyin **hech qachon
+    tuzatib bo'lmasligi** aynan shundan edi.
+  → Navbatdagiga «siz navbatdasiz» emas, «siz **3-o'rindasiz**» deyiladi.
+    Birinchisi qaror qabul qilib bo'lmaydigan ma'lumot.
+  → Ro'yxatdan o'tish tugmasi joy bor-yo'qligini o'zi hal qilmaydi —
+    javobni **server** beradi: sahifa ochilgandan beri xona to'lgan
+    bo'lishi mumkin.
+  → Davomat varaqasida faqat **joyi bo'lganlar** belgilanadi. Navbatda
+    turgan odam ichkariga kiritilmagan, uni «kelmadi» deb yozish soxta
+    yozuv bo'lardi.
+  → Varaqa ochilganda allaqachon yozilgan holatdan to'ldiriladi, aks
+    holda qayta ochish hammani jimgina «kelmadi» ga tushirardi.
+  → Vaqt tanlagichga ISO satr emas, **lokal** «YYYY-MM-DDTHH:mm»
+    beriladi: `Z` bilan ISO lokal deb o'qilib, tadbirni ofset chamasi
+    surib yuborardi.
 
 - [ ] **6.4** **Yagona kalendar** — `services/calendar/calendar.service.js`
   (tadbir + kurs deadline + topshiriq + path), `GET /calendar`, `.ics`
