@@ -2,17 +2,12 @@
 import { computed, onMounted, reactive, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { auditApi } from '@/services/audit'
-import { usersApi } from '@/services/users'
 import AppButton from '@/components/ui/AppButton.vue'
-import AppInput from '@/components/ui/AppInput.vue'
-import AppSelect from '@/components/ui/AppSelect.vue'
-import AppDatePicker from '@/components/ui/AppDatePicker.vue'
 import Badge from '@/components/ui/Badge.vue'
-import EmptyState from '@/components/ui/EmptyState.vue'
-import Icon from '@/components/ui/Icon.vue'
+import DataTable from '@/components/ui/DataTable.vue'
+import FilterBar from '@/components/ui/FilterBar.vue'
 import Modal from '@/components/ui/Modal.vue'
 import Pagination from '@/components/ui/Pagination.vue'
-import Skeleton from '@/components/ui/Skeleton.vue'
 import { apiErrorText } from '@/utils/apiError'
 
 const { t } = useI18n()
@@ -30,13 +25,36 @@ const exportError = ref('')
 
 const actionOptions = ref([])
 const filters = reactive({ action: '', actor: '', actorLabel: '', dateFrom: '', dateTo: '' })
-const actorSearch = ref('')
-const actorResults = ref([])
 const detail = ref(null)
 
-const hasActiveFilters = computed(() =>
-  Boolean(filters.action || filters.actor || filters.dateFrom || filters.dateTo)
-)
+const filterFields = computed(() => [
+  {
+    key: 'action',
+    type: 'select',
+    width: 'w-56',
+    label: t('audit.filters.action'),
+    placeholder: t('audit.filters.allActions'),
+    options: actionOptions.value,
+  },
+  {
+    key: 'actor',
+    type: 'user',
+    width: 'w-56',
+    displayKey: 'actorLabel',
+    label: t('audit.filters.actor'),
+    placeholder: t('audit.filters.actorPlaceholder'),
+  },
+  { key: 'dateFrom', type: 'date', label: t('audit.filters.dateFrom'), placeholder: t('audit.filters.datePlaceholder') },
+  { key: 'dateTo', type: 'date', label: t('audit.filters.dateTo'), placeholder: t('audit.filters.datePlaceholder') },
+])
+
+const columns = computed(() => [
+  { key: 'timestamp', label: t('audit.columns.time'), cellClass: 'whitespace-nowrap', skeletonWidth: 'w-24' },
+  { key: 'actor', label: t('audit.columns.actor'), skeletonWidth: 'w-32' },
+  { key: 'action', label: t('audit.columns.action'), skeletonWidth: 'w-36' },
+  { key: 'entity', label: t('audit.columns.entity'), cellClass: 'text-ink-muted', skeletonWidth: 'w-20' },
+  { key: 'details', label: t('audit.columns.details'), cellClass: 'max-w-md text-ink-muted', skeletonWidth: 'w-48' },
+])
 const rangeStart = computed(() => (page.value - 1) * PAGE_SIZE + 1)
 const rangeEnd = computed(() => Math.min(page.value * PAGE_SIZE, total.value))
 
@@ -111,36 +129,6 @@ async function loadActionOptions() {
     // log itself still loads, and the other filters still work.
     actionOptions.value = []
   }
-}
-
-async function onActorSearch() {
-  if (!actorSearch.value) {
-    actorResults.value = []
-    return
-  }
-  const { items: found } = await usersApi.list({ search: actorSearch.value, limit: 5 })
-  actorResults.value = found
-}
-
-function pickActor(user) {
-  filters.actor = user.id
-  filters.actorLabel = user.fullName
-  actorSearch.value = user.fullName
-  actorResults.value = []
-}
-
-function clearActor() {
-  filters.actor = ''
-  filters.actorLabel = ''
-  actorSearch.value = ''
-  actorResults.value = []
-}
-
-function clearFilters() {
-  filters.action = ''
-  filters.dateFrom = ''
-  filters.dateTo = ''
-  clearActor()
 }
 
 async function onExport() {

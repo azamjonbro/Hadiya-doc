@@ -4,6 +4,7 @@ import AppInput from './AppInput.vue'
 import AppSelect from './AppSelect.vue'
 import AppDatePicker from './AppDatePicker.vue'
 import BranchSelect from './BranchSelect.vue'
+import UserPicker from './UserPicker.vue'
 import AppButton from './AppButton.vue'
 
 /**
@@ -25,12 +26,20 @@ const props = defineProps({
   // The reactive filters object the caller owns.
   modelValue: { type: Object, required: true },
   /**
-   * [{ key, type, placeholder, label, options, width }]
-   * type: 'search' | 'select' | 'branch' | 'date'
+   * [{ key, type, placeholder, label, options, width, displayKey }]
+   * type: 'search' | 'select' | 'branch' | 'date' | 'user'
+   *
+   * `displayKey` belongs to 'user': the chosen person's id goes in `key`, and
+   * their name in `displayKey`, so a filter restored from a saved view can
+   * show who it is filtering by without a round trip to look the name up.
    */
   fields: { type: Array, required: true },
   applyLabel: { type: String, default: '' },
   clearLabel: { type: String, default: '' },
+  // Labelled controls line up along their bottom edge; unlabelled ones are
+  // centred, because a row of bare boxes with a button 4px shorter than they
+  // are looks sunk when bottom-aligned.
+  align: { type: String, default: 'center' },
   // Selects and dates apply the moment they change — there is nothing to
   // finish typing. Only the text box waits for Enter or the button.
   applyOnChange: { type: Boolean, default: true },
@@ -49,43 +58,62 @@ function onChanged(field, value) {
   if (props.applyOnChange && field.type !== 'search') emit('apply')
 }
 
+function pickUser(field, user) {
+  props.modelValue[field.key] = user?.id ?? ''
+  if (field.displayKey) props.modelValue[field.displayKey] = user?.fullName ?? ''
+  emit('apply')
+}
+
 function clear() {
-  for (const field of props.fields) props.modelValue[field.key] = ''
+  for (const field of props.fields) {
+    props.modelValue[field.key] = ''
+    if (field.displayKey) props.modelValue[field.displayKey] = ''
+  }
   emit('clear')
   emit('apply')
 }
 </script>
 
 <template>
-  <!-- items-center, not items-end: none of these controls has a label, and
-       the button is 4px shorter than the fields, so bottom alignment left it
-       visibly sunk below the row. -->
-  <div class="flex flex-wrap items-center gap-3">
+  <div class="flex flex-wrap gap-3" :class="align === 'end' ? 'items-end' : 'items-center'">
     <div v-for="field in fields" :key="field.key" :class="field.width ?? 'w-44'">
       <AppInput
         v-if="field.type === 'search'"
         :model-value="modelValue[field.key]"
         icon="search"
+        :label="field.label"
         :placeholder="field.placeholder"
         @update:model-value="set(field.key, $event)"
         @keyup.enter="emit('apply')"
+      />
+      <UserPicker
+        v-else-if="field.type === 'user'"
+        :model-value="modelValue[field.key]"
+        :display-name="field.displayKey ? modelValue[field.displayKey] : ''"
+        :label="field.label"
+        :placeholder="field.placeholder"
+        @select="pickUser(field, $event)"
+        @clear="pickUser(field, null)"
       />
       <BranchSelect
         v-else-if="field.type === 'branch'"
         :model-value="modelValue[field.key]"
         :options="field.options"
+        :label="field.label"
         :placeholder="field.placeholder"
         @update:model-value="onChanged(field, $event)"
       />
       <AppDatePicker
         v-else-if="field.type === 'date'"
         :model-value="modelValue[field.key]"
+        :label="field.label"
         :placeholder="field.placeholder"
         @update:model-value="onChanged(field, $event)"
       />
       <AppSelect
         v-else
         :model-value="modelValue[field.key]"
+        :label="field.label"
         :placeholder="field.placeholder"
         :options="field.options ?? []"
         @update:model-value="onChanged(field, $event)"
