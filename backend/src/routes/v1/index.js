@@ -41,7 +41,7 @@ import { pathsRouter } from './paths.routes.js'
 import { enrollmentRulesRouter } from './enrollmentRules.routes.js'
 import { onboardingRouter } from './onboarding.routes.js'
 import { calendarRouter } from './calendar.routes.js'
-import { homeworkRouter } from './assignments.routes.js'
+import { homeworkRouter } from './homework.routes.js'
 
 export const v1Router = Router()
 

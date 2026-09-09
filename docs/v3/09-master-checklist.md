@@ -1163,9 +1163,41 @@
     yo'li ham kerak. Uni shu endpoint'ning yon ta'siri sifatida emas,
     alohida qilish to'g'ri.
 
-- [ ] **6.5** **Uy vazifasi (Assignment)**
+- [x] **6.5** **Uy vazifasi (Assignment)**
   · `models/assignment.model.js`, `submission.model.js`, `rubric.model.js`
   · `services/assignments/*`, baholash navbati UI
+  → Uchta narsa «assignment» deb ataladi va ular **boshqa-boshqa**:
+    `Assignment` (uy vazifasi), `CourseAssignment` (kurs odamga
+    berilgani), `Task` (topshiriq). Izoh `assignment.model.js` da —
+    hech kim ochmaydigan hujjatda emas. API yo'li ham shu sabab
+    `/homework`.
+  → Har urinish **alohida yozuv**: tekshiruvchi qaytaradi, o'quvchi
+    tuzatadi — bu normal sikl, va birinchi urinishning ustiga yozish
+    ham nima xato bo'lganini, ham tuzatilganini yo'qotadi.
+  → Kechikish **bir marta**, topshirish paytida hal qilinadi. O'qishda
+    qayta hisoblansa, muddatni keyin uzaytirish hammaning ishini
+    «kechikmagan» qilib qo'yardi, qisqartirish esa o'z vaqtida
+    topshirilganini kechikkan qilardi — ikkalasi ham o'tmish haqidagi
+    faktni kelajakni tahrirlab o'zgartirish.
+  → Qayta topshirish avvalgi **hukmni tozalaydi**: o'sha ball hozirgina
+    almashtirilgan ishga tegishli edi.
+  → Qoralama urinish sifatida sanalmaydi (aks holda ishini saqlagani
+    uchun jazolangan bo'lardi) va tekshirish navbatida **ko'rinmaydi**
+    (tugallanmagan ishni baholash).
+  → Ball rubrikadan **hosil qilinadi**, alohida raqamdan emas: o'zi
+    tuzilgan mezonlarga qarama-qarshi jami — o'quvchining bahoga
+    ishonchini yo'qotishning eng tez yo'li.
+  → «Qaytarish» va «baholash» — ikki xil holat. `GRADED` ko'rgan odam
+    buni yakuniy deb o'ylaydi; `RETURNED` esa qiladigan ish borligini
+    aytadi.
+  → Navbat **eng eskisi birinchi**. Yangisi birinchi bo'lsa, eng eski
+    ish abadiy kutadi — va aynan uning muallifi ballini ikki marta
+    so'ragan bo'ladi.
+  → ⚠️ Yo'l-yo'lakay: `routes/v1/assignments.routes.js` ni
+    **ustiga yozib yuborgandim** (u allaqachon bor edi —
+    `courseAssignment` PATCH/DELETE uchun). Server ishga tushmay
+    qoldi, xato shundan topildi; asl fayl `ada315f` dan tiklandi,
+    homework esa `homework.routes.js` ga ko'chirildi.
 
 ---
 
