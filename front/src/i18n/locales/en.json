@@ -232,7 +232,24 @@
     },
     "fields": {
       "title": "Title",
-      "description": "Description"
+      "description": "Description",
+      "category": "Category",
+      "level": "Level",
+      "tags": "Tags",
+      "tagPlaceholder": "Type a tag and press Enter",
+      "estimatedMinutes": "Estimated time (minutes)",
+      "estimatedMinutesHint": "Shown in the catalog. 0 hides it.",
+      "validityDays": "Completion valid for (days)",
+      "validityDaysHint": "0 means it never expires. Set days if the course has to be retaken.",
+      "navigationMode": "Lesson order",
+      "certificateTemplate": "Certificate template",
+      "noCertificate": "No certificate",
+      "issuesCertificate": "Issues a certificate",
+      "completionRule": "Completion rule",
+      "completionRuleHint": "What counts as finishing this course.",
+      "minPercent": "Minimum percent",
+      "requireAllRequired": "Required items must be complete",
+      "allowSelfEnroll": "Employees may enrol themselves"
     },
     "topics": {
       "title": "Topics",
@@ -281,7 +298,10 @@
       "allStatuses": "All statuses",
       "apply": "Apply",
       "clear": "Clear",
-      "allBranches": "All branches"
+      "allBranches": "All branches",
+      "allCategories": "All categories",
+      "allLevels": "All levels",
+      "allTags": "All tags"
     },
     "targeting": {
       "rolesLabel": "Roles",
@@ -292,7 +312,17 @@
       "autoAssignHint": "Every currently-matching active employee will be assigned the course right away.",
       "branchesLabel": "Branches",
       "branchesPlaceholder": "All branches"
-    }
+    },
+    "level": {
+      "BEGINNER": "Beginner",
+      "INTERMEDIATE": "Intermediate",
+      "ADVANCED": "Advanced"
+    },
+    "navigation": {
+      "SEQUENTIAL": "Sequential (a lesson unlocks after the one before it)",
+      "FREE": "Free (any lesson, any order)"
+    },
+    "minutes": "{count} min"
   },
   "videos": {
     "empty": "No videos uploaded yet",
@@ -1247,7 +1277,8 @@
       "basics": "Basic information",
       "media": "Cover & banner",
       "access": "Access",
-      "review": "Review & publish"
+      "review": "Review & publish",
+      "details": "Details"
     }
   },
   "content": {

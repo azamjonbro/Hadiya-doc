@@ -87,11 +87,29 @@ export const courseRepository = {
 
   // Shared by listPage and count so a page and its total can never be
   // computed from two subtly different filters.
-  buildFilter({ search, status, branch, visibleToRoleName, visibleToBranch, visibleToDepartment, assignedCourseIds }) {
+  buildFilter({
+    search,
+    status,
+    branch,
+    categoryId,
+    level,
+    tag,
+    visibleToRoleName,
+    visibleToBranch,
+    visibleToDepartment,
+    assignedCourseIds,
+  }) {
     const filter = { deletedAt: null }
-    if (search) filter.title = containsRegex(search)
+    // Substring, not `$text`, and deliberately: the admin catalog searches
+    // as you type, and a full-text index matches whole words — "mehn" would
+    // stop finding "mehnat muhofazasi" the moment this switched over. Tags
+    // are included because they are the other thing people type in this box.
+    if (search) filter.$or = [{ title: containsRegex(search) }, { tags: containsRegex(search) }]
     if (status) filter.status = status
     if (branch) filter.branches = branch
+    if (categoryId) filter.categoryId = categoryId
+    if (level) filter.level = level
+    if (tag) filter.tags = tag
     if (visibleToRoleName !== undefined) {
       // Courses created before targetRoles/branches/department existed have
       // none of those fields stored at all (Mongoose schema defaults don't
@@ -131,5 +149,39 @@ export const courseRepository = {
 
   count(params) {
     return Course.countDocuments(this.buildFilter(params))
+  },
+
+  /**
+   * Whole-word relevance search over the `course_text` index.
+   *
+   * Separate from listPage rather than folded into it: `$text` cannot sit
+   * inside an `$or`, so it does not compose with the visibility clause the
+   * catalog builds. The caller applies visibility to the result instead —
+   * which is what the global search in 7.1 does for every entity it spans.
+   */
+  searchText(query, { limit = 20 } = {}) {
+    return Course.find(
+      { deletedAt: null, $text: { $search: query } },
+      { score: { $meta: 'textScore' } }
+    )
+      .sort({ score: { $meta: 'textScore' } })
+      .limit(limit)
+  },
+
+  /** Distinct tags actually in use, for the catalog's tag filter. */
+  async listTags() {
+    const tags = await Course.distinct('tags', { deletedAt: null })
+    return tags.filter(Boolean).sort((a, b) => a.localeCompare(b))
+  },
+
+  countByCategory(categoryId) {
+    return Course.countDocuments({ categoryId, deletedAt: null })
+  },
+
+  // Includes trashed courses on purpose: one of them may be restored later,
+  // and it must not come back pointing at a category that no longer exists.
+  async clearCategory(categoryId) {
+    const result = await Course.updateMany({ categoryId }, { $set: { categoryId: null } })
+    return result.modifiedCount ?? 0
   },
 }

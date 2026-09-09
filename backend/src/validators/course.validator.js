@@ -1,5 +1,29 @@
 import { z } from 'zod'
 
+const objectId = z.string().regex(/^[a-f\d]{24}$/i, 'Invalid id')
+
+// Catalog metadata (3.4). Shared between create and update so the two can
+// never drift into accepting different shapes for the same field.
+const courseMetadataShape = {
+  categoryId: objectId.nullable().optional(),
+  tags: z.array(z.string().trim().min(1).max(40)).max(20).optional(),
+  level: z.enum(['BEGINNER', 'INTERMEDIATE', 'ADVANCED']).optional(),
+  authorIds: z.array(objectId).max(20).optional(),
+  estimatedMinutes: z.coerce.number().int().min(0).max(100000).optional(),
+  prerequisiteCourseIds: z.array(objectId).max(20).optional(),
+  certificateTemplateId: objectId.nullable().optional(),
+  navigationMode: z.enum(['SEQUENTIAL', 'FREE']).optional(),
+  validityDays: z.coerce.number().int().min(0).max(3650).optional(),
+  version: z.coerce.number().int().min(1).max(1000).optional(),
+  allowSelfEnroll: z.boolean().optional(),
+  completionRule: z
+    .object({
+      minPercent: z.coerce.number().int().min(1).max(100).optional(),
+      requireAllRequired: z.boolean().optional(),
+    })
+    .optional(),
+}
+
 export const createCourseSchema = z.object({
   title: z.string().min(1, 'Title is required'),
   description: z.string().optional().default(''),
@@ -12,6 +36,7 @@ export const createCourseSchema = z.object({
   // One-time trigger, not a model field: when true and the course is being
   // published, matching active users get auto-assigned. See course.service.js.
   autoAssign: z.boolean().optional().default(false),
+  ...courseMetadataShape,
 })
 
 export const updateCourseSchema = z
@@ -25,6 +50,7 @@ export const updateCourseSchema = z
     branches: z.array(z.string()).optional(),
     department: z.string().optional(),
     autoAssign: z.boolean().optional(),
+    ...courseMetadataShape,
   })
   .refine((data) => Object.keys(data).length > 0, { message: 'No fields to update' })
 
@@ -35,6 +61,9 @@ export const listCoursesQuerySchema = z.object({
   // (course.service.js), so this narrows the admin catalog rather than
   // widening anyone's access.
   branch: z.string().optional(),
+  categoryId: objectId.optional(),
+  level: z.enum(['BEGINNER', 'INTERMEDIATE', 'ADVANCED']).optional(),
+  tag: z.string().trim().max(40).optional(),
   // `page` opts into numbered pagination (response carries total/totalPages);
   // `cursor` keeps the original "load more" behaviour. Sending both is
   // meaningless, so page wins — see course.service.js.
@@ -79,4 +108,16 @@ export const updateAssignmentSchema = z
     expiresAt: z.coerce.date().nullable().optional(),
     status: z.enum(['ACTIVE', 'COMPLETED', 'CANCELLED']).optional(),
   })
+  .refine((data) => Object.keys(data).length > 0, { message: 'No fields to update' })
+
+export const courseCategoryCreateSchema = z.object({
+  name: z.string().trim().min(1).max(80),
+  description: z.string().trim().max(500).optional(),
+  color: z.string().regex(/^#[0-9a-f]{6}$/i, 'Colour must be #rrggbb').optional(),
+  parentId: objectId.nullable().optional(),
+  order: z.coerce.number().int().min(0).max(1000).optional(),
+})
+
+export const courseCategoryUpdateSchema = courseCategoryCreateSchema
+  .partial()
   .refine((data) => Object.keys(data).length > 0, { message: 'No fields to update' })

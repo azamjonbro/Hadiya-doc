@@ -4,6 +4,7 @@ import { authenticate } from '../../middlewares/auth.middleware.js'
 import { requirePermission, requireRole } from '../../middlewares/rbac.middleware.js'
 import { validateBody, validateQuery } from '../../middlewares/validate.middleware.js'
 import { courseController } from '../../controllers/course.controller.js'
+import { courseCategoryController } from '../../controllers/courseCategory.controller.js'
 import { courseAssignmentController } from '../../controllers/courseAssignment.controller.js'
 import { courseReviewController } from '../../controllers/courseReview.controller.js'
 import { courseQuestionController } from '../../controllers/courseQuestion.controller.js'
@@ -15,6 +16,8 @@ import {
   listCoursesQuerySchema,
   createTopicSchema,
   createAssignmentSchema,
+  courseCategoryCreateSchema,
+  courseCategoryUpdateSchema,
 } from '../../validators/course.validator.js'
 import { upsertReviewSchema, listReviewsQuerySchema } from '../../validators/courseReview.validator.js'
 import {
@@ -41,6 +44,30 @@ coursesRouter.post(
 )
 // Before '/:id' — Express matches in order and 'trash' is not a course id.
 coursesRouter.get('/trash', requirePermission(PERMISSIONS.COURSE_DELETE), courseController.listTrash)
+
+// Same ordering rule: 'categories' and 'tags' are literal segments, so they
+// have to be declared before the '/:id' catch-all or they arrive as ids.
+// Reading them is course:read — every catalog renders the filter — while
+// changing them is course:create, the admin-tier permission.
+coursesRouter.get('/categories', requirePermission(PERMISSIONS.COURSE_READ), courseCategoryController.list)
+coursesRouter.post(
+  '/categories',
+  requirePermission(PERMISSIONS.COURSE_CREATE),
+  validateBody(courseCategoryCreateSchema),
+  courseCategoryController.create
+)
+coursesRouter.patch(
+  '/categories/:id',
+  requirePermission(PERMISSIONS.COURSE_UPDATE),
+  validateBody(courseCategoryUpdateSchema),
+  courseCategoryController.update
+)
+coursesRouter.delete(
+  '/categories/:id',
+  requirePermission(PERMISSIONS.COURSE_DELETE),
+  courseCategoryController.remove
+)
+coursesRouter.get('/tags', requirePermission(PERMISSIONS.COURSE_READ), courseCategoryController.tags)
 coursesRouter.get('/:id', requirePermission(PERMISSIONS.COURSE_READ), courseController.getById)
 coursesRouter.get('/:id/progress', requirePermission(PERMISSIONS.COURSE_READ), courseController.getMyProgress)
 coursesRouter.get(

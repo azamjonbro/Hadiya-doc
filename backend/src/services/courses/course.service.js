@@ -19,7 +19,8 @@ import { topicListCacheKey } from './topic.service.js'
 import { effectiveCacheKey as attentionPolicyCacheKey } from './attentionPolicy.service.js'
 import { notificationService } from '../notifications/notification.service.js'
 import { formatNotificationDate } from '../../utils/notificationFormat.js'
-import { collectCourseItems, summarize } from './courseCompletion.service.js'
+import { collectCourseItems, summarize, courseCompletionService } from './courseCompletion.service.js'
+import { logger } from '../../config/logger.js'
 
 // Course metadata is read on every catalog/detail page view and written
 // rarely (spec §39) — cached actor-independently (the DTO doesn't vary by
@@ -151,6 +152,25 @@ function toPublicCourse(course) {
     targetRoles: course.targetRoles ?? [],
     branches: course.branches ?? [],
     department: course.department ?? '',
+    // Catalog metadata (3.4). Defaults are spelled out rather than left
+    // undefined: courses created before these fields existed have none of
+    // them stored, and a catalog card that reads `level: undefined` renders
+    // as a blank chip instead of "Beginner".
+    categoryId: course.categoryId ? course.categoryId.toString() : null,
+    tags: course.tags ?? [],
+    level: course.level ?? 'BEGINNER',
+    authorIds: (course.authorIds ?? []).map((id) => id.toString()),
+    estimatedMinutes: course.estimatedMinutes ?? 0,
+    prerequisiteCourseIds: (course.prerequisiteCourseIds ?? []).map((id) => id.toString()),
+    certificateTemplateId: course.certificateTemplateId ? course.certificateTemplateId.toString() : null,
+    navigationMode: course.navigationMode ?? 'SEQUENTIAL',
+    validityDays: course.validityDays ?? 0,
+    version: course.version ?? 1,
+    allowSelfEnroll: course.allowSelfEnroll ?? false,
+    completionRule: {
+      minPercent: course.completionRule?.minPercent ?? 100,
+      requireAllRequired: course.completionRule?.requireAllRequired ?? true,
+    },
     createdAt: course.createdAt,
     updatedAt: course.updatedAt,
   }
@@ -319,6 +339,18 @@ export const courseService = {
     })
     if (payload.status === 'PUBLISHED' && existing.status !== 'PUBLISHED') {
       await autoAssignIfNeeded(actor, updated, payload.autoAssign)
+    }
+    // Changing what "finished" means changes who has finished. Editing the
+    // rule and leaving every assignment on the old answer is exactly the
+    // split-brain 3.1 removed, so the re-evaluation runs here for the same
+    // reason publishing a new lesson triggers one (AT-04).
+    if (payload.completionRule) {
+      await courseCompletionService.evaluateCourse(id).catch((error) => {
+        logger.warn('Could not re-evaluate completion after a rule change', {
+          courseId: String(id),
+          error: error.message,
+        })
+      })
     }
     return toPublicCourse(updated)
   },

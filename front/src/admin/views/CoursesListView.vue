@@ -23,7 +23,44 @@ const auth = useAuthStore()
 const router = useRouter()
 const route = useRoute()
 
-const filters = reactive({ search: '', status: '', branch: route.query.branch ?? '' })
+const filters = reactive({
+  search: '',
+  status: '',
+  branch: route.query.branch ?? '',
+  categoryId: '',
+  level: '',
+  tag: '',
+})
+
+// Loaded once. Both lists are small and change rarely, and a filter bar that
+// waits on two requests before it can be used is worse than one that fills in
+// a moment later.
+const categories = ref([])
+const tags = ref([])
+coursesApi
+  .categories()
+  .then((rows) => {
+    categories.value = rows
+  })
+  .catch(() => {
+    categories.value = []
+  })
+coursesApi
+  .tags()
+  .then((rows) => {
+    tags.value = rows
+  })
+  .catch(() => {
+    tags.value = []
+  })
+
+const categoryOptions = computed(() =>
+  // The count is part of the label because a category with nothing in it
+  // reads as a broken filter otherwise.
+  categories.value.map((category) => ({ value: category.id, label: `${category.name} (${category.courseCount})` }))
+)
+const tagOptions = computed(() => tags.value.map((tag) => ({ value: tag, label: tag })))
+const LEVELS = ['BEGINNER', 'INTERMEDIATE', 'ADVANCED']
 
 // Admins see every course regardless of branch (visibility scoping applies to
 // employees only), so this is a plain facet: "show me what Toshkent runs".
@@ -37,10 +74,12 @@ usersApi
     branchOptions.value = []
   })
 
-const hasActiveFilters = computed(() => Boolean(filters.search || filters.status || filters.branch))
+const hasActiveFilters = computed(() =>
+  Boolean(filters.search || filters.status || filters.branch || filters.categoryId || filters.level || filters.tag)
+)
 
 function clearFilters() {
-  Object.assign(filters, { search: '', status: '', branch: '' })
+  Object.assign(filters, { search: '', status: '', branch: '', categoryId: '', level: '', tag: '' })
   loadFirstPage()
 }
 
@@ -63,6 +102,9 @@ function buildParams() {
   if (filters.search) params.search = filters.search
   if (filters.status) params.status = filters.status
   if (filters.branch) params.branch = filters.branch
+  if (filters.categoryId) params.categoryId = filters.categoryId
+  if (filters.level) params.level = filters.level
+  if (filters.tag) params.tag = filters.tag
   return params
 }
 
@@ -149,6 +191,30 @@ onMounted(load)
           @update:model-value="loadFirstPage"
         />
       </div>
+      <div class="w-48">
+        <AppSelect
+          v-model="filters.categoryId"
+          :placeholder="t('courses.filters.allCategories')"
+          :options="categoryOptions"
+          @update:model-value="loadFirstPage"
+        />
+      </div>
+      <div class="w-44">
+        <AppSelect
+          v-model="filters.level"
+          :placeholder="t('courses.filters.allLevels')"
+          :options="LEVELS.map((level) => ({ value: level, label: t(`courses.level.${level}`) }))"
+          @update:model-value="loadFirstPage"
+        />
+      </div>
+      <div v-if="tagOptions.length" class="w-44">
+        <AppSelect
+          v-model="filters.tag"
+          :placeholder="t('courses.filters.allTags')"
+          :options="tagOptions"
+          @update:model-value="loadFirstPage"
+        />
+      </div>
       <AppButton variant="outline" icon="search" @click="loadFirstPage">{{ t('courses.filters.apply') }}</AppButton>
       <AppButton v-if="hasActiveFilters" variant="ghost" icon="close" @click="clearFilters">
         {{ t('courses.filters.clear') }}
@@ -191,7 +257,16 @@ onMounted(load)
           <Badge :variant="statusBadge[course.status]" size="sm" class="self-start">{{ t(`courses.status.${course.status.toLowerCase()}`) }}</Badge>
           <h3 class="mt-2.5 line-clamp-2 text-small font-semibold text-ink">{{ course.title }}</h3>
           <p v-if="course.description" class="mt-1 line-clamp-2 text-caption text-ink-faint">{{ course.description }}</p>
-          <p class="mt-auto pt-3 text-caption text-ink-faint">{{ new Date(course.updatedAt).toLocaleDateString(locale) }}</p>
+          <div v-if="course.tags?.length" class="mt-2 flex flex-wrap gap-1">
+            <span v-for="tag in course.tags.slice(0, 3)" :key="tag" class="rounded-full bg-surface-2 px-2 py-0.5 text-caption text-ink-muted">
+              {{ tag }}
+            </span>
+          </div>
+          <p class="mt-auto flex flex-wrap items-center gap-x-2 pt-3 text-caption text-ink-faint">
+            <span>{{ t(`courses.level.${course.level ?? 'BEGINNER'}`) }}</span>
+            <span v-if="course.estimatedMinutes">· {{ t('courses.minutes', { count: course.estimatedMinutes }) }}</span>
+            <span>· {{ new Date(course.updatedAt).toLocaleDateString(locale) }}</span>
+          </p>
         </div>
       </AppCard>
     </div>

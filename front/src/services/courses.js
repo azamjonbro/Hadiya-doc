@@ -1,6 +1,23 @@
 import { http } from './http'
 
 export const coursesApi = {
+  categories() {
+    return http.get('/courses/categories').then((r) => r.data.data.items)
+  },
+  createCategory(payload) {
+    return http.post('/courses/categories', payload).then((r) => r.data.data)
+  },
+  updateCategory(id, payload) {
+    return http.patch(`/courses/categories/${id}`, payload).then((r) => r.data.data)
+  },
+  deleteCategory(id) {
+    return http.delete(`/courses/categories/${id}`).then((r) => r.data.data)
+  },
+  // The tag filter's options: what courses actually carry, since tags are
+  // free text and there is no catalog of them to read instead.
+  tags() {
+    return http.get('/courses/tags').then((r) => r.data.data.tags)
+  },
   list(params) {
     return http.get('/courses', { params }).then((r) => r.data.data)
   },

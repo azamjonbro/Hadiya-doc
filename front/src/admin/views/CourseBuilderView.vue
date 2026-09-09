@@ -4,9 +4,11 @@ import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { ROLES } from '@lms/shared'
 import { coursesApi } from '@/services/courses'
+import { certificatesApi } from '@/services/certificates'
 import { useToast } from '@/composables/useToast'
 import AppButton from '@/components/ui/AppButton.vue'
 import AppInput from '@/components/ui/AppInput.vue'
+import AppSelect from '@/components/ui/AppSelect.vue'
 import AppCard from '@/components/ui/AppCard.vue'
 import Badge from '@/components/ui/Badge.vue'
 import Icon from '@/components/ui/Icon.vue'
@@ -21,6 +23,7 @@ const roleList = Object.values(ROLES)
 
 const steps = [
   { key: 'basics', labelKey: 'courseBuilder.steps.basics', icon: 'file-text' },
+  { key: 'details', labelKey: 'courseBuilder.steps.details', icon: 'list' },
   { key: 'media', labelKey: 'courseBuilder.steps.media', icon: 'layers' },
   { key: 'access', labelKey: 'courseBuilder.steps.access', icon: 'shield' },
   { key: 'review', labelKey: 'courseBuilder.steps.review', icon: 'check-circle' },
@@ -36,7 +39,58 @@ const form = reactive({
   targetRoles: [],
   department: '',
   autoAssign: false,
+  // Catalog metadata (3.4). The defaults match the model's, so a course
+  // created without touching this step behaves exactly as courses did
+  // before the step existed.
+  categoryId: '',
+  level: 'BEGINNER',
+  tags: [],
+  estimatedMinutes: 0,
+  navigationMode: 'SEQUENTIAL',
+  validityDays: 0,
+  allowSelfEnroll: false,
+  certificateTemplateId: '',
+  completionRule: { minPercent: 100, requireAllRequired: true },
 })
+
+const LEVELS = ['BEGINNER', 'INTERMEDIATE', 'ADVANCED']
+const categories = ref([])
+const templates = ref([])
+const tagInput = ref('')
+
+coursesApi
+  .categories()
+  .then((rows) => {
+    categories.value = rows
+  })
+  .catch(() => {
+    categories.value = []
+  })
+// Only the people who manage templates can list them. A course author
+// without that permission simply gets no certificate picker rather than an
+// error on a page that is otherwise working.
+certificatesApi
+  .templates()
+  .then((rows) => {
+    templates.value = rows
+  })
+  .catch(() => {
+    templates.value = []
+  })
+
+function addTag() {
+  const value = tagInput.value.trim()
+  if (!value || form.tags.includes(value) || form.tags.length >= 20) {
+    tagInput.value = ''
+    return
+  }
+  form.tags.push(value)
+  tagInput.value = ''
+}
+
+function removeTag(tag) {
+  form.tags.splice(form.tags.indexOf(tag), 1)
+}
 const submitting = ref(false)
 const errorMessage = ref('')
 
@@ -64,7 +118,21 @@ async function onPublish(status) {
   submitting.value = true
   errorMessage.value = ''
   try {
-    const course = await coursesApi.create({ ...form, status })
+    // Empty strings are the select's "not chosen", which the API reads as
+    // an invalid id rather than as null. Converted here so an untouched
+    // picker means "no category" instead of a validation error.
+    const course = await coursesApi.create({
+      ...form,
+      status,
+      categoryId: form.categoryId || null,
+      certificateTemplateId: form.certificateTemplateId || null,
+      estimatedMinutes: Number(form.estimatedMinutes) || 0,
+      validityDays: Number(form.validityDays) || 0,
+      completionRule: {
+        minPercent: Number(form.completionRule.minPercent) || 100,
+        requireAllRequired: form.completionRule.requireAllRequired,
+      },
+    })
     toast.success(t('courseBuilder.created'))
     router.push(`/bos/courses/${course.id}`)
   } catch (error) {
@@ -116,16 +184,110 @@ async function onPublish(status) {
         </div>
       </div>
 
-      <!-- Step 2: Media -->
+      <!-- Step 2: Details -->
       <div v-else-if="stepIndex === 1" class="space-y-4">
+        <h2 class="text-h3 text-ink">{{ t('courseBuilder.steps.details') }}</h2>
+        <div class="grid gap-4 sm:grid-cols-2">
+          <AppSelect
+            v-model="form.categoryId"
+            :label="t('courses.fields.category')"
+            :placeholder="t('courses.filters.allCategories')"
+            :options="categories.map((category) => ({ value: category.id, label: category.name }))"
+          />
+          <AppSelect
+            v-model="form.level"
+            :label="t('courses.fields.level')"
+            :options="LEVELS.map((level) => ({ value: level, label: t(`courses.level.${level}`) }))"
+          />
+        </div>
+
+        <div>
+          <label class="mb-1.5 block text-small font-medium text-ink">{{ t('courses.fields.tags') }}</label>
+          <div class="flex flex-wrap gap-1.5">
+            <span
+              v-for="tag in form.tags"
+              :key="tag"
+              class="flex items-center gap-1 rounded-full bg-surface-2 px-2.5 py-1 text-caption text-ink"
+            >
+              {{ tag }}
+              <button type="button" class="text-ink-faint hover:text-danger" @click="removeTag(tag)">
+                <Icon name="close" size="12" />
+              </button>
+            </span>
+          </div>
+          <AppInput
+            v-model="tagInput"
+            class="mt-2"
+            :placeholder="t('courses.fields.tagPlaceholder')"
+            @keyup.enter="addTag"
+            @blur="addTag"
+          />
+        </div>
+
+        <div class="grid gap-4 sm:grid-cols-2">
+          <AppInput
+            v-model="form.estimatedMinutes"
+            type="number"
+            :label="t('courses.fields.estimatedMinutes')"
+            :hint="t('courses.fields.estimatedMinutesHint')"
+          />
+          <AppInput
+            v-model="form.validityDays"
+            type="number"
+            :label="t('courses.fields.validityDays')"
+            :hint="t('courses.fields.validityDaysHint')"
+          />
+        </div>
+
+        <AppSelect
+          v-model="form.navigationMode"
+          :label="t('courses.fields.navigationMode')"
+          :options="[
+            { value: 'SEQUENTIAL', label: t('courses.navigation.SEQUENTIAL') },
+            { value: 'FREE', label: t('courses.navigation.FREE') },
+          ]"
+        />
+
+        <AppSelect
+          v-if="templates.length"
+          v-model="form.certificateTemplateId"
+          :label="t('courses.fields.certificateTemplate')"
+          :placeholder="t('courses.fields.noCertificate')"
+          :options="templates.map((template) => ({ value: template._id, label: template.name }))"
+        />
+
+        <div class="rounded-lg border border-border p-4">
+          <p class="text-small font-medium text-ink">{{ t('courses.fields.completionRule') }}</p>
+          <p class="mt-1 text-caption text-ink-faint">{{ t('courses.fields.completionRuleHint') }}</p>
+          <div class="mt-3 grid gap-4 sm:grid-cols-2">
+            <AppInput v-model="form.completionRule.minPercent" type="number" :label="t('courses.fields.minPercent')" />
+            <label class="flex items-end gap-2 pb-2 text-small text-ink">
+              <input
+                v-model="form.completionRule.requireAllRequired"
+                type="checkbox"
+                class="h-4 w-4 rounded border-border-strong text-primary"
+              />
+              {{ t('courses.fields.requireAllRequired') }}
+            </label>
+          </div>
+        </div>
+
+        <label class="flex items-center gap-2 text-small text-ink">
+          <input v-model="form.allowSelfEnroll" type="checkbox" class="h-4 w-4 rounded border-border-strong text-primary" />
+          {{ t('courses.fields.allowSelfEnroll') }}
+        </label>
+      </div>
+
+      <!-- Step 3: Media -->
+      <div v-else-if="stepIndex === 2" class="space-y-4">
         <h2 class="text-h3 text-ink">{{ t('courseBuilder.steps.media') }}</h2>
         <ImageUploadField v-model="form.cover" :label="t('courseBuilder.coverUrl')" aspect="aspect-video" />
         <ImageUploadField v-model="form.banner" :label="t('courseBuilder.bannerUrl')" aspect="aspect-[3/1]" />
         <p class="text-caption text-ink-faint">{{ t('courseBuilder.mediaHint') }}</p>
       </div>
 
-      <!-- Step 3: Access -->
-      <div v-else-if="stepIndex === 2" class="space-y-4">
+      <!-- Step 4: Access -->
+      <div v-else-if="stepIndex === 3" class="space-y-4">
         <h2 class="text-h3 text-ink">{{ t('courseBuilder.steps.access') }}</h2>
         <div>
           <p class="mb-1.5 text-small font-medium text-ink">{{ t('courses.targeting.rolesLabel') }}</p>
@@ -145,13 +307,23 @@ async function onPublish(status) {
         <p class="text-caption text-ink-faint">{{ t('courses.targeting.noRestrictionHint') }}</p>
       </div>
 
-      <!-- Step 4: Review -->
+      <!-- Step 5: Review -->
       <div v-else class="space-y-5">
         <h2 class="text-h3 text-ink">{{ t('courseBuilder.steps.review') }}</h2>
         <div class="rounded-lg border border-border bg-surface-2 p-4">
           <p class="text-small font-semibold text-ink">{{ form.title || '—' }}</p>
           <p v-if="form.description" class="mt-1 text-small text-ink-muted">{{ form.description }}</p>
           <p v-if="!form.cover" class="mt-2 text-caption text-ink-faint">{{ t('courseBuilder.noCover') }}</p>
+          <div class="mt-3 flex flex-wrap items-center gap-1.5">
+            <Badge variant="neutral" size="sm">{{ t(`courses.level.${form.level}`) }}</Badge>
+            <Badge v-if="form.estimatedMinutes" variant="neutral" size="sm">
+              {{ t('courses.minutes', { count: form.estimatedMinutes }) }}
+            </Badge>
+            <Badge v-for="tag in form.tags" :key="tag" variant="neutral" size="sm">{{ tag }}</Badge>
+            <Badge v-if="form.certificateTemplateId" variant="success" size="sm">
+              {{ t('courses.fields.issuesCertificate') }}
+            </Badge>
+          </div>
           <div v-if="hasTargeting" class="mt-3 flex flex-wrap items-center gap-1.5 border-t border-border pt-3">
             <Badge v-for="role in form.targetRoles" :key="role" variant="primary" size="sm">{{ role }}</Badge>
             <Badge v-if="form.department" variant="info" size="sm">{{ form.department }}</Badge>

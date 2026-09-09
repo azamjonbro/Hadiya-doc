@@ -232,7 +232,24 @@
     },
     "fields": {
       "title": "Nomi",
-      "description": "Tavsif"
+      "description": "Tavsif",
+      "category": "Kategoriya",
+      "level": "Daraja",
+      "tags": "Teglar",
+      "tagPlaceholder": "Teg yozing va Enter bosing",
+      "estimatedMinutes": "Taxminiy davomiylik (daqiqa)",
+      "estimatedMinutesHint": "Kataloglarda ko‘rsatiladi. 0 — ko‘rsatilmaydi.",
+      "validityDays": "Tugatish muddati (kun)",
+      "validityDaysHint": "0 — muddatsiz. Qayta o‘qish talab qilinsa, kun sonini yozing.",
+      "navigationMode": "Darslar tartibi",
+      "certificateTemplate": "Sertifikat shabloni",
+      "noCertificate": "Sertifikat berilmaydi",
+      "issuesCertificate": "Sertifikat beradi",
+      "completionRule": "Tugatish qoidasi",
+      "completionRuleHint": "Kurs qachon «tugatilgan» hisoblanadi.",
+      "minPercent": "Kamida necha foiz",
+      "requireAllRequired": "Majburiy elementlar shart",
+      "allowSelfEnroll": "Xodim o‘zi yozila oladi"
     },
     "topics": {
       "title": "Mavzular",
@@ -281,7 +298,10 @@
       "allStatuses": "Barcha holatlar",
       "apply": "Filtrlash",
       "clear": "Tozalash",
-      "allBranches": "Barcha filiallar"
+      "allBranches": "Barcha filiallar",
+      "allCategories": "Barcha kategoriyalar",
+      "allLevels": "Barcha darajalar",
+      "allTags": "Barcha teglar"
     },
     "targeting": {
       "rolesLabel": "Rollar",
@@ -292,7 +312,17 @@
       "autoAssignHint": "Hozirda mos keladigan barcha faol xodimlarga darhol kurs tayinlanadi.",
       "branchesLabel": "Filiallar",
       "branchesPlaceholder": "Barcha filiallar"
-    }
+    },
+    "level": {
+      "BEGINNER": "Boshlang‘ich",
+      "INTERMEDIATE": "O‘rta",
+      "ADVANCED": "Yuqori"
+    },
+    "navigation": {
+      "SEQUENTIAL": "Ketma-ket (oldingisi tugagach ochiladi)",
+      "FREE": "Erkin (istalgan darsdan boshlash mumkin)"
+    },
+    "minutes": "{count} daq."
   },
   "videos": {
     "empty": "Videolar hali yuklanmagan",
@@ -1247,7 +1277,8 @@
       "basics": "Asosiy ma'lumot",
       "media": "Muqova va banner",
       "access": "Kirish huquqi",
-      "review": "Ko'rib chiqish va e'lon qilish"
+      "review": "Ko'rib chiqish va e'lon qilish",
+      "details": "Tafsilotlar"
     }
   },
   "content": {

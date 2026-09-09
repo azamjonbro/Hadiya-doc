@@ -232,7 +232,24 @@
     },
     "fields": {
       "title": "Название",
-      "description": "Описание"
+      "description": "Описание",
+      "category": "Категория",
+      "level": "Уровень",
+      "tags": "Теги",
+      "tagPlaceholder": "Введите тег и нажмите Enter",
+      "estimatedMinutes": "Примерная длительность (мин.)",
+      "estimatedMinutesHint": "Показывается в каталоге. 0 — не показывать.",
+      "validityDays": "Срок действия прохождения (дни)",
+      "validityDaysHint": "0 — бессрочно. Укажите дни, если нужна переаттестация.",
+      "navigationMode": "Порядок уроков",
+      "certificateTemplate": "Шаблон сертификата",
+      "noCertificate": "Без сертификата",
+      "issuesCertificate": "Выдаёт сертификат",
+      "completionRule": "Правило завершения",
+      "completionRuleHint": "Когда курс считается пройденным.",
+      "minPercent": "Минимальный процент",
+      "requireAllRequired": "Обязательные элементы нужны",
+      "allowSelfEnroll": "Сотрудник может записаться сам"
     },
     "topics": {
       "title": "Темы",
@@ -281,7 +298,10 @@
       "allStatuses": "Все статусы",
       "apply": "Применить",
       "clear": "Сбросить",
-      "allBranches": "Все филиалы"
+      "allBranches": "Все филиалы",
+      "allCategories": "Все категории",
+      "allLevels": "Все уровни",
+      "allTags": "Все теги"
     },
     "targeting": {
       "rolesLabel": "Роли",
@@ -292,7 +312,17 @@
       "autoAssignHint": "Курс сразу будет назначен всем подходящим активным сотрудникам.",
       "branchesLabel": "Филиалы",
       "branchesPlaceholder": "Все филиалы"
-    }
+    },
+    "level": {
+      "BEGINNER": "Начальный",
+      "INTERMEDIATE": "Средний",
+      "ADVANCED": "Продвинутый"
+    },
+    "navigation": {
+      "SEQUENTIAL": "Последовательно (следующий урок после предыдущего)",
+      "FREE": "Свободно (любой урок в любом порядке)"
+    },
+    "minutes": "{count} мин."
   },
   "videos": {
     "empty": "Видео ещё не загружены",
@@ -1247,7 +1277,8 @@
       "basics": "Основная информация",
       "media": "Обложка и баннер",
       "access": "Доступ",
-      "review": "Проверка и публикация"
+      "review": "Проверка и публикация",
+      "details": "Детали"
     }
   },
   "content": {
