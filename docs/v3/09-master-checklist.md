@@ -1051,11 +1051,43 @@
 
 ## BLOK 6 — Live training, kalendar, topshiriq (3 hafta)
 
-- [ ] **6.1** **Tadbir kengaytmasi**
+- [x] **6.1** **Tadbir kengaytmasi**
   · `models/event.model.js` — `+mode, trainerIds[], capacity, registeredCount,
   meeting{}, remindBeforeMinutes[], linkedCourseId, requiresRegistration, status`
   · `models/eventRegistration.model.js`, Migratsiya **M6**
   · Qabul: **AT-31**
+  → `participants` **qoladi** va endi u — taklif ro'yxati, ro'yxatdan
+    o'tganlar ro'yxati emas. Taklif qilingan bo'lish va joy egallash —
+    ikki xil fakt; ularni chalkashtirish sig'imni majburlab
+    bo'lmaydigan qiladi.
+  → Har odam uchun alohida yozuv (`eventRegistration`), massiv emas:
+    kim keldi, kim navbatda nechanchi, kim belgiladi — massiv bularning
+    hech birini ko'tarolmaydi, navbatga esa tartib kerak.
+  → Butun xususiyat bitta savolda: xona 10 kishilik bo'lsa, 11-odam
+    nima bo'ladi. Rad etish — u kelmoqchi ekanini yo'qotadi; kiritish —
+    xonani to'ldiradi. Shuning uchun navbat, va navbat **o'zi
+    siljiydi**: kimdir bekor qilishi bilan birinchi odam ko'tariladi.
+    Kechqurun ishlaydigan job'ga qoldirilsa, soat 09:00 da bo'shagan
+    joy kun bo'yi bo'sh turardi.
+  → `registeredCount` — katalog uchun kesh, oshirilmaydi balki har
+    o'zgarishdan keyin yozuvlardan **qayta hisoblanadi**, ya'ni ko'pi
+    bilan bitta yozuvga adashadi.
+  → Davomat belgilash joy **bo'shatmaydi**: tadbir o'tib bo'lgan, va
+    tugagan sessiyaga navbatdan odam ko'tarish bema'nilik.
+  → Meeting **passcode** faqat joyi borlarga va tashkilotchiga
+    beriladi. Katalog javobidagi passcode — sahifani ochgan har bir
+    brauzerdagi passcode, jumladan kiritilmaganlarniki.
+  → M6 ikki qismdan: `$exists:false` backfill (M3 dagi bilan bir xil
+    sabab) va `participants` ni ro'yxatdan o'tish yozuvlariga
+    aylantirish. Ular `REGISTERED` qilib yoziladi, sig'imga qaramay:
+    o'sha paytda navbat degan narsa yo'q edi, va orqaga qarab navbat
+    o'ylab topish odamga o'zi qatnashgan joyni yo'qotgandek qilib
+    ko'rsatardi.
+  → Yo'l-yo'lakay topildi: `EVENT_CANCELLED` va `EVENT_RESCHEDULED`
+    shablonlari **allaqachon bor ekan** — men dublikat qo'shib
+    yuborgandim (object literal'da keyingisi yutadi). Dublikatlar
+    olib tashlandi, mavjudlari qoldi; ular `startsAt`/`previousStartsAt`
+    placeholder'larini ishlatadi, 6.2 da shuni hisobga olish kerak.
 
 - [ ] **6.2** **Tadbir bildirishnomalari** — `event.service.js` ga `notify()`
   (yaratildi / o'zgardi / bekor qilindi / eslatma / waitlist ko'tarildi)
