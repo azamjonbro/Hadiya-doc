@@ -2264,5 +2264,57 @@
       "TASK_DEADLINE": "Срок задачи",
       "PATH_DEADLINE": "Срок траектории"
     }
+  },
+  "grading": {
+    "title": "Очередь проверки",
+    "subtitle": "Сданные работы — сначала самые давние",
+    "emptyTitle": "Очередь пуста",
+    "emptyDescription": "Новые работы появятся здесь.",
+    "loadError": "Не удалось загрузить",
+    "saveError": "Не удалось сохранить",
+    "late": "С опозданием",
+    "attemptNo": "Попытка {number}",
+    "justNow": "только что",
+    "hoursAgo": "{hours} ч назад",
+    "daysAgo": "{days} дн. назад",
+    "review": "Проверка работы",
+    "files": "Файлы",
+    "links": "Ссылки",
+    "score": "Балл",
+    "outOf": "Максимум: {max}",
+    "total": "Итого",
+    "feedback": "Комментарий",
+    "grade": "Оценить",
+    "returnForRevision": "Вернуть на доработку",
+    "graded": "Оценено",
+    "returned": "Возвращено на доработку"
+  },
+  "homework": {
+    "due": "Срок: {date}",
+    "lateNow": "С опозданием",
+    "closed": "Закрыто",
+    "attemptsLeft": "{used} из {total} попыток",
+    "attemptNo": "Попытка {number}",
+    "yourAttempts": "Ваши работы",
+    "yourAnswer": "Ваш ответ",
+    "links": "Ссылки",
+    "addLink": "Добавить",
+    "saveDraft": "Сохранить черновик",
+    "submit": "Сдать",
+    "draftSaved": "Черновик сохранён",
+    "submitted": "Работа сдана",
+    "loadError": "Не удалось загрузить",
+    "saveError": "Не удалось сохранить",
+    "submitTitle": "Сдать работу?",
+    "submitMessage": "После сдачи её увидит проверяющий.",
+    "submitLateMessage": "Срок прошёл — работа будет помечена как сданная с опозданием.",
+    "closedHint": "Задание закрыто, сдать уже нельзя.",
+    "noAttemptsLeft": "Попытки исчерпаны.",
+    "status": {
+      "DRAFT": "Черновик",
+      "SUBMITTED": "На проверке",
+      "GRADED": "Оценено",
+      "RETURNED": "Возвращено"
+    }
   }
 }

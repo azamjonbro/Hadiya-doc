@@ -14,22 +14,22 @@
 |---|:--:|---|:--:|:--:|---|---|
 | Kurs yaratish/tahrirlash | ✓ | Bor | FULL | 100 | `course.service.js:281-322` | — |
 | Draft / Published / Archived | ✓ | Bor | FULL | 100 | `course.model.js:11` | — |
-| Kursni nusxalash | ✓ | Yo'q | NONE | 0 | — | `POST /courses/:id/duplicate` deep copy |
-| Kurs kategoriyasi | ✓ | Yo'q | NONE | 0 | `course.model.js` — maydon yo'q | `CourseCategory` daraxti |
-| Teglar | ✓ | Yo'q | NONE | 0 | — | `course.tags[]` + indeks |
-| Muallif | ✓ | Faqat `createdBy` | PARTIAL | 25 | `course.model.js:24` | `authorIds[]` + AUTHOR roli |
-| Prerequisites | ✓ | Yo'q | NONE | 0 | — | `prerequisiteCourseIds[]` + gate |
-| Tugatish qoidasi (sozlanadigan) | ✓ | Qat'iy, ikki xil hisoblanadi | PARTIAL | 25 | `course.service.js:116` ↔ `videoEventProcessor.js:245` | Yagona `completionRule` |
+| Kursni nusxalash | ✓ | Bor — chuqur nusxa (mavzu/video/material/test+savol), media havola qilinadi | FULL | 100 | `courseDuplicate.service.js`, `courses.routes.js:82-85` | — |
+| Kurs kategoriyasi | ✓ | Bor — bir daraja ichma-ich `CourseCategory` | FULL | 100 | `courseCategory.model.js`, `course.model.js:21` | — |
+| Teglar | ✓ | Bor — `tags[]` + `$text` indeksda vaznlangan | FULL | 100 | `course.model.js:25,118-120` | — |
+| Muallif | ✓ | Bor — `authorIds[]` + AUTHOR roli | FULL | 100 | `course.model.js:30`, `role.model.js` | — |
+| Prerequisites | ✓ | Maydon bor, kirish gate'i Blok 5 da | PARTIAL | 50 | `course.model.js:38` | Path'da tekshiruv |
+| Tugatish qoidasi (sozlanadigan) | ✓ | Bor — yagona `completionRule{minPercent,requireAllRequired}`, bitta servis | FULL | 100 | `course.model.js:70-78`, `courseCompletion.service.js` | — |
 | Minimal tugatish vaqti | ✓ | Yo'q | NONE | 0 | — | `course.minMinutes` |
-| Navigatsiya: qat'iy/erkin | ✓ | Faqat qat'iy, sozlanmaydi | PARTIAL | 50 | `courseSequence.js` | `navigationMode` toggle |
+| Navigatsiya: qat'iy/erkin | ✓ | Bor — `navigationMode` SEQUENTIAL / FREE | FULL | 100 | `course.model.js:44`, `courseSequence.js` | — |
 | Gated content (test o'tilmaguncha qulf) | ✓ | Video ketma-ketligi bor, test gate'i yo'q | PARTIAL | 50 | `courseSequence.js:52-66` | `blockedByQuizId` |
 | Kurs versiyalash | ? | Yo'q | VERIFY | 0 | — | Manba tasdiqlanmagan |
-| Kurs amal muddati | ✓ | Faqat assignment darajasida | PARTIAL | 75 | `courseAssignment.model.js:19` | `course.validityDays` |
+| Kurs amal muddati | ✓ | Bor — `course.validityDays` + assignment darajasi | FULL | 100 | `course.model.js:50`, `courseAssignment.model.js:19` | — |
 | Soft delete + trash + tiklash | — | Bor + avtomatik tozalash | OURS+ | 100 | `trash.service.js`, `course.model.js:31` | — |
 | Kurs ko'rinishi (targeting) | ✓ | rol AND filial AND bo'lim | OURS+ | 100 | `courseVisibility.js:20-38` | — |
-| Kurs qidiruvi | ✓ | Faqat sarlavha, regex, escape'siz | PARTIAL | 25 | `course.repository.js:91` | `$text` + ReDoS tuzatish |
+| Kurs qidiruvi | ✓ | Bor — `$text` indeks (title×10 / tags×4 / description×1) | FULL | 100 | `course.model.js:118-120`, `course.repository.js` | — |
 | Kurs cover/banner | ✓ | Bor | FULL | 100 | `course.model.js:8-9` | — |
-| **D01 jami: 17 capability** | | | **FULL 3 · OURS+ 2 · PARTIAL 6 · NONE 5 · VERIFY 1** | **44** | | |
+| **D01 jami: 17 capability** | | | **FULL 11 · OURS+ 2 · PARTIAL 2 · NONE 1 · VERIFY 1** | **82** | | |
 
 ## D02 · COURSE CATALOG
 
@@ -37,15 +37,15 @@
 |---|:--:|---|:--:|:--:|---|---|
 | Katalog sahifasi | ✓ | Bor | FULL | 100 | `CoursesView.vue` | — |
 | Filtr: status/filial | ✓ | Bor | FULL | 100 | `course.repository.js:89-112` | — |
-| Filtr: kategoriya/teg/daraja | ✓ | Yo'q | NONE | 0 | — | D01 metadatasiga bog'liq |
+| Filtr: kategoriya/teg/daraja | ✓ | Bor | FULL | 100 | `course.repository.js:94-112` | — |
 | Self-enroll | ✓ | Bor | FULL | 100 | `courseAssignment.service.js:88-124` | — |
-| Self-enroll'ni kurs darajasida o'chirish | ? | Yo'q | VERIFY | 0 | — | `allowSelfEnroll` |
+| Self-enroll'ni kurs darajasida o'chirish | ? | Bor — `allowSelfEnroll` | OURS+ | 100 | `course.model.js:60` | — |
 | Reyting va sharh | — | Bor (1–5 + izoh) | OURS+ | 100 | `courseReview.model.js` | — |
 | Tayyor kurslar kutubxonasi | ✓ | Yo'q | N/A | — | — | §24 — biznes modeliga tegishli emas |
 | Tashqi kutubxona integratsiyasi | ✓ | Yo'q | N/A | — | — | §24 |
-| Nested papkalar | ✓ | Faqat Course→Topic (2 daraja) | PARTIAL | 50 | `topic.model.js` | Kategoriya daraxti buni qoplaydi |
+| Nested papkalar | ✓ | Kategoriya daraxti (2 daraja) + Course→Topic | PARTIAL | 75 | `courseCategory.model.js:25`, `topic.model.js` | Chuqurroq ierarxiya |
 | Tavsiya etilgan kurslar | — | Yo'q | NONE | 0 | — | `recommendation.service` |
-| **D02 jami: 10 capability (+2 N/A)** | | | **FULL 3 · OURS+ 1 · PARTIAL 1 · NONE 2 · VERIFY 1 · N/A 2** | **56** | | |
+| **D02 jami: 10 capability (+2 N/A)** | | | **FULL 4 · OURS+ 2 · PARTIAL 1 · NONE 1 · N/A 2** | **84** | | |
 
 ## D03 · COURSE STRUCTURE
 
@@ -125,52 +125,52 @@
 | Capability | iSp | Bizda | Status | Sc | Evidence | Gap |
 |---|:--:|---|:--:|:--:|---|---|
 | Multiple choice (1 javob) | ? | Bor | FULL | 100 | `quiz.model.js:3-21` | — |
-| Multiple response | ? | **Ataylab rad etiladi** | NONE | 0 | `quiz.service.js:56-60` | Yagona `Question` modeli |
-| True/False | ? | MCQ bilan taqlid | PARTIAL | 50 | — | `type=TRUE_FALSE` |
-| Short answer | ? | Yo'q | NONE | 0 | — | Normalizatsiya + alternativalar |
-| Essay + qo'lda baholash | ? | Yo'q | VERIFY | 0 | — | iSpring'da "free-form assignment" bor (S1) |
-| Numeric | ? | Yo'q | NONE | 0 | — | Tolerans bilan |
-| Matching | ? | Yo'q | NONE | 0 | — | — |
-| Sequence | ? | Yo'q | NONE | 0 | — | — |
-| **Drag & Drop** | ✓ (S2 2024-12) | Yo'q | NONE | 0 | — | — |
-| Hotspot | ? | Yo'q | NONE | 0 | — | — |
-| Fill in the blanks | ? | Yo'q | NONE | 0 | — | — |
-| **Likert** | ✓ (S2 2023-08) | Yo'q | NONE | 0 | — | 360° uchun ham kerak |
-| **Savol banki** | ✓ | Yo'q — savollar test ichiga embed | NONE | 0 | `quiz.model.js`, `assessment.model.js` (dublikat sxema) | `Question` + `QuestionBank` |
-| **Random pool** | ✓ | Yo'q | NONE | 0 | — | `pools[]{bankId,count}` |
-| **Savollarni aralashtirish** | ✓ | Yo'q | NONE | 0 | — | Seed'li shuffle |
-| **Javoblarni aralashtirish** | ✓ | Yo'q | NONE | 0 | — | — |
-| **Urinishlar chegarasi** | ✓ | **Yo'q — cheksiz** | NONE | 0 | `quiz.service.js:88-133` | `maxAttempts` + atomik guard |
+| Multiple response | ? | Bor — `MULTI_CHOICE`, qisman ball bilan | FULL | 100 | `question.model.js:24-38`, `questionGrading.js:49-72` | — |
+| True/False | ? | Bor — alohida tur | FULL | 100 | `question.model.js:26`, `questionGrading.js` | — |
+| Short answer | ? | Bor — normalizatsiya + alternativalar | FULL | 100 | `questionGrading.js:74-79` | — |
+| Essay + qo'lda baholash | ? | Tur bor, `needsReview` bilan; qo'lda baholash endpoint'i yo'q | PARTIAL | 50 | `questionGrading.js:210-216`, `quizResult.service.js:92` | Baholash API + UI (Blok 13) |
+| Numeric | ? | Bor — tolerans bilan | FULL | 100 | `questionGrading.js:81-89` | — |
+| Matching | ? | Bor | FULL | 100 | `questionGrading.js:92-106` | — |
+| Sequence | ? | Bor | FULL | 100 | `questionGrading.js:108-116` | — |
+| **Drag & Drop** | ✓ (S2 2024-12) | Bor — `DRAG_DROP` va `DRAG_WORDS` | FULL | 100 | `questionGrading.js:172-186` | — |
+| Hotspot | ? | Bor | FULL | 100 | `questionGrading.js:144-165` | — |
+| Fill in the blanks | ? | Bor — `FILL_BLANK` va `SELECT_LIST` | FULL | 100 | `questionGrading.js:118-142` | — |
+| **Likert** | ✓ (S2 2023-08) | Bor — so'rov elementi, `max: 0` | FULL | 100 | `questionGrading.js`, `question.model.js` | — |
+| **Savol banki** | ✓ | Bor — `QuestionBank` + CRUD + editor | FULL | 100 | `questionBank.model.js`, `question.service.js`, `QuestionBanksView.vue` | — |
+| **Random pool** | ✓ | Bor — `pools[]{bankId,count,tags,difficulty}` | FULL | 100 | `testQuiz.model.js:29-37`, `questionSelection.js:51-62` | — |
+| **Savollarni aralashtirish** | ✓ | Bor — seed'li Fisher–Yates | FULL | 100 | `questionSelection.js:28-37,71-90` | — |
+| **Javoblarni aralashtirish** | ✓ | Bor — o'sha seed bilan | FULL | 100 | `questionSelection.js`, `testQuiz.model.js:62` | — |
+| **Urinishlar chegarasi** | ✓ | Bor — `maxAttempts` + start guard + audit | FULL | 100 | `testQuiz.model.js:59`, `testQuiz.service.js:111-113` | — |
 | O'tish bali | ✓ | Bor | FULL | 100 | `quiz.model.js:29` | — |
-| Vaqt chegarasi | ✓ | Assessment'da 15 daq **hardcoded**, video quiz'da yo'q | PARTIAL | 25 | `assessment.service.js:19` | Maydonga ko'chirish + quiz'ga yoyish |
-| Savol og'irligi | ? | Har savol teng | VERIFY | 0 | — | `question.points` |
-| Qisman ball | ? | Yo'q | VERIFY | 0 | — | Multi-response uchun majburiy |
-| Izoh (explanation) | ? | Yo'q | VERIFY | 0 | — | — |
-| Darhol feedback (knowledge check) | ✓ | Yo'q | NONE | 0 | — | `gradingMode=PRACTICE` |
-| Natijani ko'rsatish rejimi | ? | Javob kaliti **har doim** qaytadi | PARTIAL | 25 | `quiz.service.js:133` | `revealMode` |
+| Vaqt chegarasi | ✓ | Bor — `timeLimitMinutes` (0 = cheksiz) | FULL | 100 | `testQuiz.model.js:60` | — |
+| Savol og'irligi | ? | Bor — `question.points` | FULL | 100 | `question.model.js:63` | — |
+| Qisman ball | ? | Bor — test darajasidagi `partialCredit` | FULL | 100 | `testQuiz.model.js:66`, `questionGrading.js` | — |
+| Izoh (explanation) | ? | Bor — savolda saqlanadi, `revealMode` ruxsat berganda ko'rsatiladi | FULL | 100 | `question.model.js:61` | — |
+| Darhol feedback (knowledge check) | ✓ | `revealMode=AFTER_SUBMIT` bor, savol-savol amaliyot rejimi yo'q | PARTIAL | 50 | `testQuiz.model.js:71-76` | `gradingMode=PRACTICE` |
+| Natijani ko'rsatish rejimi | ? | Bor — `NEVER` / `AFTER_SUBMIT` / `AFTER_PASS` / `AFTER_LAST_ATTEMPT` | FULL | 100 | `testQuiz.model.js:71-76`, `testQuiz.service.js` | — |
 | Urinishlar tarixi | ✓ | Bor | FULL | 100 | `quizAttempt.model.js` | — |
 | Batafsil javob tahlili | ✓ | Bor (admin drill-down) | FULL | 100 | `quiz.service.js:137-174` | — |
-| O'rtacha natija | ✓ | Attemptlar bor, agregatsiya yo'q | PARTIAL | 50 | — | `scorePolicy` |
-| Savol qiyinligi statistikasi | ✓ | Yo'q | NONE | 0 | — | `questionStats` aggregation |
-| Mustaqil (kurssiz) quiz | ✓ | `Assessment` topic ostida | PARTIAL | 50 | `assessment.model.js:32` | `scope=STANDALONE` |
+| O'rtacha natija | ✓ | Bor — `scorePolicy` LAST/BEST/FIRST/AVERAGE | FULL | 100 | `quizResult.service.js:25-45,78-90` | — |
+| Savol qiyinligi statistikasi | ✓ | Bor — savol bo'yicha to'g'ri javob foizi, e'lon qilingan ↔ kuzatilgan qiyinlik | FULL | 100 | `quizStats.service.js` | — |
+| Mustaqil (kurssiz) quiz | ✓ | `scope` VIDEO / TOPIC / COURSE / PATH — kurssiz test yo'q | PARTIAL | 50 | `testQuiz.model.js:41-44` | `scope=STANDALONE` |
 | Javob kalitini yashirish | ✓ | Bor va qat'iy | FULL | 100 | `quiz.service.js:22-36` | — |
 | **Server taymer + focus-loss** | — | Bor | OURS+ | 100 | `assessmentSession.model.js`, `assessment.service.js:265-290` | — |
 | **Savollar sessiyagacha berilmaydi** | — | Bor | OURS+ | 100 | `assessment.service.js:194-212` | — |
 | **Tashlab ketish nol ball bilan yoziladi** | — | Bor | OURS+ | 100 | `assessment.service.js:243-248` | — |
 | **Test oldidan yuzni tekshirish** | — | Bor | OURS+ | 100 | `assessment.service.js:222` | — |
 | Savol import/eksport | ✓ | Yo'q | NONE | 0 | — | XLSX/GIFT |
-| **D18–D25 jami: 35 capability** | | | **FULL 5 · OURS+ 4 · PARTIAL 5 · NONE 17 · VERIFY 4** | **31** | | |
+| **D18–D25 jami: 35 capability** | | | **FULL 27 · OURS+ 4 · PARTIAL 3 · NONE 1** | **93** | | |
 
 ## D26–D29 · LEARNING PATHS / PROGRAMS / ENROLLMENT
 
 | Capability | iSp | Bizda | Status | Sc | Evidence | Gap |
 |---|:--:|---|:--:|:--:|---|---|
-| Learning track / path | ✓ | **Yo'q** | NONE | 0 | — | `LearningPath` + `PathEnrollment` |
-| Path ichida boblar | ✓ | Yo'q | NONE | 0 | — | `path.sections[]` |
-| Qat'iy / erkin tugatish tartibi | ✓ | Yo'q (kursda bor) | NONE | 0 | `courseSequence.js` naqshi qayta ishlatiladi | `pathSequence.js` |
-| Path progressi | ✓ | Yo'q | NONE | 0 | — | Majburiy element bo'yicha |
-| Path muddati | ✓ | Yo'q | NONE | 0 | — | `reminderJob` ga ulash |
-| Path katalogda | ✓ (S2 2023-12) | Yo'q | NONE | 0 | — | — |
+| Learning track / path | ✓ | Bor — `LearningPath` + `PathEnrollment` | FULL | 100 | `learningPath.model.js`, `pathEnrollment.service.js` | — |
+| Path ichida boblar | ✓ | Bor — `sections[]` (faqat ko'rinish uchun, tartib `item.order` da) | FULL | 100 | `learningPath.model.js:32-40` | — |
+| Qat'iy / erkin tugatish tartibi | ✓ | Bor — `sequential` + `pathSequence.js` | FULL | 100 | `pathSequence.js`, `learningPath.model.js:60` | — |
+| Path progressi | ✓ | Bor — `completionPercent` + element holatlari (LOCKED/AVAILABLE/IN_PROGRESS/COMPLETED) | FULL | 100 | `pathEnrollment.model.js:17,42` | — |
+| Path muddati | ✓ | Maydonlar bor (`deadline`, `expiresAt`, `deadlineReminderSentAt`), kunlik eslatma joblari hali path'ni o'qimaydi | PARTIAL | 50 | `pathEnrollment.model.js:31-47` | `reminderJob` ga ulash |
+| Path katalogda | ✓ (S2 2023-12) | Servis bor, katalog sahifasi hali commit qilinmagan | NONE | 0 | — | Katalog ro'yxati + API |
 | Qo'lda biriktirish | ✓ | Bor | FULL | 100 | `courseAssignment.service.js:46-86` | — |
 | Guruhga biriktirish | ✓ | Bor | FULL | 100 | `group.service.js` | — |
 | Publish'da avto-biriktirish | ✓ | Bor (targeting bo'lsa) | FULL | 100 | `course.service.js:170-200` | — |
@@ -179,7 +179,7 @@
 | Deadline + muddat | ✓ | Bor | FULL | 100 | `courseAssignment.model.js:17-19` | — |
 | Boshlash sanasi (`startAt`) | ? | Bor | OURS+ | 100 | `courseAssignmentAccess.js:11` | — |
 | Enrollment tasdiqlash oqimi | ? | Yo'q | VERIFY | 0 | — | — |
-| **D26–D29 jami: 14 capability** | | | **FULL 4 · OURS+ 1 · PARTIAL 2 · NONE 6 · VERIFY 1** | **39** | | |
+| **D26–D29 jami: 14 capability** | | | **FULL 8 · OURS+ 1 · PARTIAL 3 · NONE 1 · VERIFY 1** | **71** | | |
 
 ## D30–D36 · USERS / GROUPS / ORGANIZATION / DEPARTMENTS / MANAGERS / ROLES / PERMISSIONS
 
@@ -274,16 +274,16 @@
 
 | Capability | iSp | Bizda | Status | Sc | Evidence | Gap |
 |---|:--:|---|:--:|:--:|---|---|
-| Sertifikat shabloni (.docx) | ✓ | **Yo'q** | NONE | 0 | — | `CertificateTemplate` |
-| Avtomatik berish | ✓ | Yo'q | NONE | 0 | — | `certificateQueue` |
-| Sertifikat statuslari (Valid/Expiring/Expired/Renewed) | ✓ | Yo'q | NONE | 0 | — | `Certificate.status` |
-| Muddat + sozlanadigan ogohlantirish (30 kun) | ✓ | Yo'q | NONE | 0 | — | `complianceQueue` |
+| Sertifikat shabloni (.docx) | ✓ | Bor — fon rasmi + foizli koordinatali maydonlar (docx emas) | FULL | 75 | `certificateTemplate.model.js`, `CertificateTemplatesView.vue` | `.docx` import emas, konstruktor |
+| Avtomatik berish | ✓ | Bor — kurs tugaganda navbatga qo'yiladi, idempotent | FULL | 100 | `jobs/certificateQueue.js`, `certificate.service.js:50-93` | — |
+| Sertifikat statuslari (Valid/Expiring/Expired/Renewed) | ✓ | VALID / EXPIRED / REVOKED bor; Expiring va Renewed yo'q | PARTIAL | 50 | `certificate.service.js:204-218` | `EXPIRING` oynasi + qayta berish zanjiri |
+| Muddat + sozlanadigan ogohlantirish (30 kun) | ✓ | `validUntil` + shablon `validityDays` + bildirishnoma shabloni bor; jo'natuvchi sweep yo'q | PARTIAL | 25 | `certificate.model.js:33,60`, `notificationTemplates.seed.js:479` | `complianceQueue` — muddat sweep'i |
 | **Avtomatik re-enrollment** (yillik) | ✓ | Yo'q | NONE | 0 | — | `RecurringAssignment` |
 | Qo'lda re-enrollment | ✓ | Qo'lda qayta biriktirish mumkin | PARTIAL | 50 | `courseAssignment.service.js:46` | — |
-| Tashqi sertifikat + muddat | ✓ | Yo'q | NONE | 0 | — | `ExternalCertificate` |
-| Sertifikatlar hisoboti | ✓ | Yo'q | NONE | 0 | — | Registr |
-| Ochiq tekshiruv sahifasi / QR | ? | Yo'q | VERIFY | 0 | — | Manba tasdiqlanmagan |
-| PDF render | ✓ (.docx) | Yo'q — lekin `pdfkit` + DejaVu mavjud | NONE | 0 | `reportExport.service.js` | Qayta ishlatiladi |
+| Tashqi sertifikat + muddat | ✓ | Bor — `ExternalCertificate` + tasdiqlash oqimi (PENDING/APPROVED/REJECTED) | FULL | 100 | `externalCertificate.model.js` | — |
+| Sertifikatlar hisoboti | ✓ | Registr ro'yxati bor (status/qidiruv/scope), alohida eksport yo'q | PARTIAL | 50 | `certificate.service.js:163`, `CertificatesView.vue` | Hisobot eksporti (Blok 8) |
+| Ochiq tekshiruv sahifasi / QR | ? | Bor — auth'siz, rate-limited, PII'siz endpoint + PDF'dagi QR | OURS+ | 100 | `certificates.routes.js:25-27`, `certificateRender.service.js:22-38`, `VerifyCertificateView.vue` | — |
+| PDF render | ✓ (.docx) | Bor — `pdfkit` + DejaVu, fon + maydonlar + QR | FULL | 100 | `certificateRender.service.js` | — |
 | Knowledge base (spaces + maqolalar) | ✓ | **Yo'q** (`News` — oqim, baza emas) | NONE | 0 | — | `KbArticle` + `KbCategory` |
 | KB rolga asoslangan kirish | ✓ | Yo'q | NONE | 0 | `courseVisibility.js` qayta ishlatiladi | — |
 | KB teglar (rangli) | ✓ | Yo'q | NONE | 0 | — | — |
@@ -293,7 +293,7 @@
 | KB PDF eksport | ✓ | Yo'q | NONE | 0 | — | — |
 | KB full-text qidiruv | ✓ | Yo'q | NONE | 0 | — | `$text` |
 | KB o'qish analitikasi | ✓ | Yo'q (`NewsView` naqshi mavjud) | NONE | 0 | `newsView.model.js` | Ko'chiriladi |
-| **D51–D54 jami: 19 capability** | | | **PARTIAL 1 · NONE 17 · VERIFY 1** | **3** | | |
+| **D51–D54 jami: 19 capability** | | | **FULL 4 · OURS+ 1 · PARTIAL 4 · NONE 10** | **34** | | |
 
 ## D55–D59 · 360 / OJT / COMPETENCIES / SKILLS / DEVELOPMENT PLANS
 
@@ -382,19 +382,19 @@
 | Capability | iSp | Bizda | Status | Sc | Evidence | Gap |
 |---|:--:|---|:--:|:--:|---|---|
 | Global qidiruv | ✓ | **Yo'q** | NONE | 0 | — | `search.service` fan-out |
-| Kurs qidiruvi | ✓ | Faqat sarlavha, regex | PARTIAL | 25 | `course.repository.js:91` | `$text` |
+| Kurs qidiruvi | ✓ | Bor — `$text`, vaznlangan | FULL | 100 | `course.model.js:118-120` | — |
 | Foydalanuvchi qidiruvi | ✓ | Bor, escape'langan | FULL | 100 | `user.repository.js:97-105` | — |
 | Chat qidiruvi | ? | Bor | OURS+ | 100 | `chatMessage.repository.js:44` | — |
 | KB qidiruvi | ✓ | Yo'q | NONE | 0 | — | D53 |
-| Katalog filtri (facet) | ✓ | Qisman | PARTIAL | 25 | — | — |
+| Katalog filtri (facet) | ✓ | Bor — kategoriya/teg/daraja + ishlatilayotgan teglar ro'yxati | PARTIAL | 75 | `course.repository.js:94-112,171-178` | Facet hisoblari |
 | Autocomplete | ? | Chat kontaktlarida | PARTIAL | 25 | — | — |
 | UI lokalizatsiyasi | ✓ **30 til** | **3 til** (uz/ru/en) | PARTIAL | 50 | `i18n/locales/*.json` (1393 kalit) | — |
 | Kontent ko'p tilli | ✓ | **Yo'q** — kontent bir tilli | NONE | 0 | — | `ContentTranslation` |
 | Bildirishnoma ko'p tilli | ✓ | Bor — uz/ru/en shablonlar, hisobga bog'langan til | FULL | 100 | `notificationTemplates.seed.js` | — |
-| Sertifikat ko'p tilli | ✓ | Yo'q (sertifikat yo'q) | NONE | 0 | — | — |
+| Sertifikat ko'p tilli | ✓ | Har til uchun alohida shablon mumkin, render matni tarjima qilinmaydi | PARTIAL | 25 | `certificateTemplate.model.js`, `certificateRender.service.js:43` | Shablon matni i18n |
 | Hisobot ko'p tilli | ? | **3 tilli** | OURS+ | 100 | `reportI18n.js` | — |
 | Tashkilot bo'yicha til | ✓ | Yo'q | NONE | 0 | — | — |
-| **D68–D69 jami: 13 capability** | | | **FULL 2 · OURS+ 2 · PARTIAL 4 · NONE 5** | **40** | | |
+| **D68–D69 jami: 13 capability** | | | **FULL 3 · OURS+ 2 · PARTIAL 4 · NONE 4** | **52** | | |
 
 ## D70–D73 · INTEGRATIONS / API / WEBHOOKS / SSO
 

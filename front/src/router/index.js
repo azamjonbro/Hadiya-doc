@@ -55,6 +55,7 @@ export const router = createRouter({
         { path: 'leaderboard', name: 'leaderboard', component: () => import('@/views/LeaderboardView.vue'), meta: { titleKey: 'nav.leaderboard' } },
         { path: 'chat', name: 'chat', component: () => import('@/views/ChatView.vue'), meta: { titleKey: 'nav.chat' } },
         { path: 'notifications', name: 'notifications', component: () => import('@/views/NotificationsView.vue'), meta: { titleKey: 'nav.notifications' } },
+        { path: 'homework/:id', name: 'homework-detail', component: () => import('@/views/HomeworkView.vue'), meta: { titleKey: 'nav.courses' } },
         { path: 'calendar', name: 'calendar', component: () => import('@/views/CalendarView.vue'), meta: { titleKey: 'nav.calendar' } },
         {
           path: 'events/:id',
@@ -166,6 +167,12 @@ export const router = createRouter({
           name: 'admin-roles',
           component: () => import('@/admin/views/RolesPermissionsView.vue'),
           meta: { permission: 'role:manage', titleKey: 'roles.title' },
+        },
+        {
+          path: 'grading',
+          name: 'admin-grading',
+          component: () => import('@/admin/views/GradingQueueView.vue'),
+          meta: { permission: 'quiz:grade', titleKey: 'grading.title' },
         },
         {
           path: 'events',

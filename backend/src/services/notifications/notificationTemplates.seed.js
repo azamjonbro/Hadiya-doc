@@ -41,6 +41,9 @@ export const TEMPLATE_TYPES = [
   'EVENT_REGISTERED',
   'EVENT_WAITLISTED',
   'EVENT_WAITLIST_PROMOTED',
+  'ASSIGNMENT_SUBMITTED',
+  'ASSIGNMENT_GRADED',
+  'ASSIGNMENT_RETURNED',
   'NEWS_PUBLISHED',
   'CERTIFICATE_ISSUED',
   'CERTIFICATE_EXPIRING',
@@ -383,6 +386,69 @@ export const TEMPLATE_SEED = {
       subject: 'A place opened up: {{eventTitle}}',
       body: 'A place at "{{eventTitle}}" has opened and it is yours. It is on {{eventDate}}.',
       push: 'A place opened: {{eventTitle}}',
+    },
+  },
+
+  ASSIGNMENT_SUBMITTED: {
+    placeholders: ['userName', 'assignmentTitle', 'appUrl'],
+    uz: {
+      subject: 'Yangi ish topshirildi: {{assignmentTitle}}',
+      body: '{{userName}} "{{assignmentTitle}}" bo\'yicha ishini topshirdi — tekshirish navbatida.',
+      push: 'Tekshirish kerak: {{assignmentTitle}}',
+      defaults: { userName: 'Xodim' },
+    },
+    ru: {
+      subject: 'Новая работа на проверку: {{assignmentTitle}}',
+      body: '{{userName}} сдал(а) работу по «{{assignmentTitle}}» — она в очереди на проверку.',
+      push: 'На проверку: {{assignmentTitle}}',
+      defaults: { userName: 'Сотрудник' },
+    },
+    en: {
+      subject: 'New submission: {{assignmentTitle}}',
+      body: '{{userName}} has handed in "{{assignmentTitle}}" — it is in the grading queue.',
+      push: 'To review: {{assignmentTitle}}',
+      defaults: { userName: 'An employee' },
+    },
+  },
+
+  ASSIGNMENT_GRADED: {
+    placeholders: ['userName', 'assignmentTitle', 'score', 'gradedAt', 'appUrl'],
+    uz: {
+      subject: 'Ishingiz baholandi: {{assignmentTitle}}',
+      body: '"{{assignmentTitle}}" bo\'yicha ishingiz baholandi: {{score}}. Izohni ilovada ko\'ring.',
+      push: '{{assignmentTitle}}: {{score}}',
+    },
+    ru: {
+      subject: 'Работа проверена: {{assignmentTitle}}',
+      body: 'Ваша работа по «{{assignmentTitle}}» оценена: {{score}}. Комментарий — в приложении.',
+      push: '{{assignmentTitle}}: {{score}}',
+    },
+    en: {
+      subject: 'Your work has been marked: {{assignmentTitle}}',
+      body: '"{{assignmentTitle}}" has been marked: {{score}}. The comments are in the app.',
+      push: '{{assignmentTitle}}: {{score}}',
+    },
+  },
+
+  ASSIGNMENT_RETURNED: {
+    placeholders: ['userName', 'assignmentTitle', 'score', 'gradedAt', 'appUrl'],
+    uz: {
+      subject: 'Ish qayta ishlashga qaytarildi: {{assignmentTitle}}',
+      body: '"{{assignmentTitle}}" bo\'yicha ishingiz izoh bilan qaytarildi — tuzatib, qayta topshiring.',
+      push: 'Qaytarildi: {{assignmentTitle}}',
+      defaults: { score: '' },
+    },
+    ru: {
+      subject: 'Работа возвращена на доработку: {{assignmentTitle}}',
+      body: 'Ваша работа по «{{assignmentTitle}}» возвращена с комментарием — исправьте и сдайте снова.',
+      push: 'Возвращена: {{assignmentTitle}}',
+      defaults: { score: '' },
+    },
+    en: {
+      subject: 'Sent back for revision: {{assignmentTitle}}',
+      body: '"{{assignmentTitle}}" has been returned with comments — fix it and hand it in again.',
+      push: 'Returned: {{assignmentTitle}}',
+      defaults: { score: '' },
     },
   },
 

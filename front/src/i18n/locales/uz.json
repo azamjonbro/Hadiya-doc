@@ -2264,5 +2264,57 @@
       "TASK_DEADLINE": "Vazifa muddati",
       "PATH_DEADLINE": "Yo‘nalish muddati"
     }
+  },
+  "grading": {
+    "title": "Tekshirish navbati",
+    "subtitle": "Topshirilgan ishlar — eng eskisi birinchi",
+    "emptyTitle": "Navbat bo‘sh",
+    "emptyDescription": "Yangi ish topshirilsa, shu yerda paydo bo‘ladi.",
+    "loadError": "Yuklab bo‘lmadi",
+    "saveError": "Saqlab bo‘lmadi",
+    "late": "Kechikkan",
+    "attemptNo": "{number}-urinish",
+    "justNow": "hozirgina",
+    "hoursAgo": "{hours} soat oldin",
+    "daysAgo": "{days} kun oldin",
+    "review": "Ishni tekshirish",
+    "files": "Fayllar",
+    "links": "Havolalar",
+    "score": "Ball",
+    "outOf": "Maksimum: {max}",
+    "total": "Jami",
+    "feedback": "Izoh",
+    "grade": "Baholash",
+    "returnForRevision": "Qayta ishlashga qaytarish",
+    "graded": "Baholandi",
+    "returned": "Qayta ishlashga qaytarildi"
+  },
+  "homework": {
+    "due": "Muddat: {date}",
+    "lateNow": "Kechikdi",
+    "closed": "Yopilgan",
+    "attemptsLeft": "{used} / {total} urinish",
+    "attemptNo": "{number}-urinish",
+    "yourAttempts": "Topshirganlaringiz",
+    "yourAnswer": "Javobingiz",
+    "links": "Havolalar",
+    "addLink": "Qo‘shish",
+    "saveDraft": "Qoralamani saqlash",
+    "submit": "Topshirish",
+    "draftSaved": "Qoralama saqlandi",
+    "submitted": "Ish topshirildi",
+    "loadError": "Yuklab bo‘lmadi",
+    "saveError": "Saqlab bo‘lmadi",
+    "submitTitle": "Topshirilsinmi?",
+    "submitMessage": "Topshirgandan keyin uni tekshiruvchi ko‘radi.",
+    "submitLateMessage": "Muddat o‘tgan — ish «kechikkan» deb belgilanadi.",
+    "closedHint": "Bu vazifa yopilgan, endi topshirib bo‘lmaydi.",
+    "noAttemptsLeft": "Urinishlar tugadi.",
+    "status": {
+      "DRAFT": "Qoralama",
+      "SUBMITTED": "Tekshiruvda",
+      "GRADED": "Baholangan",
+      "RETURNED": "Qaytarilgan"
+    }
   }
 }

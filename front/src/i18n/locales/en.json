@@ -2264,5 +2264,57 @@
       "TASK_DEADLINE": "Task deadline",
       "PATH_DEADLINE": "Path deadline"
     }
+  },
+  "grading": {
+    "title": "Grading queue",
+    "subtitle": "Work waiting to be marked, oldest first",
+    "emptyTitle": "Nothing waiting",
+    "emptyDescription": "New submissions appear here.",
+    "loadError": "Could not load",
+    "saveError": "Could not save",
+    "late": "Late",
+    "attemptNo": "Attempt {number}",
+    "justNow": "just now",
+    "hoursAgo": "{hours}h ago",
+    "daysAgo": "{days}d ago",
+    "review": "Review the work",
+    "files": "Files",
+    "links": "Links",
+    "score": "Score",
+    "outOf": "Out of {max}",
+    "total": "Total",
+    "feedback": "Comments",
+    "grade": "Mark it",
+    "returnForRevision": "Send back for revision",
+    "graded": "Marked",
+    "returned": "Sent back"
+  },
+  "homework": {
+    "due": "Due {date}",
+    "lateNow": "Late",
+    "closed": "Closed",
+    "attemptsLeft": "{used} of {total} attempts",
+    "attemptNo": "Attempt {number}",
+    "yourAttempts": "What you have handed in",
+    "yourAnswer": "Your answer",
+    "links": "Links",
+    "addLink": "Add",
+    "saveDraft": "Save draft",
+    "submit": "Hand it in",
+    "draftSaved": "Draft saved",
+    "submitted": "Handed in",
+    "loadError": "Could not load",
+    "saveError": "Could not save",
+    "submitTitle": "Hand this in?",
+    "submitMessage": "Once handed in, a reviewer sees it.",
+    "submitLateMessage": "The deadline has passed — this will be marked late.",
+    "closedHint": "This assignment is closed for submissions.",
+    "noAttemptsLeft": "No attempts left.",
+    "status": {
+      "DRAFT": "Draft",
+      "SUBMITTED": "Being marked",
+      "GRADED": "Marked",
+      "RETURNED": "Returned"
+    }
   }
 }
