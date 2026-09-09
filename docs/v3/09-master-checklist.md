@@ -762,13 +762,45 @@
     to'rtta juftlikdan uchtasini topganni jarimalash qisman ballni
     javob bermaslikdan yomonroq qilardi.
 
-- [ ] **4.2** 🔴 **`Quiz`/`Assessment` birlashtirish**
+- [x] **4.2** 🔴 **`Quiz`/`Assessment` birlashtirish**
   · `models/quiz.model.js` — `scope: VIDEO|TOPIC|COURSE|PATH`, `questionIds[]`,
   `pools[]`, `maxAttempts`, `timeLimitMinutes`, `shuffle*`, `partialCredit`,
   `revealMode`, `scorePolicy`, `focusLossLimit`
   · `models/testSession.model.js` (`assessmentSession` umumlashtirilgan) — `+questionSet[]`, `+seed`
   · Migratsiya **M1** (`_legacy` bilan) va **M5**
   · Qabul: **AT-09**
+  → **Kolleksiya nomi `testQuizzes`, `quizzes` emas.** `quizzes` — tirik
+    eski model, AT-09 esa eski endpoint'lar shu reliz davomida
+    o'zgarmasdan javob berishini talab qiladi. Birlashgan yozuvlarni o'sha
+    kolleksiyaga yozish bitta kolleksiyada ikkita sxema degani bo'lardi va
+    har bir eski o'qish ularni ajratishi kerak bo'lardi. Eski
+    kolleksiyalar keyingi relizda, ularni hech kim o'qimay qolgach,
+    tashlanadi.
+  → M1 **hech narsani o'zgartirmaydi va nomini almashtirmaydi** — faqat
+    oldinga nusxalaydi. Eski endpoint'lar eski kolleksiyalarni o'qiyverdi,
+    ular uchun hech narsa sodir bo'lmagan. AT-09 shu sabab bajariladi.
+  → Yangi `Question` **eski embed savolning `_id` sini saqlab qoladi**.
+    Bu shunchaki qulaylik emas: eski attempt `answers[].questionId` ni
+    yozgan, va endi u haqiqiy `Question` hujjatiga ishora qiladi —
+    mapping jadvali umuman kerak emas.
+  → M1 hech narsani jimgina yoqmaydi: `shuffle*`, `partialCredit`,
+    `maxAttempts`, `timeLimitMinutes`, `focusLossLimit` — hammasi eski
+    xatti-harakatdagidek. Migratsiya testni **nima ekanini** o'zgartirsa,
+    uni allaqachon topshirayotganlar uchun boshqa test bo'lib qolardi.
+  → Ko'p to'g'ri javobli eski savol `MULTI_CHOICE` deb yoziladi. Eski
+    grader baribir bitta indeksni solishtirardi, ya'ni u savol
+    allaqachon xato baholanayotgan edi; bu saqlangan ballni
+    o'zgartirmaydi, faqat yangi grader xatoni takrorlamaydi.
+  → M5: `attemptNo` yozilish tartibidan to'ldiriladi (`createdAt`, teng
+    bo'lsa `_id` bilan — beqaror sort bitta odamga ikkita «2-urinish»
+    berardi), `testQuizId` qo'yiladi, `assessmentSessions` →
+    `testSessions` ga **nusxalanadi**. `expiresAt` o'zgarmaydi: uni
+    «hozir»dan qayta hisoblash davom etayotgan topshiriqqa yangi taymer
+    berardi — server tomonidagi deadline aynan shundan saqlaydi.
+  → `quizAttempts`/`assessmentAttempts` faqat **qo'shimcha** maydonlar
+    oldi (`payload`, `perQuestion[]`, `sessionId`, `attemptNo`,
+    `testQuizId`, `needsReview`, `gradedBy/At`); `selectedOptionIndex` va
+    `videoId` ixtiyoriy bo'ldi. Mavjud yozuvlarga tegilmadi.
 
 - [ ] **4.3** **Urinish chegarasi va tanlash**
   · `services/quizzes/quiz.service.js` — atomik `maxAttempts` guard
