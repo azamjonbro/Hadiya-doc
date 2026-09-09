@@ -1208,8 +1208,35 @@
   bo'yicha filtr), `ui/CommandPalette.vue`
   · Qabul: **AT-24**
 
-- [ ] **7.2** **Knowledge base** — `kbCategory`, `kbArticle`, `kbArticleVersion`,
+- [x] **7.2** **Knowledge base** — `kbCategory`, `kbArticle`, `kbArticleVersion`,
   `kbView`, `kbComment`; `sanitize-html` allowlist; `NewsView` naqshi analitika uchun
+  → **Tartib o'zgartirildi:** 7.2 dan boshlandi, 7.1 dan emas. Global
+    qidiruv `kbArticles` ustidan ham ishlashi kerak, ya'ni 7.1 ni oldin
+    qilsak, qidiruvni ikki marta yozishga to'g'ri kelardi.
+  → Nega bu yerda HTML: news ataylab **oddiy matn** (shuning uchun
+    sanitizatsiya kerak emas edi), lekin sarlavha, ro'yxat va jadval
+    kerak bo'ladigan protsedurani oddiy matnda yozdirish — tirelardan
+    iborat devor. HTML tanlangani sanitizatsiyani **majburiy** qiladi:
+    kontent `v-html` bilan qaytariladi, ya'ni server qabul qilgan narsani
+    har bir o'quvchining brauzeri bajaradi.
+  → **Allowlist, blocklist emas.** Blocklist — kimdir o'ylab topgan
+    hujumlar ro'yxati; qolgani (yangi atribut, SVG handler, `data:` URL)
+    o'tib ketaveradi. Allowlist teskarisi: ro'yxatda yo'q narsa
+    tashlanadi, ya'ni noma'lum usul **avtomatik** rad etiladi.
+  → `style` atributi ham taqiqlangan: u butun sahifani qoplaydigan
+    qatlam yoki soxta dialog chizishning odatiy yo'li.
+  → Havolalar muallif nima yozganidan qat'i nazar `target="_blank"` va
+    `rel="noopener noreferrer"` bilan majburlanadi.
+  → `bodyText` — markup'siz nusxa, matn indeksi uchun. HTML'ni
+    indekslash `<strong>` ni so'z deb hisoblaydi va teg chegarasidan
+    bo'lingan iborani topolmaydi.
+  → Ko'rinmaydigan maqola **404**, 403 emas: 403 maqola borligini
+    tasdiqlaydi — sarlavhani yashirishdan maqsad aynan shu edi (AT-24
+    qoidasi bir daraja pastda).
+  → Ko'rish bir marta sanaladi (qayta ochish — o'sha odam), «foydali
+    bo'ldimi» esa javobni **almashtiradi**, ustiga qo'shmaydi.
+  → Versiya **kontentni** kuzatadi: teg qo'shish protsedura'ning yangi
+    versiyasi emas.
 
 - [ ] **7.3** **Compliance** — `models/recurringAssignment.model.js`,
   `jobs/complianceQueue.js`, `ComplianceView` (kurs × xodim matritsasi)

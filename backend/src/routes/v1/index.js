@@ -42,6 +42,7 @@ import { enrollmentRulesRouter } from './enrollmentRules.routes.js'
 import { onboardingRouter } from './onboarding.routes.js'
 import { calendarRouter } from './calendar.routes.js'
 import { homeworkRouter } from './homework.routes.js'
+import { kbRouter } from './kb.routes.js'
 
 export const v1Router = Router()
 
@@ -98,3 +99,4 @@ v1Router.use('/calendar', calendarRouter)
 // Homework. `/assignments` is already course-to-person assignment, so this
 // takes its own prefix rather than overloading that one.
 v1Router.use('/homework', homeworkRouter)
+v1Router.use('/kb', kbRouter)
