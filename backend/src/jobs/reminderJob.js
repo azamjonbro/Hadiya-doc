@@ -4,6 +4,7 @@ import { Task } from '../models/task.model.js'
 import { notificationService } from '../services/notifications/notification.service.js'
 import { logger } from '../config/logger.js'
 import { formatNotificationDate, daysUntil } from '../utils/notificationFormat.js'
+import { eventService } from '../services/events/event.service.js'
 
 const DEADLINE_WARNING_WINDOW_MS = 24 * 60 * 60 * 1000
 
@@ -93,11 +94,21 @@ export async function runDeadlineChecks() {
     await task.save()
   }
 
+  // Events ride the same sweep rather than getting a queue of their own:
+  // it already runs every fifteen minutes, which is the granularity an
+  // event reminder needs, and a second scheduler would be another job
+  // waking a shared 1.9 GB box on its own timetable.
+  const events = await eventService.sendDueReminders({ now }).catch((error) => {
+    logger.warn('Event reminder sweep failed', { error: error.message })
+    return { reminders: 0 }
+  })
+
   logger.info('Deadline reminder check completed', {
     approaching: approaching.length,
     expired: expired.length,
     approachingTasks: approachingTasks.length,
     overdueTasks: overdueTasks.length,
+    eventReminders: events.reminders,
   })
 
   return {
@@ -105,5 +116,6 @@ export async function runDeadlineChecks() {
     expired: expired.length,
     approachingTasks: approachingTasks.length,
     overdueTasks: overdueTasks.length,
+    eventReminders: events.reminders,
   }
 }
