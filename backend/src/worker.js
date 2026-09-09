@@ -15,6 +15,9 @@ import { BACKUP_QUEUE, scheduleDailyBackup } from './jobs/backupQueue.js'
 import { DELIVERY_QUEUE, handleDeliveryFailure } from './jobs/deliveryQueue.js'
 import { CERTIFICATE_QUEUE } from './jobs/certificateQueue.js'
 import { ENROLLMENT_RULE_QUEUE, scheduleEnrollmentRuleSweep } from './jobs/enrollmentRuleQueue.js'
+import { ONBOARDING_QUEUE, scheduleOnboardingStart } from './jobs/onboardingQueue.js'
+import { onboardingService } from './services/onboarding/onboarding.service.js'
+import { OnboardingEnrollment } from './models/onboardingEnrollment.model.js'
 import { enrollmentRuleService } from './services/enrollment/enrollmentRule.service.js'
 import { certificateService } from './services/certificates/certificate.service.js'
 import { certificateRenderService } from './services/certificates/certificateRender.service.js'
@@ -171,8 +174,35 @@ async function main() {
     logger.error('Enrollment rule job failed', { jobId: job?.id, name: job?.name, error: err.message })
   })
 
+  const onboardingWorker = new Worker(
+    ONBOARDING_QUEUE,
+    async (job) => {
+      if (job.name === 'evaluate') {
+        // Every active programme this person is on — a finished course can
+        // tick a step in more than one.
+        const enrollments = await OnboardingEnrollment.find(
+          { userId: job.data.userId, status: 'ACTIVE' },
+          { programId: 1 }
+        ).lean()
+        for (const enrollment of enrollments) {
+          await onboardingService.evaluate(job.data.userId, enrollment.programId)
+        }
+        return { evaluated: enrollments.length }
+      }
+      return onboardingService.autoStartDue()
+    },
+    // One at a time, like the enrolment sweep: two passes racing would both
+    // see "not yet enrolled" and both start the same programme.
+    { connection: redisConnection, concurrency: 1 }
+  )
+
+  onboardingWorker.on('failed', (job, err) => {
+    logger.error('Onboarding job failed', { jobId: job?.id, name: job?.name, error: err.message })
+  })
+
   await scheduleReminderChecks()
   await scheduleEnrollmentRuleSweep()
+  await scheduleOnboardingStart()
   await scheduleDashboardAggregation()
   const backupsScheduled = await scheduleDailyBackup()
 
@@ -181,6 +211,7 @@ async function main() {
   logger.info('Dashboard aggregation worker started (recomputes every 5 minutes)')
   logger.info('Certificate worker started (issue + render on course completion)')
   logger.info('Enrollment rule worker started (nightly sweep + per-user evaluation)')
+  logger.info('Onboarding worker started (daily hireDate check + per-user evaluation)')
   logger.info(
     isMailConfigured()
       ? `Delivery worker started (SMTP ${env.SMTP_HOST}:${env.SMTP_PORT})`
@@ -197,6 +228,7 @@ async function main() {
     await Promise.all([
       videoWorker.close(),
       enrollmentRuleWorker.close(),
+      onboardingWorker.close(),
       reminderWorker.close(),
       dashboardWorker.close(),
       backupWorker.close(),

@@ -39,6 +39,7 @@ import { testQuizzesRouter } from './testQuizzes.routes.js'
 import { questionsRouter } from './questions.routes.js'
 import { pathsRouter } from './paths.routes.js'
 import { enrollmentRulesRouter } from './enrollmentRules.routes.js'
+import { onboardingRouter } from './onboarding.routes.js'
 
 export const v1Router = Router()
 
@@ -90,3 +91,4 @@ v1Router.use('/quizzes', testQuizzesRouter)
 v1Router.use('/questions', questionsRouter)
 v1Router.use('/paths', pathsRouter)
 v1Router.use('/enrollment-rules', enrollmentRulesRouter)
+v1Router.use('/onboarding', onboardingRouter)

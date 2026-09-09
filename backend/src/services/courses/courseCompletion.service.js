@@ -10,6 +10,7 @@ import { notificationService } from '../notifications/notification.service.js'
 import { logger } from '../../config/logger.js'
 import { queueCertificate } from '../../jobs/certificateQueue.js'
 import { pathEnrollmentService } from '../paths/pathEnrollment.service.js'
+import { queueOnboardingEvaluation } from '../../jobs/onboardingQueue.js'
 
 /**
  * One definition of "this course is finished", and one place that acts on it.
@@ -216,6 +217,16 @@ export const courseCompletionService = {
       await pathEnrollmentService.evaluateForCourse(userId, course._id).catch((error) => {
         logger.warn('Could not re-evaluate the paths containing this course', {
           courseId: String(course._id),
+          userId: String(userId),
+          error: error.message,
+        })
+      })
+
+      // A course can also be a step in somebody's first week. Queued rather
+      // than run here — it reads every programme they are on, and the
+      // learner finishing a video should not wait for that.
+      await queueOnboardingEvaluation(userId).catch((error) => {
+        logger.warn('Could not queue the onboarding evaluation', {
           userId: String(userId),
           error: error.message,
         })

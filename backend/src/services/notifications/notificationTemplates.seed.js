@@ -36,6 +36,8 @@ export const TEMPLATE_TYPES = [
   'QUIZ_FAILED',
   'QUIZ_ATTEMPTS_EXHAUSTED',
   'PATH_COMPLETED',
+  'ONBOARDING_STARTED',
+  'ONBOARDING_COMPLETED',
   'NEWS_PUBLISHED',
   'CERTIFICATE_ISSUED',
   'CERTIFICATE_EXPIRING',
@@ -283,6 +285,44 @@ export const TEMPLATE_SEED = {
       subject: 'Path complete: {{pathTitle}}',
       body: 'You have finished every required step of "{{pathTitle}}". Well done.',
       push: 'Path complete: {{pathTitle}}',
+    },
+  },
+
+  ONBOARDING_STARTED: {
+    placeholders: ['userName', 'programName', 'stepCount', 'appUrl'],
+    uz: {
+      subject: 'Adaptatsiya boshlandi: {{programName}}',
+      body: 'Sizga "{{programName}}" adaptatsiya dasturi ochildi — {{stepCount}} ta bosqich. Har birining o\'z muddati bor.',
+      push: 'Adaptatsiya: {{programName}}',
+    },
+    ru: {
+      subject: 'Адаптация началась: {{programName}}',
+      body: 'Для вас открыта программа адаптации «{{programName}}» — этапов: {{stepCount}}. У каждого свой срок.',
+      push: 'Адаптация: {{programName}}',
+    },
+    en: {
+      subject: 'Your onboarding has started: {{programName}}',
+      body: '"{{programName}}" is open for you — {{stepCount}} steps, each with its own date.',
+      push: 'Onboarding: {{programName}}',
+    },
+  },
+
+  ONBOARDING_COMPLETED: {
+    placeholders: ['userName', 'programName', 'appUrl'],
+    uz: {
+      subject: 'Adaptatsiya tugadi: {{programName}}',
+      body: '"{{programName}}" dasturidagi barcha majburiy bosqichlarni tugatdingiz. Tabriklaymiz!',
+      push: 'Adaptatsiya tugadi: {{programName}}',
+    },
+    ru: {
+      subject: 'Адаптация завершена: {{programName}}',
+      body: 'Вы прошли все обязательные этапы программы «{{programName}}». Поздравляем!',
+      push: 'Адаптация завершена: {{programName}}',
+    },
+    en: {
+      subject: 'Onboarding complete: {{programName}}',
+      body: 'You have finished every required step of "{{programName}}". Welcome aboard.',
+      push: 'Onboarding complete: {{programName}}',
     },
   },
 
