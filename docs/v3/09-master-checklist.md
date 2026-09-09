@@ -943,7 +943,23 @@
   → Kurs tugaganda uni o'z ichiga olgan path'lar **o'sha so'rovda**
     qayta hisoblanadi — sahifa ochilishini kutmaydi.
 
-- [ ] **5.2** **Path UI** — `PathsView`, `PathDetailView`, `PathsListView`, `PathBuilderView`
+- [x] **5.2** **Path UI** — `PathsView`, `PathDetailView`, `PathsListView`, `PathBuilderView`
+  → 5.1 da endpoint yo'q edi (faqat modellar va qoidalar), shuning uchun
+    `routes/v1/paths.routes.js` shu bandda qo'shildi: katalog, detal,
+    o'zi yozilish, tayinlash, CRUD va progress jadvali.
+  → Qulf holati **server**dan keladi va sahifada ko'rsatiladi. Sabab —
+    qulfning o'zi serverda (AT-26), lekin uni ekranda ko'rsatmaslik
+    odamni 403 ga borib urilishga majbur qilardi. Ya'ni bu ikki xil
+    qulf emas, bitta qulfning ko'rinadigan tomoni.
+  → O'chirilgan kurs bosqichda **«yo'q» deb ko'rsatiladi**, jimgina
+    tashlab yuborilmaydi: administrator teshikni ko'rishi kerak.
+  → Bosqichlar tartibi saqlashda massiv pozitsiyasidan qayta yoziladi.
+    Eski `order` qiymatlarini yuborish serverni ekranda ko'rinmaydigan
+    raqamlar bo'yicha tartiblashga qoldirardi.
+  → Path elementlari o'zgarsa, unga yozilgan **hamma** qayta hisoblanadi
+    — «tugagan» ta'rifi o'zgargani uchun (AT-04 bilan bir xil sabab).
+  → Path o'chirilganda yozilishlar saqlanadi: martda tugatgan odamning
+    sertifikati bor, va compliance hisoboti uni yozilishdan tushuntiradi.
 
 - [ ] **5.3** **Enrollment rules** — `models/enrollmentRule.model.js`,
   `jobs/enrollmentRuleQueue.js` (user create/update + kunlik)
