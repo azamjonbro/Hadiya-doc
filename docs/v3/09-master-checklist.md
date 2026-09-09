@@ -842,9 +842,32 @@
     meros qilib olardi va hamma assertion koddagi sababsiz 429 da
     yiqilardi.
 
-- [ ] **4.4** **Baholash siyosati va feedback**
+- [x] **4.4** **Baholash siyosati va feedback**
   · `partialCredit`, `question.points`, `question.explanation`, `revealMode`, `scorePolicy`
   · Qabul: **AT-08**
+  → `scorePolicy` — «qaysi urinish hisoblanadi» degan savolga javob.
+    Eski modellarda bu savol umuman yo'q edi: ular doim eng oxirgi
+    yozuvni o'qirdi, ya'ni `LAST` amalda yagona siyosat edi. `BEST` —
+    ko'pchilik trening uchun to'g'risi (muhimi o'rgangani, uch marta
+    urinishi emas), `FIRST` — sertifikatsiya organi talab qiladigani,
+    `AVERAGE` — ba'zilari talab qiladigani.
+  → «O'tdi» hisoblanadigan ball bo'yicha aniqlanadi, biror urinish
+    o'tgan-o'tmaganiga qarab emas — aks holda `FIRST` va `AVERAGE`
+    bezakdan boshqa narsa bo'lmasdi.
+  → Urinish yo'q bo'lsa ball `null`, `0` emas: 0 «topshirdi va yiqildi»
+    degan ma'noni beradi, bu «hali topshirmagan»dan butunlay boshqa
+    narsa.
+  → `revealMode`: ikkala eski model ham javoblarni **darhol**
+    ko'rsatardi. Mashq uchun to'g'ri, qayta topshirish mumkin bo'lgan
+    test uchun esa xato — yiqilasan, javob kalitini o'qiysan, hammasini
+    bilib qayta topshirasan.
+  → `AFTER_LAST_ATTEMPT` cheksiz urinishda `AFTER_PASS` ga tushadi. Hech
+    qachon bajarilmaydigan qoida — qattiq siyosat emas, bug.
+  → Ochilmagan holatda ham **ballar ko'rsatiladi**, faqat to'g'ri javob
+    va izoh berilmaydi: ballarni ham yashirish odamni «yiqildim»mi yoki
+    «buzuq»mi ajrata olmaydigan holatga qo'yadi.
+  → `quiz:grade` huquqi bo'lgan odam qoidaga bo'ysunmaydi — u tekshirish
+    uchun qaraydi, javob kalitini «ovlash» uchun emas.
 
 - [ ] **4.5** **Editor va statistika**
   · `front/src/admin/views/QuestionBanksView.vue`, `QuizEditorView.vue` (13 tur)
