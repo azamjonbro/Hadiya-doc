@@ -17,6 +17,8 @@
     "build": "npm run build --workspaces --if-present",
     "lint": "npm run lint --workspaces --if-present",
     "infra:up": "docker compose up -d",
-    "infra:down": "docker compose down"
+    "infra:down": "docker compose down",
+    "status": "node tools/status/server.js",
+    "status:tests": "node tools/status/record-tests.js"
   }
 }

@@ -1,0 +1,216 @@
+<!doctype html>
+<html lang="uz">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Qo'llanma — ish holati</title>
+<style>
+  :root {
+    color-scheme: light dark;
+    --bg: #0d1117; --panel: #161b22; --line: #21262d;
+    --ink: #e6edf3; --muted: #8b949e; --faint: #6e7681;
+    --ok: #3fb950; --warn: #d29922; --bad: #f85149; --accent: #58a6ff;
+    font-family: ui-sans-serif, -apple-system, "Segoe UI", system-ui, sans-serif;
+  }
+  @media (prefers-color-scheme: light) {
+    :root { --bg:#f6f8fa; --panel:#fff; --line:#d0d7de; --ink:#1f2328; --muted:#656d76; --faint:#8c959f; }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font-size: 14px; }
+  .wrap { max-width: 1100px; margin: 0 auto; padding: 24px 20px 64px; }
+  header { display: flex; flex-wrap: wrap; align-items: baseline; gap: 12px; margin-bottom: 20px; }
+  h1 { font-size: 20px; margin: 0; font-weight: 650; }
+  .live { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; color: var(--muted); }
+  .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--faint); }
+  .dot.on { background: var(--ok); box-shadow: 0 0 0 3px rgb(63 185 80 / .18); }
+  .dot.off { background: var(--bad); }
+  .grid { display: grid; gap: 14px; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); }
+  .card { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 16px; }
+  .card h2 { font-size: 12px; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); margin: 0 0 10px; font-weight: 600; }
+  .big { font-size: 30px; font-weight: 680; line-height: 1.1; }
+  .sub { color: var(--muted); font-size: 12px; margin-top: 4px; }
+  .bar { height: 8px; border-radius: 999px; background: var(--line); overflow: hidden; margin-top: 10px; }
+  .bar > span { display: block; height: 100%; background: var(--ok); transition: width .4s ease; }
+  table { width: 100%; border-collapse: collapse; }
+  td, th { text-align: left; padding: 5px 0; vertical-align: top; }
+  th { color: var(--muted); font-weight: 500; font-size: 12px; }
+  .blocks td { border-bottom: 1px solid var(--line); padding: 7px 0; }
+  .blocks tr:last-child td { border-bottom: 0; }
+  .minibar { width: 110px; height: 6px; border-radius: 999px; background: var(--line); overflow: hidden; }
+  .minibar > span { display: block; height: 100%; }
+  .num { font-variant-numeric: tabular-nums; color: var(--muted); white-space: nowrap; }
+  .hash { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; color: var(--faint); font-size: 12px; }
+  .msg { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .pill { display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 11px; border: 1px solid var(--line); color: var(--muted); }
+  .pill.ok { color: var(--ok); border-color: rgb(63 185 80 / .4); }
+  .pill.warn { color: var(--warn); border-color: rgb(210 153 34 / .4); }
+  .pill.bad { color: var(--bad); border-color: rgb(248 81 73 / .4); }
+  .wide { grid-column: 1 / -1; }
+  .current { font-size: 15px; font-weight: 600; }
+  ul.files { margin: 0; padding-left: 16px; color: var(--muted); font-size: 12px; }
+  .empty { color: var(--faint); font-size: 12px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Qo'llanma — ish holati</h1>
+    <span class="live"><span id="dot" class="dot"></span><span id="liveText">ulanmoqda…</span></span>
+    <span class="live" id="stamp"></span>
+  </header>
+
+  <div class="grid">
+    <div class="card">
+      <h2>Umumiy progress</h2>
+      <div class="big"><span id="pct">—</span>%</div>
+      <div class="sub"><span id="doneTotal">—</span> band bajarilgan</div>
+      <div class="bar"><span id="overallBar" style="width:0%"></span></div>
+    </div>
+
+    <div class="card">
+      <h2>Bugungi commitlar</h2>
+      <div class="big" id="today">—</div>
+      <div class="sub">oxirgisi: <span id="lastCommit">—</span></div>
+    </div>
+
+    <div class="card">
+      <h2>Deploy</h2>
+      <div class="big" id="unpushed">—</div>
+      <div class="sub">push qilinmagan commit · <span id="branch">—</span></div>
+    </div>
+
+    <div class="card">
+      <h2>Testlar</h2>
+      <div class="big" id="testPass">—</div>
+      <div class="sub" id="testSub">hali o'lchanmagan</div>
+    </div>
+
+    <div class="card wide">
+      <h2>Hozir ustida ishlanayotgan band</h2>
+      <div class="current" id="current">—</div>
+      <div class="sub" id="currentBlock"></div>
+    </div>
+
+    <div class="card wide">
+      <h2>Bloklar</h2>
+      <table class="blocks"><tbody id="blocks"></tbody></table>
+    </div>
+
+    <div class="card wide">
+      <h2>Oxirgi commitlar</h2>
+      <table><tbody id="commits"></tbody></table>
+    </div>
+
+    <div class="card">
+      <h2>Saqlanmagan o'zgarishlar</h2>
+      <div id="dirty"></div>
+    </div>
+
+    <div class="card">
+      <h2>Faoliyat sohalari</h2>
+      <table><tbody id="activity"></tbody></table>
+    </div>
+  </div>
+</div>
+
+<script>
+  const $ = (id) => document.getElementById(id)
+
+  function ago(iso) {
+    if (!iso) return '—'
+    const seconds = Math.floor((Date.now() - new Date(iso)) / 1000)
+    if (seconds < 60) return 'hozirgina'
+    if (seconds < 3600) return Math.floor(seconds / 60) + ' daq. oldin'
+    if (seconds < 86400) return Math.floor(seconds / 3600) + ' soat oldin'
+    return Math.floor(seconds / 86400) + ' kun oldin'
+  }
+
+  function barColour(done, total) {
+    if (!total) return 'var(--line)'
+    if (done === total) return 'var(--ok)'
+    if (done === 0) return 'var(--faint)'
+    return 'var(--accent)'
+  }
+
+  function render(data) {
+    const { checklist, git, tests, activity } = data
+    const pct = checklist.total ? Math.round((checklist.done / checklist.total) * 100) : 0
+
+    $('pct').textContent = pct
+    $('doneTotal').textContent = checklist.done + ' / ' + checklist.total
+    $('overallBar').style.width = pct + '%'
+
+    $('today').textContent = git.commitsToday
+    $('lastCommit').textContent = ago(git.lastCommitAt)
+
+    $('unpushed').textContent = git.unpushed
+    $('branch').textContent = git.branch || '—'
+
+    if (tests) {
+      $('testPass').textContent = tests.pass + ' / ' + tests.tests
+      $('testSub').innerHTML = (tests.fail > 0
+        ? '<span class="pill bad">' + tests.fail + ' yiqilgan</span> '
+        : '<span class="pill ok">hammasi o\'tdi</span> ') + ago(tests.at)
+    }
+
+    $('current').textContent = checklist.current
+      ? checklist.current.id + ' — ' + checklist.current.title
+      : 'Hammasi bajarilgan'
+    $('currentBlock').textContent = checklist.current ? checklist.current.block : ''
+
+    $('blocks').innerHTML = checklist.blocks.map((block) => {
+      const width = block.total ? Math.round((block.done / block.total) * 100) : 0
+      return '<tr>' +
+        '<td>' + block.name.replace(/ —.*/, '') + '</td>' +
+        '<td style="width:120px"><div class="minibar"><span style="width:' + width + '%;background:' + barColour(block.done, block.total) + '"></span></div></td>' +
+        '<td class="num" style="width:60px">' + block.done + '/' + block.total + '</td>' +
+        '</tr>'
+    }).join('')
+
+    $('commits').innerHTML = git.commits.map((commit) =>
+      '<tr>' +
+      '<td class="hash" style="width:70px">' + commit.hash + '</td>' +
+      '<td><span class="msg">' + commit.subject.replace(/</g, '&lt;') + '</span></td>' +
+      '<td class="num" style="width:110px">' + ago(commit.date) + '</td>' +
+      '</tr>'
+    ).join('')
+
+    $('dirty').innerHTML = git.dirty.length
+      ? '<ul class="files">' + git.dirty.slice(0, 12).map((row) =>
+          '<li>' + row.state + ' ' + row.file.replace(/</g, '&lt;') + '</li>').join('') +
+        '</ul>' + (git.dirty.length > 12 ? '<div class="sub">…yana ' + (git.dirty.length - 12) + '</div>' : '')
+      : '<div class="empty">toza</div>'
+
+    $('activity').innerHTML = activity.slice(0, 8).map((row) =>
+      '<tr><td>' + row.scope + '</td><td class="num" style="width:40px">' + row.count + '</td></tr>'
+    ).join('')
+
+    $('stamp').textContent = 'yangilandi: ' + ago(data.generatedAt)
+  }
+
+  // Server-sent events: the page is a viewer, the server decides when
+  // something changed. EventSource reconnects on its own, so a restarted
+  // server does not need a page refresh.
+  let source
+  function connect() {
+    source = new EventSource('/events')
+    source.onopen = () => {
+      $('dot').className = 'dot on'
+      $('liveText').textContent = 'jonli'
+    }
+    source.onmessage = (event) => render(JSON.parse(event.data))
+    source.onerror = () => {
+      $('dot').className = 'dot off'
+      $('liveText').textContent = 'uzildi — qayta ulanmoqda'
+    }
+  }
+  connect()
+
+  // Only the relative times need a tick; the data itself arrives by event.
+  setInterval(() => {
+    const stamp = $('stamp').textContent
+    if (stamp) fetch('/api/status').then((r) => r.json()).then(render).catch(() => {})
+  }, 60000)
+</script>
+</body>
+</html>
