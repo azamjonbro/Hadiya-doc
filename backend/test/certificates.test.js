@@ -253,11 +253,11 @@ describe('certificates', () => {
       const shown = certificateService.toPublicVerification(certificate)
 
       assert.deepEqual(Object.keys(shown).sort(), [
-        'expired',
         'fullName',
         'issuedAt',
-        'revoked',
+        'revokedAt',
         'serial',
+        'status',
         'title',
         'validUntil',
       ])
@@ -265,12 +265,36 @@ describe('certificates', () => {
       assert.ok(!('userId' in shown))
       assert.ok(!('sourceId' in shown))
       assert.ok(!('pdfKey' in shown))
-      assert.equal(shown.revoked, false)
+      assert.equal(shown.status, 'VALID')
     })
 
     test('a revoked certificate says so rather than disappearing', async () => {
       const revoked = await Certificate.findOne({ userId: learner._id, revokedAt: { $ne: null } }).lean()
-      assert.equal(certificateService.toPublicVerification(revoked).revoked, true)
+      assert.equal(certificateService.toPublicVerification(revoked).status, 'REVOKED')
+    })
+
+    test('revoked beats expired — the stronger answer is the one a verifier needs', () => {
+      const shown = certificateService.toPublicVerification({
+        serial: 'X',
+        fullName: 'A',
+        sourceTitle: 'B',
+        issuedAt: new Date('2020-01-01'),
+        validUntil: new Date('2020-02-01'),
+        revokedAt: new Date('2020-01-15'),
+      })
+      assert.equal(shown.status, 'REVOKED')
+    })
+
+    test('an expired one is EXPIRED, not VALID', () => {
+      const shown = certificateService.toPublicVerification({
+        serial: 'X',
+        fullName: 'A',
+        sourceTitle: 'B',
+        issuedAt: new Date('2020-01-01'),
+        validUntil: new Date('2020-02-01'),
+        revokedAt: null,
+      })
+      assert.equal(shown.status, 'EXPIRED')
     })
 
     test('an unknown serial is null, not an error', () => {

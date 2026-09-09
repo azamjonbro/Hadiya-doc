@@ -4,7 +4,8 @@ export const workspaceNav = [
   { name: 'news', path: '/news', icon: 'newspaper', labelKey: 'nav.news' },
   { name: 'tasks', path: '/tasks', icon: 'check-square', labelKey: 'nav.tasks', permission: 'task:read:own' },
   { name: 'events', path: '/events', icon: 'calendar', labelKey: 'nav.events', permission: 'event:read' },
-  { name: 'leaderboard', path: '/leaderboard', icon: 'award', labelKey: 'nav.leaderboard' },
+  { name: 'certificates', path: '/certificates', icon: 'award', labelKey: 'nav.certificates' },
+  { name: 'leaderboard', path: '/leaderboard', icon: 'trending-up', labelKey: 'nav.leaderboard' },
   { name: 'chat', path: '/chat', icon: 'message-square', labelKey: 'nav.chat' },
 ]
 

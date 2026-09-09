@@ -22,7 +22,8 @@
     "groups": "Guruhlar",
     "trash": "Karzinka",
     "branches": "Filiallar",
-    "auditLog": "Audit jurnali"
+    "auditLog": "Audit jurnali",
+    "certificates": "Sertifikatlar"
   },
   "shell": {
     "searchPlaceholder": "Kurslar, yangiliklar, vazifalarni qidirish..."
@@ -1750,5 +1751,124 @@
       "person": "Xodim",
       "password": "Parol"
     }
+  },
+  "certificates": {
+    "title": "Sertifikatlarim",
+    "subtitle": "Tugatilgan kurslaringiz uchun berilgan sertifikatlar",
+    "emptyTitle": "Hozircha sertifikat yo‘q",
+    "emptyDescription": "Kursni to‘liq tugatganingizdan so‘ng sertifikat shu yerda paydo bo‘ladi.",
+    "issuedAt": "Berilgan sana",
+    "validUntil": "Amal qilish muddati",
+    "serial": "Raqami",
+    "download": "Yuklab olish",
+    "loadError": "Sertifikatlarni yuklab bo‘lmadi",
+    "downloadError": "Sertifikatni yuklab olib bo‘lmadi",
+    "revokedNote": "{date} sanasida bekor qilingan",
+    "status": {
+      "VALID": "Amalda",
+      "EXPIRED": "Muddati o‘tgan",
+      "REVOKED": "Bekor qilingan"
+    }
+  },
+  "verify": {
+    "heading": "Sertifikatni tekshirish",
+    "title": "Sertifikat haqiqiyligini tekshirish",
+    "subtitle": "Sertifikat raqamini kiriting yoki QR kodni skanerlang.",
+    "placeholder": "2026-ABCDE-FGHJK",
+    "check": "Tekshirish",
+    "fullName": "Ism-familiya",
+    "course": "Kurs",
+    "issuedAt": "Berilgan sana",
+    "validUntil": "Amal qiladi",
+    "revokedAt": "Bekor qilingan sana",
+    "serial": "Raqami",
+    "notFound": "Bunday sertifikat topilmadi",
+    "notFoundHint": "Raqamni qaytadan tekshirib ko‘ring — harflar va chiziqchalar aynan bo‘lishi kerak.",
+    "error": "Tekshirib bo‘lmadi. Birozdan so‘ng qayta urinib ko‘ring.",
+    "throttled": "Juda ko‘p so‘rov yuborildi. Bir daqiqadan so‘ng qayta urinib ko‘ring.",
+    "status": {
+      "VALID": "Sertifikat haqiqiy",
+      "EXPIRED": "Muddati o‘tgan",
+      "REVOKED": "Bekor qilingan"
+    },
+    "statusHint": {
+      "VALID": "Bu sertifikat platformamiz tomonidan berilgan va kuchda.",
+      "EXPIRED": "Sertifikat berilgan, lekin amal qilish muddati tugagan.",
+      "REVOKED": "Bu sertifikat bekor qilingan va endi kuchga ega emas."
+    }
+  },
+  "certTemplates": {
+    "title": "Sertifikatlar",
+    "subtitle": "Shablonlar va berilgan sertifikatlar",
+    "tabs": {
+      "templates": "Shablonlar",
+      "issued": "Berilganlar"
+    },
+    "new": "Yangi shablon",
+    "edit": "Tahrirlash",
+    "save": "Saqlash",
+    "cancel": "Bekor qilish",
+    "saved": "Shablon saqlandi",
+    "saveError": "Shablonni saqlab bo‘lmadi",
+    "deleted": "Shablon o‘chirildi",
+    "deleteError": "Shablonni o‘chirib bo‘lmadi",
+    "deleteTitle": "Shablon o‘chirilsinmi?",
+    "deleteMessage": "«{name}» shabloni o‘chiriladi.",
+    "loadError": "Ma’lumotlarni yuklab bo‘lmadi",
+    "uploadError": "Rasmni yuklab bo‘lmadi",
+    "nameRequired": "Shablon nomini kiriting",
+    "emptyTitle": "Shablon yo‘q",
+    "emptyDescription": "Kurs sertifikat berishi uchun kamida bitta shablon kerak.",
+    "default": "Asosiy",
+    "name": "Nomi",
+    "orientationLabel": "Sahifa yo‘nalishi",
+    "orientation": {
+      "landscape": "Gorizontal",
+      "portrait": "Vertikal"
+    },
+    "fieldsCount": "maydon",
+    "validFor": "{days} kun amal qiladi",
+    "neverExpires": "Muddatsiz",
+    "validityDays": "Amal qilish muddati (kun)",
+    "validityHint": "0 — muddatsiz",
+    "makeDefault": "Asosiy shablon sifatida belgilash",
+    "background": "Fon rasmi",
+    "uploadBackground": "Rasm yuklash",
+    "replaceBackground": "Rasmni almashtirish",
+    "fields": "Maydonlar",
+    "dragHint": "Maydonni sichqoncha bilan suring yoki o‘q tugmalari bilan aniq joylashtiring.",
+    "fontSize": "Shrift o‘lchami",
+    "qrSize": "QR o‘lchami (%)",
+    "align": "Joylashuv",
+    "alignLeft": "Chapga",
+    "alignCenter": "Markazga",
+    "alignRight": "O‘ngga",
+    "bold": "Qalin",
+    "color": "Rang",
+    "field": {
+      "fullName": "Ism-familiya",
+      "courseTitle": "Kurs nomi",
+      "issuedAt": "Berilgan sana",
+      "validUntil": "Amal qilish muddati",
+      "serial": "Sertifikat raqami",
+      "score": "Natija",
+      "qr": "QR kod"
+    },
+    "sample": {
+      "fullName": "Alisher Karimov",
+      "courseTitle": "Mehnat muhofazasi"
+    },
+    "status": "Holati",
+    "holder": "Xodim",
+    "searchPlaceholder": "Ism, kurs yoki raqam",
+    "allStatuses": "Barcha holatlar",
+    "noneIssuedTitle": "Sertifikat berilmagan",
+    "noneIssuedDescription": "Xodimlar kurslarni tugatgach, sertifikatlar shu yerda ko‘rinadi.",
+    "loadMore": "Yana yuklash",
+    "revoke": "Bekor qilish",
+    "revoked": "Sertifikat bekor qilindi",
+    "revokeError": "Bekor qilib bo‘lmadi",
+    "revokeTitle": "Sertifikat bekor qilinsinmi?",
+    "revokeMessage": "{name} uchun berilgan sertifikat bekor qilinadi. Yozuv saqlanadi, lekin tekshiruvda «bekor qilingan» deb ko‘rsatiladi."
   }
 }

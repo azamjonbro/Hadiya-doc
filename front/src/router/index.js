@@ -19,6 +19,15 @@ export const router = createRouter({
     { path: '/login', name: 'login', component: () => import('@/views/LoginView.vue'), meta: { public: true } },
     { path: '/403', name: 'forbidden', component: () => import('@/views/ForbiddenView.vue'), meta: { public: true } },
     { path: '/401', name: 'unauthorized', component: () => import('@/views/UnauthorizedView.vue'), meta: { public: true } },
+    // Where the QR code on a printed certificate points. Public, and
+    // outside the app shell: whoever opens it is holding paper, not an
+    // account, and a login prompt would make the page useless.
+    {
+      path: '/verify/:serial?',
+      name: 'verify-certificate',
+      component: () => import('@/views/VerifyCertificateView.vue'),
+      meta: { public: true },
+    },
     {
       path: '/',
       component: AppShell,
@@ -46,6 +55,7 @@ export const router = createRouter({
         { path: 'leaderboard', name: 'leaderboard', component: () => import('@/views/LeaderboardView.vue'), meta: { titleKey: 'nav.leaderboard' } },
         { path: 'chat', name: 'chat', component: () => import('@/views/ChatView.vue'), meta: { titleKey: 'nav.chat' } },
         { path: 'notifications', name: 'notifications', component: () => import('@/views/NotificationsView.vue'), meta: { titleKey: 'nav.notifications' } },
+        { path: 'certificates', name: 'certificates', component: () => import('@/views/CertificatesView.vue'), meta: { titleKey: 'nav.certificates' } },
         { path: 'settings', name: 'settings', component: () => import('@/views/SettingsView.vue'), meta: { titleKey: 'nav.settings' } },
       ],
     },
@@ -147,6 +157,12 @@ export const router = createRouter({
           name: 'admin-roles',
           component: () => import('@/admin/views/RolesPermissionsView.vue'),
           meta: { permission: 'role:manage', titleKey: 'roles.title' },
+        },
+        {
+          path: 'certificates',
+          name: 'admin-certificates',
+          component: () => import('@/admin/views/CertificateTemplatesView.vue'),
+          meta: { permission: 'certificate:template:manage', titleKey: 'nav.certificates' },
         },
         {
           path: 'audit-logs',

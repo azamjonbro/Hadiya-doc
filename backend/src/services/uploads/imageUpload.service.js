@@ -17,6 +17,18 @@ const ALLOWED_MIME_TO_EXT = {
   'image/gif': 'gif',
 }
 
+/**
+ * Where a key in the images bucket can be fetched from.
+ *
+ * Exported because the certificate template editor has to *show* the
+ * background it stored a key for, and rebuilding this in the frontend from
+ * a second copy of S3_PUBLIC_URL is how the two drift apart.
+ */
+export function publicImageUrl(key) {
+  if (!key) return ''
+  return publicUrlFor(key)
+}
+
 function publicUrlFor(key) {
   if (env.S3_PUBLIC_URL) return `${env.S3_PUBLIC_URL.replace(/\/$/, '')}/${key}`
   return `${env.S3_ENDPOINT.replace(/\/$/, '')}/${env.S3_BUCKET_IMAGES}/${key}`

@@ -22,7 +22,8 @@
     "groups": "Groups",
     "trash": "Trash",
     "branches": "Branches",
-    "auditLog": "Audit log"
+    "auditLog": "Audit log",
+    "certificates": "Certificates"
   },
   "shell": {
     "searchPlaceholder": "Search courses, news, tasks..."
@@ -1750,5 +1751,124 @@
       "person": "Person",
       "password": "Password"
     }
+  },
+  "certificates": {
+    "title": "My certificates",
+    "subtitle": "Certificates issued for the courses you have completed",
+    "emptyTitle": "No certificates yet",
+    "emptyDescription": "A certificate appears here once you finish a course that issues one.",
+    "issuedAt": "Issued",
+    "validUntil": "Valid until",
+    "serial": "Serial",
+    "download": "Download",
+    "loadError": "Could not load your certificates",
+    "downloadError": "Could not download the certificate",
+    "revokedNote": "Revoked on {date}",
+    "status": {
+      "VALID": "Valid",
+      "EXPIRED": "Expired",
+      "REVOKED": "Revoked"
+    }
+  },
+  "verify": {
+    "heading": "Certificate check",
+    "title": "Verify a certificate",
+    "subtitle": "Enter the serial number, or scan the QR code on the certificate.",
+    "placeholder": "2026-ABCDE-FGHJK",
+    "check": "Check",
+    "fullName": "Name",
+    "course": "Course",
+    "issuedAt": "Issued",
+    "validUntil": "Valid until",
+    "revokedAt": "Revoked on",
+    "serial": "Serial",
+    "notFound": "No such certificate",
+    "notFoundHint": "Check the serial again — the letters and dashes have to match exactly.",
+    "error": "Could not check it. Please try again shortly.",
+    "throttled": "Too many checks from here. Try again in a minute.",
+    "status": {
+      "VALID": "This certificate is genuine",
+      "EXPIRED": "This certificate has expired",
+      "REVOKED": "This certificate was revoked"
+    },
+    "statusHint": {
+      "VALID": "It was issued by this platform and is still in force.",
+      "EXPIRED": "It was genuinely issued, but its validity period has ended.",
+      "REVOKED": "It was withdrawn and no longer counts as valid."
+    }
+  },
+  "certTemplates": {
+    "title": "Certificates",
+    "subtitle": "Templates, and the certificates issued from them",
+    "tabs": {
+      "templates": "Templates",
+      "issued": "Issued"
+    },
+    "new": "New template",
+    "edit": "Edit",
+    "save": "Save",
+    "cancel": "Cancel",
+    "saved": "Template saved",
+    "saveError": "Could not save the template",
+    "deleted": "Template deleted",
+    "deleteError": "Could not delete the template",
+    "deleteTitle": "Delete this template?",
+    "deleteMessage": "The template “{name}” will be deleted.",
+    "loadError": "Could not load the data",
+    "uploadError": "Could not upload the image",
+    "nameRequired": "Give the template a name",
+    "emptyTitle": "No templates",
+    "emptyDescription": "A course needs at least one template before it can issue certificates.",
+    "default": "Default",
+    "name": "Name",
+    "orientationLabel": "Page orientation",
+    "orientation": {
+      "landscape": "Landscape",
+      "portrait": "Portrait"
+    },
+    "fieldsCount": "fields",
+    "validFor": "Valid for {days} days",
+    "neverExpires": "Never expires",
+    "validityDays": "Validity (days)",
+    "validityHint": "0 means it never expires",
+    "makeDefault": "Use as the default template",
+    "background": "Background image",
+    "uploadBackground": "Upload image",
+    "replaceBackground": "Replace image",
+    "fields": "Fields",
+    "dragHint": "Drag a field, or use the arrows for the last percent.",
+    "fontSize": "Font size",
+    "qrSize": "QR size (%)",
+    "align": "Alignment",
+    "alignLeft": "Left",
+    "alignCenter": "Centre",
+    "alignRight": "Right",
+    "bold": "Bold",
+    "color": "Colour",
+    "field": {
+      "fullName": "Full name",
+      "courseTitle": "Course title",
+      "issuedAt": "Issue date",
+      "validUntil": "Valid until",
+      "serial": "Serial number",
+      "score": "Score",
+      "qr": "QR code"
+    },
+    "sample": {
+      "fullName": "Alisher Karimov",
+      "courseTitle": "Workplace safety"
+    },
+    "status": "Status",
+    "holder": "Employee",
+    "searchPlaceholder": "Name, course or serial",
+    "allStatuses": "All statuses",
+    "noneIssuedTitle": "No certificates issued",
+    "noneIssuedDescription": "Certificates appear here once employees finish their courses.",
+    "loadMore": "Load more",
+    "revoke": "Revoke",
+    "revoked": "Certificate revoked",
+    "revokeError": "Could not revoke it",
+    "revokeTitle": "Revoke this certificate?",
+    "revokeMessage": "The certificate issued to {name} will be revoked. The record stays, but a verification will report it as revoked."
   }
 }

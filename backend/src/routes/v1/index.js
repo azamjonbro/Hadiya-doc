@@ -34,8 +34,15 @@ import { gamificationRouter } from './gamification.routes.js'
 import { chatRouter } from './chat.routes.js'
 import { attentionPolicyRouter } from './attentionPolicy.routes.js'
 import { facePolicyRouter } from './facePolicy.routes.js'
+import { certificatesRouter, publicCertificatesRouter } from './certificates.routes.js'
 
 export const v1Router = Router()
+
+// Public first, and deliberately at its own prefix: /public/* is the only
+// part of the API that answers without a token, and keeping it visible in
+// one place is what makes "which endpoints are unauthenticated" a question
+// with a readable answer.
+v1Router.use('/public/certificates', publicCertificatesRouter)
 
 v1Router.use('/health', healthRouter)
 v1Router.use('/auth', authRouter)
@@ -72,3 +79,4 @@ v1Router.use('/gamification', gamificationRouter)
 v1Router.use('/chat', chatRouter)
 v1Router.use('/attention-policy', attentionPolicyRouter)
 v1Router.use('/face-policy', facePolicyRouter)
+v1Router.use('/certificates', certificatesRouter)

@@ -148,6 +148,49 @@ export const certificateService = {
     return certificate
   },
 
+  /** Someone's own certificates, newest first. */
+  async listForUser(userId) {
+    return Certificate.find({ userId }).sort({ issuedAt: -1 }).lean()
+  },
+
+  /**
+   * The admin list, fenced to whoever the caller may see (2.2).
+   *
+   * `scopedUserIds` is null for an unscoped caller and an allow-list
+   * otherwise — the same contract every other listing uses, so a manager
+   * cannot read certificates for a department they cannot read people for.
+   */
+  async list({ scopedUserIds = null, status = '', search = '', limit = 50, cursor = null } = {}) {
+    const filter = {}
+    if (scopedUserIds) filter.userId = { $in: scopedUserIds }
+    if (status === 'REVOKED') filter.revokedAt = { $ne: null }
+    if (status === 'VALID') {
+      filter.revokedAt = null
+      filter.$or = [{ validUntil: null }, { validUntil: { $gt: new Date() } }]
+    }
+    if (status === 'EXPIRED') {
+      filter.revokedAt = null
+      filter.validUntil = { $lte: new Date() }
+    }
+    if (search) {
+      const escaped = search.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+      const regex = new RegExp(escaped, 'i')
+      filter.$and = [{ $or: [{ fullName: regex }, { sourceTitle: regex }, { serial: regex }] }]
+    }
+    if (cursor) filter._id = { $lt: cursor }
+
+    const rows = await Certificate.find(filter).sort({ _id: -1 }).limit(limit + 1).lean()
+    const hasMore = rows.length > limit
+    const items = hasMore ? rows.slice(0, -1) : rows
+    return { items, nextCursor: hasMore ? String(items.at(-1)._id) : null }
+  },
+
+  findBySerial(serial) {
+    // Case-insensitive: the serial is typed off paper, and the alphabet is
+    // upper-case only, so a lower-case entry is a person, not a miss.
+    return Certificate.findOne({ serial: String(serial ?? '').trim().toUpperCase() })
+  },
+
   /**
    * What the public verification page may say (AT-12 builds on this).
    *
@@ -155,16 +198,24 @@ export const certificateService = {
    * id, nothing that could be walked back to a person beyond the name that
    * is printed on the paper the enquirer is already holding.
    */
-  toPublicVerification(certificate) {
+  toPublicVerification(certificate, now = new Date()) {
     if (!certificate) return null
+    const revoked = Boolean(certificate.revokedAt)
+    const expired = Boolean(certificate.validUntil && certificate.validUntil < now)
     return {
       serial: certificate.serial,
+      // The one piece of personal data here, and it is the piece already
+      // printed on the paper the enquirer is holding. Everything that could
+      // be walked back to an account — the user id, the course id, the pdf
+      // key — is deliberately absent (AT-12).
       fullName: certificate.fullName,
       title: certificate.sourceTitle,
       issuedAt: certificate.issuedAt,
       validUntil: certificate.validUntil,
-      revoked: Boolean(certificate.revokedAt),
-      expired: Boolean(certificate.validUntil && certificate.validUntil < new Date()),
+      // Revoked wins over expired: "we withdrew this" is a different answer
+      // from "this ran out", and the stronger one is what a verifier needs.
+      status: revoked ? 'REVOKED' : expired ? 'EXPIRED' : 'VALID',
+      revokedAt: certificate.revokedAt ?? null,
     }
   },
 }
