@@ -35,6 +35,7 @@ import { chatRouter } from './chat.routes.js'
 import { attentionPolicyRouter } from './attentionPolicy.routes.js'
 import { facePolicyRouter } from './facePolicy.routes.js'
 import { certificatesRouter, publicCertificatesRouter } from './certificates.routes.js'
+import { testQuizzesRouter } from './testQuizzes.routes.js'
 
 export const v1Router = Router()
 
@@ -80,3 +81,6 @@ v1Router.use('/chat', chatRouter)
 v1Router.use('/attention-policy', attentionPolicyRouter)
 v1Router.use('/face-policy', facePolicyRouter)
 v1Router.use('/certificates', certificatesRouter)
+// The unified test (4.2). The legacy video-quiz and assessment routes stay
+// exactly where they are until the frontend has moved over (AT-09).
+v1Router.use('/quizzes', testQuizzesRouter)

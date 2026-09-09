@@ -59,5 +59,24 @@ const quizAttemptSchema = new Schema(
 )
 
 quizAttemptSchema.index({ userId: 1, videoId: 1, createdAt: -1 })
+quizAttemptSchema.index({ userId: 1, testQuizId: 1, createdAt: -1 })
+
+/**
+ * The attempt limit, enforced by the database (AT-06).
+ *
+ * Two browser tabs submitting at the same moment both count the existing
+ * attempts, both get the same answer, and both decide they are allowed one
+ * more. No amount of checking first fixes that — the check and the insert
+ * are two operations. A unique index makes the *insert* the decision: one
+ * of them writes attempt 2, the other gets a duplicate-key error and is
+ * turned away with 409.
+ *
+ * Partial on `testQuizId`, so the legacy rows — which have none and were
+ * never numbered per test — are not dragged into it.
+ */
+quizAttemptSchema.index(
+  { userId: 1, testQuizId: 1, attemptNo: 1 },
+  { unique: true, partialFilterExpression: { testQuizId: { $type: 'objectId' } } }
+)
 
 export const QuizAttempt = model('QuizAttempt', quizAttemptSchema)

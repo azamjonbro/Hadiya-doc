@@ -33,10 +33,22 @@ let learner
 let valid
 let revoked
 
-async function verify(serial) {
+// Each run presents its own client address.
+//
+// The endpoint is rate limited per IP, and without this a second run of the
+// suite inside the same minute inherits the bucket the first one emptied —
+// every assertion then fails with 429 for a reason that has nothing to do
+// with the code. The backend trusts exactly one proxy hop (app.js), which
+// is the role the test is playing here.
+const CLIENT_IP = `203.0.113.${Math.floor(Math.random() * 200) + 1}`
+const THROTTLE_IP = `198.51.100.${Math.floor(Math.random() * 200) + 1}`
+
+async function verify(serial, ip = CLIENT_IP) {
   // Deliberately no Authorization header and no cookie: this is the whole
   // point of the endpoint.
-  const res = await fetch(`${BASE_URL}/public/certificates/${serial}`)
+  const res = await fetch(`${BASE_URL}/public/certificates/${serial}`, {
+    headers: { 'X-Forwarded-For': ip },
+  })
   return { status: res.status, body: await res.json().catch(() => null) }
 }
 
@@ -100,7 +112,10 @@ describe('AT-12 · public certificate verification', () => {
   })
 
   test('carries nothing that identifies the account behind the name', async () => {
-    const { body } = await verify(valid.serial)
+    const { status, body } = await verify(valid.serial)
+    // Asserted so this cannot pass on an error body, which carries no PII
+    // either and would make the check meaningless.
+    assert.equal(status, 200)
     // Checked against the serialised body rather than key by key: a field
     // added later that happens to carry the id would slip past a key list.
     const raw = JSON.stringify(body)
@@ -133,12 +148,13 @@ describe('AT-12 · public certificate verification', () => {
   })
 
   test('more than ten a minute from one address is refused', async () => {
-    // Asserted as "429 arrives within a dozen tries" rather than "the
-    // eleventh is 429": the window is shared with anything else that hit
-    // the route in the last minute, including a previous run of this file.
+    // From its own address, so the count starts clean: the eleventh request
+    // is the first that may be refused. Asserted as "429 arrives within a
+    // dozen tries" rather than exactly on the eleventh, because the window
+    // is wall-clock and a slow run can roll into the next minute.
     let sawTooMany = false
     for (let i = 0; i < 12; i += 1) {
-      const { status } = await verify(valid.serial)
+      const { status } = await verify(valid.serial, THROTTLE_IP)
       if (status === 429) {
         sawTooMany = true
         break

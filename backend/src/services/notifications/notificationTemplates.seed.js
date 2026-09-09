@@ -34,6 +34,7 @@ export const TEMPLATE_TYPES = [
   'QUIZ_ASSIGNED',
   'QUIZ_PASSED',
   'QUIZ_FAILED',
+  'QUIZ_ATTEMPTS_EXHAUSTED',
   'NEWS_PUBLISHED',
   'CERTIFICATE_ISSUED',
   'CERTIFICATE_EXPIRING',
@@ -237,6 +238,31 @@ export const TEMPLATE_SEED = {
       subject: 'A lesson was added to {{courseTitle}}',
       body: '"{{courseTitle}}" has a new required lesson, so it is open again. You are at {{completionPercent}}. A certificate you already have stays valid.',
       push: 'New lesson: {{courseTitle}}',
+    },
+  },
+
+  QUIZ_ATTEMPTS_EXHAUSTED: {
+    // One template for two readers: the learner who ran out, and their
+    // manager. `userName` is what tells them apart — empty for the
+    // learner's own copy, the employee's name on the manager's.
+    placeholders: ['userName', 'quizTitle', 'maxAttempts', 'appUrl'],
+    uz: {
+      subject: 'Urinishlar tugadi: {{quizTitle}}',
+      body: '"{{quizTitle}}" testida ruxsat etilgan {{maxAttempts}} ta urinish tugadi. Yangi urinish uchun o\'quv bo\'limiga murojaat qiling.',
+      push: 'Urinishlar tugadi: {{quizTitle}}',
+      defaults: { userName: '' },
+    },
+    ru: {
+      subject: 'Попытки исчерпаны: {{quizTitle}}',
+      body: 'По тесту «{{quizTitle}}» использованы все {{maxAttempts}} попытки. Для новой попытки обратитесь в учебный отдел.',
+      push: 'Попытки исчерпаны: {{quizTitle}}',
+      defaults: { userName: '' },
+    },
+    en: {
+      subject: 'No attempts left: {{quizTitle}}',
+      body: 'All {{maxAttempts}} attempts at "{{quizTitle}}" have been used. Ask the training team if you need another.',
+      push: 'No attempts left: {{quizTitle}}',
+      defaults: { userName: '' },
     },
   },
 
