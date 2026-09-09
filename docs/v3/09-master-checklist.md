@@ -909,11 +909,39 @@
 
 ## BLOK 5 — Learning path va onboarding (4 hafta)
 
-- [ ] **5.1** **Learning path**
+- [x] **5.1** **Learning path**
   · `models/learningPath.model.js`, `pathEnrollment.model.js`
   · `services/paths/pathSequence.js` — `courseSequence.js` naqshi
   · `services/courses/courseVisibility.js` → umumiy `isVisibleToActor(actor, doc)`
   · Qabul: **AT-26, AT-27**
+  → AT-26 — bu **chetlab o'tish** testi: qulf faqat video baytlari
+    beriladigan joyda tursa haqiqiy. Yon paneldagi kulrang qator —
+    bezak, URL yozib o'tib ketiladi. Shuning uchun tekshiruv
+    `videoAccess` da, token muhrlanishidan oldin. Path qulfi kurs
+    qulfidan **oldin** tekshiriladi: «oldingi kursni tugating» —
+    ochilishi kerak bo'lmagan kursning «oldingi darsini tugating»idan
+    foydaliroq javob.
+  → Faqat **o'zi yozilgan** path'lar tekshiriladi. Boshqa birovning
+    dasturida uchraydigan kurs uni qulflab qo'ymasligi kerak.
+  → AT-27 — foiz faqat **majburiy** elementlar ustidan hisoblanadi.
+    Ixtiyoriyni sanash majburiy kursni tashlab 100% ga chiqishga yo'l
+    ochardi; maxrajda qoldirish esa hammasini bajargan odamni abadiy
+    60% da ushlab turardi.
+  → Bo'sh path ham, faqat ixtiyoriy elementlardan iborat path ham
+    «tugagan» emas — aks holda hech narsa uchun sertifikat berilardi.
+  → Ko'rinish qoidasi `services/access/visibility.js` ga chiqarildi.
+    Path ham aynan o'sha uchta maydonni o'qiydi, va ikkinchi nusxa —
+    ular bo'sh `branches` massivi nimani anglatishi haqida
+    kelishmovchilikka tushadigan yo'l (bir tomoni hammadan yashiradi,
+    ikkinchisi hammaga ko'rsatadi).
+  → Path'ga yozilish uning kurslarini ham tayinlaydi: aks holda path —
+    o'quvchi ocholmaydigan ro'yxat.
+  → Sertifikat navbati endi `sourceType` ni oladi (`COURSE|PATH`), va
+    `certificateService.issueForPath` qo'shildi. Eski relizdan Redis'da
+    qolgan job'lar hamon `courseId` ni tashiydi — worker ikkalasini ham
+    o'qiydi, navbat bo'shaguncha.
+  → Kurs tugaganda uni o'z ichiga olgan path'lar **o'sha so'rovda**
+    qayta hisoblanadi — sahifa ochilishini kutmaydi.
 
 - [ ] **5.2** **Path UI** — `PathsView`, `PathDetailView`, `PathsListView`, `PathBuilderView`
 
