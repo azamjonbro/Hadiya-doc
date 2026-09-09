@@ -55,6 +55,12 @@ export const router = createRouter({
         { path: 'leaderboard', name: 'leaderboard', component: () => import('@/views/LeaderboardView.vue'), meta: { titleKey: 'nav.leaderboard' } },
         { path: 'chat', name: 'chat', component: () => import('@/views/ChatView.vue'), meta: { titleKey: 'nav.chat' } },
         { path: 'notifications', name: 'notifications', component: () => import('@/views/NotificationsView.vue'), meta: { titleKey: 'nav.notifications' } },
+        {
+          path: 'events/:id',
+          name: 'event-detail',
+          component: () => import('@/views/EventDetailView.vue'),
+          meta: { titleKey: 'nav.events', permission: 'event:read' },
+        },
         { path: 'paths', name: 'paths-list', component: () => import('@/views/PathsView.vue'), meta: { titleKey: 'nav.paths', permission: 'path:read' } },
         { path: 'paths/:id', name: 'path-detail', component: () => import('@/views/PathDetailView.vue'), meta: { titleKey: 'nav.paths', permission: 'path:read' } },
         { path: 'certificates', name: 'certificates', component: () => import('@/views/CertificatesView.vue'), meta: { titleKey: 'nav.certificates' } },
@@ -159,6 +165,12 @@ export const router = createRouter({
           name: 'admin-roles',
           component: () => import('@/admin/views/RolesPermissionsView.vue'),
           meta: { permission: 'role:manage', titleKey: 'roles.title' },
+        },
+        {
+          path: 'events',
+          name: 'admin-events',
+          component: () => import('@/admin/views/EventsAdminView.vue'),
+          meta: { permission: 'event:create', titleKey: 'events.adminTitle' },
         },
         {
           path: 'paths',

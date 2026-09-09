@@ -1,5 +1,6 @@
 <script setup>
 import { computed, onMounted, reactive, ref } from 'vue'
+import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useAuthStore } from '@/stores/auth'
 import { eventsApi } from '@/services/events'
@@ -17,6 +18,7 @@ import { apiErrorText } from '@/utils/apiError'
 
 const { t, locale } = useI18n()
 const auth = useAuthStore()
+const router = useRouter()
 
 const items = ref([])
 const loading = ref(true)
@@ -119,7 +121,7 @@ onMounted(load)
         <div class="relative space-y-4 border-l border-border pl-6">
           <div v-for="ev in group.items" :key="ev.id" class="relative">
             <span class="absolute -left-[29px] top-1.5 h-3 w-3 rounded-full border-2 border-surface bg-primary" />
-            <AppCard>
+            <AppCard hover class="cursor-pointer" @click="router.push(`/events/${ev.id}`)">
               <div class="flex items-start justify-between gap-3">
                 <div class="min-w-0">
                   <div class="flex items-center gap-2">
@@ -133,9 +135,13 @@ onMounted(load)
                   <div class="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-caption text-ink-faint">
                     <span class="flex items-center gap-1"><Icon name="clock" size="12" />{{ new Date(ev.startAt).toLocaleString(locale, { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) }}</span>
                     <span v-if="ev.location" class="flex items-center gap-1"><Icon name="map-pin" size="12" />{{ ev.location }}</span>
-                    <span v-if="ev.participants?.length" class="flex items-center gap-1"><Icon name="users" size="12" />{{ ev.participants.length }}</span>
+                    <span v-if="ev.requiresRegistration && ev.capacity" class="flex items-center gap-1">
+                      <Icon name="users" size="12" />{{ t('events.seats', { taken: ev.registeredCount, total: ev.capacity }) }}
+                    </span>
+                    <span v-else-if="ev.participants?.length" class="flex items-center gap-1"><Icon name="users" size="12" />{{ ev.participants.length }}</span>
                   </div>
                 </div>
+                <Icon name="chevron-right" size="16" class="shrink-0 text-ink-faint" />
               </div>
             </AppCard>
           </div>
