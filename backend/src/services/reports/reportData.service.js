@@ -1,4 +1,3 @@
-import mongoose from 'mongoose'
 import { User } from '../../models/user.model.js'
 import { Course } from '../../models/course.model.js'
 import { CourseAssignment } from '../../models/courseAssignment.model.js'
@@ -10,103 +9,19 @@ import { roleRepository } from '../../repositories/role.repository.js'
 import { ApiError } from '../../utils/ApiError.js'
 import { DEFAULT_REPORT_LANG, reportTranslator } from './reportI18n.js'
 import { scopedUserIdsFor } from '../access/actorScope.js'
-
-// Hard cap on exported rows — an admin exporting the whole org is a
-// legitimate, expected use, but an unbounded export is still a resource-
-// exhaustion vector on a shared server.
-//
-// The cap itself was never the problem. Cutting at 5 000 rows and saying
-// nothing was: an export of 8 000 employees produced a file of 5 000 that
-// looked complete, and the 3 000 missing people were indistinguishable
-// from people who do not exist. AT-22 is about the *silence*, so every
-// builder now reports `totalRows` alongside its rows and `build` derives
-// `truncated` from the two — see countFor below.
-export const MAX_ROWS = 5000
-
-// What an async export is allowed to fetch. Higher because nobody is
-// waiting on an HTTP response for it — the job writes a file and tells the
-// requester when it is ready — but still bounded: an unbounded export on a
-// shared box is a way to run it out of memory.
-export const ASYNC_MAX_ROWS = 100000
-
-/**
- * The row cap for this build.
- *
- * Threaded through `filters` rather than read from module state, because
- * an async job and a synchronous request can be in flight at the same
- * time and a mutable global would give one of them the other's limit.
- */
-function capFor(filters) {
-  return filters.maxRows ?? MAX_ROWS
-}
-
-/**
- * Runs an aggregation and gets both the capped rows and the true total in
- * one pass.
- *
- * `$facet` rather than two queries: the grouping stage is the expensive
- * part of these pipelines, and running it twice to learn a number would
- * double the cost of every export.
- */
-async function facetRows(model, pipeline, { sort, project, cap = MAX_ROWS }) {
-  const [result] = await model.aggregate([
-    ...pipeline,
-    {
-      $facet: {
-        rows: [...(sort ? [{ $sort: sort }] : []), { $limit: cap }, ...(project ? [{ $project: project }] : [])],
-        total: [{ $count: 'count' }],
-      },
-    },
-  ])
-  return { rows: result?.rows ?? [], totalRows: result?.total?.[0]?.count ?? 0 }
-}
-
-/**
- * The row count a report *would* have produced, uncapped.
- *
- * Counted separately rather than by fetching and measuring: the whole
- * point of the cap is not to load 8 000 rows into memory, so the honest
- * number has to come from a count query.
- */
-async function countFor(model, filter) {
-  return model.countDocuments(filter)
-}
-
-function round1(n) {
-  return Math.round((n ?? 0) * 10) / 10
-}
-
-function toObjectId(id) {
-  return new mongoose.Types.ObjectId(id)
-}
-
-function toObjectIds(ids) {
-  return ids.map(toObjectId)
-}
-
-// Combines any number of id lists (each meaning "must be one of these") into
-// a single list. `null`/`undefined` entries mean "no constraint from this
-// filter" and are ignored. Returns `null` if none of the filters applied any
-// constraint at all, otherwise an array (possibly empty, meaning nothing
-// matches every constraint at once).
-function intersectIds(...idLists) {
-  const constraints = idLists.filter((list) => list !== null && list !== undefined)
-  if (constraints.length === 0) return null
-  const sets = constraints.map((list) => new Set(list.map((id) => id.toString())))
-  const [first, ...rest] = sets
-  let result = first
-  for (const set of rest) {
-    result = new Set([...result].filter((id) => set.has(id)))
-  }
-  return [...result]
-}
-
-function dateRangeMatch(field, filters) {
-  const range = {}
-  if (filters.dateFrom) range.$gte = filters.dateFrom
-  if (filters.dateTo) range.$lte = filters.dateTo
-  return Object.keys(range).length ? { [field]: range } : {}
-}
+import {
+  MAX_ROWS,
+  ASYNC_MAX_ROWS,
+  capFor,
+  facetRows,
+  countFor,
+  round1,
+  toObjectId,
+  toObjectIds,
+  intersectIds,
+  dateRangeMatch,
+} from './reportHelpers.js'
+import { EXTRA_REPORT_BUILDERS } from './reportBuilders.extra.js'
 
 async function resolveRoleUserIds(roleName) {
   const role = await roleRepository.findByName(roleName)
@@ -422,9 +337,18 @@ const REPORT_BUILDERS = {
   'video-analytics': videoAnalytics,
   'news-analytics': newsAnalytics,
   'task-analytics': taskAnalytics,
+  // The seventeen reports the platform grew in blocks 3–7. Kept in their
+  // own file for length, registered here so there is still one list of
+  // what a report type can be.
+  ...EXTRA_REPORT_BUILDERS,
 }
 
 export const REPORT_TYPES = Object.keys(REPORT_BUILDERS)
+
+// Re-exported so callers that already import them from here keep working —
+// the constants live in reportHelpers.js now that two builder files need
+// them.
+export { MAX_ROWS, ASYNC_MAX_ROWS }
 
 export const reportDataService = {
   // `lang` decides the language of every header and enum value in the file;

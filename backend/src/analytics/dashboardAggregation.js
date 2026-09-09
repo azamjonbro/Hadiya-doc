@@ -94,16 +94,42 @@ async function employeeEngagementStats() {
   // VideoProgress-having ones — an employee with zero progress docs still
   // counts in the 0-25% bucket, since "hasn't started anything" is itself
   // a meaningful signal for this chart.
-  const progressByUser = new Map(rows.map((r) => [r.userId.toString(), r.avgCompletion]))
-  const allEmployees = await User.find({}, { _id: 1 })
+  //
+  // Counted in the database rather than by pulling every user id into Node:
+  // the $lookup collapses each employee's progress rows to a single average
+  // before they leave the server, so this costs four counters no matter how
+  // many people work here.
+  const bucketRows = await User.aggregate([
+    {
+      $lookup: {
+        from: 'videoprogresses',
+        localField: '_id',
+        foreignField: 'userId',
+        pipeline: [{ $group: { _id: null, avgCompletion: { $avg: '$completionPercent' } } }],
+        as: 'progress',
+      },
+    },
+    // Rounded to one decimal first, the same way the rows above are, so a
+    // 24.97% employee lands in the same bucket the chart's own numbers imply.
+    { $set: { pct: { $round: [{ $ifNull: [{ $first: '$progress.avgCompletion' }, 0] }, 1] } } },
+    {
+      $group: {
+        _id: {
+          $switch: {
+            branches: [
+              { case: { $lt: ['$pct', 25] }, then: '0-25' },
+              { case: { $lt: ['$pct', 50] }, then: '25-50' },
+              { case: { $lt: ['$pct', 75] }, then: '50-75' },
+            ],
+            default: '75-100',
+          },
+        },
+        count: { $sum: 1 },
+      },
+    },
+  ])
   const buckets = { '0-25': 0, '25-50': 0, '50-75': 0, '75-100': 0 }
-  for (const emp of allEmployees) {
-    const pct = progressByUser.get(emp._id.toString()) ?? 0
-    if (pct < 25) buckets['0-25'] += 1
-    else if (pct < 50) buckets['25-50'] += 1
-    else if (pct < 75) buckets['50-75'] += 1
-    else buckets['75-100'] += 1
-  }
+  for (const row of bucketRows) buckets[row._id] = row.count
 
   return {
     mostEngagedEmployees: byWatchTimeDesc.slice(0, TOP_N),

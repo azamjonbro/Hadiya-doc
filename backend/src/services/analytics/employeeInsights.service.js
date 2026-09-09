@@ -124,9 +124,14 @@ export const employeeInsightsService = {
     ])
 
     // ---- learning level -------------------------------------------------
+    // One query for every assigned course's videos, not one per course: an
+    // employee with thirty assignments used to fire thirty parallel finds,
+    // and this endpoint is opened by a manager for one report subject at a
+    // time — the cost is paid on every page view.
     const courseIds = assignments.map((a) => a.courseId.toString())
-    const videoLists = await Promise.all(courseIds.map((id) => videoRepository.listByCourse(id)))
-    const assignedVideos = videoLists.flat().filter((v) => v.status === 'PUBLISHED')
+    const assignedVideos = (await videoRepository.listByCourses(courseIds)).filter(
+      (v) => v.status === 'PUBLISHED'
+    )
     const completedVideoIds = new Set(
       progressRows.filter((p) => p.completedAt).map((p) => p.videoId.toString())
     )

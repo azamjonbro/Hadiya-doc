@@ -3,6 +3,18 @@ import { User } from '../models/user.model.js'
 import { Role } from '../models/role.model.js'
 import { containsRegex } from '../utils/escapeRegex.js'
 
+// The one shape of "who counts as in scope" shared by the active-employee
+// list and its count, so a board that says "42 people" cannot be listing a
+// different 42 than it counted.
+function activeScopeFilter({ department, position, memberIds, excludeIds } = {}) {
+  const filter = { isActive: true }
+  if (department) filter.department = department
+  if (position) filter.position = position
+  if (memberIds) filter._id = { $in: memberIds }
+  if (excludeIds?.length) filter._id = { ...(filter._id ?? {}), $nin: excludeIds }
+  return filter
+}
+
 export const userRepository = {
   // One login box, three accepted handles: JSHSHIR, passport series, or email.
   // The candidate fields are narrowed by shape first, so `12345678901234` is
@@ -84,11 +96,14 @@ export const userRepository = {
   // Leaderboard candidates and bulk task recipients: active accounts only,
   // capped so a large tenant can't turn one ranking request into an
   // unbounded scan.
-  listActive({ department, position, limit = 500 } = {}) {
-    const filter = { isActive: true }
-    if (department) filter.department = department
-    if (position) filter.position = position
-    return User.find(filter).sort({ fullName: 1 }).limit(limit)
+  listActive({ department, position, memberIds, excludeIds, limit = 500 } = {}) {
+    return User.find(activeScopeFilter({ department, position, memberIds, excludeIds }))
+      .sort({ fullName: 1 })
+      .limit(limit)
+  },
+
+  countActive({ department, position, memberIds } = {}) {
+    return User.countDocuments(activeScopeFilter({ department, position, memberIds }))
   },
 
   // Chat contact picker: every colleague you could start a thread with.

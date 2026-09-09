@@ -17,6 +17,14 @@ export const videoRepository = {
     return Video.find({ courseId })
   },
 
+  // Every video of several courses at once. Callers that hold a list of
+  // course ids (an employee's assignments, a path's steps) used to map
+  // listByCourse over it, which is one round trip per assigned course.
+  listByCourses(courseIds) {
+    if (!courseIds?.length) return Promise.resolve([])
+    return Video.find({ courseId: { $in: courseIds } })
+  },
+
   create(data) {
     return Video.create(data)
   },

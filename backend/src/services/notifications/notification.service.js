@@ -143,11 +143,16 @@ async function renderInApp({ templateKey, vars, lang }) {
   }
 }
 
-export const notificationService = {
-  // Called from other services (course assignment, tasks, scheduled
-  // reminders, ...) — never exposed as its own authenticated endpoint,
-  // since "who to notify" is always decided by the calling domain logic.
-  async notify({
+/**
+ * Everything notify() does once it knows who it is writing to.
+ *
+ * Split out from notify() so a bulk caller can load its recipients in one
+ * query and still go down exactly this path — see notifyMany. Nothing else
+ * should call it: `recipient` is the only thing it trusts to have been
+ * looked up already.
+ */
+async function deliver(
+  {
     userId,
     type,
     title,
@@ -158,69 +163,103 @@ export const notificationService = {
     templateKey,
     vars = {},
     // Overrides the recipient's own locale. Only passed by callers that
-    // already know it; otherwise it is read from the account below.
+    // already know it; otherwise it is read from the account.
     lang,
     relatedEntityType = null,
     relatedEntityId = null,
     severity = 'INFO',
-  }) {
+  },
+  recipient
+) {
+  const language = lang ?? recipient?.locale ?? DEFAULT_LANG
+  const prefs = recipient?.notificationPrefs ?? {}
+
+  const rendered = await renderInApp({
+    templateKey: templateKey ?? type,
+    // userName is in almost every template and no call site has it to
+    // hand; filling it here keeps the callers about their own domain.
+    vars: { userName: recipient?.fullName ?? '', ...vars },
+    lang: language,
+  })
+
+  // In-app is a preference like any other channel — except that switching
+  // it off must not lose the record, only the delivery. Mandatory types
+  // ignore this entirely (isChannelEnabled returns true for them).
+  if (!isChannelEnabled(prefs, type, 'inApp')) {
+    return null
+  }
+
+  const notification = await notificationRepository.create({
+    userId,
+    type,
+    // An explicit title still wins: a few call sites build text a template
+    // cannot express yet, and they must not be broken by this change.
+    title: title ?? rendered?.subject ?? type,
+    message: message || rendered?.body || '',
+    relatedEntityType,
+    relatedEntityId,
+    severity,
+  })
+
+  // Pushed the moment it is persisted, so the bell badge and toast are
+  // live for every notification type (task assigned, course assigned,
+  // deadline reminders, ...) instead of waiting out the client's 45s
+  // poll. Every caller of notify() gets this for free — deliberately
+  // done here rather than at each call site.
+  emitNotification(String(userId), toPublicNotification(notification))
+
+  // Mail is queued, never awaited, and never allowed to fail the caller.
+  // It is the slowest and least reliable thing the platform does, and the
+  // in-app notification above is already delivered: a relay being down
+  // must not undo a course assignment.
+  await queueEmail({ recipient, type, templateKey: templateKey ?? type, vars, lang: language, prefs })
+  await sendPush({ recipient, type, templateKey: templateKey ?? type, vars, lang: language, prefs })
+
+  return notification
+}
+
+export const notificationService = {
+  // Called from other services (course assignment, tasks, scheduled
+  // reminders, ...) — never exposed as its own authenticated endpoint,
+  // since "who to notify" is always decided by the calling domain logic.
+  async notify(params) {
     // One read per notification, answering both questions: which language to
     // write in, and which channels this person still wants. A notification is
     // composed on the server — often hours later by a cron job — so there is
     // no browser whose language could be used instead.
     //
-    // It is a read per recipient in the bulk-assignment loops, which is a
-    // cost worth naming: the alternative is passing prefs down from every
-    // call site, which puts "does this person want email" into services that
-    // have no business knowing. If those loops become hot, the fix is a
-    // notifyMany() that loads the recipients in one query — not spreading
-    // this decision outwards.
-    const recipient = await loadRecipient(userId)
-    const language = lang ?? recipient?.locale ?? DEFAULT_LANG
-    const prefs = recipient?.notificationPrefs ?? {}
+    // Passing prefs down from every call site is the alternative, and it puts
+    // "does this person want email" into services that have no business
+    // knowing. So a loop that notifies many people reaches for notifyMany
+    // below instead, which is the same path with the reads done once.
+    return deliver(params, await loadRecipient(params.userId))
+  },
 
-    const rendered = await renderInApp({
-      templateKey: templateKey ?? type,
-      // userName is in almost every template and no call site has it to
-      // hand; filling it here keeps the callers about their own domain.
-      vars: { userName: recipient?.fullName ?? '', ...vars },
-      lang: language,
-    })
+  /**
+   * The same notification path for a batch of recipients, with their accounts
+   * read in one query instead of one per message.
+   *
+   * Sent in order and one at a time on purpose: the delivery each message
+   * triggers (a socket emit, a queued mail, a web push) is not something to
+   * fire in parallel bursts at a 1.9 GB box, and the reminder sweep that uses
+   * this is not in a hurry. What it must not do is spend a round trip per
+   * recipient — which is what this exists to fix.
+   *
+   * Returns the created notifications, `null` in the slots where the
+   * recipient had in-app notifications switched off, so a caller can tell
+   * which ones were actually written.
+   */
+  async notifyMany(items = []) {
+    if (!items.length) return []
+    const userIds = [...new Set(items.map((item) => String(item.userId)))]
+    const accounts = await userRepository.findByIds(userIds)
+    const byId = new Map(accounts.map((account) => [account._id.toString(), account]))
 
-    // In-app is a preference like any other channel — except that switching
-    // it off must not lose the record, only the delivery. Mandatory types
-    // ignore this entirely (isChannelEnabled returns true for them).
-    if (!isChannelEnabled(prefs, type, 'inApp')) {
-      return null
+    const results = []
+    for (const item of items) {
+      results.push(await deliver(item, byId.get(String(item.userId)) ?? null))
     }
-
-    const notification = await notificationRepository.create({
-      userId,
-      type,
-      // An explicit title still wins: a few call sites build text a template
-      // cannot express yet, and they must not be broken by this change.
-      title: title ?? rendered?.subject ?? type,
-      message: message || rendered?.body || '',
-      relatedEntityType,
-      relatedEntityId,
-      severity,
-    })
-
-    // Pushed the moment it is persisted, so the bell badge and toast are
-    // live for every notification type (task assigned, course assigned,
-    // deadline reminders, ...) instead of waiting out the client's 45s
-    // poll. Every caller of notify() gets this for free — deliberately
-    // done here rather than at each call site.
-    emitNotification(String(userId), toPublicNotification(notification))
-
-    // Mail is queued, never awaited, and never allowed to fail the caller.
-    // It is the slowest and least reliable thing the platform does, and the
-    // in-app notification above is already delivered: a relay being down
-    // must not undo a course assignment.
-    await queueEmail({ recipient, type, templateKey: templateKey ?? type, vars, lang: language, prefs })
-    await sendPush({ recipient, type, templateKey: templateKey ?? type, vars, lang: language, prefs })
-
-    return notification
+    return results
   },
 
   async list(actor, query) {

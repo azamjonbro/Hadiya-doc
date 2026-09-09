@@ -88,6 +88,12 @@ export const pointsService = {
   // the admin view narrows by group/department/period and asks for
   // zero-point people too (a manager needs to see who has done nothing —
   // an employee-facing board of zeros is just noise).
+  //
+  // The ranking itself is done by the database (see rankUsers): this used to
+  // load every active employee, sum the ledger for all of them and sort the
+  // whole company in memory to show twenty rows. That also quietly capped
+  // the board at the 500 employees listActive returned, so on a larger
+  // tenant the "top 20" was the top 20 of whoever came first alphabetically.
   async getLeaderboard(actor, { limit = 20, groupId, department, period = 'all', includeZero = false } = {}) {
     // Narrowing the board is a management action: without analytics:view:all
     // an employee gets the plain company-wide top list and nothing else.
@@ -98,7 +104,7 @@ export const pointsService = {
       includeZero = false
     }
 
-    let candidates
+    let memberIds
     if (groupId) {
       const group = await groupRepository.findById(groupId)
       if (!group) throw ApiError.notFound('Group not found')
@@ -108,23 +114,17 @@ export const pointsService = {
           throw ApiError.forbidden('Managers can only view groups in their own department', 'DEPARTMENT_SCOPE_FORBIDDEN')
         }
       }
-      candidates = group.memberIds.length ? await userRepository.findByIds(group.memberIds) : []
-      candidates = candidates.filter((user) => user.isActive)
-    } else {
+      if (!group.memberIds.length) return { period, rows: [], totalRanked: 0 }
+      memberIds = group.memberIds.map((id) => id.toString())
+    } else if (actor && !hasUnscopedAccess(actor)) {
       // A manager's board never reaches outside their own department, the
       // same fence applied to users, tasks and assignments.
-      if (actor && !hasUnscopedAccess(actor)) {
-        const actorUser = await userRepository.findById(actor.id)
-        department = actorUser?.department ?? ''
-      }
-      candidates = await userRepository.listActive({ department })
+      const actorUser = await userRepository.findById(actor.id)
+      department = actorUser?.department ?? ''
     }
 
-    const userIds = candidates.map((user) => user._id.toString())
-    if (!userIds.length) return { period, rows: [], totalRanked: 0 }
-
-    const totals = await pointsLedgerRepository.totalsForUsers({ userIds, since: periodStart(period) })
-    const totalsByUserId = new Map(totals.map((row) => [row.userId, row]))
+    const scope = { memberIds, department }
+    const ranked = await pointsLedgerRepository.rankUsers({ ...scope, since: periodStart(period), limit })
 
     // The board is readable by every signed-in employee, so a row carries only
     // what a colleague may see: a name, a face and a score. The JSHSHIR is a
@@ -133,32 +133,39 @@ export const pointsService = {
     // documents. It now rides along only for the management view, which is
     // already gated on analytics:view:all and needs it to line rows up with
     // the employee records.
-    const merged = candidates.map((user) => {
-      const points = totalsByUserId.get(user._id.toString())
-      return {
-        userId: user._id.toString(),
-        fullName: user.fullName,
-        ...(canFilter ? { jshshir: user.jshshir } : {}),
-        avatar: user.avatar,
-        department: user.department,
-        position: user.position,
-        totalPoints: points?.totalPoints ?? 0,
-        videosCompleted: points?.videosCompleted ?? 0,
-        quizzesPassed: points?.quizzesPassed ?? 0,
-        assessmentsPassed: points?.assessmentsPassed ?? 0,
-        lastEarnedAt: points?.lastEarnedAt ?? null,
-      }
+    const shape = (user, totals) => ({
+      userId: user._id.toString(),
+      fullName: user.fullName,
+      ...(canFilter ? { jshshir: user.jshshir } : {}),
+      avatar: user.avatar,
+      department: user.department,
+      position: user.position,
+      totalPoints: totals?.totalPoints ?? 0,
+      videosCompleted: totals?.videosCompleted ?? 0,
+      quizzesPassed: totals?.quizzesPassed ?? 0,
+      assessmentsPassed: totals?.assessmentsPassed ?? 0,
+      lastEarnedAt: totals?.lastEarnedAt ?? null,
     })
 
-    const visible = includeZero ? merged : merged.filter((row) => row.totalPoints > 0)
-    // Name breaks ties so the order is stable between requests rather than
-    // depending on however Mongo happened to return the users.
-    visible.sort((a, b) => b.totalPoints - a.totalPoints || a.fullName.localeCompare(b.fullName))
+    let rows = ranked.rows.map(({ user, ...totals }) => shape(user, totals))
+    let totalRanked = ranked.totalRanked
 
-    return {
-      period,
-      totalRanked: visible.length,
-      rows: withRanks(visible).slice(0, limit),
+    if (includeZero) {
+      // Everyone in scope is on this board, so its size is the headcount and
+      // not the number of earners. The people with no points all tie at zero,
+      // so they sort last by name — which is exactly the order listActive
+      // returns them in, and only as many as the page still has room for.
+      totalRanked = await userRepository.countActive(scope)
+      if (rows.length < limit) {
+        const idle = await userRepository.listActive({
+          ...scope,
+          excludeIds: ranked.rows.map((row) => row.userId),
+          limit: limit - rows.length,
+        })
+        rows = rows.concat(idle.map((user) => shape(user)))
+      }
     }
+
+    return { period, totalRanked, rows: withRanks(rows) }
   },
 }
