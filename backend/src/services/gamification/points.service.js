@@ -2,7 +2,9 @@ import { PERMISSIONS } from '@lms/shared'
 import { pointsLedgerRepository } from '../../repositories/pointsLedger.repository.js'
 import { userRepository } from '../../repositories/user.repository.js'
 import { groupRepository } from '../../repositories/group.repository.js'
-import { computeEarnedBadges } from '../../gamification/badgeDefinitions.js'
+import { badgeService } from './badge.service.js'
+import { UserBadge } from '../../models/userBadge.model.js'
+import { logger } from '../../config/logger.js'
 import { ApiError } from '../../utils/ApiError.js'
 import { hasUnscopedAccess } from '../access/actorScope.js'
 
@@ -29,11 +31,27 @@ function withRanks(rows) {
   })
 }
 
+/**
+ * Badges are evaluated after points change, not on read.
+ *
+ * Best-effort on purpose: the points are the fact, and failing to work out
+ * whether they crossed a badge threshold must not fail the award that
+ * caused it. The next points event re-evaluates anyway.
+ */
+async function evaluateBadges(userId) {
+  try {
+    await badgeService.evaluate(userId)
+  } catch (error) {
+    logger.warn('Badge evaluation failed', { userId: String(userId), error: error.message })
+  }
+}
+
 export const pointsService = {
   async award(userId, videoId, courseId, points, source) {
     if (!points || points <= 0) return { awarded: false }
     try {
       await pointsLedgerRepository.create({ userId, videoId, courseId, points, source })
+      await evaluateBadges(userId)
       return { awarded: true, points }
     } catch (error) {
       // Unique {userId, videoId} index — already paid out for this video.
@@ -46,6 +64,7 @@ export const pointsService = {
     if (!points || points <= 0) return { awarded: false }
     try {
       await pointsLedgerRepository.create({ userId, assessmentId, courseId, points, source: 'ASSESSMENT' })
+      await evaluateBadges(userId)
       return { awarded: true, points }
     } catch (error) {
       // Unique {userId, assessmentId} index — already paid out for this assessment.
@@ -55,8 +74,14 @@ export const pointsService = {
   },
 
   async getSummary(userId) {
-    const summary = await pointsLedgerRepository.getSummary(userId)
-    return { ...summary, badges: computeEarnedBadges(summary) }
+    const [summary, held] = await Promise.all([
+      pointsLedgerRepository.getSummary(userId),
+      // Read from what was awarded, not recomputed from the totals (7.4).
+      // Recomputing means a badge quietly disappears if a total ever drops,
+      // and nothing can say when it was earned.
+      UserBadge.find({ userId }, { code: 1 }).sort({ earnedAt: 1 }).lean(),
+    ])
+    return { ...summary, badges: held.map((row) => row.code) }
   },
 
   // One ranking for both audiences: employees see the plain top-20, while

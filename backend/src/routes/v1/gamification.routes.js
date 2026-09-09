@@ -10,3 +10,5 @@ gamificationRouter.use(authenticate)
 
 gamificationRouter.get('/me', gamificationController.getMySummary)
 gamificationRouter.get('/leaderboard', validateQuery(leaderboardQuerySchema), gamificationController.getLeaderboard)
+gamificationRouter.get('/badges', gamificationController.myBadges)
+gamificationRouter.get('/badges/catalog', gamificationController.badgeCatalog)

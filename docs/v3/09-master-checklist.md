@@ -1292,9 +1292,39 @@
   → Qoida `active: false` bilan yaratiladi (enrollment rule va
     onboarding dasturi bilan bir xil sabab).
 
-- [ ] **7.4** **Badge dvigateli** — `models/badge.model.js`, `userBadge.model.js`,
+- [x] **7.4** **Badge dvigateli** — `models/badge.model.js`, `userBadge.model.js`,
   `services/gamification/badge.service.js` (criteria + notify), Migratsiya **M7**
   · `badgeDefinitions.js` seed'ga aylanadi
+  → Ilgari nishon — har o'qishda qayta hisoblanadigan qattiq kodlangan
+    qoida edi. Ikki muammosi keyin chiqadi: yangi nishon uchun deploy
+    kerak, va **qachon** olingani hech qayerda yozilmaydi — ya'ni uni
+    e'lon qilib bo'lmaydi, timeline'da ko'rsatib bo'lmaydi, va umumiy
+    ko'rsatkich tushib ketsa u jimgina yo'qoladi.
+  → Shuning uchun berish **bir tomonlama va yozib qo'yiladi**: nishon —
+    biror narsa sodir bo'lganining yozuvi, hozirgi holatni aks ettiruvchi
+    status emas. Ball tuzatilsa ham qaytarib olinmaydi.
+  → `criteria` — funksiya emas, **e'lon qilingan qoida**: funksiyani
+    saqlab ham, administrator yozib ham bo'lmaydi. Metrikalar to'plami
+    ataylab kichik va yopiq — bu yerda ifoda tili hech kim tekshira
+    olmaydigan ikkinchi, yomonroq so'rov dvigateli bo'lardi.
+  → M7 beshta kod-nishonni **kodini saqlab** hujjatga aylantiradi
+    (klient sarlavha va ikonkani koddan oladi) va allaqachon loyiq
+    bo'lganlarga beradi — aks holda deploy kunida hamma nishonini
+    yo'qotardi. Backfill'da bildirishnoma **o'chirilgan**: to'rt yuz
+    odamga oylardan beri egalik qilgan nishoni haqida xabar yuborish —
+    to'rt yuzta shovqin.
+  → 🔴 **Yo'l-yo'lakay topilgan prod xatosi:** `pointsLedger` dagi
+    ikkita unique indeks `sparse` deb e'lon qilingan edi. **Compound
+    indeksda `sparse` faqat barcha maydonlar yo'q bo'lsa hujjatni
+    o'tkazib yuboradi**, `userId` esa doim bor — va `assessmentId`
+    yo'qligi emas, `null` bo'lgani uchun bir odamning ikkita video
+    yozuvi ham `{userId, assessmentId: null}` deb indekslanib to'qnashardi.
+    `pointsService.award` duplicate-key'ni «allaqachon to'langan» deb
+    yutadi, ya'ni **birinchi videodan keyin har bir ball jimgina
+    yo'qolardi** — odam boshiga bitta video va bitta assessment, umrbod.
+    `partialFilterExpression` ga o'tkazildi
+    (`migrate:points-indexes` mavjud bazalarda eski indekslarni
+    almashtiradi), va uchta regressiya testi qo'shildi.
 
 - [ ] **7.5** **Material yuklab olish nazorati** — `material.allowDownload`;
   `getDownloadUrl` 403; `openStream` **allaqachon tayyor** (§1.1)

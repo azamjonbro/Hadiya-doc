@@ -44,6 +44,7 @@ export const TEMPLATE_TYPES = [
   'ASSIGNMENT_SUBMITTED',
   'ASSIGNMENT_GRADED',
   'ASSIGNMENT_RETURNED',
+  'BADGE_EARNED',
   'NEWS_PUBLISHED',
   'CERTIFICATE_ISSUED',
   'CERTIFICATE_EXPIRING',
@@ -449,6 +450,25 @@ export const TEMPLATE_SEED = {
       body: '"{{assignmentTitle}}" has been returned with comments — fix it and hand it in again.',
       push: 'Returned: {{assignmentTitle}}',
       defaults: { score: '' },
+    },
+  },
+
+  BADGE_EARNED: {
+    placeholders: ['userName', 'badgeName', 'badgeCode', 'appUrl'],
+    uz: {
+      subject: 'Yangi nishon: {{badgeName}}',
+      body: '"{{badgeName}}" nishonini qo\'lga kiritdingiz. Tabriklaymiz!',
+      push: 'Yangi nishon: {{badgeName}}',
+    },
+    ru: {
+      subject: 'Новый значок: {{badgeName}}',
+      body: 'Вы получили значок «{{badgeName}}». Поздравляем!',
+      push: 'Новый значок: {{badgeName}}',
+    },
+    en: {
+      subject: 'New badge: {{badgeName}}',
+      body: 'You have earned the "{{badgeName}}" badge. Nicely done.',
+      push: 'New badge: {{badgeName}}',
     },
   },
 
