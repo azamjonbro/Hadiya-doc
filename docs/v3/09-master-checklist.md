@@ -961,8 +961,30 @@
   → Path o'chirilganda yozilishlar saqlanadi: martda tugatgan odamning
     sertifikati bor, va compliance hisoboti uni yozilishdan tushuntiradi.
 
-- [ ] **5.3** **Enrollment rules** — `models/enrollmentRule.model.js`,
+- [x] **5.3** **Enrollment rules** — `models/enrollmentRule.model.js`,
   `jobs/enrollmentRuleQueue.js` (user create/update + kunlik)
+  → Qoida **faqat qo'shadi**. Kimdir mos kelmay qolsa (bo'limi
+    o'zgardi), kurslari **tortib olinmaydi**: u kursning yarmiga yetgan
+    bo'lishi mumkin, va o'qishni bekor qilish fonda ishlaydigan job
+    qabul qiladigan qaror emas — bu ataylab qilinadigan, audit'ga
+    yoziladigan amal.
+  → Idempotent bo'lishi shart, chunki kechayu-kunduzgi sweep har bir
+    qoidani har bir mos odamga qayta qo'llaydi. «Allaqachon tayinlangan»
+    — no-op, **deadline ham qayta yozilmaydi**: aks holda muddat har
+    kuni oldinga surilib ketardi.
+  → Bo'sh `match` **rad etiladi**. U butun kompaniyaga qo'llanardi —
+    ba'zan kerak, lekin hech qachon tasodifan emas.
+  → Qoida `active: false` bilan yaratiladi. Saqlangan zahoti yuzlab
+    odamga kurs tayinlaydigan narsa tasodifan yoqiladigan bo'lmasligi
+    kerak; yoqilganda esa darhol qo'llanadi (sweep kutilmaydi).
+  → `assignedBy` — qoidani **yozgan odam**, `null` emas. U qoidani
+    yaratib va yoqib, bu tayinlovlarga ruxsat bergan; muallifi yo'q
+    tayinlovni bir yildan keyin audit tushuntirib berolmaydi.
+  → Foydalanuvchi o'zgarganda faqat qoida mos keladigan **to'rt maydon**
+    (`roleId`, `department`, `branch`, `position`) o'zgargan bo'lsa
+    navbatga qo'yiladi — telefon raqami tahriri uchun job kerak emas.
+  → `preview` — quruq yurgizish: to'rt yuz odamni qamrab olishini
+    tayinlashdan **oldin** bilish kerak (import sehrgaridagi kabi).
 
 - [ ] **5.4** **Onboarding**
   · `models/onboardingProgram.model.js`, `onboardingEnrollment.model.js`
