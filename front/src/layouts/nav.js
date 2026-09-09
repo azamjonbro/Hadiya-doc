@@ -3,6 +3,7 @@ export const workspaceNav = [
   { name: 'courses', path: '/courses', icon: 'book-open', labelKey: 'nav.courses' },
   { name: 'news', path: '/news', icon: 'newspaper', labelKey: 'nav.news' },
   { name: 'tasks', path: '/tasks', icon: 'check-square', labelKey: 'nav.tasks', permission: 'task:read:own' },
+  { name: 'calendar', path: '/calendar', icon: 'calendar', labelKey: 'nav.calendar' },
   { name: 'events', path: '/events', icon: 'calendar', labelKey: 'nav.events', permission: 'event:read' },
   { name: 'paths', path: '/paths', icon: 'layers', labelKey: 'nav.paths', permission: 'path:read' },
   { name: 'certificates', path: '/certificates', icon: 'award', labelKey: 'nav.certificates' },

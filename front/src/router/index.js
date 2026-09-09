@@ -55,6 +55,7 @@ export const router = createRouter({
         { path: 'leaderboard', name: 'leaderboard', component: () => import('@/views/LeaderboardView.vue'), meta: { titleKey: 'nav.leaderboard' } },
         { path: 'chat', name: 'chat', component: () => import('@/views/ChatView.vue'), meta: { titleKey: 'nav.chat' } },
         { path: 'notifications', name: 'notifications', component: () => import('@/views/NotificationsView.vue'), meta: { titleKey: 'nav.notifications' } },
+        { path: 'calendar', name: 'calendar', component: () => import('@/views/CalendarView.vue'), meta: { titleKey: 'nav.calendar' } },
         {
           path: 'events/:id',
           name: 'event-detail',

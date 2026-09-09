@@ -24,7 +24,8 @@
     "branches": "Filiallar",
     "auditLog": "Audit jurnali",
     "certificates": "Sertifikatlar",
-    "paths": "Yo‘nalishlar"
+    "paths": "Yo‘nalishlar",
+    "calendar": "Kalendar"
   },
   "shell": {
     "searchPlaceholder": "Kurslar, yangiliklar, vazifalarni qidirish..."
@@ -2246,5 +2247,22 @@
     },
     "pickerEmpty": "Qo‘shiladigan kurs yo‘q",
     "pickerEmptyHint": "Barcha kurslar allaqachon qo‘shilgan."
+  },
+  "calendar": {
+    "title": "Kalendar",
+    "subtitle": "Tadbirlar, kurs muddatlari, vazifalar va yo‘nalishlar — bir joyda",
+    "export": "Yuklab olish (.ics)",
+    "allDay": "Kun bo‘yi",
+    "queued": "Navbatda",
+    "emptyTitle": "Yaqin oyda hech narsa yo‘q",
+    "emptyDescription": "Muddatlar va tadbirlar shu yerda paydo bo‘ladi.",
+    "loadError": "Kalendarni yuklab bo‘lmadi",
+    "downloadError": "Faylni yuklab olib bo‘lmadi",
+    "kind": {
+      "EVENT": "Tadbir",
+      "COURSE_DEADLINE": "Kurs muddati",
+      "TASK_DEADLINE": "Vazifa muddati",
+      "PATH_DEADLINE": "Yo‘nalish muddati"
+    }
   }
 }

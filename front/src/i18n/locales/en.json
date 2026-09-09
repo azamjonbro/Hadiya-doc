@@ -24,7 +24,8 @@
     "branches": "Branches",
     "auditLog": "Audit log",
     "certificates": "Certificates",
-    "paths": "Paths"
+    "paths": "Paths",
+    "calendar": "Calendar"
   },
   "shell": {
     "searchPlaceholder": "Search courses, news, tasks..."
@@ -2246,5 +2247,22 @@
     },
     "pickerEmpty": "Nothing to add",
     "pickerEmptyHint": "Every course is already on the path."
+  },
+  "calendar": {
+    "title": "Calendar",
+    "subtitle": "Events, course deadlines, tasks and paths in one place",
+    "export": "Download (.ics)",
+    "allDay": "All day",
+    "queued": "In the queue",
+    "emptyTitle": "Nothing in the next month",
+    "emptyDescription": "Deadlines and sessions appear here.",
+    "loadError": "Could not load the calendar",
+    "downloadError": "Could not download the file",
+    "kind": {
+      "EVENT": "Event",
+      "COURSE_DEADLINE": "Course deadline",
+      "TASK_DEADLINE": "Task deadline",
+      "PATH_DEADLINE": "Path deadline"
+    }
   }
 }
