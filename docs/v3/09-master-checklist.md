@@ -644,12 +644,30 @@
     5. `course.certificateTemplateId` maydoni 3.4 ro'yxatidan **erta**
     qo'shildi — 3.2 dagi berish yo'lida o'qiydigan narsa bo'lmasdi.
 
-- [ ] **3.3** **Sertifikat API va UI**
+- [x] **3.3** **Sertifikat API va UI**
   · `routes/v1/certificates.routes.js` (9 endpoint)
   · `GET /public/certificates/:serial` — auth'siz, rate-limited, PII'siz
   · `front/src/views/CertificatesView.vue`,
   `front/src/admin/views/CertificateTemplatesView.vue` + pozitsiya editori
   · Qabul: **AT-12, AT-13**
+  → Ochiq endpoint alohida router'da (`publicCertificatesRouter`) va
+    `/api/v1/public/certificates` ostiga ulandi. Sababi: uni
+    `authenticate` ishlaydigan router'ga qo'ysak, kelajakda kimdir
+    `router.use(authenticate)` qo'shib qo'ysa, QR kod jimgina buziladi —
+    endi bunday bo'lishi mumkin emas, chunki u router'da `authenticate`
+    umuman yo'q. Login o'rniga daqiqasiga 10 ta so'rov limiti turadi.
+  → `toPublicVerification` `status: VALID | EXPIRED | REVOKED` qaytaradi
+    (AT-13 matni shuni talab qiladi); bekor qilingan muddati o'tgandan
+    ustun — tekshiruvchiga kuchliroq javob kerak. Bekor qilish **sababi**
+    ochiq javobda yo'q: unda odam ismi yoki hodisa tafsiloti bo'lishi
+    mumkin.
+  → Yuklab olish PDF'ni proksi qilmaydi, 5 daqiqalik imzolangan URL
+    beradi; `pdfKey` hech qachon javobga chiqmaydi (chelak yo'lini
+    berish — qo'shni kalitni sinab ko'rishga taklif).
+  → Test: `test/certificatePublic.test.js` — jonli HTTP orqali, chunki
+    noto'g'ri joyga ulangan route har qanday mock'dan o'tib ketadi.
+    Tekshiriladi: token'siz 200, javobda JSHSHIR/email/userId/pdfKey/
+    bo'lim yo'q, noma'lum seriya 404, 12 urinishdan oldin 429.
 
 - [ ] **3.4** **Kurs metadatasi**
   · `models/courseCategory.model.js`
