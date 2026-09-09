@@ -115,11 +115,43 @@
   `admin/` e'lon qilgani uchun hoisting orqali topilardi. Endi front'da
   e'lon qilingan, build o'tadi.
 
-- [ ] **0.9** `[P]` **N+1 tuzatishlar**
+- [x] **0.9** `[P]` **N+1 tuzatishlar**
   · `jobs/reminderJob.js:18-50` — kurslarni `$in` bilan bir so'rovda; `bulkWrite`
   · `analytics/dashboardAggregation.js:98` — `User.find({})` o'rniga aggregation
   · `services/analytics/employeeInsights.service.js:126` — `listByCourses($in)`
   · `services/gamification/points.service.js:92` — aggregation pipeline'da `$sort`+`$limit`
+  · Bajarildi — to'rttala manba ham yopildi, ustiga beshinchisi qo'shildi:
+    1. **Eslatma sweep'i** — kurs sarlavhalari bitta `$in` bilan olinadi,
+    belgilash esa `updateMany` bilan. `bulkWrite` emas: har qatorga bir xil
+    maydonga bir xil vaqt yoziladi, ya'ni bulkWrite ko'taradigan qatorga xos
+    hech narsa yo'q. Belgilash `finally` ichida — yetkazish yarmida yiqilsa,
+    xabar tekkan odamlar qayta-qayta (har 15 daqiqada) ogohlantirilmasin.
+    2. **`notificationService.notifyMany()`** — kod o'zi taklif qilgan tuzatish
+    (`notification.service.js` dagi izoh: "the fix is a notifyMany() that loads
+    the recipients in one query"). Sweep har bir bildirishnoma uchun oluvchi
+    hisobini alohida o'qirdi; endi butun to'plam uchun bitta o'qish.
+    `notify()` ning tanasi `deliver()` ga ajratildi, boshqa hech narsa
+    o'zgarmadi.
+    3. **Dashboard gistogrammasi** — `employeeProgressBuckets()` aggregation'i
+    (`$lookup` + `$switch` + `$group`); butun xodimlar ro'yxati endi Node'ga
+    ko'chirilmaydi. Filtr parametri qo'shildi — testga kerak, dashboard uni
+    ishlatmaydi.
+    4. **`videoRepository.listByCourses($in)`** — `getPerformance` o'ttiz
+    topshiriqli xodim uchun o'ttizta so'rov yuborardi.
+    5. **Leaderboard** — `pointsLedgerRepository.rankUsers()`: `$group` →
+    `$lookup` (users) → `$facet{rows:[$sort,$limit], total:[$count]}`.
+    Yonida **jimgina xato** ham tuzaldi: eski kod `listActive` dan 500 ta
+    xodim olardi, ya'ni 500 dan katta kompaniyada "top 20" aslida alifbo
+    bo'yicha birinchi 500 tasining top 20 si edi.
+  · Sinov: `backend/test/nPlusOne.test.js` (15 test). Mezon "kam so'rov" emas,
+  **"katta to'plamda ham xuddi shuncha so'rov"** — mongoose'ning `debug`
+  ilgagi haqiqatan yuborilgan buyruqlarni sanaydi, shuning uchun kelajakda
+  kimdir sikl ichiga yana bir o'qish qo'shsa test tushadi.
+  · Chetlanish: `test/roleScope.test.js` dagi "scope ALL hammani ko'radi"
+  testi 100 qatorlik birinchi sahifada aniq bir odam bo'lishiga tayanardi —
+  parallel ishlaydigan boshqa test fayli o'nlab xodim yaratsa tushardi.
+  Ismi bo'yicha qidiruvga o'tkazildi va yoniga fence hali ham ushlab
+  turishini tekshiradigan ikkinchi test qo'shildi.
 
 - [ ] **0.10** `[P]` **Frontend poydevor komponentlari**
   · `ui/DataTable.vue`, `ui/FilterBar.vue`, `ui/FileDropzone.vue`,
