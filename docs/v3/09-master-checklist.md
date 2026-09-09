@@ -730,10 +730,37 @@
 
 ## BLOK 4 — Baholash tizimi (Zanjir C, 4 hafta · BLOK 3 bilan parallel)
 
-- [ ] **4.1** 🔴 **`Question` + `QuestionBank`**
+- [x] **4.1** 🔴 **`Question` + `QuestionBank`**
   · `models/question.model.js` (13 tur, `payload` sxemalari — `docs/v2/03` §6.3)
   · `models/questionBank.model.js`
   · `services/questions/questionGrading.js` — har tur uchun baholash
+  → Enum'da **14** qiymat bor, spec esa «13 tur» deydi:
+    `DRAG_WORDS` — bu `DRAG_DROP` ning gap ichidagi ko'rinishi. Payload
+    ham, baholash ham bir xil, faqat editor boshqa; spec ularni bitta
+    deb sanaydi.
+  → `payload` — `Mixed`. 14 turning umumiy strukturasi yo'q, va mongoose
+    subdocument bo'yicha discriminate qilolmaydi. Shakl **zod** bilan
+    `question.validator.js` da, ya'ni yomon payload **kirgan joyda**
+    tekshiriladi. Aks holda u keyinroq validatsiya xatosi emas, balki
+    hammani jimgina «noto'g'ri» deb baholaydigan savol bo'lardi. Test
+    `PAYLOAD_SCHEMAS` kalitlari `QUESTION_TYPES` bilan **aynan** mos
+    kelishini tekshiradi — yangi tur sxemasiz qo'shilsa test yiqiladi.
+  → Baholash toza funksiyalar: baza yo'q, soat yo'q, so'rov yo'q. 48 ta
+    test har turni alohida qamraydi, shuning uchun yiqilgan test qaysi
+    tur ekanini aytadi.
+  → Ikkita tuzoq yopildi: (1) `MULTI_CHOICE` da barcha katakchani
+    belgilash **0** beradi — noto'g'ri tanlov to'g'risini so'ndiradi;
+    aks holda bu har qanday testdagi eng oson to'liq ball. (2) buzuq
+    javob **exception emas, 0**: javob brauzerdan keladi va u yerda
+    throw qilish butun topshiriqni yiqitib, o'quvchining qolgan
+    javoblarini ham yo'qotadi.
+  → `LIKERT` — so'rov elementi: `max: 0`, foizga umuman kirmaydi.
+    `ESSAY` — `needsReview: true`, odam ko'rmaguncha ball yo'q (noto'g'ri
+    deb belgilanmaydi). Noma'lum tur ham `needsReview`, chunki jimgina
+    0 qo'yish buzuq savolni ko'rinmas qiladi.
+  → Jarima (`penalty`) faqat **butunlay** noto'g'ri javobga qo'llanadi:
+    to'rtta juftlikdan uchtasini topganni jarimalash qisman ballni
+    javob bermaslikdan yomonroq qilardi.
 
 - [ ] **4.2** 🔴 **`Quiz`/`Assessment` birlashtirish**
   · `models/quiz.model.js` — `scope: VIDEO|TOPIC|COURSE|PATH`, `questionIds[]`,
