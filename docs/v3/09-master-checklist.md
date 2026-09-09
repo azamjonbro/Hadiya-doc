@@ -1394,7 +1394,38 @@
 
 ## BLOK 8 — Hisobot, analitika (3 hafta)
 
-- [ ] **8.1** **17 yangi hisobot turi** — `reportData.service.js` builders
+- [x] **8.1** **17 yangi hisobot turi** — `reportData.service.js` builders
+  → 17 ta qo'shildi, jami **22** ta: sertifikatlar reyestri, yo'nalish
+    progressi, test natijalari, savol qiyinligi, compliance holati,
+    adaptatsiya, tadbir davomati, uy vazifalari, yetkazish jurnali, KB
+    statistikasi, guruh/bo'lim progressi, muddati o'tganlar, tayinlovlar
+    auditi, nishonlar, kirish faoliyati, materiallardan foydalanish.
+  → Umumiy yordamchilar `reportHelpers.js` ga chiqarildi. Nusxalash oson
+    yo'l va noto'g'ri yo'l edi: `intersectIds` — bu **kirish to'sig'i**,
+    va to'siqning ikkita nusxasi — ertami-kechmi noto'g'ri bo'ladigan
+    bitta nusxa.
+  → Test har bir builder'ni alohida emas, **shartnomani** tekshiradi:
+    (a) hammasi `totalRows` va `truncated` qaytaradi — buni unutgan
+    builder AT-22 tuzatgan xatoni o'z hisoboti uchun qaytarib keladi;
+    (b) hammasi tarjima qilingan sarlavha beradi, kalit emas;
+    (c) **bo'sh scope hech narsa qaytaradi, hamma narsa emas** — xavfli
+    yo'nalish aynan shu: «id yo'q» ni «filtr yo'q» deb o'qigan builder
+    rahbarga butun kompaniyani ko'rsatadi.
+  → Ingliz tilida `col.*` kalitlari **ataylab takrorlanmagan**:
+    builder'lar inglizcha matnni fallback sifatida uzatadi
+    (`t('col.serial', 'Serial')`), va qirq beshta satrni ikkinchi marta
+    yozish sarlavhani o'zgartirish uchun ikkita joy degani — biri
+    albatta unutiladi.
+  → `populate()` uchun ishlatiladigan modellar **side effect uchun**
+    import qilindi: Mongoose'da ro'yxatdan o'tmagan model populate'da
+    runtime xatosi beradi («Schema hasn't been registered»), va bu
+    ro'yxat aynan shu xato orqali topildi.
+  → ⚠️ **Yon topilma:** 38 ta test fayli bitta MongoDB/Redis ustida
+    parallel ishlab, natijalar **har ishga tushirishda o'zgaradigan**
+    bo'lib qoldi (timeout, tugagan rate-limit, bir zumda to'g'ri bo'lgan
+    sanoq). Hech biri haqiqiy emas edi. `--test-concurrency=2` bilan
+    to'plam barqaror (677 test, ~90 soniya); sabab va HTTP testlarining
+    talablari `backend/TESTING.md` da yozildi.
 - [ ] **8.2** **Hisobotni ekranda ko'rish** — `ReportsView` da jadval + grafik (FL-29)
 - [x] **8.3** **Async eksport** — `models/exportJob.model.js`, `jobs/exportQueue.js`,
   `MAX_ROWS` kesilganini ochiq ko'rsatish
