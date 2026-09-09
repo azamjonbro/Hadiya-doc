@@ -18,6 +18,16 @@ const materialSchema = new Schema(
     originalFilename: { type: String, default: '' },
     mimeType: { type: String, required: true },
     fileSize: { type: Number, default: 0 },
+    // Whether the download button exists at all (7.5). Default true — most
+    // material is meant to be kept, and flipping the default would silently
+    // lock every existing document.
+    //
+    // Deliberately not DRM. It removes the download button and refuses the
+    // `attachment` URL; it cannot stop somebody who can read a file from
+    // keeping it — screenshots, the browser cache and a phone camera all
+    // still exist. What it does is make "please don't circulate this" an
+    // enforced default rather than a note in the description.
+    allowDownload: { type: Boolean, default: true },
     status: { type: String, enum: ['DRAFT', 'PUBLISHED'], default: 'DRAFT' },
     order: { type: Number, default: 0 },
     createdBy: { type: Schema.Types.ObjectId, ref: 'User', required: true },

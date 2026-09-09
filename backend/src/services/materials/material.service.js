@@ -27,6 +27,10 @@ function toPublicMaterial(material) {
     fileSize: material.fileSize,
     status: material.status,
     order: material.order,
+    // Defaulted rather than left undefined: materials uploaded before 7.5
+    // have no such field, and a viewer reading `undefined` would hide the
+    // download button on every one of them.
+    allowDownload: material.allowDownload !== false,
     createdAt: material.createdAt,
     updatedAt: material.updatedAt,
   }
@@ -66,6 +70,9 @@ export const materialService = {
       title: meta.title,
       description: meta.description ?? '',
       order: meta.order ?? 0,
+      // Absent means the default (downloadable). Only an explicit false
+      // restricts it — a missing checkbox must not lock a document.
+      allowDownload: meta.allowDownload !== false,
       key: uploaded.key,
       mimeType: uploaded.mimeType,
       fileSize: uploaded.fileSize,

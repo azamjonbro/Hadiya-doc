@@ -1326,9 +1326,30 @@
     (`migrate:points-indexes` mavjud bazalarda eski indekslarni
     almashtiradi), va uchta regressiya testi qo'shildi.
 
-- [ ] **7.5** **Material yuklab olish nazorati** — `material.allowDownload`;
+- [x] **7.5** **Material yuklab olish nazorati** — `material.allowDownload`;
   `getDownloadUrl` 403; `openStream` **allaqachon tayyor** (§1.1)
   · Qabul: **AT-33**
+  → Bu **DRM emas**, va kodda ham shunday yozilgan. U yuklab olish
+    tugmasini olib tashlaydi va `attachment` URL'ini rad etadi; faylni
+    o'qiy oladigan odamning uni saqlab qolishini to'xtata olmaydi —
+    skrinshot, brauzer keshi va telefon kamerasi joyida. Qiladigan
+    ishi: «iltimos, tarqatmang» ni tavsifdagi eslatma emas, majburlangan
+    sukut holatiga aylantirish.
+  → `inline` baribir beriladi. Sabab aniq: pleyerda faqat **audio**
+    presigned URL ishlatadi (PDF/docx/xlsx `/content` orqali oqadi), va
+    cheklangan yozuv ham eshitilishi kerak. `<audio src>` esa
+    Authorization sarlavhasini yubormaydi, ya'ni proksi yo'l unga
+    yaramaydi.
+  → Xodimlar (course:create) uchun istisno: faylni yuklagan odam uni
+    qaytarib ololishi kerak — bayroqni ham o'sha qo'ygan.
+  → Default `true`. Teskarisi mavjud har bir hujjatni jimgina
+    qulflardi. DTO ham `!== false` deb o'qiydi: 7.5 dan oldin
+    yuklangan materialda maydon **umuman yo'q**, va `undefined` ni
+    `false` deb o'qish o'sha hujjatlarning tugmasini yashirardi.
+  → Multipart hamma narsani satr qilib yuboradi — `"false"` esa
+    truthy. Validator uni `z.union([boolean, 'true'|'false'])` bilan
+    aylantiradi; buni controller'da qilib esdan chiqarish har bir
+    cheklangan yuklamani jimgina ochiq qilardi.
 
 - [ ] **7.6** **Settings modeli** — `models/settings.model.js` (singleton),
   `attentionPolicy`/`facePolicy` dagi **GLOBAL→COURSE meros naqshini

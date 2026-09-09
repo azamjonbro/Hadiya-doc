@@ -7,6 +7,14 @@ export const createMaterialMetaSchema = z.object({
   title: z.string().min(1),
   description: z.string().optional(),
   order: z.coerce.number().int().optional(),
+  // Multipart sends everything as a string, so the checkbox arrives as
+  // "false" — which is truthy. Coerced here rather than in the controller,
+  // where forgetting it would silently turn every restricted upload into a
+  // downloadable one.
+  allowDownload: z
+    .union([z.boolean(), z.enum(['true', 'false'])])
+    .optional()
+    .transform((value) => (typeof value === 'string' ? value === 'true' : value)),
 })
 
 // `inline` is what the in-app viewer asks for; `attachment` is the download
@@ -21,6 +29,7 @@ export const updateMaterialSchema = z
     description: z.string().optional(),
     status: z.enum(['DRAFT', 'PUBLISHED']).optional(),
     order: z.coerce.number().int().optional(),
+    allowDownload: z.boolean().optional(),
   })
   .refine((data) => Object.keys(data).length > 0, { message: 'No fields to update' })
 

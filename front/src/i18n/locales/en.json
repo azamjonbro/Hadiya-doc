@@ -391,7 +391,9 @@
     "exitFullscreen": "Exit full screen",
     "markDone": "Mark as finished",
     "done": "Finished",
-    "doneClose": "Finished — close"
+    "doneClose": "Finished — close",
+    "downloadAllowed": "Download allowed",
+    "downloadBlocked": "Download blocked"
   },
   "quiz": {
     "title": "Quiz",

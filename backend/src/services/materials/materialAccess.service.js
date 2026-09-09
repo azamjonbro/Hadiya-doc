@@ -54,6 +54,21 @@ export const materialAccessService = {
   async getDownloadUrl(actor, materialId, disposition = 'attachment') {
     const material = await assertReadable(actor, materialId)
 
+    // AT-33. `attachment` is the download button; refusing it is the whole
+    // control. `inline` is still issued, because the in-app viewer needs a
+    // URL the browser can play audio from — and because the flag was never
+    // DRM: it removes the download button, it does not stop somebody who
+    // can read a file from keeping it.
+    //
+    // Staff are exempt: whoever uploaded the file has to be able to fetch
+    // it back, and they are the person who set the flag.
+    if (disposition === 'attachment' && material.allowDownload === false && !canManageCourses(actor)) {
+      throw ApiError.forbidden(
+        'This material can be read but not downloaded',
+        'DOWNLOAD_NOT_ALLOWED'
+      )
+    }
+
     const filename = displayFilename(material)
     const url = await materialsStorage.getSignedUrl(material.key, env.MATERIAL_DOWNLOAD_URL_TTL, filename, {
       disposition,

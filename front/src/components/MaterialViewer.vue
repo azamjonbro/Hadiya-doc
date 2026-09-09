@@ -445,6 +445,15 @@ async function load() {
   }
 }
 
+/**
+ * Whether the download button exists at all (7.5).
+ *
+ * The server refuses the attachment URL either way — this only avoids
+ * offering a button that answers 403. Hiding it is presentation; the
+ * refusal is the control.
+ */
+const canDownload = computed(() => props.material?.allowDownload !== false)
+
 async function onDownload() {
   try {
     const { url } = await materialsApi.getUrl(props.material.id, 'attachment')
@@ -508,7 +517,7 @@ onBeforeUnmount(() => {
             </p>
           </div>
 
-          <AppButton variant="outline" size="sm" icon="download" @click="onDownload">
+          <AppButton v-if="canDownload" variant="outline" size="sm" icon="download" @click="onDownload">
             {{ t('materials.download') }}
           </AppButton>
           <button
@@ -552,7 +561,7 @@ onBeforeUnmount(() => {
           <div v-else-if="errorMessage" class="flex h-full flex-col items-center justify-center gap-3 px-6 text-center">
             <Icon name="alert-triangle" size="22" class="text-warning" />
             <p class="text-small text-ink-muted">{{ errorMessage }}</p>
-            <AppButton size="sm" icon="download" @click="onDownload">{{ t('materials.download') }}</AppButton>
+            <AppButton v-if="canDownload" size="sm" icon="download" @click="onDownload">{{ t('materials.download') }}</AppButton>
           </div>
 
           <div v-else-if="kind === 'audio'" class="flex h-full flex-col items-center justify-center gap-4 px-6">
@@ -606,7 +615,7 @@ onBeforeUnmount(() => {
           <div v-else class="flex h-full flex-col items-center justify-center gap-3 px-6 text-center">
             <Icon name="file-text" size="22" class="text-ink-faint" />
             <p class="text-small text-ink-muted">{{ t('materials.unsupported') }}</p>
-            <AppButton size="sm" icon="download" @click="onDownload">{{ t('materials.download') }}</AppButton>
+            <AppButton v-if="canDownload" size="sm" icon="download" @click="onDownload">{{ t('materials.download') }}</AppButton>
           </div>
         </div>
 

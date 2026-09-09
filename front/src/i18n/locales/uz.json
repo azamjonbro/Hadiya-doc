@@ -391,7 +391,9 @@
     "exitFullscreen": "Butun ekrandan chiqish",
     "markDone": "Tugatdim",
     "done": "Tugallandi",
-    "doneClose": "Tugadi — yopish"
+    "doneClose": "Tugadi — yopish",
+    "downloadAllowed": "Yuklab olish ochiq",
+    "downloadBlocked": "Yuklab olish yopiq"
   },
   "quiz": {
     "title": "Test",

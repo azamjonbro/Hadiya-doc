@@ -163,6 +163,17 @@ async function toggleMaterialStatus(item) {
   await materialsApi.update(item.id, { status: nextStatus })
   load()
 }
+/**
+ * Whether learners get a download button for this file.
+ *
+ * Not DRM — the server refuses the attachment URL, which stops the button
+ * and the shareable link, and stops nothing else. It makes "please don't
+ * circulate this" enforced rather than a note in the description.
+ */
+async function toggleMaterialDownload(item) {
+  await materialsApi.update(item.id, { allowDownload: item.allowDownload === false })
+  load()
+}
 async function removeMaterial(item) {
   if (!(await confirm.ask({ message: t('confirm.deleteMaterial', { title: item.title }) }))) return
   await materialsApi.remove(item.id)
@@ -304,6 +315,14 @@ onMounted(load)
                 {{ t('materials.download') }}
               </AppButton>
               <template v-if="canManage">
+                <AppButton
+                  variant="ghost"
+                  size="sm"
+                  :icon="item.allowDownload === false ? 'lock' : 'download'"
+                  @click="toggleMaterialDownload(item)"
+                >
+                  {{ item.allowDownload === false ? t('materials.downloadBlocked') : t('materials.downloadAllowed') }}
+                </AppButton>
                 <AppButton variant="ghost" size="sm" @click="toggleMaterialStatus(item)">
                   {{ item.status === 'PUBLISHED' ? t('materials.unpublish') : t('materials.publish') }}
                 </AppButton>
