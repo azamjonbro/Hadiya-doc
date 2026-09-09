@@ -869,10 +869,41 @@
   → `quiz:grade` huquqi bo'lgan odam qoidaga bo'ysunmaydi — u tekshirish
     uchun qaraydi, javob kalitini «ovlash» uchun emas.
 
-- [ ] **4.5** **Editor va statistika**
+- [x] **4.5** **Editor va statistika**
   · `front/src/admin/views/QuestionBanksView.vue`, `QuizEditorView.vue` (13 tur)
   · `GET /quizzes/:id/stats` — savol qiyinligi
   · Video quiz'ga ham `testSession` (taymer + focus-loss) — hozir faqat assessment'da
+  → Statistika **o'rtacha ball emas, har savol bo'yicha to'g'ri javob
+    ulushi** beradi. «Bu guruh mavzuni o'zlashtirmagan» bilan «bu savol
+    noto'g'ri yozilgan»ni ajratadigan raqam aynan shu; ilgari attempt
+    faqat umumiy ballni saqlagani uchun ikkalasiga ham javob yo'q edi.
+  → Muallif belgilagan qiyinlik va amaldagi qiyinlik yonma-yon
+    ko'rsatiladi — ularning **kelishmasligi** signal. 5+ marta berilgan
+    va ≤20% to'g'ri javob olgan savol alohida flag qilinadi.
+  → Ko'rsatkichlar `perQuestion[]` dan, ya'ni baholash paytida
+    yozilganidan hisoblanadi — hozirgi savoldan qayta hisoblanmaydi.
+    Javob kalitini tuzatgan muallif hammaning o'tmishini qayta
+    yozmasligi kerak.
+  → Editor 14 turni bitta komponentda boshqaradi: hammasi kichik
+    ro'yxatni tahrirlab, uning bir qismini «to'g'ri» deb belgilaydi;
+    farq faqat qaysi qismida, va bu bitta `switch` ga sig'adi.
+  → Tur o'zgarganda payload **noldan** yaratiladi, birlashtirilmaydi —
+    aks holda `MATCHING` savol ustida eski `options` massivi qolib
+    ketardi.
+  → Variant `id` lari qayta raqamlanmaydi: attempt'dagi javob shu id ga
+    ishora qiladi, va tartibni o'zgartirish o'tmishdagi javobni boshqa
+    variantga ko'chirib yuborardi.
+  → O'chirish qoidalari: test topshirilgan bo'lsa o'chirilmaydi (bu
+    urinishlar majburiy kursni o'tganlik yozuvi), savol test unga
+    to'g'ridan-to'g'ri ishora qilsa o'chirilmaydi (pool boshqa gap —
+    undan bitta savol kamaysa hech narsa buzilmaydi).
+  → Video quiz endi sessiya oladi: birlashgan modelda `scope: VIDEO`
+    ham xuddi `TOPIC` kabi `TestSession` orqali o'tadi, ya'ni taymer va
+    focus-loss ikkalasida ham ishlaydi. Test buni tekshiradi: deadline
+    server tomonda muhrlanadi, reload uni yangilamaydi, limitdan oshgan
+    focus-loss sessiyani yopadi va urinishni **0 ball bilan yozadi**
+    (aks holda testni boshlab, tab almashtirib, bepul qaytadan boshlash
+    mumkin bo'lardi).
 
 ---
 
