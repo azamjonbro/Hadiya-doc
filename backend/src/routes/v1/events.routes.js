@@ -4,7 +4,13 @@ import { authenticate } from '../../middlewares/auth.middleware.js'
 import { requirePermission } from '../../middlewares/rbac.middleware.js'
 import { validateBody, validateQuery } from '../../middlewares/validate.middleware.js'
 import { eventController } from '../../controllers/event.controller.js'
-import { createEventSchema, updateEventSchema, calendarQuerySchema } from '../../validators/event.validator.js'
+import {
+  createEventSchema,
+  updateEventSchema,
+  calendarQuerySchema,
+  markAttendanceSchema,
+  cancelRegistrationSchema,
+} from '../../validators/event.validator.js'
 
 export const eventsRouter = Router()
 
@@ -21,3 +27,21 @@ eventsRouter.patch(
   eventController.update
 )
 eventsRouter.delete('/:id', requirePermission(PERMISSIONS.EVENT_CREATE), eventController.remove)
+
+// Taking a seat is the learner's own act — event:read is enough, and the
+// service decides whether there is one or a place in the queue (AT-31).
+eventsRouter.post('/:id/register', eventController.register)
+eventsRouter.post(
+  '/:id/cancel-registration',
+  validateBody(cancelRegistrationSchema),
+  eventController.cancelRegistration
+)
+
+// The attendance sheet belongs to whoever runs the event.
+eventsRouter.get('/:id/registrations', requirePermission(PERMISSIONS.EVENT_CREATE), eventController.registrations)
+eventsRouter.post(
+  '/:id/attendance',
+  requirePermission(PERMISSIONS.EVENT_CREATE),
+  validateBody(markAttendanceSchema),
+  eventController.markAttendance
+)

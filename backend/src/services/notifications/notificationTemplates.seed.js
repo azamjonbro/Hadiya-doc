@@ -38,6 +38,9 @@ export const TEMPLATE_TYPES = [
   'PATH_COMPLETED',
   'ONBOARDING_STARTED',
   'ONBOARDING_COMPLETED',
+  'EVENT_REGISTERED',
+  'EVENT_WAITLISTED',
+  'EVENT_WAITLIST_PROMOTED',
   'NEWS_PUBLISHED',
   'CERTIFICATE_ISSUED',
   'CERTIFICATE_EXPIRING',
@@ -323,6 +326,63 @@ export const TEMPLATE_SEED = {
       subject: 'Onboarding complete: {{programName}}',
       body: 'You have finished every required step of "{{programName}}". Welcome aboard.',
       push: 'Onboarding complete: {{programName}}',
+    },
+  },
+
+  EVENT_REGISTERED: {
+    placeholders: ['userName', 'eventTitle', 'eventDate', 'appUrl'],
+    uz: {
+      subject: 'Ro\'yxatdan o\'tdingiz: {{eventTitle}}',
+      body: '"{{eventTitle}}" tadbiriga joyingiz band qilindi. Sana: {{eventDate}}.',
+      push: 'Joy band: {{eventTitle}}',
+    },
+    ru: {
+      subject: 'Вы записаны: {{eventTitle}}',
+      body: 'Ваше место на «{{eventTitle}}» забронировано. Дата: {{eventDate}}.',
+      push: 'Место забронировано: {{eventTitle}}',
+    },
+    en: {
+      subject: 'You are registered: {{eventTitle}}',
+      body: 'Your place at "{{eventTitle}}" is booked for {{eventDate}}.',
+      push: 'Registered: {{eventTitle}}',
+    },
+  },
+
+  EVENT_WAITLISTED: {
+    placeholders: ['userName', 'eventTitle', 'eventDate', 'position', 'appUrl'],
+    uz: {
+      subject: 'Navbatdasiz: {{eventTitle}}',
+      body: '"{{eventTitle}}" tadbirida joylar tugagan. Siz navbatda {{position}}-o\'rindasiz — joy bo\'shasa avtomatik xabar beramiz.',
+      push: 'Navbatda {{position}}-o\'rin: {{eventTitle}}',
+    },
+    ru: {
+      subject: 'Вы в очереди: {{eventTitle}}',
+      body: 'На «{{eventTitle}}» мест не осталось. Вы {{position}}-й в очереди — сообщим автоматически, если место освободится.',
+      push: 'В очереди, место {{position}}: {{eventTitle}}',
+    },
+    en: {
+      subject: 'You are on the waiting list: {{eventTitle}}',
+      body: '"{{eventTitle}}" is full. You are number {{position}} in the queue — we will tell you if a place opens.',
+      push: 'Waiting list #{{position}}: {{eventTitle}}',
+    },
+  },
+
+  EVENT_WAITLIST_PROMOTED: {
+    placeholders: ['userName', 'eventTitle', 'eventDate', 'appUrl'],
+    uz: {
+      subject: 'Joy bo\'shadi: {{eventTitle}}',
+      body: '"{{eventTitle}}" tadbirida joy bo\'shadi va u sizga berildi. Sana: {{eventDate}}.',
+      push: 'Joy bo\'shadi: {{eventTitle}}',
+    },
+    ru: {
+      subject: 'Место освободилось: {{eventTitle}}',
+      body: 'На «{{eventTitle}}» освободилось место, и оно ваше. Дата: {{eventDate}}.',
+      push: 'Место ваше: {{eventTitle}}',
+    },
+    en: {
+      subject: 'A place opened up: {{eventTitle}}',
+      body: 'A place at "{{eventTitle}}" has opened and it is yours. It is on {{eventDate}}.',
+      push: 'A place opened: {{eventTitle}}',
     },
   },
 
