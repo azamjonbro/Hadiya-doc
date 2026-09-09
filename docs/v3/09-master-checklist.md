@@ -802,10 +802,45 @@
     `testQuizId`, `needsReview`, `gradedBy/At`); `selectedOptionIndex` va
     `videoId` ixtiyoriy bo'ldi. Mavjud yozuvlarga tegilmadi.
 
-- [ ] **4.3** **Urinish chegarasi va tanlash**
+- [x] **4.3** **Urinish chegarasi va tanlash**
   · `services/quizzes/quiz.service.js` — atomik `maxAttempts` guard
   · `services/questions/questionSelection.js` — pool + shuffle + attempt'da muzlatish
   · Qabul: **AT-05, AT-06, AT-07**
+  → Guard **yangi** `services/quizzes/testQuiz.service.js` da, eski
+    `quiz.service.js` da emas. Eskisi legacy video quiz'ga xizmat qiladi:
+    unda `maxAttempts` ham, taymer ham, pool ham yo'q, va u endpoint'lar
+    almashguncha aynan hozirgidek ishlashi kerak (AT-09). Ikkala qoidani
+    bitta faylga tiqish — migratsiya aynan o'zi saqlashi kerak bo'lgan
+    narsani buzadigan yo'l.
+  → AT-06 ni «yaxshiroq tekshirish» bilan hal qilib bo'lmaydi: ikkala tab
+    ham mavjud urinishlarni sanaydi, ikkalasi ham bir xil javob oladi va
+    ikkalasi ham «yana bitta mumkin» deb xulosa qiladi — sanash va yozish
+    ikki xil amal. Shuning uchun qaror **unique indeks**da:
+    `{userId, testQuizId, attemptNo}` (partial, `testQuizId` bor
+    yozuvlarda). Yutqazgani 11000 oladi va 409 ga aylanadi.
+  → AT-07: paper sessiyada **muzlatiladi**. `questionSet` saqlanmasa,
+    reload — qayta tanlov, ya'ni o'quvchi F5 bosib oson variant «ovlashi»
+    mumkin, va yuborilgan javobni solishtirishga narsa qolmaydi. Tanlov
+    seed bilan: bir seed — bir xil paper, ya'ni bir oydan keyin «nega
+    unga aynan shu 5 ta savol tushdi?» degan savolga sessiya yozuvidan
+    javob berish mumkin.
+  → `SEQUENCE` va `MATCHING` **har doim** aralashtirib ko'rsatiladi
+    (`shuffleOptions` dan qat'i nazar): ular payload'ni to'g'ri tartibda
+    saqlaydi, saqlangan holicha yuborish esa savolni «submit bosing»ga
+    aylantiradi. Test buni tekshiradi.
+  → Bank yupqalashib qolsa (savollar nafaqaga chiqarilgan) test
+    **qisqaroq** bo'ladi, xato emas — lekin `shortfalls` log'ga yoziladi,
+    aks holda 10 ta savol sozlangan joyda 5 ta savolli test jimgina
+    chiqib ketardi.
+  → Vaqti tugagan sessiya urinish sifatida **yoziladi** (0 ball). Aks
+    holda taymerli testni boshlab, ketib qolib, keyin bepul qaytadan
+    boshlash mumkin bo'lardi. Kechikkan yuborishga 30 soniya imtiyoz —
+    sekin tarmoq aldov emas.
+  → Yon ta'sir: `test/certificatePublic.test.js` endi har ishga tushishda
+    o'z IP'sini taqdim etadi (`X-Forwarded-For`). Aks holda bir daqiqa
+    ichidagi ikkinchi run birinchisi bo'shatgan rate-limit chelagini
+    meros qilib olardi va hamma assertion koddagi sababsiz 429 da
+    yiqilardi.
 
 - [ ] **4.4** **Baholash siyosati va feedback**
   · `partialCredit`, `question.points`, `question.explanation`, `revealMode`, `scorePolicy`
