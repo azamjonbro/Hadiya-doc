@@ -1136,8 +1136,32 @@
     beriladi: `Z` bilan ISO lokal deb o'qilib, tadbirni ofset chamasi
     surib yuborardi.
 
-- [ ] **6.4** **Yagona kalendar** — `services/calendar/calendar.service.js`
+- [x] **6.4** **Yagona kalendar** — `services/calendar/calendar.service.js`
   (tadbir + kurs deadline + topshiriq + path), `GET /calendar`, `.ics`
+  → To'rtta kolleksiyadan bitta ko'rinish. Xodimning majburiyatlari
+    tarqoq: mashg'ulot `events` da, kurs muddati tayinlovda, vazifa
+    vazifada, dastur muddati yozilishda — to'rt ekran, ya'ni birortasini
+    o'tkazib yuborishning to'rtta imkoni.
+  → Servis **hech narsa yozmaydi**. Kalendar yozuvi — o'zi kelib
+    chiqqan narsaning ko'rinishi; kurs muddatini surish — tayinlov
+    ustidagi amal, kalendar ustidagi emas.
+  → Navbatdagi joy ham kalendarda, lekin **belgilangan holda**: faqat
+    navbatda turgan narsangga borib qolish — aynan shu oldini oladigan
+    xato.
+  → Muddatlar **kun bo'yi** (`VALUE=DATE`), moment emas: «juma kuni»
+    tugaydigan kurs 23:59 ga qadalsa, Outlook'da kechki uchrashuv bo'lib
+    ko'rinadi.
+  → `.ics` da vergul va nuqtali vergul — maydon ajratgichlari.
+    Ekranlanmasa, ichida vergul bor kurs nomi yozuvni **jimgina kesib
+    tashlaydi** (xato bermaydi). Qatorlar 75 oktetda buklanadi, satr
+    oxiri CRLF — ba'zi parserlar aks holda faylni butunlay rad etadi.
+  → `UID` barqaror: qayta import qilinganda mijoz mavjud yozuvni
+    yangilaydi, ikkinchi nusxa qo'shmaydi.
+  → **Cheklov:** hozircha `.ics` — yuklab olish, obuna emas. Obuna
+    bo'ladigan havola URL ichida uzoq muddatli token talab qiladi, va
+    odamning butun kalendarini ko'rsatadigan havolani **bekor qilish**
+    yo'li ham kerak. Uni shu endpoint'ning yon ta'siri sifatida emas,
+    alohida qilish to'g'ri.
 
 - [ ] **6.5** **Uy vazifasi (Assignment)**
   · `models/assignment.model.js`, `submission.model.js`, `rubric.model.js`
