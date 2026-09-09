@@ -1089,9 +1089,33 @@
     olib tashlandi, mavjudlari qoldi; ular `startsAt`/`previousStartsAt`
     placeholder'larini ishlatadi, 6.2 da shuni hisobga olish kerak.
 
-- [ ] **6.2** **Tadbir bildirishnomalari** — `event.service.js` ga `notify()`
+- [x] **6.2** **Tadbir bildirishnomalari** — `event.service.js` ga `notify()`
   (yaratildi / o'zgardi / bekor qilindi / eslatma / waitlist ko'tarildi)
   · Qabul: **AT-32**
+  → Auditoriya — `REGISTERED` **va** `WAITLIST`. Navbatdagini tashlab
+    ketish — ko'rinishidan to'g'ri, aslida xato: payshanbaga navbatda
+    turgan odam payshanbasini shunga moslab qo'ygan, va dushanbaga
+    ko'chirilgan sessiya unga ham xuddi shunday tegishli.
+  → `EVENT_CANCELLED` va `EVENT_RESCHEDULED` **majburiy** turlar (§9.3,
+    allaqachon ro'yxatda edi): tadbir bildirishnomalarini o'chirgan odam
+    ham oladi. Nosozlik ssenariysi — bo'lmaydigan sessiyaga yo'lga
+    chiqish.
+  → Bekor qilish ko'chirishdan **ustun**: «vaqti o'zgardi» va keyin
+    «bo'lmaydi» — bitta tadbir haqidagi ikkita qarama-qarshi xabar.
+  → Ko'chirilganda `remindersSentFor` **tozalanadi**: seshanbadan
+    jumaga ko'chgan tadbir qaytadan eslatishi kerak, dedup markerlari
+    esa «allaqachon eslatgan» derdi.
+  → Eslatmalar alohida navbat olmadi, mavjud 15 daqiqalik deadline
+    sweep'iga ulandi — u allaqachon kerakli aniqlikda ishlaydi, va
+    ikkinchi scheduler umumiy 1.9 GB serverni o'z jadvali bo'yicha
+    uyg'otadigan yana bitta job bo'lardi.
+  → Eng katta offset birinchi tekshiriladi: o'zining 24 soatlik oynasi
+    ichida yaratilgan tadbir 1440-eslatmani **hozir** yuboradi, 60 ga
+    yetguncha kutmaydi.
+  → `minutesBefore` shablonga uzatilmaydi: `EVENT_REMINDER` ning
+    placeholder allowlist'ida u yo'q, va render allowlist'dan tashqari
+    placeholder'ni rad etadi. Offset **qachon** yuborilishini
+    belgilaydi, matnni emas.
 
 - [ ] **6.3** **Tadbir UI** — `EventDetailView` (xodim, ro'yxatdan o'tish),
   `EventsAdminView` (davomat). ⚠️ `PATCH`/`DELETE /events/:id` API **allaqachon bor**, UI yo'q (§1.14)
