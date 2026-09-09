@@ -669,7 +669,7 @@
     Tekshiriladi: token'siz 200, javobda JSHSHIR/email/userId/pdfKey/
     bo'lim yo'q, noma'lum seriya 404, 12 urinishdan oldin 429.
 
-- [ ] **3.4** **Kurs metadatasi**
+- [x] **3.4** **Kurs metadatasi**
   · `models/courseCategory.model.js`
   · `models/course.model.js` — `+categoryId, tags[], level, authorIds[],
   estimatedMinutes, prerequisiteCourseIds[], certificateTemplateId,
@@ -677,6 +677,32 @@
   · Migratsiya **M3**
   · `repositories/course.repository.js` — `$text` indeks + yangi filtrlar
   · `front/src/admin/views/CoursesListView.vue`, `CourseBuilderView.vue` — filtr va maydonlar
+  → M3 nega kerak: Mongoose default'lari **allaqachon saqlangan**
+    hujjatlarga tegmaydi. Eski kursda `level` maydoni umuman yo'q, va
+    `{ level: 'BEGINNER' }` yo'q maydonga mos kelmaydi — ya'ni backfill
+    bo'lmasa, har bir eski kurs filtrlangan katalogdan jimgina yo'qoladi
+    (filtrsizida esa turaveradi). Test shu holatni qamrab oladi.
+  → Migratsiya har maydon uchun alohida `updateMany` qiladi,
+    `$exists:false` bilan. Bitta umumiy `$set` 80% ga sozlangan
+    `completionRule`ni default'ga qaytarib yuborardi — bu migratsiya
+    niqobidagi ma'lumot yo'qotish. Qayta ishga tushirish xavfsiz.
+  → Default'lar hozirgi xatti-harakatni aynan saqlaydi:
+    `navigationMode='SEQUENTIAL'` (courseSequence.js allaqachon shunday
+    qulflaydi), `allowSelfEnroll=false`, `validityDays=0`, `version=1`.
+    Ya'ni migratsiya bazaning **aytganini** o'zgartiradi, **qilganini**
+    emas.
+  → `$text` indeks (`course_text`, title×10 / tags×4 / description×1)
+    qo'shildi, lekin katalog ro'yxati hamon substring bilan qidiradi:
+    `$text` faqat butun so'zga mos keladi, ro'yxat esa harf-harf
+    yoziladi — «mehn» «mehnat muhofazasi»ni topolmay qolardi. Indeks 7.1
+    global qidiruv uchun, `searchText()` orqali.
+  → Kategoriya o'chirilsa kurslar **kategoriyasiz** qoladi (o'chmaydi va
+    o'chirishga to'sqinlik ham qilmaydi) — aks holda xato yaratilgan
+    kategoriyani o'chirish uchun 40 ta kursni qo'lda ko'chirish kerak
+    bo'lardi.
+  → `completionRule` o'zgarsa `evaluateCourse()` chaqiriladi: «tugagan»
+    ta'rifini o'zgartirish kimlar tugatganini o'zgartiradi (AT-04 bilan
+    bir xil sabab).
 
 - [ ] **3.5** **Kursni nusxalash** — `POST /courses/:id/duplicate` (deep copy)
 
