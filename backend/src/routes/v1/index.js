@@ -37,6 +37,7 @@ import { facePolicyRouter } from './facePolicy.routes.js'
 import { certificatesRouter, publicCertificatesRouter } from './certificates.routes.js'
 import { testQuizzesRouter } from './testQuizzes.routes.js'
 import { questionsRouter } from './questions.routes.js'
+import { pathsRouter } from './paths.routes.js'
 
 export const v1Router = Router()
 
@@ -86,3 +87,4 @@ v1Router.use('/certificates', certificatesRouter)
 // exactly where they are until the frontend has moved over (AT-09).
 v1Router.use('/quizzes', testQuizzesRouter)
 v1Router.use('/questions', questionsRouter)
+v1Router.use('/paths', pathsRouter)

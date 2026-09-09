@@ -23,7 +23,8 @@
     "trash": "Trash",
     "branches": "Branches",
     "auditLog": "Audit log",
-    "certificates": "Certificates"
+    "certificates": "Certificates",
+    "paths": "Paths"
   },
   "shell": {
     "searchPlaceholder": "Search courses, news, tasks..."
@@ -2090,5 +2091,90 @@
     "noStatsHint": "Per-question numbers appear once people have sat the test.",
     "pickerEmpty": "Nothing to add",
     "pickerEmptyHint": "Every question in this bank is already on the test."
+  },
+  "paths": {
+    "title": "My paths",
+    "subtitle": "Programmes made of steps taken in order",
+    "mine": "Yours",
+    "available": "Open to you",
+    "emptyTitle": "No paths",
+    "emptyDescription": "There is nothing open to you yet.",
+    "progress": "{percent}% · {count} required steps",
+    "stepCount": "{count} steps",
+    "optionalCount": "{count} optional",
+    "sequential": "In order",
+    "view": "View",
+    "join": "Join",
+    "joined": "You are on the path",
+    "joinError": "Could not join",
+    "loadError": "Could not load",
+    "saveError": "Could not save",
+    "completed": "Complete",
+    "inProgress": "In progress",
+    "continue": "Continue",
+    "requiredDone": "{done} of {total} required steps",
+    "notEnrolled": "You are not on this path yet.",
+    "blockedBy": "Opens after “{title}”",
+    "optional": "Optional",
+    "missingCourse": "Course missing",
+    "missingHint": "The course for this step has been deleted — an administrator needs to fix it.",
+    "kind": {
+      "GENERAL": "General",
+      "ONBOARDING": "Onboarding",
+      "CERTIFICATION": "Certification",
+      "DEVELOPMENT": "Development"
+    },
+    "status": {
+      "DRAFT": "Draft",
+      "PUBLISHED": "Published",
+      "ARCHIVED": "Archived"
+    },
+    "adminTitle": "Paths",
+    "adminSubtitle": "Build programmes and watch people move through them",
+    "newPath": "New path",
+    "allKinds": "All kinds",
+    "allStatuses": "All statuses",
+    "adminEmpty": "No paths",
+    "adminEmptyHint": "Build the first programme."
+  },
+  "pathBuilder": {
+    "untitled": "Untitled path",
+    "tabs": {
+      "steps": "Steps",
+      "settings": "Settings",
+      "people": "People"
+    },
+    "steps": "Steps",
+    "addCourses": "Add courses",
+    "addSelected": "Add {count}",
+    "noSteps": "No steps",
+    "noStepsHint": "Add the courses that make up this path.",
+    "sequentialHint": "Each required step opens once the one before it is finished.",
+    "freeHint": "Steps can be taken in any order.",
+    "pathTitle": "Title",
+    "description": "Description",
+    "kind": "Kind",
+    "status": "Status",
+    "sequential": "Take the steps in order",
+    "sequentialExplain": "When on, the lock is enforced server-side — going round the interface does not work.",
+    "audience": "Who it is for",
+    "certificate": "Certificate",
+    "saved": "Saved",
+    "deleted": "Path deleted",
+    "deleteTitle": "Delete this path?",
+    "deleteMessage": "“{title}” will be deleted. Enrolments stay — anyone who finished it keeps their certificate.",
+    "nobody": "Nobody enrolled",
+    "nobodyHint": "Progress appears here once people are put on the path.",
+    "person": "Employee",
+    "department": "Department",
+    "progressColumn": "Progress",
+    "enrollment": {
+      "ACTIVE": "In progress",
+      "COMPLETED": "Completed",
+      "CANCELLED": "Cancelled",
+      "EXPIRED": "Expired"
+    },
+    "pickerEmpty": "Nothing to add",
+    "pickerEmptyHint": "Every course is already on the path."
   }
 }

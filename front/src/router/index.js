@@ -55,6 +55,8 @@ export const router = createRouter({
         { path: 'leaderboard', name: 'leaderboard', component: () => import('@/views/LeaderboardView.vue'), meta: { titleKey: 'nav.leaderboard' } },
         { path: 'chat', name: 'chat', component: () => import('@/views/ChatView.vue'), meta: { titleKey: 'nav.chat' } },
         { path: 'notifications', name: 'notifications', component: () => import('@/views/NotificationsView.vue'), meta: { titleKey: 'nav.notifications' } },
+        { path: 'paths', name: 'paths-list', component: () => import('@/views/PathsView.vue'), meta: { titleKey: 'nav.paths', permission: 'path:read' } },
+        { path: 'paths/:id', name: 'path-detail', component: () => import('@/views/PathDetailView.vue'), meta: { titleKey: 'nav.paths', permission: 'path:read' } },
         { path: 'certificates', name: 'certificates', component: () => import('@/views/CertificatesView.vue'), meta: { titleKey: 'nav.certificates' } },
         { path: 'settings', name: 'settings', component: () => import('@/views/SettingsView.vue'), meta: { titleKey: 'nav.settings' } },
       ],
@@ -157,6 +159,18 @@ export const router = createRouter({
           name: 'admin-roles',
           component: () => import('@/admin/views/RolesPermissionsView.vue'),
           meta: { permission: 'role:manage', titleKey: 'roles.title' },
+        },
+        {
+          path: 'paths',
+          name: 'admin-paths-list',
+          component: () => import('@/admin/views/PathsListView.vue'),
+          meta: { permission: 'path:manage', titleKey: 'paths.adminTitle' },
+        },
+        {
+          path: 'paths/:id',
+          name: 'admin-path-builder',
+          component: () => import('@/admin/views/PathBuilderView.vue'),
+          meta: { permission: 'path:manage', titleKey: 'paths.adminTitle' },
         },
         {
           path: 'question-banks',

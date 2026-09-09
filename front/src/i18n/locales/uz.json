@@ -23,7 +23,8 @@
     "trash": "Karzinka",
     "branches": "Filiallar",
     "auditLog": "Audit jurnali",
-    "certificates": "Sertifikatlar"
+    "certificates": "Sertifikatlar",
+    "paths": "Yo‘nalishlar"
   },
   "shell": {
     "searchPlaceholder": "Kurslar, yangiliklar, vazifalarni qidirish..."
@@ -2090,5 +2091,90 @@
     "noStatsHint": "Test topshirilgach, savol bo‘yicha ko‘rsatkichlar shu yerda chiqadi.",
     "pickerEmpty": "Qo‘shiladigan savol yo‘q",
     "pickerEmptyHint": "Bu bankdagi savollar allaqachon testda."
+  },
+  "paths": {
+    "title": "Yo‘nalishlarim",
+    "subtitle": "Ketma-ket bosqichlardan iborat o‘quv dasturlari",
+    "mine": "Men yozilganlarim",
+    "available": "Ochiq yo‘nalishlar",
+    "emptyTitle": "Yo‘nalish yo‘q",
+    "emptyDescription": "Sizga ochiq yo‘nalish hozircha yo‘q.",
+    "progress": "{percent}% · {count} ta majburiy bosqich",
+    "stepCount": "{count} ta bosqich",
+    "optionalCount": "{count} ta ixtiyoriy",
+    "sequential": "Ketma-ket",
+    "view": "Ko‘rish",
+    "join": "Yozilish",
+    "joined": "Yo‘nalishga yozildingiz",
+    "joinError": "Yozilib bo‘lmadi",
+    "loadError": "Yuklab bo‘lmadi",
+    "saveError": "Saqlab bo‘lmadi",
+    "completed": "Tugatilgan",
+    "inProgress": "Davom etmoqda",
+    "continue": "Davom etish",
+    "requiredDone": "{done} / {total} majburiy bosqich",
+    "notEnrolled": "Bu yo‘nalishga hali yozilmagansiz.",
+    "blockedBy": "«{title}» tugagach ochiladi",
+    "optional": "Ixtiyoriy",
+    "missingCourse": "Kurs topilmadi",
+    "missingHint": "Bu bosqichdagi kurs o‘chirilgan — administrator tuzatishi kerak.",
+    "kind": {
+      "GENERAL": "Umumiy",
+      "ONBOARDING": "Adaptatsiya",
+      "CERTIFICATION": "Sertifikatsiya",
+      "DEVELOPMENT": "Rivojlanish"
+    },
+    "status": {
+      "DRAFT": "Qoralama",
+      "PUBLISHED": "Chop etilgan",
+      "ARCHIVED": "Arxivlangan"
+    },
+    "adminTitle": "Yo‘nalishlar",
+    "adminSubtitle": "O‘quv dasturlarini tuzish va kuzatish",
+    "newPath": "Yangi yo‘nalish",
+    "allKinds": "Barcha turlar",
+    "allStatuses": "Barcha holatlar",
+    "adminEmpty": "Yo‘nalish yo‘q",
+    "adminEmptyHint": "Birinchi o‘quv dasturini tuzing."
+  },
+  "pathBuilder": {
+    "untitled": "Nomsiz yo‘nalish",
+    "tabs": {
+      "steps": "Bosqichlar",
+      "settings": "Sozlamalar",
+      "people": "Xodimlar"
+    },
+    "steps": "Bosqichlar",
+    "addCourses": "Kurs qo‘shish",
+    "addSelected": "{count} ta qo‘shish",
+    "noSteps": "Bosqich yo‘q",
+    "noStepsHint": "Yo‘nalishga kurslarni qo‘shing.",
+    "sequentialHint": "Har bir majburiy bosqich oldingisi tugagach ochiladi.",
+    "freeHint": "Bosqichlarni istalgan tartibda bajarish mumkin.",
+    "pathTitle": "Nomi",
+    "description": "Tavsif",
+    "kind": "Turi",
+    "status": "Holati",
+    "sequential": "Ketma-ket o‘tish",
+    "sequentialExplain": "Yoqilsa, qulf server tomonda majburlanadi — UI’ni chetlab o‘tish ishlamaydi.",
+    "audience": "Kimlar uchun",
+    "certificate": "Sertifikat",
+    "saved": "Saqlandi",
+    "deleted": "Yo‘nalish o‘chirildi",
+    "deleteTitle": "Yo‘nalish o‘chirilsinmi?",
+    "deleteMessage": "«{title}» o‘chiriladi. Yozilganlar yozuvi saqlanib qoladi — kimdir uni tugatgan bo‘lsa, sertifikati o‘z kuchida.",
+    "nobody": "Hech kim yozilmagan",
+    "nobodyHint": "Xodimlar yozilgach, progress shu yerda ko‘rinadi.",
+    "person": "Xodim",
+    "department": "Bo‘lim",
+    "progressColumn": "Progress",
+    "enrollment": {
+      "ACTIVE": "Davom etmoqda",
+      "COMPLETED": "Tugatgan",
+      "CANCELLED": "Bekor qilingan",
+      "EXPIRED": "Muddati o‘tgan"
+    },
+    "pickerEmpty": "Qo‘shiladigan kurs yo‘q",
+    "pickerEmptyHint": "Barcha kurslar allaqachon qo‘shilgan."
   }
 }
