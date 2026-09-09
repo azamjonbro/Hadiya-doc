@@ -148,9 +148,14 @@
 
     if (tests) {
       $('testPass').textContent = tests.pass + ' / ' + tests.tests
-      $('testSub').innerHTML = (tests.fail > 0
+      // A cancelled test never produced an answer, so a run with any is
+      // not green however many passed.
+      const badge = tests.fail > 0
         ? '<span class="pill bad">' + tests.fail + ' yiqilgan</span> '
-        : '<span class="pill ok">hammasi o\'tdi</span> ') + ago(tests.at)
+        : tests.cancelled > 0
+          ? '<span class="pill warn">' + tests.cancelled + ' bekor qilingan — run tugamagan</span> '
+          : '<span class="pill ok">hammasi o\'tdi</span> '
+      $('testSub').innerHTML = badge + ago(tests.at)
     }
 
     $('current').textContent = checklist.current

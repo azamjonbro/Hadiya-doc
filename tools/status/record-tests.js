@@ -36,13 +36,29 @@ child.stdout.on('data', (chunk) => {
 child.stderr.on('data', (chunk) => process.stderr.write(chunk))
 
 child.on('close', async (code) => {
-  const read = (label) => Number(output.match(new RegExp(`^# ${label} (\\d+)$`, 'm'))?.[1] ?? 0)
+  // The *last* occurrence, not the first. Node prints a summary block per
+  // file as well as one for the whole run, so taking the first match
+  // reported one file's numbers as the total — 597 of 677 passing with
+  // nothing failing, which is arithmetic that cannot be true.
+  const read = (label) => {
+    const matches = [...output.matchAll(new RegExp(`^# ${label} (\\d+)$`, 'gm'))]
+    return matches.length ? Number(matches.at(-1)[1]) : 0
+  }
   const tests = read('tests')
+  const cancelled = read('cancelled')
+  const fail = read('fail')
   const result = {
     at: new Date().toISOString(),
     tests,
     pass: read('pass'),
-    fail: read('fail'),
+    fail,
+    // A cancelled subtest is one that never ran — a file timed out or
+    // aborted and took the rest of its suite with it. Node reports those
+    // separately from failures, so a run can say `fail 0` with twenty-one
+    // tests that produced no answer at all. Recording only `fail` would
+    // put "everything passed" on the panel for a run that did not finish.
+    cancelled,
+    green: fail === 0 && cancelled === 0 && tests > 0,
     // A non-zero exit with no counts means the run never got going — a
     // missing database, usually — and recording "0 of 0 passed" would look
     // like a catastrophe rather than a setup problem.
@@ -52,7 +68,8 @@ child.on('close', async (code) => {
   await writeFile(path.join(ROOT, 'tools/status/last-test-run.json'), JSON.stringify(result, null, 2))
   console.log(
     result.ran
-      ? `Recorded: ${result.pass}/${result.tests} passing, ${result.fail} failing`
+      ? `Recorded: ${result.pass}/${result.tests} passing, ${result.fail} failing` +
+          (result.cancelled ? `, ${result.cancelled} cancelled (the run did not finish)` : '')
       : 'The suite did not run — is MongoDB up, and the backend listening on 4055?'
   )
 })
