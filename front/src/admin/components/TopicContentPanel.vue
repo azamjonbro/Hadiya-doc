@@ -18,6 +18,7 @@ import AppButton from '@/components/ui/AppButton.vue'
 import AppInput from '@/components/ui/AppInput.vue'
 import Badge from '@/components/ui/Badge.vue'
 import ProgressBar from '@/components/ui/ProgressBar.vue'
+import FileDropzone from '@/components/ui/FileDropzone.vue'
 import Icon from '@/components/ui/Icon.vue'
 import { apiErrorText } from '@/utils/apiError'
 
@@ -74,19 +75,10 @@ const isVideoProcessing = {
 const upload = useVideoUpload()
 const selectedVideoFile = ref(null)
 const videoForm = reactive({ title: '', description: '', required: true })
-const isDragOver = ref(false)
-
 function pickVideoFile(file) {
   if (!file) return
   selectedVideoFile.value = file
   if (!videoForm.title) videoForm.title = file.name.replace(/\.[^.]+$/, '')
-}
-function onVideoFileInputChange(event) {
-  pickVideoFile(event.target.files?.[0])
-}
-function onDrop(event) {
-  isDragOver.value = false
-  pickVideoFile(event.dataTransfer?.files?.[0])
 }
 function startVideoUpload() {
   if (!selectedVideoFile.value || !videoForm.title) return
@@ -388,26 +380,23 @@ onMounted(load)
         </AppButton>
       </div>
 
-      <!-- Video upload form -->
+      <!-- Video upload form. The dropzone is only the empty state: once a
+           file is picked the same box holds a title field and buttons, and a
+           <button> cannot contain those. -->
+      <FileDropzone
+        v-if="addingType === 'VIDEO' && !selectedVideoFile"
+        accept="video/mp4,video/quicktime,video/x-matroska,video/webm"
+        class="mt-3"
+        :title="t('videos.dropHint')"
+        :hint="t('videos.browse')"
+        @select="pickVideoFile"
+      />
+
       <div
-        v-if="addingType === 'VIDEO'"
-        class="mt-3 rounded-lg border-2 border-dashed p-6 text-center text-small transition-default"
-        :class="isDragOver ? 'border-primary bg-primary-subtle' : 'border-border-strong bg-surface'"
-        @dragover.prevent="isDragOver = true"
-        @dragleave.prevent="isDragOver = false"
-        @drop.prevent="onDrop"
+        v-else-if="addingType === 'VIDEO'"
+        class="mt-3 rounded-lg border border-border-strong bg-surface p-6 text-small"
       >
-        <template v-if="!selectedVideoFile">
-          <Icon name="upload" size="22" class="mx-auto text-ink-faint" />
-          <p class="mt-2 text-ink-muted">
-            {{ t('videos.dropHint') }}
-            <label class="cursor-pointer font-medium text-primary hover:underline">
-              {{ t('videos.browse') }}
-              <input type="file" accept="video/mp4,video/quicktime,video/x-matroska,video/webm" class="hidden" @change="onVideoFileInputChange" />
-            </label>
-          </p>
-        </template>
-        <div v-else class="space-y-3 text-left">
+        <div class="space-y-3 text-left">
           <p class="text-small font-medium text-ink">{{ selectedVideoFile.name }} <span class="text-ink-faint">({{ formatSize(selectedVideoFile.size) }})</span></p>
           <AppInput v-model="videoForm.title" required :label="t('admin.courses.fields.title')" />
           <label class="flex items-center gap-2 text-small text-ink">
