@@ -33,6 +33,11 @@ export function scheduleEnrollmentRuleSweep() {
 /**
  * One person, now.
  *
+ * Also refreshes the dynamic groups they could have moved in or out of
+ * (5.5) — the trigger is identical (role, department, branch, position), and
+ * a second queue firing on the same four fields would be two jobs racing to
+ * read the same person.
+ *
  * Queued when somebody is created or their role, department, branch or
  * position changes — the four things a rule matches on. On a queue rather
  * than inline because it walks every active rule, and nobody editing an

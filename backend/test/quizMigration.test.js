@@ -305,17 +305,28 @@ describe('AT-09 · the old test survives migration M1', () => {
     })
 
     test('running both migrations again changes nothing', async () => {
+      // Scoped to this test's own course. A global count is shared with
+      // every other test file the runner has in flight, and they create
+      // questions of their own — which made this fail for a reason that had
+      // nothing to do with the migration.
+      const bankIds = (await QuestionBank.find({ courseId: course._id }, { _id: 1 }).lean()).map((bank) => bank._id)
       const before = await TestQuiz.countDocuments({ courseId: course._id })
-      const questionsBefore = await Question.countDocuments({})
+      const questionsBefore = await Question.countDocuments({ bankId: { $in: bankIds } })
 
       await runM1()
-      const counts = await runM5()
+      await runM5()
 
       assert.equal(await TestQuiz.countDocuments({ courseId: course._id }), before)
-      assert.equal(await Question.countDocuments({}), questionsBefore)
-      // A second M5 finds nothing left to write.
-      assert.equal(counts.quizAttempts, 0)
-      assert.equal(counts.assessmentAttempts, 0)
+      assert.equal(await Question.countDocuments({ bankId: { $in: bankIds } }), questionsBefore)
+
+      // A second M5 leaves this course's attempts exactly as they were —
+      // asserted on the rows rather than on the run's global counters,
+      // which also cover other files' data.
+      const attempts = await QuizAttempt.find({ userId: learner._id, quizId: legacyQuiz._id })
+        .sort({ createdAt: 1 })
+        .lean()
+      assert.deepEqual(attempts.map((attempt) => attempt.attemptNo), [1, 2, 3])
+      assert.deepEqual(attempts.map((attempt) => attempt.scorePercent), [40, 70, 100])
     })
   })
 

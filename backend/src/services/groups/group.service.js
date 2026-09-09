@@ -8,6 +8,7 @@ import { ApiError } from '../../utils/ApiError.js'
 import { logger } from '../../config/logger.js'
 import { formatNotificationDate } from '../../utils/notificationFormat.js'
 import { hasUnscopedAccess } from '../access/actorScope.js'
+import { groupMembershipService } from './groupMembership.service.js'
 
 function toPublicGroup(group) {
   return {
@@ -19,6 +20,17 @@ function toPublicGroup(group) {
     courseIds: group.courseIds.map((id) => id.toString()),
     memberCount: group.memberIds.length,
     courseCount: group.courseIds.length,
+    // Defaulted rather than left undefined: groups created before 5.5 have
+    // no `type` stored, and a card that reads "undefined" beside the member
+    // count is worse than one that says what those groups actually are.
+    type: group.type ?? 'STATIC',
+    rule: {
+      roles: group.rule?.roles ?? [],
+      departments: group.rule?.departments ?? [],
+      branches: group.rule?.branches ?? [],
+      positions: group.rule?.positions ?? [],
+    },
+    membersRefreshedAt: group.membersRefreshedAt ?? null,
     createdAt: group.createdAt,
     updatedAt: group.updatedAt,
   }
@@ -124,6 +136,22 @@ async function notifyEnrolments(rows) {
   }
 }
 
+/**
+ * A dynamic group's membership belongs to its rule.
+ *
+ * Refused rather than allowed-and-reverted: a hand-added member would
+ * disappear at the next refresh, and the person who added them would have
+ * no way to know why.
+ */
+function assertNotDynamic(group) {
+  if (group.type === 'DYNAMIC') {
+    throw ApiError.badRequest(
+      'This group\'s members come from its rule — edit the rule instead',
+      'GROUP_IS_DYNAMIC'
+    )
+  }
+}
+
 export const groupService = {
   async list(actor, query = {}) {
     const department = hasUnscopedAccess(actor) ? query.department : await actorDepartment(actor)
@@ -157,6 +185,8 @@ export const groupService = {
         name: payload.name,
         description: payload.description ?? '',
         department,
+        type: payload.type ?? 'STATIC',
+        rule: payload.rule ?? {},
         createdBy: actor.id,
       })
     } catch (error) {
@@ -179,7 +209,14 @@ export const groupService = {
     // selection made on the employees page minutes earlier, and one id that
     // has since stopped resolving must not leave a group created with nobody
     // in it and a 404 on the way out.
-    if (payload.memberIds?.length) await this.addMembersBulk(actor, group._id.toString(), payload.memberIds)
+    if (group.type === 'DYNAMIC') {
+      // Populated at once rather than at the next nightly pass: a group
+      // created from a rule and showing nobody looks broken, and the first
+      // thing somebody does is add members by hand.
+      await groupMembershipService.refresh(group._id)
+    } else {
+      if (payload.memberIds?.length) await this.addMembersBulk(actor, group._id.toString(), payload.memberIds)
+    }
     if (payload.courseIds?.length) await this.addCourses(actor, group._id.toString(), payload.courseIds)
 
     return this.getById(actor, group._id.toString())
@@ -192,6 +229,11 @@ export const groupService = {
     const updateData = { updatedBy: actor.id }
     if (payload.name !== undefined) updateData.name = payload.name
     if (payload.description !== undefined) updateData.description = payload.description
+    if (payload.rule !== undefined) updateData.rule = payload.rule
+    // Switching a curated list to a rule is allowed — that is how an
+    // existing group is converted — but it replaces the membership at the
+    // next line, so it is worth doing knowingly.
+    if (payload.type !== undefined) updateData.type = payload.type
     // A manager can't move a group out of their own department.
     if (payload.department !== undefined && hasUnscopedAccess(actor)) {
       updateData.department = payload.department
@@ -203,6 +245,19 @@ export const groupService = {
     } catch (error) {
       if (error.code === 11000) throw ApiError.conflict('A group with this name already exists', 'GROUP_ALREADY_EXISTS')
       throw error
+    }
+
+    // A changed rule changes who is in the group, so the membership is
+    // rebuilt in the same request rather than at the next nightly pass —
+    // otherwise the person who just edited it sees the old list and edits
+    // it again.
+    if (updated?.type === 'DYNAMIC' && (payload.rule !== undefined || payload.type !== undefined)) {
+      await groupMembershipService.refresh(updated._id).catch((error) => {
+        logger.warn('Could not refresh the group after its rule changed', {
+          groupId: String(updated._id),
+          error: error.message,
+        })
+      })
     }
 
     await auditLogRepository.record({
@@ -236,6 +291,7 @@ export const groupService = {
 
   async addMembers(actor, id, userIds) {
     const group = await loadGroupOr404(id)
+    assertNotDynamic(group)
     await assertManagerScopeForGroup(actor, group)
 
     const users = await userRepository.findByIds(userIds)
@@ -271,6 +327,7 @@ export const groupService = {
   // admin learns what actually happened instead of losing the operation.
   async addMembersBulk(actor, id, userIds) {
     const group = await loadGroupOr404(id)
+    assertNotDynamic(group)
     await assertManagerScopeForGroup(actor, group)
 
     const wanted = [...new Set(userIds.map(String))]
@@ -327,6 +384,7 @@ export const groupService = {
   // and the course access that membership opened, nothing else.
   async removeMembersBulk(actor, id, userIds) {
     const group = await loadGroupOr404(id)
+    assertNotDynamic(group)
     await assertManagerScopeForGroup(actor, group)
 
     const wanted = [...new Set(userIds.map(String))]
@@ -358,6 +416,7 @@ export const groupService = {
 
   async removeMember(actor, id, userId) {
     const group = await loadGroupOr404(id)
+    assertNotDynamic(group)
     await assertManagerScopeForGroup(actor, group)
 
     await groupRepository.removeMember(id, userId, actor.id)

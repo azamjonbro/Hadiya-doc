@@ -1,6 +1,16 @@
 import { z } from 'zod'
 
 const objectId = z.string().regex(/^[a-f\d]{24}$/i, 'Invalid id')
+const nameList = z.array(z.string().trim().min(1).max(120)).max(50)
+
+// The membership rule of a dynamic group (5.5). Same shape as an enrolment
+// rule's match, read the same way: OR within a field, AND across.
+const groupRuleSchema = z.object({
+  roles: nameList.optional(),
+  departments: nameList.optional(),
+  branches: nameList.optional(),
+  positions: nameList.optional(),
+})
 
 export const createGroupSchema = z.object({
   name: z.string().min(1, 'Group name is required').max(80),
@@ -8,6 +18,8 @@ export const createGroupSchema = z.object({
   department: z.string().max(80).optional().default(''),
   memberIds: z.array(objectId).optional().default([]),
   courseIds: z.array(objectId).optional().default([]),
+  type: z.enum(['STATIC', 'DYNAMIC']).optional(),
+  rule: groupRuleSchema.optional(),
 })
 
 export const updateGroupSchema = z
@@ -15,6 +27,8 @@ export const updateGroupSchema = z
     name: z.string().min(1).max(80).optional(),
     description: z.string().max(500).optional(),
     department: z.string().max(80).optional(),
+    type: z.enum(['STATIC', 'DYNAMIC']).optional(),
+    rule: groupRuleSchema.optional(),
   })
   .refine((data) => Object.keys(data).length > 0, { message: 'No fields to update' })
 

@@ -13,6 +13,24 @@ const groupSchema = new Schema(
     name: { type: String, required: true, trim: true },
     description: { type: String, default: '' },
     department: { type: String, default: '' },
+    // STATIC is a list somebody curates. DYNAMIC is a rule, and its
+    // `memberIds` are a cache of who currently matches — recomputed, never
+    // edited by hand, because a hand edit would be silently reverted at the
+    // next refresh and nobody would know why their addition vanished.
+    type: { type: String, enum: ['STATIC', 'DYNAMIC'], default: 'STATIC' },
+    // Only meaningful when type is DYNAMIC. Same shape as an enrolment
+    // rule's `match` and read the same way: OR within a field, AND across
+    // them, an empty array meaning no constraint on that field.
+    rule: {
+      roles: { type: [String], default: [] },
+      departments: { type: [String], default: [] },
+      branches: { type: [String], default: [] },
+      positions: { type: [String], default: [] },
+    },
+    // When the membership cache was last rebuilt. Shown in the UI, because
+    // "who is in this group" having a staleness is a fact the person
+    // looking at it needs.
+    membersRefreshedAt: { type: Date, default: null },
     memberIds: { type: [{ type: Schema.Types.ObjectId, ref: 'User' }], default: [] },
     courseIds: { type: [{ type: Schema.Types.ObjectId, ref: 'Course' }], default: [] },
     createdBy: { type: Schema.Types.ObjectId, ref: 'User', required: true },

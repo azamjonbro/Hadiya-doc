@@ -19,6 +19,7 @@ import { ONBOARDING_QUEUE, scheduleOnboardingStart } from './jobs/onboardingQueu
 import { onboardingService } from './services/onboarding/onboarding.service.js'
 import { OnboardingEnrollment } from './models/onboardingEnrollment.model.js'
 import { enrollmentRuleService } from './services/enrollment/enrollmentRule.service.js'
+import { groupMembershipService } from './services/groups/groupMembership.service.js'
 import { certificateService } from './services/certificates/certificate.service.js'
 import { certificateRenderService } from './services/certificates/certificateRender.service.js'
 import { Certificate } from './models/certificate.model.js'
@@ -161,7 +162,15 @@ async function main() {
       // 'user' is one person, queued when their role or posting changed.
       // 'sweep' is the nightly pass over every active rule, which is the
       // only thing that catches changes made outside the platform.
-      if (job.name === 'user') return enrollmentRuleService.applyToOneUser(job.data.userId)
+      if (job.name === 'user') {
+        // Groups first: an enrolment rule can match on group membership, so
+        // evaluating rules before the groups are up to date would use the
+        // membership from before this person moved.
+        const groups = await groupMembershipService.refreshForUser(job.data.userId)
+        const rules = await enrollmentRuleService.applyToOneUser(job.data.userId)
+        return { ...rules, groups: groups.groups }
+      }
+      await groupMembershipService.refreshAll()
       return enrollmentRuleService.applyAll()
     },
     // One at a time: the sweep walks every rule against every matching
@@ -210,7 +219,7 @@ async function main() {
   logger.info('Reminder worker started (deadline checks every 15 minutes)')
   logger.info('Dashboard aggregation worker started (recomputes every 5 minutes)')
   logger.info('Certificate worker started (issue + render on course completion)')
-  logger.info('Enrollment rule worker started (nightly sweep + per-user evaluation)')
+  logger.info('Enrollment rule worker started (nightly sweep + per-user evaluation, dynamic groups included)')
   logger.info('Onboarding worker started (daily hireDate check + per-user evaluation)')
   logger.info(
     isMailConfigured()
