@@ -1,4 +1,5 @@
 import { PERMISSIONS } from '@lms/shared'
+import { Video } from '../../models/video.model.js'
 import { videoRepository } from '../../repositories/video.repository.js'
 import { topicRepository } from '../../repositories/topic.repository.js'
 import { auditLogRepository } from '../../repositories/auditLog.repository.js'
@@ -108,10 +109,21 @@ export const videoService = {
     const existing = await videoRepository.findById(id)
     if (!existing) throw ApiError.notFound('Video not found')
     if (existing.originalKey) {
-      await originalsStorage.deleteObject(existing.originalKey).catch(() => {})
-      // @tus/s3-store keeps a companion `${key}.info` object with upload
-      // bookkeeping metadata — clean it up alongside the video file.
-      await originalsStorage.deleteObject(`${existing.originalKey}.info`).catch(() => {})
+      // Duplicating a course copies the video rows but references the same
+      // stored file (courseDuplicate.service.js) — gigabytes are not
+      // re-uploaded to make an editable copy of a syllabus. So the object
+      // is only dropped once nothing else points at it; without this check,
+      // deleting a lesson from one copy would empty the player in the other.
+      const sharedWith = await Video.countDocuments({
+        _id: { $ne: existing._id },
+        originalKey: existing.originalKey,
+      })
+      if (sharedWith === 0) {
+        await originalsStorage.deleteObject(existing.originalKey).catch(() => {})
+        // @tus/s3-store keeps a companion `${key}.info` object with upload
+        // bookkeeping metadata — clean it up alongside the video file.
+        await originalsStorage.deleteObject(`${existing.originalKey}.info`).catch(() => {})
+      }
     }
     await videoRepository.deleteById(id)
     await auditLogRepository.record({ actor: actor.id, action: 'VIDEO_DELETED', entity: 'Video', entityId: id })

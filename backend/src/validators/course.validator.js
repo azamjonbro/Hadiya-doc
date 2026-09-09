@@ -54,6 +54,12 @@ export const updateCourseSchema = z
   })
   .refine((data) => Object.keys(data).length > 0, { message: 'No fields to update' })
 
+// The only thing a duplicate needs from the caller, and it is optional:
+// without it the copy takes the original's title with a suffix.
+export const duplicateCourseSchema = z.object({
+  title: z.string().trim().min(1).max(200).optional(),
+})
+
 export const listCoursesQuerySchema = z.object({
   search: z.string().optional(),
   status: z.enum(['DRAFT', 'PUBLISHED', 'ARCHIVED']).optional(),

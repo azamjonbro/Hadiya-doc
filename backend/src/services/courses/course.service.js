@@ -140,7 +140,7 @@ async function computeCourseProgress(actor, id, targetUserId) {
   }
 }
 
-function toPublicCourse(course) {
+export function toPublicCourse(course) {
   return {
     id: course._id.toString(),
     title: course.title,

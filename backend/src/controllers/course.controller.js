@@ -1,3 +1,4 @@
+import { courseDuplicateService } from '../services/courses/courseDuplicate.service.js'
 import { courseService } from '../services/courses/course.service.js'
 import { topicService } from '../services/courses/topic.service.js'
 import { asyncHandler } from '../utils/asyncHandler.js'
@@ -26,6 +27,13 @@ export const courseController = {
 
   update: asyncHandler(async (req, res) => {
     sendSuccess(res, await courseService.update(req.user, req.params.id, req.body), 'Course updated')
+  }),
+
+  duplicate: asyncHandler(async (req, res) => {
+    const { course, counts } = await courseDuplicateService.duplicate(req.user, req.params.id, {
+      title: req.body?.title,
+    })
+    sendSuccess(res, { course, counts }, 'Course duplicated', 201)
   }),
 
   archive: asyncHandler(async (req, res) => {

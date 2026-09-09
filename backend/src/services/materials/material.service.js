@@ -1,4 +1,5 @@
 import { PERMISSIONS } from '@lms/shared'
+import { Material } from '../../models/material.model.js'
 import { materialRepository } from '../../repositories/material.repository.js'
 import { topicRepository } from '../../repositories/topic.repository.js'
 import { auditLogRepository } from '../../repositories/auditLog.repository.js'
@@ -99,7 +100,11 @@ export const materialService = {
     const existing = await materialRepository.findById(id)
     if (!existing) throw ApiError.notFound('Material not found')
     if (existing.key) {
-      await materialsStorage.deleteObject(existing.key).catch(() => {})
+      // Same reasoning as video.service.js: a duplicated course shares the
+      // stored file rather than copying it, so the object only goes when the
+      // last row referencing it does.
+      const sharedWith = await Material.countDocuments({ _id: { $ne: existing._id }, key: existing.key })
+      if (sharedWith === 0) await materialsStorage.deleteObject(existing.key).catch(() => {})
     }
     await materialRepository.deleteById(id)
     await auditLogRepository.record({ actor: actor.id, action: 'MATERIAL_DELETED', entity: 'Material', entityId: id })

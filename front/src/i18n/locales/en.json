@@ -322,7 +322,10 @@
       "SEQUENTIAL": "Sequential (a lesson unlocks after the one before it)",
       "FREE": "Free (any lesson, any order)"
     },
-    "minutes": "{count} min"
+    "minutes": "{count} min",
+    "duplicate": "Duplicate",
+    "duplicateTitle": "Duplicate this course?",
+    "duplicateMessage": "Everything in “{title}” — modules, videos, documents and tests — is copied into a new draft. Assignments and anyone’s progress are not."
   },
   "videos": {
     "empty": "No videos uploaded yet",

@@ -47,6 +47,11 @@ export const coursesApi = {
   update(id, payload) {
     return http.patch(`/courses/${id}`, payload).then((r) => r.data.data)
   },
+  // Deep copy: content comes across, nobody's progress does. Returns the
+  // new course plus what was copied, so the UI can say so.
+  duplicate(id, payload = {}) {
+    return http.post(`/courses/${id}/duplicate`, payload).then((r) => r.data.data)
+  },
   // Retired but still listed — a milder state than the trash below.
   archive(id) {
     return http.post(`/courses/${id}/archive`).then((r) => r.data.data)

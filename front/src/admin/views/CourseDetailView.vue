@@ -117,6 +117,30 @@ async function onSave() {
   }
 }
 
+const duplicating = ref(false)
+
+async function duplicateCourse() {
+  // Asked first: it creates a whole second course, and an accidental click
+  // on a large one leaves a mess somebody has to clean up by hand.
+  const ok = await confirm({
+    title: t('courses.duplicateTitle'),
+    message: t('courses.duplicateMessage', { title: course.value.title }),
+    danger: false,
+  })
+  if (!ok) return
+  duplicating.value = true
+  try {
+    const result = await coursesApi.duplicate(course.value.id)
+    // Straight to the copy: the next thing anyone does is edit it, and the
+    // copy is a draft, so nothing is live while they do.
+    router.push(`/bos/courses/${result.course.id}`)
+  } catch (error) {
+    errorMessage.value = apiErrorText(error)
+  } finally {
+    duplicating.value = false
+  }
+}
+
 // Both emitted by CourseDangerActions, which owns the confirmation dialogs
 // and the API calls themselves.
 function onCourseArchived(updated) {
@@ -199,6 +223,16 @@ onMounted(load)
         <div class="flex flex-wrap items-center gap-2">
           <AppButton variant="ghost" size="sm" :icon="showEditForm ? 'chevron-up' : 'pencil'" @click="showEditForm = !showEditForm">
             {{ showEditForm ? t('courses.cancel') : t('courses.edit') }}
+          </AppButton>
+          <AppButton
+            v-if="auth.hasPermission('course:create')"
+            variant="ghost"
+            size="sm"
+            icon="copy"
+            :loading="duplicating"
+            @click="duplicateCourse"
+          >
+            {{ t('courses.duplicate') }}
           </AppButton>
           <CourseDangerActions :course="course" size="sm" @archived="onCourseArchived" @deleted="onCourseDeleted" />
         </div>

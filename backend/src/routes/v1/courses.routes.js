@@ -16,6 +16,7 @@ import {
   listCoursesQuerySchema,
   createTopicSchema,
   createAssignmentSchema,
+  duplicateCourseSchema,
   courseCategoryCreateSchema,
   courseCategoryUpdateSchema,
 } from '../../validators/course.validator.js'
@@ -74,6 +75,14 @@ coursesRouter.get(
   '/:id/users/:userId/progress',
   requirePermission(PERMISSIONS.ANALYTICS_VIEW_ALL),
   courseController.getProgressForUser
+)
+// Creating a whole course, so it is gated on course:create rather than
+// course:update — copying somebody else's course is not editing it.
+coursesRouter.post(
+  '/:id/duplicate',
+  requirePermission(PERMISSIONS.COURSE_CREATE),
+  validateBody(duplicateCourseSchema),
+  courseController.duplicate
 )
 coursesRouter.patch(
   '/:id',

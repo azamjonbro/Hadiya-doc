@@ -322,7 +322,10 @@
       "SEQUENTIAL": "Ketma-ket (oldingisi tugagach ochiladi)",
       "FREE": "Erkin (istalgan darsdan boshlash mumkin)"
     },
-    "minutes": "{count} daq."
+    "minutes": "{count} daq.",
+    "duplicate": "Nusxalash",
+    "duplicateTitle": "Kurs nusxalansinmi?",
+    "duplicateMessage": "«{title}» kursining butun mazmuni (mavzular, video, hujjat, testlar) yangi qoralama kursga ko‘chiriladi. Xodimlarning tayinlovi va progressi ko‘chirilmaydi."
   },
   "videos": {
     "empty": "Videolar hali yuklanmagan",
