@@ -28,7 +28,8 @@ import { hashPassword } from '../src/utils/hash.js'
 import { runDeadlineChecks } from '../src/jobs/reminderJob.js'
 import { pointsService } from '../src/services/gamification/points.service.js'
 import { videoRepository } from '../src/repositories/video.repository.js'
-import { computeDashboard } from '../src/analytics/dashboardAggregation.js'
+import { computeDashboard, employeeProgressBuckets } from '../src/analytics/dashboardAggregation.js'
+import { VideoProgress } from '../src/models/videoProgress.model.js'
 import { employeeInsightsService } from '../src/services/analytics/employeeInsights.service.js'
 import { redisConnection } from '../src/config/redis.js'
 
@@ -97,9 +98,7 @@ async function makeCourse(title) {
   return course
 }
 
-/** A course with one topic and two videos, one of them still a draft. */
-async function makeCourseWithVideos(title) {
-  const course = await makeCourse(title)
+async function makeTopic(course, title) {
   const topic = await Topic.create({
     courseId: course._id,
     title: `${title} topic`,
@@ -107,6 +106,13 @@ async function makeCourseWithVideos(title) {
     createdBy: author._id,
   })
   topicIds.push(topic._id)
+  return topic
+}
+
+/** A course with one topic and two videos, one of them still a draft. */
+async function makeCourseWithVideos(title) {
+  const course = await makeCourse(title)
+  const topic = await makeTopic(course, title)
   for (const status of ['PUBLISHED', 'DRAFT']) {
     await Video.create({
       courseId: course._id,
@@ -156,6 +162,7 @@ describe('N+1 query fixes (0.9)', () => {
     await Promise.all([
       CourseAssignment.deleteMany({ courseId: { $in: courseIds } }),
       PointsLedger.deleteMany({ userId: { $in: userIds } }),
+      VideoProgress.deleteMany({ userId: { $in: userIds } }),
       Notification.deleteMany({ userId: { $in: userIds } }),
       Video.deleteMany({ courseId: { $in: courseIds } }),
       Topic.deleteMany({ _id: { $in: topicIds } }),
@@ -367,17 +374,41 @@ describe('N+1 query fixes (0.9)', () => {
 
   describe('the company dashboard', () => {
     test('buckets employees in the database, not by loading all of them', async () => {
-      const { value, count } = await measure(() => computeDashboard())
+      const { count } = await measure(() => computeDashboard())
       assert.equal(count('users.aggregate'), 1)
       assert.equal(count('users.find'), 0, 'User.find({}) is what this replaced')
+    })
 
-      const buckets = value.charts.employeeProgress
-      assert.deepEqual(
-        buckets.map((b) => b.bucket),
-        ['0-25', '25-50', '50-75', '75-100']
-      )
-      const total = buckets.reduce((sum, b) => sum + b.count, 0)
-      assert.equal(total, await User.countDocuments(), 'every employee lands in exactly one bucket')
+    test('and puts every employee in exactly one bucket', async () => {
+      // Measured over this suite's own department rather than the whole
+      // database: the other test files run in parallel and create and delete
+      // users while this one runs, so a company-wide total is never twice
+      // the same number.
+      const [high, middle] = [await makeUser('Watcher'), await makeUser('Skimmer')]
+      const topic = await makeTopic(course, `bucket ${stamp}`)
+      const video = await Video.create({
+        courseId: course._id,
+        topicId: topic._id,
+        title: `bucket video ${stamp}`,
+        status: 'PUBLISHED',
+        duration: 100,
+        createdBy: author._id,
+      })
+      await VideoProgress.insertMany([
+        { userId: high._id, videoId: video._id, courseId: course._id, completionPercent: 90 },
+        { userId: middle._id, videoId: video._id, courseId: course._id, completionPercent: 60 },
+      ])
+
+      const buckets = await employeeProgressBuckets({ department: DEPARTMENT })
+      const headcount = await User.countDocuments({ department: DEPARTMENT })
+      const total = Object.values(buckets).reduce((sum, n) => sum + n, 0)
+
+      assert.equal(total, headcount, 'every employee lands in exactly one bucket')
+      assert.equal(buckets['75-100'], 1)
+      assert.equal(buckets['50-75'], 1)
+      // Everyone else in the department has never watched anything.
+      assert.equal(buckets['0-25'], headcount - 2)
+      assert.equal(buckets['25-50'], 0)
     })
   })
 })

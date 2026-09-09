@@ -14,6 +14,19 @@ import { Session } from '../../models/session.model.js'
 import { MaterialProgress } from '../../models/materialProgress.model.js'
 import { RecurringAssignment } from '../../models/recurringAssignment.model.js'
 import { Course } from '../../models/course.model.js'
+
+// Imported for their side effect: `populate()` needs the referenced model
+// registered with Mongoose, and these are only ever reached through a
+// populate here. Without the import the report fails at runtime with
+// "Schema hasn't been registered for model X" — which is how this list was
+// discovered.
+import '../../models/learningPath.model.js'
+import '../../models/testQuiz.model.js'
+import '../../models/onboardingProgram.model.js'
+import '../../models/event.model.js'
+import '../../models/assignment.model.js'
+import '../../models/badge.model.js'
+import '../../models/material.model.js'
 import {
   capFor,
   countFor,

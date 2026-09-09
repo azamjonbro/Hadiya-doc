@@ -125,10 +125,26 @@ describe('AT-21 · a custom role is scoped by its own scope field', () => {
   test('the same permission with scope ALL does see everyone', async () => {
     // The point of the change: what is read is decided by scope, not by
     // whether the role happens to be called MANAGER.
-    const { status, body } = await api('/users?limit=100', tokenFor(supervisor, unscopedRole))
+    //
+    // Searched for by name rather than read off the first page of 100: the
+    // assertion is about the fence, not about how many accounts the database
+    // happens to hold, and a parallel suite seeding a few dozen users used to
+    // push the outsider off page one and fail this.
+    const { status, body } = await api(
+      `/users?limit=100&search=Outsider`,
+      tokenFor(supervisor, unscopedRole)
+    )
     assert.equal(status, 200)
     const names = body.data.items.map((row) => row.fullName)
     assert.ok(names.includes('Outsider Scope'), 'an ALL-scoped role was fenced')
+  })
+
+  test('and the department fence still holds when searching by name', async () => {
+    // The other half of the same question: search must not become a way
+    // around the fence.
+    const { body } = await api(`/users?limit=100&search=Outsider`, tokenFor(supervisor, supervisorRole))
+    const names = body.data.items.map((row) => row.fullName)
+    assert.ok(!names.includes('Outsider Scope'), 'search reached outside the actor\'s department')
   })
 
   test('department options are fenced the same way as the list', async () => {

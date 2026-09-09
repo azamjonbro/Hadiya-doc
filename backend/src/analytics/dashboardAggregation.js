@@ -63,6 +63,60 @@ async function courseCompletionStats() {
   }
 }
 
+/**
+ * A histogram of every employee's average completion.
+ *
+ * Every employee, not just the ones with a VideoProgress row: somebody who
+ * has started nothing still counts in the 0-25% bucket, since "hasn't begun"
+ * is itself the signal this chart exists to show.
+ *
+ * Counted in the database rather than by pulling every user id into Node and
+ * bucketing them in a for-loop. The $lookup collapses each employee's
+ * progress rows to a single average before they leave the server, so this
+ * costs four counters no matter how many people work here.
+ *
+ * `match` narrows the population — unused by the dashboard, which is
+ * company-wide, and the seam the test measures a known set of employees
+ * through instead of the whole database, which parallel suites keep changing
+ * underneath it.
+ */
+export async function employeeProgressBuckets(match = {}) {
+  const rows = await User.aggregate([
+    ...(Object.keys(match).length ? [{ $match: match }] : []),
+    {
+      $lookup: {
+        from: 'videoprogresses',
+        localField: '_id',
+        foreignField: 'userId',
+        pipeline: [{ $group: { _id: null, avgCompletion: { $avg: '$completionPercent' } } }],
+        as: 'progress',
+      },
+    },
+    // Rounded to one decimal first, the same way the engagement rows are, so
+    // a 24.97% employee lands in the bucket the chart's own numbers imply.
+    { $set: { pct: { $round: [{ $ifNull: [{ $first: '$progress.avgCompletion' }, 0] }, 1] } } },
+    {
+      $group: {
+        _id: {
+          $switch: {
+            branches: [
+              { case: { $lt: ['$pct', 25] }, then: '0-25' },
+              { case: { $lt: ['$pct', 50] }, then: '25-50' },
+              { case: { $lt: ['$pct', 75] }, then: '50-75' },
+            ],
+            default: '75-100',
+          },
+        },
+        count: { $sum: 1 },
+      },
+    },
+  ])
+
+  const buckets = { '0-25': 0, '25-50': 0, '50-75': 0, '75-100': 0 }
+  for (const row of rows) buckets[row._id] = row.count
+  return buckets
+}
+
 async function employeeEngagementStats() {
   const rows = await VideoProgress.aggregate([
     {
@@ -90,46 +144,7 @@ async function employeeEngagementStats() {
   const byWatchTimeDesc = [...rows].sort((a, b) => b.totalWatchedSeconds - a.totalWatchedSeconds)
   const byWatchTimeAsc = [...rows].sort((a, b) => a.totalWatchedSeconds - b.totalWatchedSeconds)
 
-  // A histogram of every employee's average completion, not just the
-  // VideoProgress-having ones — an employee with zero progress docs still
-  // counts in the 0-25% bucket, since "hasn't started anything" is itself
-  // a meaningful signal for this chart.
-  //
-  // Counted in the database rather than by pulling every user id into Node:
-  // the $lookup collapses each employee's progress rows to a single average
-  // before they leave the server, so this costs four counters no matter how
-  // many people work here.
-  const bucketRows = await User.aggregate([
-    {
-      $lookup: {
-        from: 'videoprogresses',
-        localField: '_id',
-        foreignField: 'userId',
-        pipeline: [{ $group: { _id: null, avgCompletion: { $avg: '$completionPercent' } } }],
-        as: 'progress',
-      },
-    },
-    // Rounded to one decimal first, the same way the rows above are, so a
-    // 24.97% employee lands in the same bucket the chart's own numbers imply.
-    { $set: { pct: { $round: [{ $ifNull: [{ $first: '$progress.avgCompletion' }, 0] }, 1] } } },
-    {
-      $group: {
-        _id: {
-          $switch: {
-            branches: [
-              { case: { $lt: ['$pct', 25] }, then: '0-25' },
-              { case: { $lt: ['$pct', 50] }, then: '25-50' },
-              { case: { $lt: ['$pct', 75] }, then: '50-75' },
-            ],
-            default: '75-100',
-          },
-        },
-        count: { $sum: 1 },
-      },
-    },
-  ])
-  const buckets = { '0-25': 0, '25-50': 0, '50-75': 0, '75-100': 0 }
-  for (const row of bucketRows) buckets[row._id] = row.count
+  const buckets = await employeeProgressBuckets()
 
   return {
     mostEngagedEmployees: byWatchTimeDesc.slice(0, TOP_N),
