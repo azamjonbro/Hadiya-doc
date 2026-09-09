@@ -1017,7 +1017,35 @@
     baribir yaratiladi — bitta xato butun birinchi haftani tashlab
     ketmasligi kerak.
 
-- [ ] **5.5** **Dinamik guruhlar** — `group.type`, `group.rule{}`
+- [x] **5.5** **Dinamik guruhlar** — `group.type`, `group.rule{}`
+  → Qo'lda yuritiladigan «Mehnat bo'limidagilar hammasi» ro'yxati bir
+    hafta ichida noto'g'ri bo'lib qoladi — kimdir ko'chadi, guruhni esa
+    hech kim eslamaydi. Qoida sifatida u konstruksiya bo'yicha to'g'ri;
+    narxi — `memberIds` keshga aylanadi va odamlar o'zgarganda qayta
+    qurilishi kerak.
+  → Kesh saqlanadi (har o'qishda hisoblanmaydi), chunki `memberIds` ni
+    platformaning qolgan qismi allaqachon o'qiydi: enrollment rules,
+    guruhga kurs berish, chat auditoriyasi. Ularning hammasini qoidani
+    yechishga o'tkazish dinamik guruhni hamma joyda statikdan boshqacha
+    tutardi.
+  → Dinamik guruhga qo'lda a'zo qo'shish **rad etiladi**, keyin
+    «qaytarilmaydi»: ruxsat berilsa, qo'shilgan odam keyingi refresh'da
+    izsiz yo'qolardi va buni qo'shgan odam bilmay qolardi
+    (`GROUP_IS_DYNAMIC`).
+  → So'rov `type: 'DYNAMIC'` bo'yicha, `$ne: 'STATIC'` emas: 5.5 dan
+    oldin yaratilgan guruhlarda `type` maydoni **umuman yo'q**, va
+    inkorli so'rov ularni ham qamrab olib, qo'lda yig'ilgan a'zolikni
+    bo'shatib yuborardi. Test aynan shuni tekshiradi (M3 dagi tuzoqning
+    aynan o'zi).
+  → Qoida o'zgarsa a'zolik **o'sha so'rovda** qayta quriladi — aks holda
+    hozirgina tahrirlagan odam eski ro'yxatni ko'rib, yana tahrirlardi.
+  → Foydalanuvchi o'zgarganda faqat **javobi o'zgargan** guruhlar qayta
+    quriladi, va bu mavjud per-user job'ga ulandi (trigger aynan bir xil
+    to'rt maydon). Ikkinchi navbat bir xil odamni o'qish uchun poyga
+    qilardi.
+  → Yon ta'sir: `test/quizMigration.test.js` da global `Question`
+    sanog'i bor edi — test fayllari parallel ishlaydi va boshqalari
+    ham savol yaratadi. Sanoq shu testning o'z bankiga toraytirildi.
 
 ---
 
