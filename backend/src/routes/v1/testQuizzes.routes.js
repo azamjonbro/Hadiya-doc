@@ -14,6 +14,13 @@ testQuizzesRouter.use(authenticate)
 testQuizzesRouter.post('/:id/start', testQuizController.start)
 testQuizzesRouter.post('/:id/submit', validateBody(submitTestSchema), testQuizController.submit)
 
+// Where the learner stands on this test — every attempt, and which one
+// counts under the test's scorePolicy.
+testQuizzesRouter.get('/:id/summary', testQuizController.summary)
+// One attempt, question by question. The answer key is included only when
+// the test's revealMode allows it, or the caller can grade.
+testQuizzesRouter.get('/attempts/:attemptId', testQuizController.review)
+
 // Reported by the browser, counted by the server. The count only means
 // anything because it is kept here — a visibilitychange handler is removed
 // from the devtools console in a second.

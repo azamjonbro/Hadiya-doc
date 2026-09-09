@@ -6,6 +6,7 @@ import { userRepository } from '../../repositories/user.repository.js'
 import { auditLogRepository } from '../../repositories/auditLog.repository.js'
 import { notificationService } from '../notifications/notification.service.js'
 import { gradeAttempt } from '../questions/questionGrading.js'
+import { canReveal } from './quizResult.service.js'
 import { buildQuestionSet, toLearnerPaper, newSeed } from '../questions/questionSelection.js'
 import { ApiError } from '../../utils/ApiError.js'
 import { logger } from '../../config/logger.js'
@@ -232,6 +233,11 @@ export const testQuizService = {
     session.endedAt = new Date()
     await session.save()
 
+    // What the learner is allowed to see afterwards is the test's decision,
+    // not the endpoint's — and it is one rule (canReveal), so the submit
+    // response and the review screen cannot disagree about it.
+    const revealed = canReveal(quiz, attempt, attempt.attemptNo)
+
     return {
       attemptId: String(attempt._id),
       attemptNo: attempt.attemptNo,
@@ -240,9 +246,11 @@ export const testQuizService = {
       max: graded.max,
       passed: attempt.passed,
       needsReview: graded.needsReview,
-      // What the learner is allowed to see afterwards is the test's
-      // decision, not the endpoint's.
-      perQuestion: quiz.revealMode === 'NEVER' ? [] : graded.perQuestion,
+      revealed,
+      // The marks are returned either way: somebody is entitled to know
+      // which questions they lost. What the reveal rule governs is the
+      // answer key, which lives on the review endpoint.
+      perQuestion: graded.perQuestion,
     }
   },
 
