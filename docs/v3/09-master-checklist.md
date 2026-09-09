@@ -704,7 +704,27 @@
     ta'rifini o'zgartirish kimlar tugatganini o'zgartiradi (AT-04 bilan
     bir xil sabab).
 
-- [ ] **3.5** **Kursni nusxalash** — `POST /courses/:id/duplicate` (deep copy)
+- [x] **3.5** **Kursni nusxalash** — `POST /courses/:id/duplicate` (deep copy)
+  → Ko'chiriladi: mavzular, videolar, hujjatlar, testlar (savollari bilan),
+    video quiz'lari va kursning attention override'i. **Ko'chirilmaydi:**
+    tayinlov, progress, urinishlar, Q&A, sharh, ball. Nusxa — hech kim
+    o'qimagan kurs; kimningdir «tugatgan» holatini ko'chirish
+    hisobotlarga soxta tugatish qo'shardi.
+  → Media **qayta yuklanmaydi, havola qilinadi**: video gigabaytlarcha,
+    HLS esa mingta segment. Sillabusning tahrirlanadigan nusxasi uchun
+    ularni ko'chirish bir bosishni bir soatlik uzatishga aylantirardi.
+    Ishlaydi, chunki striming segmentlarni manifest kalitidan oladi,
+    video `_id` dan emas (`videoStream.service.js`).
+  → Shu ulashuv tufayli `video.service.remove` va
+    `material.service.remove` endi o'chirishdan oldin havolani sanaydi:
+    aks holda bir nusxadan darsni o'chirish ikkinchisining pleyerini
+    bo'shatib qo'yardi.
+  → Savollarning embed `_id` lari yangidan beriladi. Mongoose berilgan
+    subdocument `_id` ni saqlab qoladi, urinish esa javob bergan savol
+    id'sini yozadi — bir xil id ikkita testda «qaysi savolda hamma
+    adashadi» tahlilini jimgina qo'shib yuborardi.
+  → Nusxa har doim `DRAFT` va `version: 1`. Aks holda bitta bosish tirik
+    kursning yarim tahrirlangan dublikatini nishondagi hammaga chiqarardi.
 
 ---
 
