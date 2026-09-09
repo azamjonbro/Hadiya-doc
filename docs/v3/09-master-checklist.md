@@ -1351,9 +1351,44 @@
     aylantiradi; buni controller'da qilib esdan chiqarish har bir
     cheklangan yuklamani jimgina ochiq qilardi.
 
-- [ ] **7.6** **Settings modeli** — `models/settings.model.js` (singleton),
+- [x] **7.6** **Settings modeli** — `models/settings.model.js` (singleton),
   `attentionPolicy`/`facePolicy` dagi **GLOBAL→COURSE meros naqshini
   umumlashtirish** (§1.8), branding, Redis kesh
+  → Naqsh `packages/shared/src/layeredSettings.js` ga chiqarildi:
+    `resolveLayered`, `pickStoredLayer`, `splitLayerPatch`. Uchta joyda
+    bir xil sakkiz qator bor edi va ular **kelishardi** — aynan shuning
+    uchun birlashtirishga arziydi: keyingisi xotiradan yozilardi, va
+    qiziq savolning (`false` — «o'chirilgan»mi yoki «meros»mi?) faqat
+    bitta to'g'ri javobi bor.
+  → `null`/`undefined` — meros; `false` va `0` — **haqiqiy qiymatlar**
+    va pastdagi qatlamni bosadi. Tekshiruvni o'chirgan kurs uni global
+    siyosatdan jimgina qaytarib olmasligi kerak. Test ikkala yo'nalishni
+    ham tekshiradi.
+  → Settings — **singleton** (`_id: 'global'`), key/value jadval emas:
+    sozlamalar birga o'qiladi, bitta ekrandan yoziladi, va bo'sh
+    kalitlar jadvali «nima sozlanadi» degan savolni koddan javob berib
+    bo'lmaydigan qiladi.
+  → 🔒 **Bu hujjatda sir saqlanmaydi.** SMTP paroli, S3 kaliti, JWT
+    secret, API token — hammasi environment'da qoladi. Bu hujjatni admin
+    ekrani o'qiydi, har bir backup'ga tushadi va API qaytaradi — bular
+    credential turmasligi kerak bo'lgan uchta joy. Bu yerda sozlamaning
+    **shakli** turadi («pochta yoqilgan, mana shu manzildan»), uni
+    autentifikatsiya qiladigan narsa emas. Test buni majburlaydi: har bir
+    maydon nomining oxiri `password|secret|token|apikey|credential|
+    privatekey` bo'lsa yiqiladi.
+  → Kesh 60 soniya, kurs metadatasidagi 5 daqiqa emas: kompaniya nomini
+    o'zgartirgan administrator uni **darhol** ko'rishni kutadi; besh
+    daqiqa kutish — «saqlash tugmasi ishlamayapti» degan xulosaga
+    olib boradigan yo'l. Yozuvda kesh bekor qilinadi.
+  → Patch **bo'lim-bo'lim** birlashtiriladi: ikki ekrandagi ikki
+    administrator bir-birining aloqasiz bo'limini bosib ketmasligi kerak,
+    va yuborilmagan maydon «tegmang» degani, «tozalang» emas.
+  → Audit log **qaysi maydonlar** o'zgarganini yozadi, qiymatlarini emas:
+    sozlama diff'i ertami-kechmi log'ga tushmasligi kerak bo'lgan narsani
+    olib kelardi.
+  → `GET /settings/public` — yagona token'siz bo'lim (branding + til):
+    login sahifasiga kompaniya nomi va logotipi kerak, unda esa hali
+    hech kim kirmagan.
 
 ---
 

@@ -1,3 +1,4 @@
+import { resolveLayered } from './layeredSettings.js'
 /**
  * Camera-based attention monitoring during video playback.
  *
@@ -78,13 +79,5 @@ export const FOREIGN_FACE_COOLDOWN_MS = 30_000
  * every field it does not mention.
  */
 export function resolveAttentionPolicy(...layers) {
-  const resolved = { ...ATTENTION_POLICY_DEFAULTS }
-  for (const layer of layers) {
-    if (!layer) continue
-    for (const field of ATTENTION_POLICY_FIELDS) {
-      const value = layer[field]
-      if (value !== undefined && value !== null) resolved[field] = value
-    }
-  }
-  return resolved
+  return resolveLayered(ATTENTION_POLICY_DEFAULTS, ATTENTION_POLICY_FIELDS, layers)
 }

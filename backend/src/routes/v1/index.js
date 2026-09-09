@@ -45,6 +45,7 @@ import { homeworkRouter } from './homework.routes.js'
 import { kbRouter } from './kb.routes.js'
 import { searchRouter } from './search.routes.js'
 import { complianceRouter } from './compliance.routes.js'
+import { settingsRouter } from './settings.routes.js'
 
 export const v1Router = Router()
 
@@ -104,3 +105,4 @@ v1Router.use('/homework', homeworkRouter)
 v1Router.use('/kb', kbRouter)
 v1Router.use('/search', searchRouter)
 v1Router.use('/compliance', complianceRouter)
+v1Router.use('/settings', settingsRouter)

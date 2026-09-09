@@ -1,3 +1,4 @@
+import { resolveLayered } from './layeredSettings.js'
 /**
  * Organisation-wide settings for the identity check (see face verification in
  * docs/face-verification.md). Deliberately separate from ATTENTION_POLICY:
@@ -32,13 +33,5 @@ export const FACE_GATE_ACTIONS = Object.freeze({
 
 /** Same merge rule as resolveAttentionPolicy: an unset field inherits. */
 export function resolveFacePolicy(...layers) {
-  const resolved = { ...FACE_POLICY_DEFAULTS }
-  for (const layer of layers) {
-    if (!layer) continue
-    for (const field of FACE_POLICY_FIELDS) {
-      const value = layer[field]
-      if (value !== undefined && value !== null) resolved[field] = value
-    }
-  }
-  return resolved
+  return resolveLayered(FACE_POLICY_DEFAULTS, FACE_POLICY_FIELDS, layers)
 }
