@@ -1396,9 +1396,42 @@
 
 - [ ] **8.1** **17 yangi hisobot turi** — `reportData.service.js` builders
 - [ ] **8.2** **Hisobotni ekranda ko'rish** — `ReportsView` da jadval + grafik (FL-29)
-- [ ] **8.3** **Async eksport** — `models/exportJob.model.js`, `jobs/exportQueue.js`,
+- [x] **8.3** **Async eksport** — `models/exportJob.model.js`, `jobs/exportQueue.js`,
   `MAX_ROWS` kesilganini ochiq ko'rsatish
   · Qabul: **AT-22**
+  → **Tartib o'zgartirildi:** 8.3 birinchi qilindi, 8.1 dan oldin. AT-22
+    har bir hisobotning javob shaklini o'zgartiradi (`totalRows`,
+    `truncated`), ya'ni 17 ta yangi builder'ni oxirgi shartnomaga qarab
+    yozgan ma'qul — keyin retrofit qilishdan ko'ra.
+  → **Chegara muammo emas edi, sukut muammo edi.** 5 000 qatorda kesib,
+    hech narsa demaslik: 8 000 xodimlik eksport 5 000 qatorli faylga
+    aylanadi va u **to'liqdek ko'rinadi** — yetishmayotgan 3 000 odam
+    umuman mavjud bo'lmagan odamlardan farq qilmaydi.
+  → Har bir builder endi `totalRows` ni **alohida count so'rovi bilan**
+    qaytaradi: chegaraning butun maqsadi 8 000 qatorni xotiraga
+    yuklamaslik, ya'ni halol raqam faqat count'dan kelishi mumkin.
+    Agregatsiyali builder'larda `$facet` — guruhlash bosqichi eng qimmat
+    joyi, va raqam bilish uchun uni ikki marta bajarish har bir
+    eksportning narxini ikkilantirardi.
+  → Fayl javobida sarlavhalar: `X-Report-Truncated`,
+    `X-Report-Total-Rows`, `X-Report-Exported-Rows` — tanada aytish
+    mumkin emas, chunki tana faylning o'zi. CORS `exposedHeaders` ga ham
+    qo'shildi, aks holda ular brauzerga yetib borib **ko'rinmas** bo'lardi.
+  → Async yo'l: `POST /reports/:type/export-job` → worker quradi →
+    `GET /reports/export-jobs/:id` tayyor bo'lganda 5 daqiqalik
+    imzolangan havola beradi. Xodimlar ro'yxati eksporti — aynan URL
+    orqali ulashib bo'lmasligi kerak bo'lgan fayl.
+  → Scope **so'rov paytida** hal qilinadi, worker ishga tushganda emas:
+    job odam **so'ragan paytda ko'ra olgan** narsani eksport qilishi
+    kerak; keyin scope kengaysa, fayl u bilan birga jimgina
+    kengaymasligi kerak.
+  → Async chegara ham bor (`ASYNC_MAX_ROWS`), shunchaki kattaroq: spinner
+    kutayotgan odam yo'q, lekin cheksiz eksport umumiy serverni xotiradan
+    chiqarishning yo'li.
+  → TTL indeksi hujjatni o'chiradi, lekin Mongo'ning TTL monitori
+    **storage'dagi obyekt haqida hech narsa bilmaydi** — shuning uchun
+    kunlik cleanup job fayllarni o'chiradi, aks holda har bir eksport
+    bucket'da abadiy qolardi.
 - [ ] **8.4** **Rejalashtirilgan hisobotlar** — `scheduledReport.model.js`, cron job
 - [ ] **8.5** **Dashboard kengaytmasi** — test, sertifikat, tadbir, path,
   compliance metrikalari; `scope` almashtirgichi

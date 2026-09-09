@@ -17,6 +17,8 @@ import { CERTIFICATE_QUEUE } from './jobs/certificateQueue.js'
 import { ENROLLMENT_RULE_QUEUE, scheduleEnrollmentRuleSweep } from './jobs/enrollmentRuleQueue.js'
 import { ONBOARDING_QUEUE, scheduleOnboardingStart } from './jobs/onboardingQueue.js'
 import { COMPLIANCE_QUEUE, scheduleComplianceSweep } from './jobs/complianceQueue.js'
+import { EXPORT_QUEUE, scheduleExportCleanup } from './jobs/exportQueue.js'
+import { exportJobService } from './services/reports/exportJob.service.js'
 import { complianceService } from './services/compliance/compliance.service.js'
 import { RecurringAssignment } from './models/recurringAssignment.model.js'
 import { onboardingService } from './services/onboarding/onboarding.service.js'
@@ -230,10 +232,27 @@ async function main() {
     logger.error('Compliance job failed', { jobId: job?.id, name: job?.name, error: err.message })
   })
 
+  const exportWorker = new Worker(
+    EXPORT_QUEUE,
+    async (job) => {
+      if (job.name === 'cleanup') return exportJobService.cleanup()
+      return exportJobService.run(job.data.jobId)
+    },
+    // Two at a time. A full-company export is a large aggregation and a
+    // spreadsheet held in memory; running eight of them concurrently is how
+    // a 1.9 GB box gets killed rather than how reports arrive faster.
+    { connection: redisConnection, concurrency: 2 }
+  )
+
+  exportWorker.on('failed', (job, err) => {
+    logger.error('Export job failed', { jobId: job?.id, error: err.message })
+  })
+
   await scheduleReminderChecks()
   await scheduleEnrollmentRuleSweep()
   await scheduleOnboardingStart()
   await scheduleComplianceSweep()
+  await scheduleExportCleanup()
   await scheduleDashboardAggregation()
   const backupsScheduled = await scheduleDailyBackup()
 
@@ -244,6 +263,7 @@ async function main() {
   logger.info('Enrollment rule worker started (nightly sweep + per-user evaluation, dynamic groups included)')
   logger.info('Onboarding worker started (daily hireDate check + per-user evaluation)')
   logger.info('Compliance worker started (daily recurring-training sweep)')
+  logger.info('Export worker started (async report builds + daily file cleanup)')
   logger.info(
     isMailConfigured()
       ? `Delivery worker started (SMTP ${env.SMTP_HOST}:${env.SMTP_PORT})`
@@ -262,6 +282,7 @@ async function main() {
       enrollmentRuleWorker.close(),
       onboardingWorker.close(),
       complianceWorker.close(),
+      exportWorker.close(),
       reminderWorker.close(),
       dashboardWorker.close(),
       backupWorker.close(),

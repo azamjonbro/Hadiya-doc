@@ -45,6 +45,7 @@ export const TEMPLATE_TYPES = [
   'ASSIGNMENT_GRADED',
   'ASSIGNMENT_RETURNED',
   'BADGE_EARNED',
+  'REPORT_READY',
   'NEWS_PUBLISHED',
   'CERTIFICATE_ISSUED',
   'CERTIFICATE_EXPIRING',
@@ -469,6 +470,25 @@ export const TEMPLATE_SEED = {
       subject: 'New badge: {{badgeName}}',
       body: 'You have earned the "{{badgeName}}" badge. Nicely done.',
       push: 'New badge: {{badgeName}}',
+    },
+  },
+
+  REPORT_READY: {
+    placeholders: ['userName', 'reportName', 'rowCount', 'appUrl'],
+    uz: {
+      subject: 'Hisobot tayyor: {{reportName}}',
+      body: '"{{reportName}}" hisoboti tayyor — {{rowCount}} qator. Havola bir hafta ishlaydi.',
+      push: 'Hisobot tayyor: {{reportName}}',
+    },
+    ru: {
+      subject: 'Отчёт готов: {{reportName}}',
+      body: 'Отчёт «{{reportName}}» готов — строк: {{rowCount}}. Ссылка действует неделю.',
+      push: 'Отчёт готов: {{reportName}}',
+    },
+    en: {
+      subject: 'Your report is ready: {{reportName}}',
+      body: '"{{reportName}}" is ready — {{rowCount}} rows. The link works for a week.',
+      push: 'Report ready: {{reportName}}',
     },
   },
 

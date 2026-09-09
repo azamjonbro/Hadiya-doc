@@ -16,4 +16,12 @@ export const reportsRouter = Router()
 reportsRouter.use(authenticate, requirePermission(PERMISSIONS.REPORT_EXPORT), scopeToManagedUsers)
 
 reportsRouter.get('/', reportController.listTypes)
+
+// The caller's own export jobs. Declared before '/:type/...' so
+// 'export-jobs' is never read as a report type.
+reportsRouter.get('/export-jobs', reportController.exportJobs)
+reportsRouter.get('/export-jobs/:jobId', reportController.exportJob)
+
 reportsRouter.get('/:type/export', validateQuery(reportExportQuerySchema), reportController.export)
+// The async half of AT-22: the whole population, built by the worker.
+reportsRouter.post('/:type/export-job', validateQuery(reportExportQuerySchema), reportController.queueExport)

@@ -14,7 +14,63 @@ import { scopedUserIdsFor } from '../access/actorScope.js'
 // Hard cap on exported rows — an admin exporting the whole org is a
 // legitimate, expected use, but an unbounded export is still a resource-
 // exhaustion vector on a shared server.
-const MAX_ROWS = 5000
+//
+// The cap itself was never the problem. Cutting at 5 000 rows and saying
+// nothing was: an export of 8 000 employees produced a file of 5 000 that
+// looked complete, and the 3 000 missing people were indistinguishable
+// from people who do not exist. AT-22 is about the *silence*, so every
+// builder now reports `totalRows` alongside its rows and `build` derives
+// `truncated` from the two — see countFor below.
+export const MAX_ROWS = 5000
+
+// What an async export is allowed to fetch. Higher because nobody is
+// waiting on an HTTP response for it — the job writes a file and tells the
+// requester when it is ready — but still bounded: an unbounded export on a
+// shared box is a way to run it out of memory.
+export const ASYNC_MAX_ROWS = 100000
+
+/**
+ * The row cap for this build.
+ *
+ * Threaded through `filters` rather than read from module state, because
+ * an async job and a synchronous request can be in flight at the same
+ * time and a mutable global would give one of them the other's limit.
+ */
+function capFor(filters) {
+  return filters.maxRows ?? MAX_ROWS
+}
+
+/**
+ * Runs an aggregation and gets both the capped rows and the true total in
+ * one pass.
+ *
+ * `$facet` rather than two queries: the grouping stage is the expensive
+ * part of these pipelines, and running it twice to learn a number would
+ * double the cost of every export.
+ */
+async function facetRows(model, pipeline, { sort, project, cap = MAX_ROWS }) {
+  const [result] = await model.aggregate([
+    ...pipeline,
+    {
+      $facet: {
+        rows: [...(sort ? [{ $sort: sort }] : []), { $limit: cap }, ...(project ? [{ $project: project }] : [])],
+        total: [{ $count: 'count' }],
+      },
+    },
+  ])
+  return { rows: result?.rows ?? [], totalRows: result?.total?.[0]?.count ?? 0 }
+}
+
+/**
+ * The row count a report *would* have produced, uncapped.
+ *
+ * Counted separately rather than by fetching and measuring: the whole
+ * point of the cap is not to load 8 000 rows into memory, so the honest
+ * number has to come from a count query.
+ */
+async function countFor(model, filter) {
+  return model.countDocuments(filter)
+}
 
 function round1(n) {
   return Math.round((n ?? 0) * 10) / 10
@@ -79,14 +135,16 @@ async function employeeProgress(filters, t) {
     : null
 
   const idFilter = intersectIds(filters.roleUserIds, filters.userId ? [filters.userId] : null, courseUserIds)
-  if (idFilter && idFilter.length === 0) return { columns, rows: [] }
+  if (idFilter && idFilter.length === 0) return { columns, rows: [], totalRows: 0 }
 
-  const users = await User.find(
-    idFilter ? { _id: { $in: idFilter } } : {},
-    { fullName: 1, jshshir: 1, department: 1, isActive: 1 }
-  )
+  const userFilter = idFilter ? { _id: { $in: idFilter } } : {}
+  // Counted before the capped fetch, so the report can say how many rows
+  // exist rather than how many it happened to return (AT-22).
+  const totalRows = await countFor(User, userFilter)
+
+  const users = await User.find(userFilter, { fullName: 1, jshshir: 1, department: 1, isActive: 1 })
     .sort({ fullName: 1 })
-    .limit(MAX_ROWS)
+    .limit(capFor(filters))
   const userIds = users.map((u) => u._id)
 
   const courseScope = filters.courseId ? { courseId: toObjectId(filters.courseId) } : {}
@@ -149,7 +207,7 @@ async function employeeProgress(filters, t) {
     }
   })
 
-  return { columns, rows }
+  return { columns, rows, totalRows }
 }
 
 async function courseProgress(filters, t) {
@@ -162,17 +220,17 @@ async function courseProgress(filters, t) {
   ]
 
   const userIdFilter = intersectIds(filters.roleUserIds, filters.userId ? [filters.userId] : null)
-  if (userIdFilter && userIdFilter.length === 0) return { columns, rows: [] }
+  if (userIdFilter && userIdFilter.length === 0) return { columns, rows: [], totalRows: 0 }
   const userScope = userIdFilter ? { userId: { $in: toObjectIds(userIdFilter) } } : {}
 
   // Trashed courses are gone from every listing, so they must not resurface
   // in an export either.
-  const courses = await Course.find(
-    filters.courseId ? { _id: filters.courseId, deletedAt: null } : { deletedAt: null },
-    { title: 1, status: 1 }
-  )
+  const courseFilter = filters.courseId ? { _id: filters.courseId, deletedAt: null } : { deletedAt: null }
+  const totalRows = await countFor(Course, courseFilter)
+
+  const courses = await Course.find(courseFilter, { title: 1, status: 1 })
     .sort({ title: 1 })
-    .limit(MAX_ROWS)
+    .limit(capFor(filters))
   const courseIds = courses.map((c) => c._id)
 
   const [assignmentStats, progressStats] = await Promise.all([
@@ -207,7 +265,7 @@ async function courseProgress(filters, t) {
     }
   })
 
-  return { columns, rows }
+  return { columns, rows, totalRows }
 }
 
 async function videoAnalytics(filters, t) {
@@ -223,24 +281,27 @@ async function videoAnalytics(filters, t) {
   if (userIdFilter && userIdFilter.length === 0) return { columns, rows: [] }
   const userScope = userIdFilter ? { userId: { $in: toObjectIds(userIdFilter) } } : {}
 
-  const rows = await VideoProgress.aggregate([
-    { $match: { ...userScope, ...dateRangeMatch('lastWatchedAt', filters) } },
-    {
-      $group: {
-        _id: '$videoId',
-        viewers: { $sum: 1 },
-        avgCompletionPercent: { $avg: '$completionPercent' },
-        avgPausesCount: { $avg: '$pausesCount' },
-        avgForwardSeekSeconds: { $avg: '$forwardSeekSeconds' },
+  const { rows, totalRows } = await facetRows(
+    VideoProgress,
+    [
+      { $match: { ...userScope, ...dateRangeMatch('lastWatchedAt', filters) } },
+      {
+        $group: {
+          _id: '$videoId',
+          viewers: { $sum: 1 },
+          avgCompletionPercent: { $avg: '$completionPercent' },
+          avgPausesCount: { $avg: '$pausesCount' },
+          avgForwardSeekSeconds: { $avg: '$forwardSeekSeconds' },
+        },
       },
-    },
-    { $lookup: { from: 'videos', localField: '_id', foreignField: '_id', as: 'video' } },
-    { $unwind: '$video' },
-    ...(filters.courseId ? [{ $match: { 'video.courseId': toObjectId(filters.courseId) } }] : []),
-    { $sort: { viewers: -1 } },
-    { $limit: MAX_ROWS },
+      { $lookup: { from: 'videos', localField: '_id', foreignField: '_id', as: 'video' } },
+      { $unwind: '$video' },
+      ...(filters.courseId ? [{ $match: { 'video.courseId': toObjectId(filters.courseId) } }] : []),
+    ],
     {
-      $project: {
+      cap: capFor(filters),
+      sort: { viewers: -1 },
+      project: {
         _id: 0,
         title: '$video.title',
         viewers: 1,
@@ -248,10 +309,10 @@ async function videoAnalytics(filters, t) {
         avgPausesCount: { $round: ['$avgPausesCount', 1] },
         avgForwardSeekSeconds: { $round: ['$avgForwardSeekSeconds', 1] },
       },
-    },
-  ])
+    }
+  )
 
-  return { columns, rows }
+  return { columns, rows, totalRows }
 }
 
 async function newsAnalytics(filters, t) {
@@ -264,12 +325,15 @@ async function newsAnalytics(filters, t) {
   ]
 
   const userIdFilter = intersectIds(filters.roleUserIds, filters.userId ? [filters.userId] : null)
-  if (userIdFilter && userIdFilter.length === 0) return { columns, rows: [] }
+  if (userIdFilter && userIdFilter.length === 0) return { columns, rows: [], totalRows: 0 }
   const userScope = userIdFilter ? { userId: { $in: toObjectIds(userIdFilter) } } : {}
 
-  const articles = await News.find({ ...dateRangeMatch('publishAt', filters) }, { title: 1, publishAt: 1 })
+  const newsFilter = { ...dateRangeMatch('publishAt', filters) }
+  const totalRows = await countFor(News, newsFilter)
+
+  const articles = await News.find(newsFilter, { title: 1, publishAt: 1 })
     .sort({ publishAt: -1 })
-    .limit(MAX_ROWS)
+    .limit(capFor(filters))
   const newsIds = articles.map((n) => n._id)
 
   const viewStats = await NewsView.aggregate([
@@ -296,7 +360,7 @@ async function newsAnalytics(filters, t) {
     }
   })
 
-  return { columns, rows }
+  return { columns, rows, totalRows }
 }
 
 async function taskAnalytics(filters, t) {
@@ -311,13 +375,16 @@ async function taskAnalytics(filters, t) {
   ]
 
   const userIdFilter = intersectIds(filters.roleUserIds, filters.userId ? [filters.userId] : null)
-  if (userIdFilter && userIdFilter.length === 0) return { columns, rows: [] }
+  if (userIdFilter && userIdFilter.length === 0) return { columns, rows: [], totalRows: 0 }
   const assigneeScope = userIdFilter ? { assignedTo: { $in: toObjectIds(userIdFilter) } } : {}
 
+  const taskFilter = { ...assigneeScope, ...dateRangeMatch('deadline', filters) }
+  const totalRows = await countFor(Task, taskFilter)
+
   const rows = await Task.aggregate([
-    { $match: { ...assigneeScope, ...dateRangeMatch('deadline', filters) } },
+    { $match: taskFilter },
     { $sort: { createdAt: -1 } },
-    { $limit: MAX_ROWS },
+    { $limit: capFor(filters) },
     { $lookup: { from: 'users', localField: 'assignedTo', foreignField: '_id', as: 'assignee' } },
     { $lookup: { from: 'users', localField: 'assignedBy', foreignField: '_id', as: 'assigner' } },
     { $unwind: { path: '$assignee', preserveNullAndEmptyArrays: true } },
@@ -338,6 +405,7 @@ async function taskAnalytics(filters, t) {
 
   return {
     columns,
+    totalRows,
     rows: rows.map((r) => ({
       ...r,
       priority: t(`priority.${r.priority}`, r.priority),
@@ -385,6 +453,18 @@ export const reportDataService = {
     // Both are "must be one of these" lists, so they combine the same way the
     // builders combine their own: intersect, and treat null as no constraint.
     const population = intersectIds(roleUserIds, scopeUserIds)
-    return builder({ ...filters, roleUserIds: population }, reportTranslator(lang))
+    const result = await builder({ ...filters, roleUserIds: population }, reportTranslator(lang))
+
+    // AT-22: the cap is fine, the silence was not. A caller now always
+    // learns how many rows exist and whether it got all of them, so an
+    // export of 5 000 out of 8 000 cannot be mistaken for a complete one.
+    const totalRows = result.totalRows ?? result.rows.length
+    return {
+      ...result,
+      totalRows,
+      exportedRows: result.rows.length,
+      truncated: totalRows > result.rows.length,
+      maxRows: capFor(filters),
+    }
   },
 }

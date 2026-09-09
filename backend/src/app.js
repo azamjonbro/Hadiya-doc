@@ -40,6 +40,11 @@ export function createApp() {
       // Without this the browser repeats that round trip constantly; a day is
       // the practical ceiling Chrome honours anyway.
       maxAge: 86400,
+      // A cross-origin response only exposes a handful of headers by
+      // default, so without this the export's truncation warning reaches
+      // the browser and is invisible to the code that has to show it
+      // (AT-22).
+      exposedHeaders: ['X-Report-Total-Rows', 'X-Report-Exported-Rows', 'X-Report-Truncated'],
     })
   )
   app.use(express.json({ limit: '1mb' }))
