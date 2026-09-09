@@ -986,10 +986,36 @@
   → `preview` — quruq yurgizish: to'rt yuz odamni qamrab olishini
     tayinlashdan **oldin** bilish kerak (import sehrgaridagi kabi).
 
-- [ ] **5.4** **Onboarding**
+- [x] **5.4** **Onboarding**
   · `models/onboardingProgram.model.js`, `onboardingEnrollment.model.js`
   · `jobs/onboardingQueue.js` — `hireDate` bo'yicha avtomatik boshlash
   · `Task` fan-out (`audienceType`, `batchId`) qadamlar uchun qayta ishlatiladi
+  → Nega path emas: path — kurslar ketma-ketligi, onboarding esa
+    **qilinishi kerak bo'lgan ishlar** ketma-ketligi, va ularning faqat
+    bir qismi kurs. «Noutbukni olib keling» uchun kurs o'ylab topish
+    kerak bo'lardi, shuning uchun alohida model va turlangan qadamlar.
+  → «Bajarildi» har turda boshqacha, va bu ataylab: `COURSE` — o'quvchi
+    kursni tugatgani bilan **o'z-o'zidan** belgilanadi (hech kim qaytib
+    kelib belgilashi shart emas); `TASK` — haqiqiy `Task` hujjati,
+    broadcast'dagi o'sha `audienceType`/`batchId` bilan, ya'ni odamning
+    oddiy vazifalar ro'yxatida o'z muddati va eslatmalari bilan turadi;
+    `MANUAL` — shunchaki belgilash.
+  → Egalik (`ownerRole`) muhim: yangi xodim «IT hisob ochildi»ni
+    belgilay olmaydi. Belgilashga ruxsat berish — ro'yxatni
+    afsonaga aylantiradigan yo'l. Test buni tekshiradi (`NOT_STEP_OWNER`).
+  → Muddat **ishga kirgan sanadan** hisoblanadi, job ishlagan kundan
+    emas: bir hafta kech kiritilgan odam jimgina bir hafta ko'proq vaqt
+    olmasligi kerak. `dueAt` bir marta muhrlanadi — o'qishda qayta
+    hisoblash dasturni tahrirlaganda hammaning, hatto oylar oldin
+    tugatganlarning ham muddatini surib yuborardi.
+  → `managerId` yozilishga **ko'chiriladi**: ro'yxat egasi — birinchi kuni
+    kim rahbar bo'lsa o'sha; uchinchi haftadagi qayta tashkil etish uni
+    egasiz qoldirmasligi kerak.
+  → Dastur `DRAFT` va `autoStart: false` bilan yaratiladi (enrollment
+    rule bilan bir xil sabab).
+  → Bitta qadam yaratilmasa (masalan kurs o'chirilgan), qolganlari
+    baribir yaratiladi — bitta xato butun birinchi haftani tashlab
+    ketmasligi kerak.
 
 - [ ] **5.5** **Dinamik guruhlar** — `group.type`, `group.rule{}`
 
