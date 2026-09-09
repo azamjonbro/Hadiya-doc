@@ -159,6 +159,18 @@ export const router = createRouter({
           meta: { permission: 'role:manage', titleKey: 'roles.title' },
         },
         {
+          path: 'question-banks',
+          name: 'admin-question-banks',
+          component: () => import('@/admin/views/QuestionBanksView.vue'),
+          meta: { permission: 'quiz:configure', titleKey: 'questions.title' },
+        },
+        {
+          path: 'quizzes/:id',
+          name: 'admin-quiz-editor',
+          component: () => import('@/admin/views/QuizEditorView.vue'),
+          meta: { permission: 'quiz:configure', titleKey: 'quizEditor.tabs.questions' },
+        },
+        {
           path: 'certificates',
           name: 'admin-certificates',
           component: () => import('@/admin/views/CertificateTemplatesView.vue'),

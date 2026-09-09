@@ -18,6 +18,13 @@ export const managementNav = [
   { name: 'reports', path: '/bos/reports', icon: 'bar-chart', labelKey: 'nav.reports', permission: 'report:export' },
   { name: 'chat', path: '/bos/chat', icon: 'message-square', labelKey: 'nav.chat', permission: 'chat:support' },
   {
+    name: 'question-banks',
+    path: '/bos/question-banks',
+    icon: 'check-square',
+    labelKey: 'questions.title',
+    permission: 'quiz:configure',
+  },
+  {
     name: 'certificates',
     path: '/bos/certificates',
     icon: 'award',

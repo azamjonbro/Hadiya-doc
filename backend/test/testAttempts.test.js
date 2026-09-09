@@ -294,6 +294,62 @@ describe('sitting a unified test (4.3)', () => {
     })
   })
 
+  describe('a video quiz gets a sitting too (4.5)', () => {
+    // Until the merge, only the topic assessment had a timer and a
+    // focus-loss rule; a video quiz had neither, because it was a different
+    // model with a different code path. One model, one sitting path.
+    let videoQuiz
+
+    before(async () => {
+      videoQuiz = await TestQuiz.create({
+        scope: 'VIDEO',
+        scopeId: new mongoose.Types.ObjectId(),
+        courseId: course._id,
+        title: 'Video quiz with a timer',
+        pools: [{ bankId: bank._id, count: 2 }],
+        timeLimitMinutes: 15,
+        focusLossLimit: 2,
+        status: 'PUBLISHED',
+        createdBy: learner._id,
+      })
+      quizIds.push(videoQuiz._id)
+    })
+
+    test('the sitting carries a server-stamped deadline', async () => {
+      const started = await testQuizService.start(actorFor(learner), videoQuiz._id)
+      assert.ok(started.expiresAt, 'a timed test has to stamp its deadline server-side')
+      const minutes = (new Date(started.expiresAt) - Date.now()) / 60000
+      assert.ok(minutes > 14 && minutes <= 15, `expected about 15 minutes, got ${minutes}`)
+    })
+
+    test('the deadline survives a reload rather than restarting', async () => {
+      const first = await testQuizService.start(actorFor(learner), videoQuiz._id)
+      const again = await testQuizService.start(actorFor(learner), videoQuiz._id)
+      // Recomputed from "now", a reload would hand out a fresh 15 minutes
+      // every time — which is the whole reason the deadline is stored.
+      assert.equal(new Date(again.expiresAt).getTime(), new Date(first.expiresAt).getTime())
+    })
+
+    test('losing focus past the limit ends the sitting and spends the attempt', async () => {
+      const started = await testQuizService.start(actorFor(learner), videoQuiz._id)
+      const first = await testQuizService.reportFocusLoss(actorFor(learner), started.sessionId)
+      assert.equal(first.terminated, false)
+
+      const second = await testQuizService.reportFocusLoss(actorFor(learner), started.sessionId)
+      assert.equal(second.terminated, true)
+
+      const session = await TestSession.findById(started.sessionId).lean()
+      assert.equal(session.status, 'TERMINATED')
+      assert.equal(session.endedReason, 'FOCUS_LOST')
+
+      // Recorded at zero rather than not recorded: otherwise you start a
+      // supervised test, switch away, and start again for free.
+      const attempts = await QuizAttempt.find({ userId: learner._id, testQuizId: videoQuiz._id }).lean()
+      assert.equal(attempts.length, 1)
+      assert.equal(attempts[0].scorePercent, 0)
+    })
+  })
+
   describe('what the learner is shown', () => {
     test('a SEQUENCE question is never presented in its correct order', async () => {
       const question = await Question.create({
