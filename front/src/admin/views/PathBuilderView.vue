@@ -25,6 +25,7 @@ import Modal from '@/components/ui/Modal.vue'
 import Tabs from '@/components/ui/Tabs.vue'
 import ProgressBar from '@/components/ui/ProgressBar.vue'
 import EmptyState from '@/components/ui/EmptyState.vue'
+import SortableList from '@/components/ui/SortableList.vue'
 import Skeleton from '@/components/ui/Skeleton.vue'
 import Icon from '@/components/ui/Icon.vue'
 
@@ -151,13 +152,6 @@ function addPicked() {
   pickerOpen.value = false
 }
 
-function move(index, delta) {
-  const target = index + delta
-  if (target < 0 || target >= path.value.items.length) return
-  const [item] = path.value.items.splice(index, 1)
-  path.value.items.splice(target, 0, item)
-}
-
 const availableCourses = computed(() => {
   const used = new Set(path.value?.items?.map((item) => item.refId) ?? [])
   return courses.value.filter((course) => !used.has(course.id))
@@ -236,29 +230,41 @@ onMounted(async () => {
             :title="t('pathBuilder.noSteps')"
             :description="t('pathBuilder.noStepsHint')"
           />
-          <div v-else class="mt-3 space-y-1.5">
-            <div
-              v-for="(item, index) in path.items"
-              :key="item.id"
-              class="flex items-center gap-3 rounded-lg border border-border px-3 py-2.5"
-              :class="item.missing ? 'border-danger/40 bg-danger-subtle/30' : ''"
-            >
-              <span class="w-5 shrink-0 text-caption text-ink-faint">{{ index + 1 }}.</span>
-              <div class="min-w-0 flex-1">
-                <p class="truncate text-small text-ink">{{ item.title ?? t('paths.missingCourse') }}</p>
-                <p v-if="item.missing" class="text-caption text-danger">{{ t('paths.missingHint') }}</p>
+          <!-- Draggable, with the up/down buttons kept: reordering a
+               twelve-step path used to be eleven clicks, and the buttons are
+               still the only way to do it from the keyboard. -->
+          <SortableList
+            v-else
+            v-model="path.items"
+            class="mt-3"
+            item-key="id"
+            list-class="space-y-1.5"
+          >
+            <template #item="{ item, index, dragging, moveUp, moveDown, isFirst, isLast }">
+              <div
+                class="flex cursor-grab items-center gap-3 rounded-lg border border-border px-3 py-2.5 transition-default active:cursor-grabbing"
+                :class="[
+                  item.missing ? 'border-danger/40 bg-danger-subtle/30' : '',
+                  dragging ? 'opacity-40' : '',
+                ]"
+              >
+                <span class="w-5 shrink-0 text-caption text-ink-faint">{{ index + 1 }}.</span>
+                <div class="min-w-0 flex-1">
+                  <p class="truncate text-small text-ink">{{ item.title ?? t('paths.missingCourse') }}</p>
+                  <p v-if="item.missing" class="text-caption text-danger">{{ t('paths.missingHint') }}</p>
+                </div>
+                <label class="flex shrink-0 items-center gap-1.5 text-caption text-ink-muted">
+                  <input v-model="item.required" type="checkbox" class="h-3.5 w-3.5 rounded border-border-strong" />
+                  {{ t('common.required') }}
+                </label>
+                <div class="flex shrink-0 gap-1">
+                  <AppButton variant="ghost" size="sm" icon="chevron-up" :disabled="isFirst" @click="moveUp()" />
+                  <AppButton variant="ghost" size="sm" icon="chevron-down" :disabled="isLast" @click="moveDown()" />
+                  <AppButton variant="ghost" size="sm" icon="trash" @click="path.items.splice(index, 1)" />
+                </div>
               </div>
-              <label class="flex shrink-0 items-center gap-1.5 text-caption text-ink-muted">
-                <input v-model="item.required" type="checkbox" class="h-3.5 w-3.5 rounded border-border-strong" />
-                {{ t('common.required') }}
-              </label>
-              <div class="flex shrink-0 gap-1">
-                <AppButton variant="ghost" size="sm" icon="chevron-up" @click="move(index, -1)" />
-                <AppButton variant="ghost" size="sm" icon="chevron-down" @click="move(index, 1)" />
-                <AppButton variant="ghost" size="sm" icon="trash" @click="path.items.splice(index, 1)" />
-              </div>
-            </div>
-          </div>
+            </template>
+          </SortableList>
         </AppCard>
       </div>
 
