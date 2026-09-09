@@ -2327,5 +2327,53 @@
       "KB": "Knowledge base",
       "USER": "People"
     }
+  },
+  "compliance": {
+    "title": "Mandatory training",
+    "subtitle": "Recurring training and where everybody stands",
+    "tabs": {
+      "matrix": "Matrix",
+      "rules": "Rules"
+    },
+    "newRule": "New rule",
+    "ruleName": "Rule name",
+    "course": "Course",
+    "intervalMonths": "Every (months)",
+    "intervalHint": "How long a completion counts for",
+    "dueDaysLabel": "Days to complete",
+    "dueDaysHint": "How long they get once it comes due",
+    "departments": "Departments",
+    "departmentsHint": "Comma separated. Empty means everybody.",
+    "requiredFields": "A name and a course are required",
+    "createdInactive": "Rule created — it is **off** until you switch it on",
+    "activateTitle": "Switch this rule on?",
+    "activateMessage": "Once “{name}” is on, anybody whose training has lapsed is reassigned the course immediately and told about it.",
+    "activate": "Switch on",
+    "pause": "Switch off",
+    "active": "On",
+    "inactive": "Off",
+    "applied": "Reassigned to {count} people",
+    "deleteTitle": "Delete this rule?",
+    "deleteMessage": "The rule goes. Courses it already assigned stay.",
+    "lastRun": "Last run {date}",
+    "everyMonths": "every {months} months",
+    "dueDays": "{days} days to do it",
+    "noRules": "No rules",
+    "noRulesHint": "Add a recurring-training rule.",
+    "searchPlaceholder": "Name or department",
+    "person": "Employee",
+    "loadError": "Could not load",
+    "saveError": "Could not save",
+    "state": {
+      "VALID": "Valid",
+      "DUE": "Due",
+      "EXPIRED": "Expired",
+      "NEVER": "Never done",
+      "NOT_APPLICABLE": "—"
+    },
+    "validUntil": "Valid until {date}",
+    "dueBy": "Due {date}",
+    "expiredOn": "Expired {date}",
+    "neverDone": "Never done"
   }
 }

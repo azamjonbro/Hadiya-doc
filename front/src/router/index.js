@@ -169,6 +169,12 @@ export const router = createRouter({
           meta: { permission: 'role:manage', titleKey: 'roles.title' },
         },
         {
+          path: 'compliance',
+          name: 'admin-compliance',
+          component: () => import('@/admin/views/ComplianceView.vue'),
+          meta: { permission: 'course:assign', titleKey: 'compliance.title' },
+        },
+        {
           path: 'grading',
           name: 'admin-grading',
           component: () => import('@/admin/views/GradingQueueView.vue'),

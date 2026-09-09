@@ -16,6 +16,9 @@ import { DELIVERY_QUEUE, handleDeliveryFailure } from './jobs/deliveryQueue.js'
 import { CERTIFICATE_QUEUE } from './jobs/certificateQueue.js'
 import { ENROLLMENT_RULE_QUEUE, scheduleEnrollmentRuleSweep } from './jobs/enrollmentRuleQueue.js'
 import { ONBOARDING_QUEUE, scheduleOnboardingStart } from './jobs/onboardingQueue.js'
+import { COMPLIANCE_QUEUE, scheduleComplianceSweep } from './jobs/complianceQueue.js'
+import { complianceService } from './services/compliance/compliance.service.js'
+import { RecurringAssignment } from './models/recurringAssignment.model.js'
 import { onboardingService } from './services/onboarding/onboarding.service.js'
 import { OnboardingEnrollment } from './models/onboardingEnrollment.model.js'
 import { enrollmentRuleService } from './services/enrollment/enrollmentRule.service.js'
@@ -209,9 +212,28 @@ async function main() {
     logger.error('Onboarding job failed', { jobId: job?.id, name: job?.name, error: err.message })
   })
 
+  const complianceWorker = new Worker(
+    COMPLIANCE_QUEUE,
+    async (job) => {
+      if (job.name === 'rule') {
+        const rule = await RecurringAssignment.findById(job.data.ruleId).lean()
+        return rule ? complianceService.runRule(rule) : { matched: 0, reassigned: 0 }
+      }
+      return complianceService.runAll()
+    },
+    // One at a time: two passes would both see "not yet reassigned" for the
+    // same person and reopen the same assignment twice.
+    { connection: redisConnection, concurrency: 1 }
+  )
+
+  complianceWorker.on('failed', (job, err) => {
+    logger.error('Compliance job failed', { jobId: job?.id, name: job?.name, error: err.message })
+  })
+
   await scheduleReminderChecks()
   await scheduleEnrollmentRuleSweep()
   await scheduleOnboardingStart()
+  await scheduleComplianceSweep()
   await scheduleDashboardAggregation()
   const backupsScheduled = await scheduleDailyBackup()
 
@@ -221,6 +243,7 @@ async function main() {
   logger.info('Certificate worker started (issue + render on course completion)')
   logger.info('Enrollment rule worker started (nightly sweep + per-user evaluation, dynamic groups included)')
   logger.info('Onboarding worker started (daily hireDate check + per-user evaluation)')
+  logger.info('Compliance worker started (daily recurring-training sweep)')
   logger.info(
     isMailConfigured()
       ? `Delivery worker started (SMTP ${env.SMTP_HOST}:${env.SMTP_PORT})`
@@ -238,6 +261,7 @@ async function main() {
       videoWorker.close(),
       enrollmentRuleWorker.close(),
       onboardingWorker.close(),
+      complianceWorker.close(),
       reminderWorker.close(),
       dashboardWorker.close(),
       backupWorker.close(),

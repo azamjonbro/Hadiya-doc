@@ -17,6 +17,7 @@ export const managementNav = [
   { name: 'tasks', path: '/bos/tasks', icon: 'check-square', labelKey: 'nav.tasks', permission: 'task:create' },
   { name: 'reports', path: '/bos/reports', icon: 'bar-chart', labelKey: 'nav.reports', permission: 'report:export' },
   { name: 'chat', path: '/bos/chat', icon: 'message-square', labelKey: 'nav.chat', permission: 'chat:support' },
+  { name: 'compliance', path: '/bos/compliance', icon: 'shield', labelKey: 'compliance.title', permission: 'course:assign' },
   { name: 'grading', path: '/bos/grading', icon: 'check-check', labelKey: 'grading.title', permission: 'quiz:grade' },
   { name: 'events', path: '/bos/events', icon: 'calendar', labelKey: 'events.adminTitle', permission: 'event:create' },
   {

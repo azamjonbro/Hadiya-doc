@@ -2327,5 +2327,53 @@
       "KB": "Bilimlar bazasi",
       "USER": "Xodimlar"
     }
+  },
+  "compliance": {
+    "title": "Majburiy o‘qish",
+    "subtitle": "Takroriy o‘qitish va kim qaerda turgani",
+    "tabs": {
+      "matrix": "Matritsa",
+      "rules": "Qoidalar"
+    },
+    "newRule": "Yangi qoida",
+    "ruleName": "Qoida nomi",
+    "course": "Kurs",
+    "intervalMonths": "Davr (oy)",
+    "intervalHint": "Har necha oyda qayta o‘qish kerak",
+    "dueDaysLabel": "Bajarish muddati (kun)",
+    "dueDaysHint": "Muddati kelganda necha kun beriladi",
+    "departments": "Bo‘limlar",
+    "departmentsHint": "Vergul bilan ajrating. Bo‘sh — hamma uchun.",
+    "requiredFields": "Nom va kursni tanlang",
+    "createdInactive": "Qoida yaratildi — u hali **o‘chirilgan** holatda, yoqishingiz kerak",
+    "activateTitle": "Qoida yoqilsinmi?",
+    "activateMessage": "«{name}» yoqilgach, muddati o‘tganlarga kurs darhol qayta tayinlanadi va ularga xabar boradi.",
+    "activate": "Yoqish",
+    "pause": "To‘xtatish",
+    "active": "Yoqilgan",
+    "inactive": "O‘chirilgan",
+    "applied": "{count} kishiga qayta tayinlandi",
+    "deleteTitle": "Qoida o‘chirilsinmi?",
+    "deleteMessage": "Qoida o‘chiriladi. U allaqachon tayinlagan kurslar joyida qoladi.",
+    "lastRun": "Oxirgi marta: {date}",
+    "everyMonths": "har {months} oyda",
+    "dueDays": "{days} kun muddat",
+    "noRules": "Qoida yo‘q",
+    "noRulesHint": "Takroriy o‘qitish qoidasini qo‘shing.",
+    "searchPlaceholder": "Ism yoki bo‘lim",
+    "person": "Xodim",
+    "loadError": "Yuklab bo‘lmadi",
+    "saveError": "Saqlab bo‘lmadi",
+    "state": {
+      "VALID": "Amalda",
+      "DUE": "Muddati keldi",
+      "EXPIRED": "Muddati o‘tgan",
+      "NEVER": "O‘tmagan",
+      "NOT_APPLICABLE": "—"
+    },
+    "validUntil": "{date} gacha amalda",
+    "dueBy": "Muddat: {date}",
+    "expiredOn": "{date} da muddati tugagan",
+    "neverDone": "Hech qachon o‘tmagan"
   }
 }

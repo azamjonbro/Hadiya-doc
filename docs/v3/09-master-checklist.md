@@ -1264,9 +1264,33 @@
   → Versiya **kontentni** kuzatadi: teg qo'shish protsedura'ning yangi
     versiyasi emas.
 
-- [ ] **7.3** **Compliance** — `models/recurringAssignment.model.js`,
+- [x] **7.3** **Compliance** — `models/recurringAssignment.model.js`,
   `jobs/complianceQueue.js`, `ComplianceView` (kurs × xodim matritsasi)
   · Qabul: **AT-34**
+  → Sikl **har odam uchun alohida**, uning o'z tugatgan sanasidan
+    hisoblanadi. Umumiy kompaniya sanasi bo'lsa, o'tgan hafta tugatgan
+    odam ham yanvarda «muddati keldi» bo'lardi — bu ham noto'g'ri, ham
+    compliance jadvallarining tashlab yuborilish sababi.
+  → Sweep faqat **qo'shadi**. U hech kimni «nomuvofiq» deb belgilamaydi,
+    sertifikat olib qo'ymaydi, tayinlovni yopmaydi: avtomatik compliance
+    tizimining nosozlik ssenariysi — u jimgina kimnidir eskirgan deb
+    hal qiladi, odam esa buni auditordan eshitadi.
+  → Allaqachon `ACTIVE` bo'lganga tegilmaydi: qayta tayinlash muddatini
+    nolga qaytarardi va platforma progressni yo'qotgandek ko'rinardi.
+  → Tugatgan sana `completedAt` dan, u bo'lmasa **sertifikat berilgan
+    sanadan** o'qiladi — platforma tayinlovlarni kuzatishdan oldin
+    o'tilgan o'qishlar shu tarzda hisobga olinadi.
+  → Oy oxiri sanasi **surilib ketmaydi**: 31-yanvar + 1 oy sukut
+    bo'yicha 3-mart bo'ladi, ya'ni yillik sikl har qisqa oydan
+    o'tganda ikki kunga oldinga siljirdi.
+  → Matritsada har katak holat **va sanani** tashiydi: «DUE» yonida
+    «qachondan» bo'lmasa, bu hech kim qila olmaydigan qizil kvadrat.
+  → Qoida qo'llanmaydigan odam `NOT_APPLICABLE` — «muvofiq» emas. Uni
+    yashil qilish qamrovni oshirib ko'rsatardi. Hech qanday qoida
+    tegishli bo'lmagan odam matritsadan **umuman chiqarib tashlanadi**:
+    yuzta kulrang qator muhimlarini yashiradi.
+  → Qoida `active: false` bilan yaratiladi (enrollment rule va
+    onboarding dasturi bilan bir xil sabab).
 
 - [ ] **7.4** **Badge dvigateli** — `models/badge.model.js`, `userBadge.model.js`,
   `services/gamification/badge.service.js` (criteria + notify), Migratsiya **M7**
