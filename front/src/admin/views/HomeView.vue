@@ -6,7 +6,7 @@ import { dashboardApi } from '@/services/dashboard'
 import StatCard from '@/admin/components/dashboard/StatCard.vue'
 import RankedListCard from '@/admin/components/dashboard/RankedListCard.vue'
 import StatusBarList from '@/admin/components/dashboard/StatusBarList.vue'
-import TrendChart from '@/admin/components/dashboard/TrendChart.vue'
+import Chart from '@/components/ui/Chart.vue'
 import AppCard from '@/components/ui/AppCard.vue'
 import Skeleton from '@/components/ui/Skeleton.vue'
 import Icon from '@/components/ui/Icon.vue'
@@ -113,6 +113,16 @@ const newsEngagementItems = computed(
 
 const statusTone = { TODO: 'neutral', IN_PROGRESS: 'info', COMPLETED: 'success', CANCELLED: 'neutral' }
 const statusIcon = { TODO: 'clock', IN_PROGRESS: 'activity', COMPLETED: 'check-circle', CANCELLED: 'close' }
+// The chart takes {label, value} and leaves the units to the caller, which
+// is the only one that knows these are seconds and want to be read as
+// minutes.
+const watchTimeSeries = computed(() =>
+  (dashboard.value?.charts?.watchTimeByDay ?? []).map((point) => ({
+    label: new Date(point.date).toLocaleDateString(locale.value, { day: '2-digit', month: '2-digit' }),
+    value: point.totalSeconds,
+  }))
+)
+
 const taskCompletionItems = computed(
   () =>
     dashboard.value?.charts.taskCompletion.map((s) => ({
@@ -197,7 +207,12 @@ const taskCompletionItems = computed(
       <!-- Training health -->
       <section class="mt-8">
         <h2 class="mb-3 text-h3 text-ink">{{ t('dashboard.title') }}</h2>
-        <TrendChart :title="t('dashboard.charts.watchTimeByDay')" :points="dashboard.charts.watchTimeByDay" />
+        <Chart
+          type="line"
+          :title="t('dashboard.charts.watchTimeByDay')"
+          :series="watchTimeSeries"
+          :format="(seconds) => `${minutes(seconds)} min`"
+        />
       </section>
 
       <!-- Analytics grid -->
