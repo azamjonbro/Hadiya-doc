@@ -62,6 +62,35 @@ const emit = defineEmits(['update:modelValue', 'move', 'reorder'])
 
 const isOver = ref(false)
 
+/**
+ * Anything inside a row that a person clicks rather than drags.
+ *
+ * A row is `draggable`, and in Chrome that wins over the buttons inside it:
+ * press the delete button, move the mouse two pixels while the button is
+ * down, and the browser starts a drag instead of dispatching a click. The
+ * button appears simply not to work, and only sometimes — whenever the hand
+ * happened to be steady enough, it did.
+ */
+const INTERACTIVE = 'button, a, input, select, textarea, label, summary, [role="button"], [contenteditable="true"]'
+
+/**
+ * Turns dragging off for the press that just started on a control, and back
+ * on when it ends.
+ *
+ * Set straight on the DOM node rather than through a reactive prop: Vue
+ * applies attribute changes on the next tick, and `dragstart` follows
+ * `pointerdown` in the same one. The attribute has to already be false by
+ * then, so this writes it itself.
+ */
+function onPointerDown(event) {
+  if (props.disabled) return
+  event.currentTarget.draggable = !event.target?.closest?.(INTERACTIVE)
+}
+
+function restoreDraggable(event) {
+  event.currentTarget.draggable = !props.disabled
+}
+
 // dragleave fires on the container every time the pointer crosses into one of
 // its own children, so a plain boolean flickers the drop highlight on and off
 // as you move over the cards. Counting enters against leaves is the standard
@@ -158,6 +187,9 @@ function move(index, delta) {
       v-for="(item, index) in modelValue"
       :key="keyOf(item)"
       :draggable="!disabled"
+      @pointerdown="onPointerDown"
+      @pointerup="restoreDraggable"
+      @pointercancel="restoreDraggable"
       @dragstart="onDragStart(item, index, $event)"
       @dragend="onDragEnd"
       @drop.prevent.stop="drop(index)"

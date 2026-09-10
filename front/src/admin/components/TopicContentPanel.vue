@@ -20,6 +20,7 @@ import Badge from '@/components/ui/Badge.vue'
 import ProgressBar from '@/components/ui/ProgressBar.vue'
 import FileDropzone from '@/components/ui/FileDropzone.vue'
 import Icon from '@/components/ui/Icon.vue'
+import { useToast } from '@/composables/useToast'
 import { apiErrorText } from '@/utils/apiError'
 
 const props = defineProps({ topicId: { type: String, required: true } })
@@ -27,6 +28,27 @@ const props = defineProps({ topicId: { type: String, required: true } })
 const { t } = useI18n()
 const auth = useAuthStore()
 const confirm = useConfirm()
+const toast = useToast()
+
+/**
+ * Runs an action and says so when it fails.
+ *
+ * Every one of these used to be a bare `await` with nothing around it. A
+ * rejected request became an unhandled promise rejection: the console knew,
+ * the console was not open, and from the outside the button simply did
+ * nothing at all — no spinner, no message, no change. "The delete button
+ * doesn't work" is what that looks like, and it looks identical whether the
+ * cause was a permission, a validation error or a dropped connection.
+ */
+async function run(action, fallbackKey) {
+  try {
+    await action()
+    return true
+  } catch (error) {
+    toast.error(apiErrorText(error, t(fallbackKey)))
+    return false
+  }
+}
 const canManage = computed(() => auth.hasPermission('video:manage'))
 const canUpload = computed(() => auth.hasPermission('video:upload'))
 
@@ -128,8 +150,7 @@ watch(
 
 async function toggleVideoStatus(item) {
   const nextStatus = item.status === 'PUBLISHED' ? 'DRAFT' : 'PUBLISHED'
-  await videosApi.update(item.id, { status: nextStatus })
-  load()
+  if (await run(() => videosApi.update(item.id, { status: nextStatus }), 'content.statusFailed')) load()
 }
 function onQuizUpdated(item, hasQuiz) {
   item.hasQuiz = hasQuiz
@@ -145,15 +166,13 @@ async function saveVideoPoints(item) {
 }
 async function removeVideo(item) {
   if (!(await confirm.ask({ message: t('confirm.deleteVideo', { title: item.title }) }))) return
-  await videosApi.remove(item.id)
-  load()
+  if (await run(() => videosApi.remove(item.id), 'content.deleteFailed')) load()
 }
 
 // --- Materials ---
 async function toggleMaterialStatus(item) {
   const nextStatus = item.status === 'PUBLISHED' ? 'DRAFT' : 'PUBLISHED'
-  await materialsApi.update(item.id, { status: nextStatus })
-  load()
+  if (await run(() => materialsApi.update(item.id, { status: nextStatus }), 'content.statusFailed')) load()
 }
 /**
  * Whether learners get a download button for this file.
@@ -163,21 +182,25 @@ async function toggleMaterialStatus(item) {
  * circulate this" enforced rather than a note in the description.
  */
 async function toggleMaterialDownload(item) {
-  await materialsApi.update(item.id, { allowDownload: item.allowDownload === false })
-  load()
+  if (await run(() => materialsApi.update(item.id, { allowDownload: item.allowDownload === false }), 'content.statusFailed')) {
+    load()
+  }
 }
 async function removeMaterial(item) {
   if (!(await confirm.ask({ message: t('confirm.deleteMaterial', { title: item.title }) }))) return
-  await materialsApi.remove(item.id)
-  load()
+  if (await run(() => materialsApi.remove(item.id), 'content.deleteFailed')) load()
 }
 // Opening an upload in the same reader the learners get is how a manager
 // checks a file before publishing it.
 const openMaterial = ref(null)
 
 async function downloadMaterial(item) {
-  const { url } = await materialsApi.getDownloadUrl(item.id)
-  window.open(url, '_blank', 'noopener')
+  try {
+    const { url } = await materialsApi.getDownloadUrl(item.id)
+    window.open(url, '_blank', 'noopener')
+  } catch (error) {
+    toast.error(apiErrorText(error, t('content.downloadFailed')))
+  }
 }
 function onMaterialCreated() {
   addingType.value = null
@@ -186,7 +209,9 @@ function onMaterialCreated() {
 
 // --- Assessments ---
 async function addAssessment() {
-  await assessmentsApi.create(props.topicId, { title: t('content.test'), order: nextOrder() })
+  if (!(await run(() => assessmentsApi.create(props.topicId, { title: t('content.test'), order: nextOrder() }), 'content.createFailed'))) {
+    return
+  }
   await load()
   const created = items.value.filter((i) => i.contentType === 'ASSESSMENT').at(-1)
   if (created) expandedAssessmentId.value = created.id

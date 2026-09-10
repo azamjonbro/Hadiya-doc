@@ -118,7 +118,16 @@ function openNew() {
 }
 
 async function openEdit(event) {
-  const full = await eventsApi.getById(event.id)
+  // The read comes first and used to be unguarded, so a failure here left
+  // the pencil doing nothing at all: no modal, no message. An edit button
+  // that silently declines to open is indistinguishable from a dead one.
+  let full
+  try {
+    full = await eventsApi.getById(event.id)
+  } catch (error) {
+    toast.error(apiErrorText(error, t('events.loadFailed')))
+    return
+  }
   Object.assign(draft, {
     id: full.id,
     title: full.title,
