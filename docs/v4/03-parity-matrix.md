@@ -67,7 +67,7 @@
 | Video imzolangan token + segment auth | ? | Bor | OURS+ | 100 | `videoStream.service.js`, `videoPlaybackToken.middleware.js` | — |
 | Watermark | ? | Bor (ism + JSHSHIR) | OURS+ | 100 | `video/AttentionOverlay.vue`, player | — |
 | Video kapitel | ? | Yo'q | VERIFY | 0 | — | — |
-| Subtitr / caption | ✓ (Suite) | Yo'q | NONE | 0 | — | WebVTT + `<track>` |
+| Subtitr / caption | ✓ (Suite) | Bor — videodan avtomatik chiqarish, .srt/.vtt yuklash, pleyerda `<track>` | FULL | 100 | `processVideo.js`, `subtitleFormat.js`, `VideoPlayer.vue` | — |
 | Matn darsi (Page) | ✓ | Bor — 12 blok turi, blok editori, o'quvchi sahifasi, blok-asosli o'qish progressi | FULL | 100 | `lesson.model.js`, `LessonEditor.vue`, `LessonView.vue` | — |
 | Blok shablonlari | ✓ | Yo'q | NONE | 0 | — | `BlockTemplate` |
 | Flashcard / jadval / labeled graphics | ✓ | Jadval bloki bor; flashcard va labeled graphics yo'q | PARTIAL | 25 | `lesson.model.js` (`TABLE`) | Yangi blok turlari |
@@ -84,7 +84,7 @@
 | Embed (iframe) | ✓ | Bor — host allowlist (YouTube/Vimeo/Google), URL normalizatsiyasi, `sandbox` | PARTIAL | 75 | `lessonEmbeds.js`, `LessonBlock.vue` | Allowlist Settings'dan sozlanmaydi |
 | Cheksiz fayl hosting | ✓ | S3/MinIO | FULL | 100 | `S3StorageProvider.js` | — |
 | Fayl turi magic-byte tekshiruvi | ? | Bor | OURS+ | 100 | `materialUpload.service.js` (`file-type`) | — |
-| **D04–D09 jami: 22 capability** | | | **FULL 8 · OURS+ 4 · PARTIAL 5 · NONE 4 · VERIFY 1** | **65** | | |
+| **D04–D09 jami: 22 capability** | | | **FULL 9 · OURS+ 4 · PARTIAL 5 · NONE 3 · VERIFY 1** | **69** | | |
 
 ## D10–D12 · INTERACTIVE CONTENT / COURSE BUILDER / AUTHORING
 
@@ -461,7 +461,7 @@
 | 150 000 foydalanuvchi miqyosi | ✓ | Hozirgi kod ~5 000 gacha | PARTIAL | 25 | N+1: `reminderJob.js:18-50`; to'liq skan: `dashboardAggregation.js:98`; leaderboard xotirada: `points.service.js:92` | Optimizatsiya + server |
 | CDN | ? | Yo'q | VERIFY | 0 | — | — |
 | **WCAG 2.1 AA** | ? | Audit qilinmagan; ARIA/focus-trap/alt yo'q | VERIFY | 0 | — | Manba tasdiqlanmagan |
-| Subtitr (a11y) | ✓ | Yo'q | NONE | 0 | — | WebVTT |
+| Subtitr (a11y) | ✓ | Bor — WebVTT, brauzerning o'z CC menyusi orqali | FULL | 100 | `videoStream.routes.js`, `VideoPlayer.vue` | Avtomatik transkripsiya yo'q |
 | Avtomatik kurs biriktirish | ✓ | Publish paytida bir martalik | PARTIAL | 25 | `course.service.js:170` | `EnrollmentRule` |
 | Development plan avto-biriktirish | ✓ | Yo'q | NONE | 0 | — | — |
 | Avtomatik eslatmalar | ✓ | Bor (kurs + task) | PARTIAL | 50 | `reminderJob.js` | Tadbir, sertifikat, onboarding |
@@ -479,4 +479,4 @@
 | E-commerce | ? | Yo'q | N/A | — | — | §24 |
 | Multi-tenant (organization izolyatsiyasi) | ✓ | Yo'q | N/A | — | — | §24 |
 | 24/7 support + SLA | ✓ | — | N/A | — | — | Mahsulot emas, xizmat |
-| **D80–D95 jami: 19 capability** | | | **OURS+ 5 · PARTIAL 5 · NONE 4 · VERIFY 5** | **37** | | |
+| **D80–D95 jami: 19 capability** | | | **FULL 1 · OURS+ 5 · PARTIAL 5 · NONE 3 · VERIFY 5** | **42** | | |

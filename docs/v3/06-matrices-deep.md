@@ -232,7 +232,7 @@ qoplash mumkin va bu mahalliy sharoitda amalda ishonchliroq.
 | Focus ko'rinishi | ◐ | Tailwind default; `:focus-visible` uchun aniq token yo'q |
 | Rang kontrasti | ⚠️ | Dark/light bor, lekin **hech qachon o'lchanmagan**; `text-ink-faint` yorug' fonda AA'dan o'tmasligi mumkin |
 | Alt text | ❌ | `ImageUploadField.vue` alt so'ramaydi; `material.altText` maydoni yo'q |
-| Subtitr / caption | ❌ | Video pleyerda `<track>` yo'q, VTT saqlanmaydi — **AA uchun majburiy** |
+| Subtitr / caption | ✅ | 9.4: pipeline videodan chiqaradi, .srt/.vtt yuklanadi, pleyerda `<track>` (playback tokeni bilan) |
 | Forma validatsiyasi | ◐ | Xato matni ko'rsatiladi, `aria-describedby` bog'lanmagan |
 | Test kirish imkoniyati | ❌ | Radio guruhlari `fieldset`/`legend`siz |
 | Video pleyer | ❌ | Klaviatura shortcut'lari va subtitr tugmasi yo'q |

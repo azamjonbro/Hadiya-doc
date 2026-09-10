@@ -12,4 +12,7 @@ export const videoStreamRouter = Router()
 // its own scoped, expiring playback token.
 videoStreamRouter.use(videoStreamRateLimiter)
 videoStreamRouter.get('/:videoId/master.m3u8', verifyPlaybackToken, videoStreamController.masterManifest)
+// Before the generic quality route on purpose: `/:videoId/:quality/:file`
+// would match this too, and "subtitles" is not a rendition.
+videoStreamRouter.get('/:videoId/subtitles/:trackId', verifyPlaybackToken, videoStreamController.subtitle)
 videoStreamRouter.get('/:videoId/:quality/:file', verifyPlaybackToken, videoStreamController.qualityFile)

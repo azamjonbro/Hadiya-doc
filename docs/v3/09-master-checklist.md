@@ -1927,8 +1927,66 @@
     5. **Zip xotirada ochiladi** (jszip): shuning uchun worker konkurentligi
     1 va ochilgan hajm sakkiz baravar chegara bilan cheklangan (zip bomba).
     Oqimli ochish kerak bo'lsa — `yauzl`, lekin hozircha kerak emas.
-- [ ] **9.4** **Subtitr / VTT** — ffmpeg pipeline'ga qo'shish, pleyerda `<track>`
+- [x] **9.4** **Subtitr / VTT** — ffmpeg pipeline'ga qo'shish, pleyerda `<track>`
   (**accessibility uchun majburiy**)
+  · Bajarildi — subtitr ikki yo'l bilan keladi: **videoning ichidan** va
+  **qo'lda yuklab**.
+    1. **Pipeline** (`processVideo.js`): `ffprobe` subtitr oqimlarini ham
+    qaytaradi, matnli kodeklar (`subrip`, `mov_text`, `ass`…) `-c:s webvtt`
+    bilan chiqariladi. Bitmap subtitrlar (DVD/PGS) **o'tkazib yuboriladi** —
+    ular matnning rasmi, OCR kerak; butun videoni shu sabab yiqitish
+    ma'nosiz. Chiqarish transcode'dan **keyin** qilinadi: buzuq subtitr
+    oqimi videoni renditionlaridan mahrum qilmasin.
+    2. **Qo'lda yuklash**: `.vtt` yoki `.srt`. SRT rad etilmaydi, **o'girib
+    olinadi** (`subtitleFormat.js`) — hamma narsa SRT eksport qiladi
+    (transkripsiya xizmati, tarjimonning Subtitle Edit'i, video bilan
+    kelgan .srt), va vergul o'rniga nuqta deb muallifni qaytarish
+    funksiyaning obro'siga tushardi.
+  · **Ikki jimgina buziladigan joy test bilan qadab qo'yildi:**
+    - VTT fayl **o'z sarlavhasini** saqlab qolsa, ikkita `WEBVTT` bo'lib,
+    ikkinchisi birinchi qatorning **matni** bo'lib chiqadi — ekranda
+    "WEBVTT" deb turadigan subtitr. Endi sarlavha bir marta yoziladi.
+    - **Qatorsiz fayl rad etiladi.** Hech narsa ko'rsatmaydigan trek
+    yo'qidan yomon: o'quvchi subtitrni yoqadi va platforma buzuq deb
+    xulosa qiladi.
+    - BOM (Windows vositalari qo'shadi) olib tashlanadi; `MM:SS.mmm`
+    shakldagi vaqt belgisi uch qismli shaklga keltiriladi (ba'zi pleyerlar
+    birinchisini o'qimaydi).
+  · **Xizmat qilish:** `<track>` elementi `Authorization` sarlavhasini
+  olib yurmaydi — brauzer uni o'zi yuklaydi, xuddi segment kabi. Shuning
+  uchun trek **o'sha qisqa muddatli playback tokeni** bilan beriladi:
+  `/video-stream/:videoId/subtitles/:trackId?token=`. Route generik
+  `/:videoId/:quality/:file` dan **oldin** qo'yilgan (aks holda "subtitles"
+  rendition deb o'qilardi). `<video>` ga `crossorigin="anonymous"` qo'shildi
+  — bo'lmasa brauzer boshqa origin'dagi trekni umuman yuklamaydi.
+  · **Pleyerda maxsus UI yo'q** va bu ataylab: pleyer native `controls`
+  ishlatadi, ya'ni `<track>` qo'shilishi bilan brauzerning o'z CC menyusi
+  paydo bo'ladi — o'zimiz yozgan menyu klaviatura va skrin-riderlar uchun
+  yomonroq bo'lardi.
+  · **Qoidalar:** bir tilga bitta trek (ikkinchi yuklash **almashtiradi** —
+  menyuda ikki xil "O'zbek" bo'lib, farqini bilib bo'lmaydi va ikkinchi
+  yuklash deyarli har doim tuzatish); bir vaqtda faqat bitta standart
+  trek; standartni o'chirsa keyingisi ko'tariladi (aks holda video
+  o'zidan yonmaydigan subtitr bilan qoladi).
+  · **Tekshirildi.** `test/subtitles.test.js` — 13 test (SRT→VTT, ikki
+  sarlavha muammosi, qatorsiz fayl, til kodlari `RU`/`ru-ru`, bitmap
+  kodeklar, birinchi trek standart bo'lishi, almashtirish, bitta standart,
+  o'chirishda ko'tarilish, qoralama videoning treklari, id bo'yicha o'qish).
+  Va **haqiqiy ffmpeg bilan**: ichida `subrip` (til `uzb`) oqimi bor MKV
+  yasab, to'liq pipeline stub S3 ustida ishga tushirildi → video READY,
+  `subtitles[0]` = `uzb`, `EMBEDDED`, 2 qator, standart, VTT obyekti
+  o'z kaliti bilan joyida.
+  · **Chetlanishlar:**
+    1. **Avtomatik transkripsiya yo'q** — nutqni matnga o'giradigan xizmat
+    ulanmagan. Bu 9.4 doirasida ham emasdi; kerak bo'lsa BLOK 10 (AI) ga
+    tegishli.
+    2. **Kodlash aniqlanmaydi**: fayl UTF-8 deb o'qiladi. Legacy Windows
+    kodlashdagi fayl rad etilmaydi, "mojibake" bo'lib ko'rinadi —
+    kodlashni taxmin qilish o'zi xatolar manbai, va bugun hamma vosita
+    UTF-8 yozadi.
+    3. **`und` tili o'zgartirilmaydi** — konteyner tilni aytmagan bo'lsa,
+    shundayligicha saqlanadi va muallif keyin nomini o'zgartiradi. O'zbekni
+    "ruscha" deb belgilab qo'yish "noma'lum" dan yomonroq.
 - [ ] **9.5** **Media kutubxona** — `mediaAsset`, papkalar, "qayerda ishlatilgan",
   `jobs/mediaCleanupQueue.js` (orphan — `course.service.js:378` dagi qarz)
 - [ ] **9.6** **Rasm optimizatsiyasi** — `sharp` → webp

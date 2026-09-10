@@ -9,6 +9,7 @@ import { ApiError } from '../../utils/ApiError.js'
 import { courseCompletionService } from '../courses/courseCompletion.service.js'
 import { logger } from '../../config/logger.js'
 import { canManageCourses } from '../courses/coursePermissions.js'
+import { subtitleService } from './subtitle.service.js'
 
 const originalsStorage = new S3StorageProvider(env.S3_BUCKET_ORIGINALS)
 
@@ -32,6 +33,18 @@ function toPublicVideo(video) {
     hasQuiz: video.hasQuiz,
     pointsEnabled: video.pointsEnabled,
     points: video.points,
+    // Caption tracks (9.4). Sent with the video rather than fetched
+    // separately: the player needs them in the same render that builds the
+    // <track> elements, and a second request would show the video without
+    // captions for a moment on every open.
+    subtitles: (video.subtitles ?? []).map((track) => ({
+      id: track._id.toString(),
+      lang: track.lang,
+      label: track.label || track.lang,
+      source: track.source,
+      isDefault: track.isDefault,
+      cueCount: track.cueCount,
+    })),
     createdAt: video.createdAt,
     updatedAt: video.updatedAt,
   }
@@ -50,6 +63,14 @@ export const videoService = {
       throw ApiError.notFound('Video not found')
     }
     return toPublicVideo(video)
+  },
+
+  /** The tracks, behind the same visibility gate as the video itself. */
+  async listSubtitles(actor, id) {
+    const video = await videoRepository.findById(id)
+    if (!video) throw ApiError.notFound('Video not found')
+    if (video.status !== 'PUBLISHED' && !canManageCourses(actor)) throw ApiError.notFound('Video not found')
+    return subtitleService.list(video)
   },
 
   async getStatus(actor, id) {

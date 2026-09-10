@@ -2599,5 +2599,29 @@
     "fullscreen": "Butun ekran",
     "exitFullscreen": "Chiqish",
     "confirmDelete": "«{title}» paketi o'chiriladi. Davom etamizmi?"
+  },
+  "subtitles": {
+    "title": "Subtitrlar",
+    "short": "Subtitr",
+    "hint": ".vtt yoki .srt yuklang — server WebVTT ga o'giradi. Videoning ichidagi subtitrlar avtomatik olinadi.",
+    "empty": "Hali subtitr yo'q. Ovozsiz ko'radigan xodim uchun bu majburiy.",
+    "chooseFile": "Fayl tanlash",
+    "add": "Qo'shish",
+    "added": "Subtitr qo'shildi",
+    "addFailed": "Subtitrni qo'shib bo'lmadi",
+    "loadFailed": "Subtitrlarni yuklab bo'lmadi",
+    "updateFailed": "O'zgartirib bo'lmadi",
+    "removeFailed": "O'chirib bo'lmadi",
+    "labelPlaceholder": "Nomi (ixtiyoriy)",
+    "langRequired": "Tilni kiriting",
+    "cueCount": "{count} qator",
+    "default": "Standart",
+    "makeDefault": "Standart qilish",
+    "embedded": "Videodan",
+    "confirmDelete": "«{lang}» subtitri o'chiriladi. Davom etamizmi?",
+    "langUz": "O'zbek",
+    "langRu": "Ruscha",
+    "langEn": "Inglizcha",
+    "langOther": "Boshqa…"
   }
 }

@@ -6,6 +6,7 @@ import { ATTENTION_EVENTS } from '@lms/shared'
 import { proctorApi } from '@/services/proctor'
 import { useAuthStore } from '@/stores/auth'
 import { videoAccessApi } from '@/services/videoAccess'
+import { videosApi } from '@/services/videos'
 import { API_BASE_URL } from '@/services/apiBase'
 import { coursesApi } from '@/services/courses'
 import { useVideoAnalytics } from '@/composables/useVideoAnalytics'
@@ -28,6 +29,18 @@ const { t } = useI18n()
 const auth = useAuthStore()
 const videoEl = ref(null)
 const errorMessage = ref('')
+/**
+ * Caption tracks (9.4).
+ *
+ * Rendered as `<track>` children, which means the browser's own captions
+ * menu turns them on — the player uses native controls, so there is nothing
+ * to build. The browser fetches a track itself and attaches no
+ * Authorization header, so the URL carries the same playback token the
+ * segments do, and the `<video>` element needs `crossorigin` for the
+ * cross-origin fetch to be allowed at all.
+ */
+const subtitles = ref([])
+const subtitleToken = ref('')
 const now = ref(new Date())
 const ready = ref(false)
 
@@ -209,6 +222,24 @@ function manifestUrl(token) {
   return `${apiBase()}/video-stream/${props.videoId}/master.m3u8?token=${token}`
 }
 
+function subtitleUrl(track) {
+  return `${apiBase()}/video-stream/${props.videoId}/subtitles/${track.id}?token=${subtitleToken.value}`
+}
+
+/**
+ * Loaded alongside the token rather than with the video's own request,
+ * because the player is given an id and nothing else. Failure is silent on
+ * purpose: no captions is a worse video, not a broken one, and a banner
+ * over a playing lesson helps nobody.
+ */
+async function loadSubtitles() {
+  try {
+    subtitles.value = await videosApi.listSubtitles(props.videoId)
+  } catch {
+    subtitles.value = []
+  }
+}
+
 // `renew` carries the token in hand, which is what keeps a lesson already
 // playing from being stopped by the face check on its two-minute refresh.
 async function fetchToken({ renew = false } = {}) {
@@ -228,6 +259,10 @@ async function fetchToken({ renew = false } = {}) {
 async function setup() {
   try {
     const token = await fetchToken()
+    // The tracks are rendered from this, so it has to be the token the
+    // element will be built with — not one refreshed two minutes later.
+    subtitleToken.value = token ?? ''
+    await loadSubtitles()
 
     if (Hls.isSupported()) {
       hls = new Hls({
@@ -337,7 +372,21 @@ onBeforeUnmount(() => {
     <div v-if="!ready" class="absolute inset-0 z-10 flex aspect-video w-full items-center justify-center bg-surface-2">
       <Icon name="loader" size="28" class="animate-spin text-ink-faint" />
     </div>
-    <video ref="videoEl" controls class="aspect-video w-full" />
+    <!-- `crossorigin` is what makes the caption fetch legal: without it the
+         browser refuses a cross-origin track and the menu stays empty.
+         `anonymous` rather than `use-credentials` because the token in the
+         URL is the authorisation, not a cookie. -->
+    <video ref="videoEl" controls crossorigin="anonymous" class="aspect-video w-full">
+      <track
+        v-for="track in subtitles"
+        :key="track.id"
+        kind="subtitles"
+        :src="subtitleUrl(track)"
+        :srclang="track.lang"
+        :label="track.label || track.lang"
+        :default="track.isDefault"
+      />
+    </video>
     <div
       class="pointer-events-none absolute select-none rounded bg-black/40 px-2 py-1 font-mono text-[10px] leading-tight text-white/70"
       :class="WATERMARK_POSITIONS[positionIndex]"

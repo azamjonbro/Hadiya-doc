@@ -2599,5 +2599,29 @@
     "fullscreen": "Full screen",
     "exitFullscreen": "Exit",
     "confirmDelete": "The package “{title}” will be deleted. Continue?"
+  },
+  "subtitles": {
+    "title": "Captions",
+    "short": "Captions",
+    "hint": "Upload a .vtt or .srt — the server converts it to WebVTT. Captions inside the video file are extracted automatically.",
+    "empty": "No captions yet. For anyone watching without sound, these are not optional.",
+    "chooseFile": "Choose a file",
+    "add": "Add",
+    "added": "Caption track added",
+    "addFailed": "Could not add the track",
+    "loadFailed": "Could not load the tracks",
+    "updateFailed": "Could not change it",
+    "removeFailed": "Could not remove it",
+    "labelPlaceholder": "Label (optional)",
+    "langRequired": "Enter a language",
+    "cueCount": "{count} cues",
+    "default": "Default",
+    "makeDefault": "Make default",
+    "embedded": "From the video",
+    "confirmDelete": "The “{lang}” track will be deleted. Continue?",
+    "langUz": "Uzbek",
+    "langRu": "Russian",
+    "langEn": "English",
+    "langOther": "Other…"
   }
 }

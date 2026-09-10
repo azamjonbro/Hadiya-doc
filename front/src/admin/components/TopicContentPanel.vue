@@ -15,6 +15,7 @@ import MaterialUploadForm from '@/admin/components/MaterialUploadForm.vue'
 import MaterialViewer from '@/components/MaterialViewer.vue'
 import AssessmentEditor from '@/admin/components/AssessmentEditor.vue'
 import LessonEditor from '@/admin/components/LessonEditor.vue'
+import SubtitleManager from '@/admin/components/SubtitleManager.vue'
 import ScormUploadForm from '@/admin/components/ScormUploadForm.vue'
 import VideoReportPanel from '@/admin/components/VideoReportPanel.vue'
 import ProctorAlertsPanel from '@/admin/components/ProctorAlertsPanel.vue'
@@ -63,6 +64,8 @@ const loading = ref(true)
 const errorMessage = ref('')
 
 const expandedReportVideoId = ref(null)
+// Caption tracks (9.4), opened per video like the quiz editor.
+const expandedSubtitleVideoId = ref(null)
 const expandedQuizVideoId = ref(null)
 const expandedAssessmentId = ref(null)
 const pointsSaving = ref(null)
@@ -356,6 +359,14 @@ onBeforeUnmount(() => {
                 >
                   {{ t('quiz.title') }}
                 </AppButton>
+                <AppButton
+                  :variant="item.subtitles?.length ? 'outline' : 'ghost'"
+                  size="sm"
+                  icon="message-square"
+                  @click="expandedSubtitleVideoId = expandedSubtitleVideoId === item.id ? null : item.id"
+                >
+                  {{ t('subtitles.short') }}<template v-if="item.subtitles?.length"> ({{ item.subtitles.length }})</template>
+                </AppButton>
                 <AppButton variant="ghost" size="sm" @click="toggleVideoStatus(item)">
                   {{ item.status === 'PUBLISHED' ? t('videos.unpublish') : t('videos.publish') }}
                 </AppButton>
@@ -390,6 +401,11 @@ onBeforeUnmount(() => {
             :video-id="item.id"
             :has-quiz="item.hasQuiz"
             @updated="(hasQuiz) => onQuizUpdated(item, hasQuiz)"
+          />
+          <SubtitleManager
+            v-if="expandedSubtitleVideoId === item.id"
+            :video-id="item.id"
+            @changed="load"
           />
           <VideoReportPanel v-if="expandedReportVideoId === item.id" :video-id="item.id" />
           <ProctorAlertsPanel v-if="expandedReportVideoId === item.id" class="mt-3" :video-id="item.id" />

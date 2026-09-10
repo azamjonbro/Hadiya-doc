@@ -3,6 +3,7 @@ import { S3StorageProvider } from '../../storage/S3StorageProvider.js'
 import { env } from '../../config/env.js'
 import { streamToString } from '../../utils/streamToString.js'
 import { ApiError } from '../../utils/ApiError.js'
+import { subtitleService } from './subtitle.service.js'
 
 const processedStorage = new S3StorageProvider(env.S3_BUCKET_PROCESSED)
 
@@ -37,6 +38,20 @@ async function loadReadyVideo(videoId) {
 }
 
 export const videoStreamService = {
+  /**
+   * A caption track, on the same authorisation as the segments (9.4).
+   *
+   * A `<track>` element carries no Authorization header — the browser
+   * fetches it itself, exactly like a segment — so it rides the same
+   * short-lived playback token the rest of the player uses. The video does
+   * not have to be READY for this: captions are still readable while a
+   * re-transcode is running, and there is nothing in a VTT that playback
+   * gates protect.
+   */
+  async getSubtitle(videoId, trackId) {
+    return subtitleService.openTrack(videoId, trackId)
+  },
+
   async getMasterManifest(videoId, token) {
     const video = await loadReadyVideo(videoId)
     const body = await processedStorage.getObject(video.hlsManifestKey)
