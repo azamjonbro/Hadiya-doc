@@ -6,6 +6,8 @@ import { ReviewResponse } from '../../models/reviewResponse.model.js'
 import { User } from '../../models/user.model.js'
 import { competencyService } from '../competencies/competency.service.js'
 import { auditLogRepository } from '../../repositories/auditLog.repository.js'
+import { notificationService } from '../notifications/notification.service.js'
+import { logger } from '../../config/logger.js'
 import { ApiError } from '../../utils/ApiError.js'
 
 const canManage = (actor) => Boolean(actor?.permissions?.includes(PERMISSIONS.REVIEW360_MANAGE))
@@ -425,6 +427,34 @@ export const review360Service = {
       entityId: String(cycle._id),
       metadata: { name: cycle.name, subjects: subjects.length, assignments: rows.length },
     })
+
+    // One message per rater, not per assignment: a manager of eight lands in
+    // eight rows here, and eight identical notices about the same cycle is
+    // how a person learns to ignore the bell. The window is also short and
+    // fixed — without this the questionnaires sat unseen until the cycle
+    // closed empty, because nothing else tells a rater they were named.
+    const perRater = new Map()
+    for (const row of rows) {
+      const raterId = String(row.raterId)
+      perRater.set(raterId, (perRater.get(raterId) ?? 0) + 1)
+    }
+    await notificationService
+      .notifyMany(
+        [...perRater].map(([raterId, subjectCount]) => ({
+          userId: raterId,
+          type: 'REVIEW360_INVITED',
+          vars: {
+            cycleName: cycle.name,
+            subjectCount,
+            deadline: cycle.dueAt ? cycle.dueAt.toISOString().slice(0, 10) : '',
+          },
+          relatedEntityType: 'ReviewCycle',
+          relatedEntityId: String(cycle._id),
+        }))
+      )
+      // Best-effort, as everywhere else: the assignments are already
+      // written, and a mail outage must not roll a launch back.
+      .catch((error) => logger.warn('360 invite failed', { error: error.message }))
 
     return toPublicCycle(cycle.toObject(), { invited: rows.length })
   },

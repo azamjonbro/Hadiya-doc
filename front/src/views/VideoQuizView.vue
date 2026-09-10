@@ -94,33 +94,50 @@ onMounted(load)
 </script>
 
 <template>
-  <div class="mx-auto max-w-3xl px-6 py-8">
-    <button
-      type="button"
-      class="mb-4 flex items-center gap-1.5 text-small text-ink-muted transition-default hover:text-ink"
-      @click="backToVideo"
-    >
-      <Icon name="chevron-left" size="16" />
-      {{ video?.title ?? t('quiz.backToVideo') }}
-    </button>
-
-    <Skeleton v-if="loading" class="h-96 w-full" />
-    <ErrorState v-else-if="!quiz" :title="errorMessage || t('quiz.notFound')" @retry="load" />
+  <div class="min-h-screen bg-bg pb-12">
+    <div v-if="loading" class="mx-auto max-w-6xl px-6 py-8 mt-12 space-y-3">
+      <Skeleton class="h-10 w-64" />
+      <Skeleton class="h-64 w-full rounded-xl" />
+    </div>
+    <div v-else-if="!quiz" class="mx-auto max-w-3xl px-6 py-12">
+      <ErrorState :title="errorMessage || t('quiz.notFound')" @retry="load" />
+    </div>
 
     <template v-else>
-      <div class="flex items-start gap-3 bg-surface p-6 rounded-md border border-border shadow-sm">
-        <span class="flex h-11 w-11 shrink-0 items-center justify-center rounded bg-primary/10 text-primary">
-          <Icon name="file-text" size="20" />
-        </span>
-        <div class="min-w-0">
-          <h1 class="text-h2 text-ink">{{ t('quiz.title') }}</h1>
-          <p v-if="video" class="mt-1 text-small text-ink-muted">{{ video.title }}</p>
-          <p class="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-caption text-ink-faint">
+      <!-- Full Width Hero Banner -->
+      <div class="relative w-full bg-surface-2 flex items-end pt-24 pb-10">
+        <div class="absolute inset-0 bg-gradient-to-br from-indigo-900 to-slate-900"></div>
+        <div class="absolute inset-0 opacity-20 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxwYXRoIGQ9Ik0zNiAzNHYtNGgtMnY0aC00djJoNHY0aDJ2LTRoNHYtMmgtNHptMC0zMFYwaC0ydjRoLTR2Mmg0djRoMnYtNGg0VjRoLTR6TTYuNiAyNy41MmwxLjc2LTMuMy0xLjc2LTMuM0g0LjRsLTEuNzYgMy4zIDEuNzYgMy4zaDIuMnptMjMuNi0xMy4yTDI4LjQ0IDExbDEuNzYtMy4zSDMyLjRsMS43NiAzLjMtMS43NiAzLjNoLTIuMnptMjMuNi0xMy4yTDUyLjA0LS4ybDEuNzYtMy4zSDU2bDEuNzYgMy4zLTEuNzYgMy4zaC0yLjJ6IiBmaWxsPSIjZmZmZmZmIiBmaWxsLW9wYWNpdHk9IjAuMSIvPjwvZz48L3N2Zz4=')]"></div>
+        
+        <div class="relative z-10 w-full mx-auto max-w-[1440px] px-6 lg:px-8">
+          <button
+            type="button"
+            class="mb-6 flex items-center gap-1.5 text-small font-medium text-white/70 transition-default hover:text-white"
+            @click="backToVideo"
+          >
+            <Icon name="chevron-left" size="16" />
+            {{ video?.title ?? t('quiz.backToVideo') }}
+          </button>
+          
+          <div class="flex items-center gap-4 mb-4">
+            <span class="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl bg-primary/20 text-primary border border-primary/30 backdrop-blur-sm shadow-inner">
+              <Icon name="file-text" size="28" />
+            </span>
+            <div class="min-w-0">
+              <h1 class="text-4xl font-bold text-white leading-tight drop-shadow-md">{{ t('quiz.title') }}</h1>
+              <p v-if="video" class="mt-2 text-body text-white/80 drop-shadow">{{ video.title }}</p>
+            </div>
+          </div>
+          <p class="flex flex-wrap items-center gap-x-3 gap-y-1 text-small text-white/70 font-medium">
             <span>{{ t('assessment.questionCount', { count: quiz.questions.length }) }}</span>
+            <span>·</span>
             <span>{{ t('assessment.passScore', { value: quiz.passScorePercent }) }}</span>
           </p>
         </div>
       </div>
+
+      <div class="mx-auto max-w-[1440px] px-6 lg:px-8 mt-8 grid grid-cols-1 lg:grid-cols-4 gap-8">
+        <div class="lg:col-span-3">
 
       <p v-if="errorMessage" class="mt-4 text-small text-danger">{{ errorMessage }}</p>
 
@@ -157,7 +174,7 @@ onMounted(load)
       </AppCard>
 
       <!-- Questions -->
-      <AppCard v-else class="mt-6 border border-border shadow-sm">
+      <AppCard v-else class="mt-6 border border-border shadow-sm rounded-xl">
         <div class="space-y-6">
           <div v-for="(question, qIndex) in quiz.questions" :key="question.id">
             <p class="text-small font-medium text-ink">{{ qIndex + 1 }}. {{ question.text }}</p>
@@ -194,6 +211,8 @@ onMounted(load)
           </AppButton>
         </div>
       </AppCard>
+        </div>
+      </div>
     </template>
   </div>
 </template>

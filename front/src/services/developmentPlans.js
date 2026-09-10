@@ -39,6 +39,13 @@ export const developmentPlansApi = {
   review(id, payload) {
     return http.post(`/development-plans/${id}/review`, payload).then((r) => r.data.data)
   },
+  // Paying CPE credits without a full review, for a goal finished after the
+  // plan was approved. Idempotent per goal — a second click credits nothing
+  // more — but it is still shown behind a confirm dialog, because the person
+  // pressing it cannot know that.
+  accrue(id) {
+    return http.post(`/development-plans/${id}/credits`).then((r) => r.data.data)
+  },
   // The competency gaps (13.1) a plan for this person would be written
   // against, each carrying the courses that close it.
   suggestions(userId) {

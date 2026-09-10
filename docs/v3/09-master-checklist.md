@@ -3408,11 +3408,34 @@
 
 ## BLOK 14 — Regressiya himoyasi (doimiy)
 
-- [ ] **14.1** `test/regression.test.js` — **AT-R1…AT-R12** (§20)
-- [ ] **14.2** `test/grading.test.js` — 13 savol turi × to'g'ri/noto'g'ri/qisman
-- [ ] **14.3** `test/completion.test.js` — AT-01…AT-04
-- [ ] **14.4** `test/scope.test.js` — AT-18…AT-21
-- [ ] **14.5** Har migratsiya uchun `--dry-run` testi
+- [x] **14.1** `test/regression.test.js` — **AT-R1…AT-R12** (§20)
+  AT-R1…AT-R12 ning har biri alohida `describe` bilan. Har biri buzilgan
+  taqdirda qaysi xatti-harakat yo'qolishini aytadi, ya'ni yiqilgan test
+  o'zi hisobot bo'ladi.
+- [x] **14.2** `test/grading.test.js` — savol turlari × to'g'ri/noto'g'ri/qisman
+  Ro'yxatda 13 tur deyilgan, modelda **14** ta (`SELECT_LIST` ham) —
+  hammasi qamrab olindi va grid **yopiq**: `Object.keys(CASES)` bilan
+  `QUESTION_TYPES` tengligi tekshiriladi, ya'ni modelga yangi tur
+  qo'shib bu faylni unutish shu yerda yiqiladi. Savollar haqiqiy hujjat
+  sifatida saqlanib qayta o'qiladi (`Mixed` maydon ichida ichma-ich
+  massiv jimgina o'zgarishi mumkin). Qisman bahosi bo'lmagan turlar
+  uchun tasdiq: partial credit yoqilganda ham **hech narsa o'zgarmaydi**.
+- [x] **14.3** `test/completion.test.js` — AT-01…AT-04
+- [x] **14.4** `test/scope.test.js` — AT-18…AT-21
+  AT-18 ning ikkinchi yarmi (**`auditLogs` da `ACCESS_DENIED`**) kodda
+  umuman yo'q edi — 403 qaytardi, lekin kim urinib ko'rgani hech qayerda
+  qolmasdi. `assertManagerCanView` endi qatorni yozadi (kim, kimni,
+  qaysi bo'lim, sabab) va audit yozuvi 403 ni 500 ga aylantirmaydi.
+- [x] **14.5** Har migratsiya uchun `--dry-run` testi
+  13 ta skriptning hammasi qamrab olingan: urug' ekiladi, skript
+  **haqiqiy child process** sifatida bayroq bilan ishga tushiriladi,
+  keyin kolleksiya sanoqlari va urug'langan hujjat **xom holda**
+  solishtiriladi. Bu fayl `npm test` ichida **alohida, ketma-ket
+  o'tishda** yuguradi — sanoq butun bazaga tegishli, yonma-yon
+  ishlayotgan boshqa fayl esa o'sha kolleksiyalarga yozadi (shu sababli
+  to'rt band yolg'ondan yiqilgan edi). Sanoqni fikstura hujjatlariga
+  toraytirish muqobili rad etildi: u aynan «boshqa joyda hujjat paydo
+  bo'ldi» holatini ko'rmay qo'yardi.
 
 ---
 

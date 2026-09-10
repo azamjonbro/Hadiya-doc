@@ -58,6 +58,9 @@ export const TEMPLATE_TYPES = [
   'COMPLIANCE_RETRAINING_DUE',
   'ATTENTION_ALERT',
   'PROCTORING_FOREIGN_FACE',
+  'REVIEW360_INVITED',
+  'DEVPLAN_APPROVED',
+  'DEVPLAN_REVIEWED',
 ]
 
 // Appended to the EMAIL body only. In-app and push already sit inside the
@@ -889,6 +892,80 @@ export const TEMPLATE_SEED = {
       subject: 'Proctoring alert: {{learnerName}}',
       body: 'While watching "{{videoTitle}}", {{reason}}. The snapshot is available in the platform.',
       push: 'Proctoring: {{learnerName}}',
+    },
+  },
+
+  // 13.2. Launching a cycle used to write the questionnaires and tell
+  // nobody — a rater only found out by happening to open /reviews, which
+  // for most people is never. The window is short and fixed, so an invite
+  // nobody sees is a cycle that closes empty.
+  REVIEW360_INVITED: {
+    placeholders: ['userName', 'cycleName', 'subjectCount', 'deadline', 'appUrl'],
+    uz: {
+      subject: '360° baholash: {{cycleName}}',
+      body: '{{userName}}, sizdan {{subjectCount}} hamkasb haqida fikr so\'ralmoqda. Muddat: {{deadline}}.',
+      push: '360° baholash: {{cycleName}}',
+      defaults: { deadline: 'belgilanmagan' },
+    },
+    ru: {
+      subject: '360° оценка: {{cycleName}}',
+      body: '{{userName}}, вас просят оценить коллег ({{subjectCount}}). Срок: {{deadline}}.',
+      push: '360° оценка: {{cycleName}}',
+      defaults: { deadline: 'не указан' },
+    },
+    en: {
+      subject: '360° review: {{cycleName}}',
+      body: '{{userName}}, you have been asked to review {{subjectCount}} colleague(s). Due {{deadline}}.',
+      push: '360° review: {{cycleName}}',
+      defaults: { deadline: 'with no set date' },
+    },
+  },
+
+  // 13.4. Both of these were already being sent by
+  // developmentPlan.service.js with no template behind them, which meant
+  // the recipient got a notification titled `DEVPLAN_APPROVED` and an
+  // empty body — and no email at all.
+  DEVPLAN_APPROVED: {
+    placeholders: ['userName', 'planTitle', 'decision', 'appUrl'],
+    uz: {
+      subject: 'Rivojlanish rejasi tasdiqlandi: {{planTitle}}',
+      body: '{{userName}}, "{{planTitle}}" rejangiz ko\'rib chiqildi va tasdiqlandi.',
+      push: 'Reja tasdiqlandi: {{planTitle}}',
+      defaults: { decision: 'APPROVED' },
+    },
+    ru: {
+      subject: 'План развития утверждён: {{planTitle}}',
+      body: '{{userName}}, ваш план «{{planTitle}}» рассмотрен и утверждён.',
+      push: 'План утверждён: {{planTitle}}',
+      defaults: { decision: 'APPROVED' },
+    },
+    en: {
+      subject: 'Development plan approved: {{planTitle}}',
+      body: '{{userName}}, your plan "{{planTitle}}" has been reviewed and approved.',
+      push: 'Plan approved: {{planTitle}}',
+      defaults: { decision: 'APPROVED' },
+    },
+  },
+
+  DEVPLAN_REVIEWED: {
+    placeholders: ['userName', 'planTitle', 'decision', 'appUrl'],
+    uz: {
+      subject: 'Rivojlanish rejangiz ko\'rib chiqildi: {{planTitle}}',
+      body: '{{userName}}, "{{planTitle}}" rejangiz bo\'yicha qaror: {{decision}}. Izohlarni platformada o\'qing.',
+      push: 'Reja ko\'rib chiqildi: {{planTitle}}',
+      defaults: { decision: 'ko\'rib chiqildi' },
+    },
+    ru: {
+      subject: 'Ваш план развития рассмотрен: {{planTitle}}',
+      body: '{{userName}}, решение по плану «{{planTitle}}»: {{decision}}. Комментарии — на платформе.',
+      push: 'План рассмотрен: {{planTitle}}',
+      defaults: { decision: 'рассмотрен' },
+    },
+    en: {
+      subject: 'Your development plan was reviewed: {{planTitle}}',
+      body: '{{userName}}, the decision on "{{planTitle}}" is: {{decision}}. The comments are on the platform.',
+      push: 'Plan reviewed: {{planTitle}}',
+      defaults: { decision: 'reviewed' },
     },
   },
 }

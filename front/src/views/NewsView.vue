@@ -59,20 +59,40 @@ async function loadMore() {
 onMounted(load)
 </script>
 
-<template>
-  <div class="mx-auto max-w-6xl px-6 py-8">
-    <h1 class="text-h1 text-ink">{{ t('news.title') }}</h1>
+  <div class="min-h-screen bg-bg pb-12">
+    <!-- Full Width Hero Banner -->
+    <div class="relative w-full bg-primary flex flex-col justify-center items-center py-24 px-6">
+      <div class="absolute inset-0 bg-gradient-to-r from-primary via-primary-hover to-primary"></div>
+      <div class="absolute inset-0 opacity-10 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxwYXRoIGQ9Ik0zNiAzNHYtNGgtMnY0aC00djJoNHY0aDJ2LTRoNHYtMmgtNHptMC0zMFYwaC0ydjRoLTR2Mmg0djRoMnYtNGg0VjRoLTR6TTYuNiAyNy41MmwxLjc2LTMuMy0xLjc2LTMuM0g0LjRsLTEuNzYgMy4zIDEuNzYgMy4zaDIuMnptMjMuNi0xMy4yTDI4LjQ0IDExbDEuNzYtMy4zSDMyLjRsMS43NiAzLjMtMS43NiAzLjNoLTIuMnptMjMuNi0xMy4yTDUyLjA0LS4ybDEuNzYtMy4zSDU2bDEuNzYgMy4zLTEuNzYgMy4zaC0yLjJ6IiBmaWxsPSIjZmZmZmZmIiBmaWxsLW9wYWNpdHk9IjAuMSIvPjwvZz48L3N2Zz4=')]"></div>
+      <h1 class="relative z-10 text-3xl md:text-5xl font-bold text-white tracking-widest uppercase text-center drop-shadow-md">
+        Bosh direktorning<br/>Murojaati
+      </h1>
+    </div>
 
-    <p v-if="errorMessage" class="mt-4 text-small text-danger">{{ errorMessage }}</p>
-
-    <template v-if="loading">
-      <Skeleton class="mt-6 h-72 w-full" />
-      <div class="mt-8 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
-        <Skeleton v-for="i in 6" :key="i" class="h-56 w-full" />
+    <!-- Search Band -->
+    <div class="bg-surface border-b border-border shadow-sm">
+      <div class="mx-auto max-w-[1440px] px-6 lg:px-8 flex flex-col sm:flex-row sm:items-center justify-between gap-4 py-4">
+        <h2 class="text-h2 text-ink">{{ t('news.title') }}</h2>
+        <div class="flex items-center gap-2">
+          <div class="flex items-center gap-2 rounded-lg border border-border bg-surface-2 px-3 py-2 text-ink-faint focus-within:border-primary/50 focus-within:bg-surface focus-within:shadow-sm w-full sm:w-64 transition-default">
+            <Icon name="search" size="16" />
+            <input type="text" :placeholder="t('users.filters.search')" class="w-full bg-transparent text-small text-ink placeholder:text-ink-muted focus:outline-none" />
+          </div>
+        </div>
       </div>
-    </template>
+    </div>
 
-    <template v-else-if="items.length">
+    <div class="mx-auto w-full max-w-[1440px] px-6 lg:px-8 pt-8">
+      <p v-if="errorMessage" class="mb-4 text-small text-danger">{{ errorMessage }}</p>
+
+      <template v-if="loading">
+        <Skeleton class="h-96 w-full rounded-xl" />
+        <div class="mt-8 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          <Skeleton v-for="i in 6" :key="i" class="h-64 w-full rounded-xl" />
+        </div>
+      </template>
+
+      <template v-else-if="items.length">
       <!-- Featured -->
       <AppCard padding="none" hover class="mt-6 cursor-pointer overflow-hidden border border-border shadow-sm" @click="router.push(`/news/${featured.id}`)">
         <div class="flex flex-col lg:flex-row">
@@ -101,37 +121,38 @@ onMounted(load)
       <section class="mt-10 border-t border-border pt-8">
         <h2 class="mb-5 text-h2 text-ink">{{ t('news.latest') }}</h2>
         <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          <AppCard
-            v-for="item in rest"
-            :key="item.id"
-            padding="none"
-            hover
-            class="flex cursor-pointer flex-col overflow-hidden border border-border shadow-sm"
-            @click="router.push(`/news/${item.id}`)"
-          >
-            <div
-              class="flex h-40 items-center justify-center bg-surface-2 border-b border-border text-ink-faint"
-              :style="item.cover ? `background-image:url(${item.cover});background-size:cover;background-position:center` : ''"
+            <AppCard
+              v-for="item in rest"
+              :key="item.id"
+              padding="none"
+              hover
+              class="flex cursor-pointer flex-col overflow-hidden border border-border shadow-sm rounded-xl hover:shadow-md hover:-translate-y-1 transition-all duration-300"
+              @click="router.push(`/news/${item.id}`)"
             >
-              <Icon v-if="!item.cover" name="newspaper" size="24" />
-            </div>
-            <div class="flex flex-1 flex-col p-5">
-              <h3 class="line-clamp-2 text-small font-semibold text-ink leading-snug">{{ item.title }}</h3>
-              <div class="mt-auto pt-4 flex items-center gap-1.5 text-caption font-medium text-ink-muted">
-                <span>{{ new Date(item.publishAt).toLocaleDateString(locale) }}</span>
-                <span>·</span>
-                <span>{{ readingMinutes(item.content) }} {{ t('common.minRead') }}</span>
+              <div
+                class="flex h-48 items-center justify-center bg-surface-2 border-b border-border text-ink-faint"
+                :style="item.cover ? `background-image:url(${item.cover});background-size:cover;background-position:center` : ''"
+              >
+                <Icon v-if="!item.cover" name="newspaper" size="32" />
               </div>
-            </div>
-          </AppCard>
+              <div class="flex flex-1 flex-col p-6">
+                <h3 class="line-clamp-2 text-small font-semibold text-ink leading-snug">{{ item.title }}</h3>
+                <div class="mt-auto pt-4 flex items-center gap-1.5 text-caption font-medium text-ink-muted">
+                  <span>{{ new Date(item.publishAt).toLocaleDateString(locale) }}</span>
+                  <span>·</span>
+                  <span>{{ readingMinutes(item.content) }} {{ t('common.minRead') }}</span>
+                </div>
+              </div>
+            </AppCard>
+          </div>
+        </section>
+
+        <div v-if="nextCursor" class="mt-10 flex justify-center">
+          <AppButton variant="outline" size="lg" @click="loadMore">{{ t('common.loadMore') }}</AppButton>
         </div>
-      </section>
+      </template>
 
-      <div v-if="nextCursor" class="mt-8 flex justify-center">
-        <AppButton variant="outline" @click="loadMore">{{ t('common.loadMore') }}</AppButton>
-      </div>
-    </template>
-
-    <EmptyState v-else icon="newspaper" :title="t('news.empty')" class="mt-6" />
+      <EmptyState v-else icon="newspaper" :title="t('news.empty')" class="mt-12" />
+    </div>
   </div>
 </template>

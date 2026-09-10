@@ -101,29 +101,77 @@ async function cancel() {
 onMounted(load)
 </script>
 
-<template>
-  <div class="mx-auto max-w-2xl px-6 py-8">
-    <button type="button" class="flex items-center gap-1.5 text-small text-ink-muted hover:text-ink" @click="router.push('/events')">
-      <Icon name="chevron-left" size="16" />
-      {{ t('events.title') }}
-    </button>
-
-    <div v-if="loading" class="mt-6 space-y-3">
+  <div class="min-h-screen bg-bg pb-12">
+    <div v-if="loading" class="mx-auto max-w-6xl px-6 py-8 mt-12 space-y-3">
       <Skeleton class="h-10 w-64" />
       <Skeleton class="h-40 w-full rounded-xl" />
     </div>
 
     <template v-else-if="event">
-      <div class="mt-4 flex flex-wrap items-center gap-2">
-        <Badge variant="neutral" size="sm">{{ t('eventTypes.' + event.type) }}</Badge>
-        <Badge v-if="isCancelled" variant="danger" size="sm">{{ t('events.cancelled') }}</Badge>
-        <Badge v-else-if="isPast" variant="neutral" size="sm">{{ t('events.past') }}</Badge>
-        <Badge v-if="event.mode !== 'OFFLINE'" variant="info" size="sm">{{ t(`events.mode.${event.mode}`) }}</Badge>
+      <!-- Full Width Hero Banner -->
+      <div class="relative w-full bg-surface-2 flex items-end pt-24 pb-10">
+        <div class="absolute inset-0 bg-gradient-to-br from-indigo-900 via-purple-900 to-indigo-800"></div>
+        <div class="absolute inset-0 opacity-20 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAiIGhlaWdodD0iMjAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGNpcmNsZSBjeD0iMiIgY3k9IjIiIHI9IjIiIGZpbGw9IiNmZmYiIGZpbGwtb3BhY2l0eT0iMC4xNSIvPjwvc3ZnPg==')]"></div>
+        
+        <div class="relative z-10 w-full mx-auto max-w-[1440px] px-6 lg:px-8">
+          <button type="button" class="flex items-center gap-1.5 text-small font-medium text-white/70 transition-default hover:text-white mb-6" @click="router.push('/events')">
+            <Icon name="chevron-left" size="16" />
+            {{ t('events.title') }}
+          </button>
+          
+          <div class="flex items-center gap-2 mb-3">
+            <Badge variant="primary" class="bg-white/20 text-white border-white/30 backdrop-blur-sm">{{ t('eventTypes.' + event.type) }}</Badge>
+            <Badge v-if="isCancelled" variant="danger" class="backdrop-blur-sm">{{ t('events.cancelled') }}</Badge>
+            <Badge v-else-if="isPast" variant="neutral" class="bg-white/20 text-white border-white/30 backdrop-blur-sm">{{ t('events.past') }}</Badge>
+            <Badge v-if="event.mode !== 'OFFLINE'" variant="info" class="bg-info/20 text-info border-info/30 backdrop-blur-sm">{{ t(`events.mode.${event.mode}`) }}</Badge>
+          </div>
+          
+          <div class="flex flex-col md:flex-row md:items-end justify-between gap-6">
+            <div class="flex-1 max-w-3xl">
+              <h1 class="text-4xl font-bold text-white leading-tight drop-shadow-md">{{ event.title }}</h1>
+              <p v-if="event.description" class="mt-3 text-body text-white/80 line-clamp-2 drop-shadow">{{ event.description }}</p>
+            </div>
+            
+            <div class="shrink-0 w-full md:w-80">
+              <AppCard v-if="event.requiresRegistration && !isCancelled && !isPast" padding="sm" class="bg-white/10 border border-white/20 backdrop-blur-md shadow-xl text-white">
+                <template v-if="isQueued">
+                  <p class="text-small font-semibold">{{ t('events.youAreQueued', { position: registration.waitlistPosition }) }}</p>
+                  <p class="mt-1 text-caption text-white/70">{{ t('events.queueHint') }}</p>
+                  <AppButton class="mt-3 w-full" variant="secondary" :loading="working" @click="cancel">
+                    {{ t('events.leaveQueue') }}
+                  </AppButton>
+                </template>
+                <template v-else-if="isSeated">
+                  <p class="flex items-center gap-1.5 text-small font-semibold text-success-subtle">
+                    <Icon name="check-circle" size="16" />
+                    {{ t('events.youHaveASeat') }}
+                  </p>
+                  <AppButton class="mt-3 w-full text-danger hover:bg-danger/10" variant="secondary" :loading="working" @click="cancel">
+                    {{ t('events.giveUpSeat') }}
+                  </AppButton>
+                </template>
+                <template v-else>
+                  <p class="text-small text-white/80">
+                    {{ full ? t('events.fullHint') : t('events.registerHint') }}
+                  </p>
+                  <AppButton class="mt-3 w-full shadow-lg shadow-primary/20" variant="primary" :loading="working" @click="register">
+                    {{ full ? t('events.joinQueue') : t('events.register') }}
+                  </AppButton>
+                </template>
+              </AppCard>
+              <p v-else-if="isCancelled" class="flex items-center gap-1.5 text-small text-danger-subtle p-4 bg-danger/10 rounded-lg backdrop-blur-sm border border-danger/20">
+                <Icon name="alert-circle" size="16" />
+                {{ event.cancelReason || t('events.cancelledHint') }}
+              </p>
+            </div>
+          </div>
+        </div>
       </div>
-      <h1 class="mt-2 text-h1 text-ink">{{ event.title }}</h1>
-      <p v-if="event.description" class="mt-2 text-small text-ink-muted">{{ event.description }}</p>
 
-      <AppCard class="mt-6 space-y-3 p-5 border border-border shadow-sm">
+      <div class="mx-auto max-w-[1440px] px-6 lg:px-8 mt-8 grid grid-cols-1 lg:grid-cols-4 gap-8">
+        <div class="lg:col-span-3">
+          <AppCard class="space-y-4 p-6 border border-border shadow-sm rounded-xl">
+
         <div class="flex items-center gap-2 text-small text-ink">
           <Icon name="clock" size="15" class="shrink-0 text-ink-faint" />
           {{ formatWhen(event.startAt) }} — {{ new Date(event.endAt).toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' }) }}
@@ -156,37 +204,7 @@ onMounted(load)
         </div>
       </AppCard>
 
-      <AppCard v-if="event.requiresRegistration && !isCancelled && !isPast" class="mt-4 p-5 border border-border shadow-sm">
-        <template v-if="isQueued">
-          <p class="text-small font-medium text-ink">{{ t('events.youAreQueued', { position: registration.waitlistPosition }) }}</p>
-          <p class="mt-1 text-caption text-ink-muted">{{ t('events.queueHint') }}</p>
-          <AppButton class="mt-3" variant="secondary" :loading="working" @click="cancel">
-            {{ t('events.leaveQueue') }}
-          </AppButton>
-        </template>
-        <template v-else-if="isSeated">
-          <p class="flex items-center gap-1.5 text-small font-medium text-success">
-            <Icon name="check-circle" size="15" />
-            {{ t('events.youHaveASeat') }}
-          </p>
-          <AppButton class="mt-3" variant="secondary" :loading="working" @click="cancel">
-            {{ t('events.giveUpSeat') }}
-          </AppButton>
-        </template>
-        <template v-else>
-          <p class="text-small text-ink-muted">
-            {{ full ? t('events.fullHint') : t('events.registerHint') }}
-          </p>
-          <AppButton class="mt-3" :loading="working" @click="register">
-            {{ full ? t('events.joinQueue') : t('events.register') }}
-          </AppButton>
-        </template>
-      </AppCard>
-
-      <p v-else-if="isCancelled" class="mt-4 flex items-center gap-1.5 text-small text-danger">
-        <Icon name="alert-circle" size="15" />
-        {{ event.cancelReason || t('events.cancelledHint') }}
-      </p>
+      </div>
     </template>
   </div>
 </template>

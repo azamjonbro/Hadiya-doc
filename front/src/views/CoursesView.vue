@@ -110,41 +110,62 @@ async function enroll(course) {
 onMounted(load)
 </script>
 
-<template>
-  <div class="mx-auto w-full max-w-[1440px] px-6 lg:px-8 py-8">
-    <div class="flex items-center justify-between border-b border-border pb-4">
-      <h2 class="text-h2 text-ink">{{ t('courses.myLearning') }}</h2>
-      <div class="flex items-center gap-4 text-small">
-        <label class="flex items-center gap-2 cursor-pointer text-ink-muted hover:text-ink transition-default">
-          <input v-model="showCompleted" type="checkbox" class="h-4 w-4 rounded border-border-strong text-primary focus:ring-primary/30" />
-          {{ t('courses.showCompleted') }}
-        </label>
+  <div class="min-h-screen bg-bg pb-12">
+    <!-- Full Width Hero Banner -->
+    <div class="relative w-full bg-surface-2 flex items-end pt-24 pb-10">
+      <div class="absolute inset-0 bg-gradient-to-br from-indigo-900 via-purple-900 to-indigo-800"></div>
+      <div class="absolute inset-0 opacity-30 bg-[url('https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?auto=format&fit=crop&q=80&w=2000')] bg-cover bg-center"></div>
+      <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent"></div>
+      
+      <div class="relative z-10 w-full mx-auto max-w-[1440px] px-6 lg:px-8 flex flex-col md:flex-row md:items-end justify-between gap-6">
+        <div>
+          <h1 class="text-4xl font-bold text-white leading-tight drop-shadow-md">{{ t('courses.myLearning') }}</h1>
+          <p class="mt-2 text-white/80 max-w-2xl text-body drop-shadow">{{ t('courses.catalog') }} - Explore and continue your learning journey.</p>
+        </div>
+        
+        <div class="flex items-center gap-4 text-small bg-black/30 backdrop-blur-md px-4 py-2.5 rounded-lg border border-white/10">
+          <label class="flex items-center gap-2 cursor-pointer text-white/90 hover:text-white transition-default">
+            <input v-model="showCompleted" type="checkbox" class="h-4 w-4 rounded border-white/30 bg-white/10 text-primary focus:ring-primary/50" />
+            {{ t('courses.showCompleted') }}
+          </label>
+        </div>
       </div>
     </div>
 
-    <p v-if="errorMessage" class="mt-4 text-small text-danger">{{ errorMessage }}</p>
-
-    <template v-if="loading">
-      <div class="mt-8 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
-        <Skeleton v-for="i in 6" :key="i" class="h-64 w-full" />
+    <!-- White Tabs & Search Band -->
+    <div class="bg-surface border-b border-border shadow-sm">
+      <div class="mx-auto max-w-[1440px] px-6 lg:px-8 flex flex-col sm:flex-row sm:items-center justify-between gap-4 py-2 sm:py-0">
+        <Tabs v-model="activeTab" :tabs="tabs" class="-mb-px" />
+        
+        <div class="flex items-center gap-2 sm:py-3">
+          <div class="flex items-center gap-2 rounded-lg border border-border bg-surface-2 px-3 py-2 text-ink-faint focus-within:border-primary/50 focus-within:bg-surface focus-within:shadow-sm w-full sm:w-64 transition-default">
+            <Icon name="search" size="16" />
+            <input type="text" v-model="search" :placeholder="t('users.filters.search')" class="w-full bg-transparent text-small text-ink placeholder:text-ink-muted focus:outline-none" />
+          </div>
+        </div>
       </div>
-    </template>
+    </div>
 
-    <template v-else>
-      <!-- Tabs -->
-      <div class="mt-8">
-        <Tabs v-model="activeTab" :tabs="tabs" />
-      </div>
+    <div class="mx-auto w-full max-w-[1440px] px-6 lg:px-8 pt-8">
+      <p v-if="errorMessage" class="mb-6 text-small text-danger">{{ errorMessage }}</p>
 
-      <div v-if="filteredAssignments.length" class="mt-6 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
-        <AppCard
-          v-for="a in filteredAssignments"
-          :key="a.id"
-          padding="none"
-          hover
-          class="cursor-pointer overflow-hidden border border-border shadow-sm flex flex-col"
-          @click="router.push(`/courses/${a.courseId}`)"
-        >
+      <template v-if="loading">
+        <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          <Skeleton v-for="i in 8" :key="i" class="h-72 w-full rounded-xl" />
+        </div>
+      </template>
+
+      <template v-else>
+
+        <div v-if="filteredAssignments.length" class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          <AppCard
+            v-for="a in filteredAssignments"
+            :key="a.id"
+            padding="none"
+            hover
+            class="cursor-pointer overflow-hidden border border-border shadow-sm flex flex-col rounded-xl hover:shadow-md hover:-translate-y-1 transition-all duration-300"
+            @click="router.push(`/courses/${a.courseId}`)"
+          >
           <div
             class="flex h-36 shrink-0 items-center justify-center bg-surface-2 text-ink-faint"
             :style="a.course?.cover ? `background-image:url(${a.course.cover});background-size:cover;background-position:center` : ''"
@@ -170,20 +191,20 @@ onMounted(load)
       </div>
       <EmptyState v-else icon="graduation-cap" :title="t('courses.noAssignments')" class="mt-6" />
 
-      <!-- Discover more -->
-      <section v-if="discoverCatalog.length" class="mt-12">
-        <div class="flex items-center justify-between border-b border-border pb-4">
-          <h2 class="text-h2 text-ink">{{ t('courses.catalog') }}</h2>
-        </div>
-        <div class="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
-          <AppCard
-            v-for="course in discoverCatalog"
-            :key="course.id"
-            padding="none"
-            hover
-            class="cursor-pointer overflow-hidden"
-            @click="router.push(`/courses/${course.id}`)"
-          >
+        <!-- Discover more -->
+        <section v-if="discoverCatalog.length" class="mt-16">
+          <div class="flex items-center justify-between border-b border-border pb-4 mb-6">
+            <h2 class="text-2xl font-bold text-ink">{{ t('courses.catalog') }}</h2>
+          </div>
+          <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+            <AppCard
+              v-for="course in discoverCatalog"
+              :key="course.id"
+              padding="none"
+              hover
+              class="cursor-pointer overflow-hidden border border-border shadow-sm rounded-xl hover:shadow-md hover:-translate-y-1 transition-all duration-300"
+              @click="router.push(`/courses/${course.id}`)"
+            >
             <div
               class="flex h-32 items-center justify-center bg-surface-2 text-ink-faint"
               :style="course.cover ? `background-image:url(${course.cover});background-size:cover;background-position:center` : ''"
@@ -204,8 +225,9 @@ onMounted(load)
               </AppButton>
             </div>
           </AppCard>
-        </div>
-      </section>
-    </template>
+          </div>
+        </section>
+      </template>
+    </div>
   </div>
 </template>

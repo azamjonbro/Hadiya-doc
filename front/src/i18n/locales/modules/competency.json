@@ -92,6 +92,25 @@
       "gapsCount": "{count} ta kompetensiyada bo'shliq bor",
       "noRequirementsForYou": "Lavozimingiz uchun hali talab belgilanmagan",
 
+      "effective": "Bugun hisobga olinadi",
+      "effectiveHint": "Muddati o'tgan baho bugun 0 ga teng",
+      "expiredExplain": "Muddati tugagan — daraja saqlanadi, lekin bugun 0 hisoblanadi",
+      "gapLevels": "{count} daraja yetishmaydi",
+      "history": "Baholash tarixi",
+      "levelNone": "0 - yo'q",
+      "onlyGapsNone": "Bo'shliq topilmadi",
+      "filterCompetency": "Kompetensiya",
+      "allCompetencies": "Barcha kompetensiyalar",
+      "allDepartments": "Barcha bo'limlar",
+      "allPositions": "Barcha lavozimlar",
+      "allBranches": "Barcha filiallar",
+      "legend": "Rang izohi",
+      "peopleCount": "{count} ta xodim",
+      "cellAria": "{name}, {competency}: {status}. Daraja {level}, talab {required}",
+      "openAssess": "Darajani belgilash",
+      "noCompetencies": "Faol kompetensiya yo'q",
+      "noCompetenciesHint": "Avval katalogda kompetensiya yarating va shkalasini belgilang",
+
       "empty": "Kompetensiya yo'q",
       "emptyHint": "Birinchi kompetensiyani qo'shing — shkalani va kim uchun majburiyligini belgilang",
       "noPeople": "Xodim topilmadi",
@@ -105,6 +124,10 @@
       "deleted": "O'chirildi",
       "levelsRequired": "Kamida bitta daraja kerak",
       "codeAndNameRequired": "Kod va nom to'ldirilishi shart"
+    },
+    "errors": {
+      "COMPETENCY_SCOPE_FORBIDDEN": "Siz faqat o'zingiz javobgar bo'lgan xodimlarni baholay olasiz.",
+      "COMPETENCY_LEVEL_OFF_SCALE": "Bunday daraja ushbu kompetensiya shkalasida yo'q."
     }
   },
   "ru": {
@@ -200,6 +223,25 @@
       "gapsCount": "Пробелы по {count} компетенциям",
       "noRequirementsForYou": "Для вашей должности требования пока не заданы",
 
+      "effective": "Засчитывается сегодня",
+      "effectiveHint": "Просроченная оценка сегодня равна 0",
+      "expiredExplain": "Срок истёк — уровень сохранён, но сегодня засчитывается как 0",
+      "gapLevels": "Не хватает уровней: {count}",
+      "history": "История оценок",
+      "levelNone": "0 - нет",
+      "onlyGapsNone": "Пробелов не найдено",
+      "filterCompetency": "Компетенция",
+      "allCompetencies": "Все компетенции",
+      "allDepartments": "Все отделы",
+      "allPositions": "Все должности",
+      "allBranches": "Все филиалы",
+      "legend": "Обозначения",
+      "peopleCount": "Сотрудников: {count}",
+      "cellAria": "{name}, {competency}: {status}. Уровень {level}, требуется {required}",
+      "openAssess": "Зафиксировать уровень",
+      "noCompetencies": "Активных компетенций нет",
+      "noCompetenciesHint": "Сначала создайте компетенцию в каталоге и задайте её шкалу",
+
       "empty": "Компетенций нет",
       "emptyHint": "Добавьте первую — задайте шкалу и для кого она обязательна",
       "noPeople": "Сотрудники не найдены",
@@ -213,6 +255,10 @@
       "deleted": "Удалено",
       "levelsRequired": "Нужен хотя бы один уровень",
       "codeAndNameRequired": "Код и название обязательны"
+    },
+    "errors": {
+      "COMPETENCY_SCOPE_FORBIDDEN": "Оценивать можно только тех сотрудников, за которых вы отвечаете.",
+      "COMPETENCY_LEVEL_OFF_SCALE": "Такого уровня нет на шкале этой компетенции."
     }
   },
   "en": {
@@ -308,6 +354,25 @@
       "gapsCount": "{count} competencies short",
       "noRequirementsForYou": "Nothing has been required of your position yet",
 
+      "effective": "Counts today",
+      "effectiveHint": "An expired assessment counts as 0 today",
+      "expiredExplain": "Expired — the level is kept, but today it counts as 0",
+      "gapLevels": "{count} level(s) short",
+      "history": "Assessment history",
+      "levelNone": "0 - none",
+      "onlyGapsNone": "No gaps found",
+      "filterCompetency": "Competency",
+      "allCompetencies": "All competencies",
+      "allDepartments": "All departments",
+      "allPositions": "All positions",
+      "allBranches": "All branches",
+      "legend": "Legend",
+      "peopleCount": "{count} people",
+      "cellAria": "{name}, {competency}: {status}. Level {level}, required {required}",
+      "openAssess": "Record a level",
+      "noCompetencies": "No active competencies",
+      "noCompetenciesHint": "Create a competency in the catalogue first and give it a scale",
+
       "empty": "No competencies",
       "emptyHint": "Add the first one — set its scale and who has to hold it",
       "noPeople": "No people found",
@@ -321,6 +386,10 @@
       "deleted": "Deleted",
       "levelsRequired": "At least one level is needed",
       "codeAndNameRequired": "Code and name are required"
+    },
+    "errors": {
+      "COMPETENCY_SCOPE_FORBIDDEN": "You may only assess people you are responsible for.",
+      "COMPETENCY_LEVEL_OFF_SCALE": "That level is not on this competency's scale."
     }
   }
 }

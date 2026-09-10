@@ -97,10 +97,39 @@ async function assertManagerCanManage(actor, role, department) {
   }
 }
 
-async function assertManagerCanView(actor, department) {
+// AT-18 asks for two things from a cross-department read: the 403, and a row
+// in the audit log. The 403 alone leaves no trace of *who tried* — which is
+// the half an incident review actually needs, because a refused read is not
+// visible anywhere else. Recorded here rather than in the controller so every
+// caller of getById (the profile, the three employee-insight reports) is
+// covered by one write instead of four that can drift apart.
+async function recordAccessDenied(actor, { entity, entityId, ...metadata }) {
+  // Never let the audit write turn a 403 into a 500: the refusal is the
+  // contract, the row is bookkeeping.
+  try {
+    await auditLogRepository.record({
+      actor: actor.id,
+      action: 'ACCESS_DENIED',
+      entity,
+      entityId,
+      metadata,
+    })
+  } catch (error) {
+    logger.error({ err: error }, 'failed to record ACCESS_DENIED audit row')
+  }
+}
+
+async function assertManagerCanView(actor, department, targetUserId = null) {
   if (hasUnscopedAccess(actor)) return
   const actorUser = await userRepository.findById(actor.id)
   if (department !== actorUser.department) {
+    await recordAccessDenied(actor, {
+      entity: 'User',
+      entityId: targetUserId ? String(targetUserId) : null,
+      reason: 'DEPARTMENT_SCOPE_FORBIDDEN',
+      actorDepartment: actorUser.department ?? null,
+      targetDepartment: department ?? null,
+    })
     throw ApiError.forbidden('Managers can only view users within their own department', 'DEPARTMENT_SCOPE_FORBIDDEN')
   }
 }
@@ -339,7 +368,7 @@ export const userService = {
   async getById(actor, id) {
     const user = await userRepository.findById(id)
     if (!user) throw ApiError.notFound('User not found')
-    await assertManagerCanView(actor, user.department)
+    await assertManagerCanView(actor, user.department, user._id)
     const role = await roleRepository.findById(user.roleId)
     return toPublicUser(user, role)
   },

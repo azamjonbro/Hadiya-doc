@@ -24,6 +24,7 @@ import { ReviewTemplate } from '../src/models/reviewTemplate.model.js'
 import { ReviewCycle } from '../src/models/reviewCycle.model.js'
 import { ReviewAssignment } from '../src/models/reviewAssignment.model.js'
 import { ReviewResponse } from '../src/models/reviewResponse.model.js'
+import { Notification } from '../src/models/notification.model.js'
 import { review360Service, deriveRaters, isGroupRevealed } from '../src/services/review360/review360.service.js'
 import { hashPassword } from '../src/utils/hash.js'
 import { redisConnection } from '../src/config/redis.js'
@@ -117,6 +118,7 @@ describe('360° review (13.2)', () => {
         ReviewResponse.deleteMany({ cycleId }),
         ReviewAssignment.deleteMany({ cycleId }),
         ReviewCycle.deleteOne({ _id: cycleId }),
+        Notification.deleteMany({ relatedEntityType: 'ReviewCycle', relatedEntityId: String(cycleId) }),
       ])
     }
     await Promise.all([
@@ -198,6 +200,29 @@ describe('360° review (13.2)', () => {
       // template at display time.
       assert.equal(launched.questions.length, 3)
       cycle = launched
+    })
+
+    test('every rater is told, once, however many people they were asked about', async () => {
+      // A cycle that materialises eight questionnaires and tells nobody is a
+      // cycle that closes empty: nothing else in the product surfaces an
+      // assignment, and the window is measured in days. The second half —
+      // one notice per rater rather than per assignment — is what keeps a
+      // manager of eight from getting eight identical messages.
+      const notices = await Notification.find({
+        type: 'REVIEW360_INVITED',
+        relatedEntityId: String(cycle.id),
+      }).lean()
+
+      const raters = await ReviewAssignment.distinct('raterId', { cycleId: cycle.id })
+      assert.equal(notices.length, raters.length)
+
+      const byUser = new Set(notices.map((notice) => String(notice.userId)))
+      assert.equal(byUser.size, notices.length, 'a rater was notified twice')
+
+      // Rendered from the template, not left as the raw enum name — the
+      // failure mode when a type is used with no seed behind it.
+      assert.ok(notices[0].title.includes(cycle.name), `title was not rendered: ${notices[0].title}`)
+      assert.ok(notices[0].message.length > 0, 'the notice has no body')
     })
   })
 

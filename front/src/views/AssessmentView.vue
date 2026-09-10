@@ -209,8 +209,7 @@ onBeforeUnmount(() => {
 })
 </script>
 
-<template>
-  <div class="relative mx-auto max-w-3xl px-6 py-8">
+  <div class="min-h-screen bg-bg pb-12">
     <!-- Fixed rather than absolute: the sitting cannot start behind it, and
          on a long briefing the check must not be somewhere up the page. -->
     <FaceGateOverlay
@@ -225,31 +224,48 @@ onBeforeUnmount(() => {
       @enrolled="faceGate.onEnrolled"
     />
 
-    <button
-      v-if="phase !== 'running'"
-      type="button"
-      class="mb-4 flex items-center gap-1.5 text-small text-ink-muted transition-default hover:text-ink"
-      @click="router.back()"
-    >
-      <Icon name="chevron-left" size="16" />
-      {{ t('common.goBack') }}
-    </button>
+    <div v-if="loading" class="mx-auto max-w-6xl px-6 py-8 mt-12 space-y-3">
+      <Skeleton class="h-10 w-64" />
+      <Skeleton class="h-64 w-full rounded-xl" />
+    </div>
 
-    <Skeleton v-if="loading" class="h-96 w-full" />
-    <ErrorState v-else-if="!briefing" :title="errorMessage || t('assessment.notFound')" @retry="loadBriefing" />
+    <div v-else-if="!briefing" class="mx-auto max-w-3xl px-6 py-12">
+      <ErrorState :title="errorMessage || t('assessment.notFound')" @retry="loadBriefing" />
+    </div>
 
     <template v-else>
       <!-- ============ BRIEFING ============ -->
       <template v-if="phase === 'briefing'">
-        <div class="flex items-start gap-3 bg-surface p-6 rounded-md border border-border shadow-sm">
-          <span class="flex h-11 w-11 shrink-0 items-center justify-center rounded bg-primary/10 text-primary">
-            <Icon name="check-square" size="20" />
-          </span>
-          <div class="min-w-0">
-            <h1 class="text-h2 text-ink">{{ briefing.title }}</h1>
-            <p v-if="briefing.description" class="mt-1 text-small text-ink-muted">{{ briefing.description }}</p>
+        <!-- Full Width Hero Banner -->
+        <div class="relative w-full bg-surface-2 flex items-end pt-24 pb-10">
+          <div class="absolute inset-0 bg-gradient-to-br from-indigo-900 to-slate-900"></div>
+          <div class="absolute inset-0 opacity-20 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxwYXRoIGQ9Ik0zNiAzNHYtNGgtMnY0aC00djJoNHY0aDJ2LTRoNHYtMmgtNHptMC0zMFYwaC0ydjRoLTR2Mmg0djRoMnYtNGg0VjRoLTR6TTYuNiAyNy41MmwxLjc2LTMuMy0xLjc2LTMuM0g0LjRsLTEuNzYgMy4zIDEuNzYgMy4zaDIuMnptMjMuNi0xMy4yTDI4LjQ0IDExbDEuNzYtMy4zSDMyLjRsMS43NiAzLjMtMS43NiAzLjNoLTIuMnptMjMuNi0xMy4yTDUyLjA0LS4ybDEuNzYtMy4zSDU2bDEuNzYgMy4zLTEuNzYgMy4zaC0yLjJ6IiBmaWxsPSIjZmZmZmZmIiBmaWxsLW9wYWNpdHk9IjAuMSIvPjwvZz48L3N2Zz4=')]"></div>
+          
+          <div class="relative z-10 w-full mx-auto max-w-[1440px] px-6 lg:px-8">
+            <button
+              type="button"
+              class="flex items-center gap-1.5 text-small font-medium text-white/70 transition-default hover:text-white mb-6"
+              @click="router.back()"
+            >
+              <Icon name="chevron-left" size="16" />
+              {{ t('common.goBack') }}
+            </button>
+            
+            <div class="flex items-center gap-4 mb-4">
+              <span class="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl bg-primary/20 text-primary border border-primary/30 backdrop-blur-sm shadow-inner">
+                <Icon name="check-square" size="28" />
+              </span>
+              <div class="min-w-0">
+                <h1 class="text-4xl font-bold text-white leading-tight drop-shadow-md">{{ briefing.title }}</h1>
+              </div>
+            </div>
+            
+            <p v-if="briefing.description" class="mt-3 text-body text-white/80 line-clamp-2 drop-shadow max-w-3xl">{{ briefing.description }}</p>
           </div>
         </div>
+
+        <div class="mx-auto max-w-[1440px] px-6 lg:px-8 mt-8 grid grid-cols-1 lg:grid-cols-4 gap-8">
+          <div class="lg:col-span-3">
 
         <AppCard class="mt-6 border border-border shadow-sm">
           <p class="text-[11px] font-bold uppercase tracking-widest text-ink-faint">
@@ -293,12 +309,15 @@ onBeforeUnmount(() => {
             {{ t('assessment.startButton') }}
           </AppButton>
         </AppCard>
+          </div>
+        </div>
       </template>
 
       <!-- ============ RUNNING ============ -->
       <template v-else-if="phase === 'running'">
-        <!-- Sticky so the remaining time is never scrolled out of sight -->
-        <div class="sticky top-0 z-20 -mx-6 mb-4 border-b border-border bg-surface/95 px-6 py-3 backdrop-blur">
+        <div class="mx-auto max-w-3xl px-6 relative">
+          <!-- Sticky so the remaining time is never scrolled out of sight -->
+          <div class="sticky top-0 z-20 -mx-6 mb-4 border-b border-border bg-surface/95 px-6 py-3 backdrop-blur">
           <div class="flex flex-wrap items-center justify-between gap-3">
             <div class="min-w-0">
               <p class="truncate text-small font-semibold text-ink">{{ briefing.title }}</p>
@@ -364,15 +383,33 @@ onBeforeUnmount(() => {
               {{ t('assessment.submit') }}
             </AppButton>
           </div>
-        </AppCard>
+        </div>
       </template>
 
       <!-- ============ RESULT ============ -->
       <template v-else>
-        <AppCard
-          class="border shadow-sm"
-          :class="result.passed ? 'border-success bg-success/5' : 'border-danger bg-danger/5'"
-        >
+        <!-- Full Width Hero Banner -->
+        <div class="relative w-full bg-surface-2 flex items-end pt-24 pb-10">
+          <div class="absolute inset-0 bg-gradient-to-br from-indigo-900 to-slate-900"></div>
+          
+          <div class="relative z-10 w-full mx-auto max-w-[1440px] px-6 lg:px-8">
+            <button
+              type="button"
+              class="flex items-center gap-1.5 text-small font-medium text-white/70 transition-default hover:text-white mb-6"
+              @click="router.back()"
+            >
+              <Icon name="chevron-left" size="16" />
+              {{ t('common.goBack') }}
+            </button>
+            <h1 class="text-4xl font-bold text-white leading-tight drop-shadow-md">{{ briefing.title }}</h1>
+          </div>
+        </div>
+
+        <div class="mx-auto max-w-3xl px-6 py-12">
+          <AppCard
+            class="border shadow-lg p-8 rounded-xl"
+            :class="result.passed ? 'border-success bg-success/5' : 'border-danger bg-danger/5'"
+          >
           <div class="flex items-center gap-2">
             <Icon
               :name="result.passed ? 'check-circle' : 'alert-circle'"
@@ -400,13 +437,14 @@ onBeforeUnmount(() => {
             +{{ result.pointsAwarded }} {{ t('gamification.points') }}
           </p>
 
-          <div class="mt-4 flex flex-wrap gap-2">
-            <AppButton v-if="!result.passed" variant="outline" icon="refresh" @click="retry">
-              {{ t('assessment.retry') }}
-            </AppButton>
-            <AppButton variant="secondary" @click="router.back()">{{ t('assessment.backToCourse') }}</AppButton>
-          </div>
-        </AppCard>
+            <div class="mt-6 flex flex-wrap gap-3">
+              <AppButton v-if="!result.passed" variant="outline" icon="refresh" @click="retry">
+                {{ t('assessment.retry') }}
+              </AppButton>
+              <AppButton variant="secondary" @click="router.back()">{{ t('assessment.backToCourse') }}</AppButton>
+            </div>
+          </AppCard>
+        </div>
       </template>
     </template>
 

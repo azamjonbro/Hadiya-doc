@@ -183,24 +183,24 @@ describe('manager scope · AT-18 … AT-21 (14.4)', () => {
       assert.ok(own, 'a manager must still be able to open their own team')
     })
 
-    test(
-      'AT-18 · the refusal is written to auditLogs as ACCESS_DENIED',
-      // Not implemented anywhere: `grep -rn "'ACCESS_DENIED'" backend/src`
-      // finds nothing, and the throw in actorScope/user.service records no
-      // audit row. The 403 half of AT-18 passes; this half does not exist
-      // yet, so the case is left standing as a todo rather than deleted —
-      // the KUTILGAN text asks for both.
-      { todo: 'AT-18 asks for an ACCESS_DENIED audit row; nothing records one (see report)' },
-      async () => {
-        const { AuditLog } = await import('../src/models/auditLog.model.js')
-        const before = await AuditLog.countDocuments({ actor: manager._id, action: 'ACCESS_DENIED' })
-        await employeeInsightsService
-          .getPerformance(managerActor, marketingStaff[2]._id.toString())
-          .catch(() => {})
-        const after = await AuditLog.countDocuments({ actor: manager._id, action: 'ACCESS_DENIED' })
-        assert.equal(after, before + 1)
-      }
-    )
+    test('AT-18 · the refusal is written to auditLogs as ACCESS_DENIED', async () => {
+      // The 403 leaves no other trace: a refused read writes nothing to the
+      // target's record and nothing to the report it was denied. Without this
+      // row, "who tried to open Marketing's file" is unanswerable.
+      const { AuditLog } = await import('../src/models/auditLog.model.js')
+      const before = await AuditLog.countDocuments({ actor: manager._id, action: 'ACCESS_DENIED' })
+      const target = marketingStaff[2]
+      await employeeInsightsService.getPerformance(managerActor, target._id.toString()).catch(() => {})
+      const after = await AuditLog.countDocuments({ actor: manager._id, action: 'ACCESS_DENIED' })
+      assert.equal(after, before + 1)
+
+      // The row has to say *what* was refused, or it is only a counter.
+      const row = await AuditLog.findOne({ actor: manager._id, action: 'ACCESS_DENIED' }).sort({ timestamp: -1 }).lean()
+      assert.equal(row.entity, 'User')
+      assert.equal(row.entityId, target._id.toString())
+      assert.equal(row.metadata.reason, 'DEPARTMENT_SCOPE_FORBIDDEN')
+      assert.equal(row.metadata.targetDepartment, MARKETING)
+    })
   })
 
   describe('AT-19 · a report export is fenced to the department', () => {

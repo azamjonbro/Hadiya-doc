@@ -21,6 +21,18 @@
 // `--dry-run` was added to two scripts for this (migrateLegacyChat.js and
 // backfillEmployeeNames.js) — the flag is spelled and behaves the same way in
 // all of them, and no-flag behaviour is untouched.
+//
+// **This file runs in its own serial pass** (see the `test` script in
+// package.json), and that is not tidiness. Point 3 asserts collection
+// *counts* — the plainest available statement of "nothing was written
+// anywhere" — and every other suite in the run also creates users, courses
+// and events in the same shared database. Side by side at
+// `--test-concurrency=2` the count moved under the assertion and four cases
+// failed on a database that was behaving correctly. The alternative was to
+// bound the count to the fixture's own documents, which would have quietly
+// stopped noticing an insert somewhere else — exactly the failure this
+// exists to catch. Costing five seconds of wall clock is the cheaper half of
+// that trade.
 
 import { test, describe, before, after } from 'node:test'
 import assert from 'node:assert/strict'

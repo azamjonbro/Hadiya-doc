@@ -216,20 +216,20 @@
 
 | Capability | iSp | Bizda | Status | Sc | Evidence | Gap |
 |---|:--:|---|:--:|:--:|---|---|
-| Development plan moduli | ✓ | **Yo'q** | NONE | 0 | — | `DevelopmentPlan` |
+| Development plan moduli | ✓ | Bor — reja + maqsadlar (kurs/kompetensiya/OJT/erkin), ko'rib chiqish, CPE | FULL | 100 | `developmentPlan.model.js`, `developmentPlan.service.js` | — |
 | Rolga qarab shaxsiy yo'l | ✓ | Yo'q | NONE | 0 | — | `PlanTemplate` |
-| Yangi xodim checklisti | ✓ | Yo'q | NONE | 0 | — | `OnboardingProgram.steps[]` |
-| Mentor biriktirish | ✓ | Yo'q (MENTOR roli ham yo'q) | NONE | 0 | — | — |
-| Rahbar biriktirish | ✓ | Yo'q (`managerId` yo'q) | NONE | 0 | — | D34 ga bog'liq |
-| Milestone kuzatuvi | ✓ | Yo'q | NONE | 0 | — | — |
+| Yangi xodim checklisti | ✓ | Bor — `OnboardingProgram.steps[]`, turli qadam turlari, `dueDays`, egasi (EMPLOYEE/MANAGER/MENTOR/HR) | FULL | 100 | `onboardingProgram.model.js:18-40` | — |
+| Mentor biriktirish | ✓ | Bor — MENTOR roli (TEAM scope) va yozilishda `mentorId` | FULL | 100 | `roles.js:19,65`, `onboardingEnrollment.model.js:31` | — |
+| Rahbar biriktirish | ✓ | Bor — `user.managerId` + indeks; 360 baholovchilari va scope shundan chiqadi | FULL | 100 | `user.model.js:32,174`, `orgHierarchy.service.js` | — |
+| Milestone kuzatuvi | ✓ | Qisman — reja maqsadi `targetDate` + holat bilan kuzatiladi, onboarding milestone'i yo'q | PARTIAL | 50 | `developmentPlan.model.js:52-58` | Onboarding bosqichlari |
 | Development plan avto-biriktirish | ✓ (S2 2026-08) | Yo'q | NONE | 0 | — | — |
-| CPE / ball asosidagi maqsad | ✓ | `PointsLedger` bor, maqsad yo'q | PARTIAL | 25 | `pointsLedger.model.js` | `plan.plannedPoints` |
+| CPE / ball asosidagi maqsad | ✓ | Bor — maqsad boshiga `cpeCredits`, tasdiqlashda `PointsLedger` ga idempotent yoziladi | FULL | 100 | `developmentPlan.model.js:66-76`, `developmentPlan.service.js` (`accrue`) | — |
 | Topshiriq yaratish | ✓ | `Task` bor (boshqa domen) | PARTIAL | 25 | `task.model.js` | `Assignment` modeli |
 | **Fayl/matn/havola topshirish** | ✓ | **Yo'q** — xodim faqat "bajardim" belgilaydi | NONE | 0 | `task.service.js` | `Submission` |
 | Tekshirish va baholash | ✓ | Yo'q | NONE | 0 | — | `grading.service` + rubrika |
 | Tugatish haqida belgilangan shaxsga xabar | ✓ | Yo'q | NONE | 0 | — | — |
 | Task fan-out (USER/POSITION/ALL) | ? | Bor | OURS+ | 100 | `task.model.js:19-30` | — |
-| **D37–D38 jami: 13 capability** | | | **OURS+ 1 · PARTIAL 2 · NONE 10** | **12** | | |
+| **D37–D38 jami: 13 capability** | | | **FULL 5 · OURS+ 1 · PARTIAL 2 · NONE 5** | **52** | | |
 
 ## D39–D42 · LIVE TRAINING / EVENTS / CALENDAR / ATTENDANCE
 
@@ -299,18 +299,18 @@
 
 | Capability | iSp | Bizda | Status | Sc | Evidence | Gap |
 |---|:--:|---|:--:|:--:|---|---|
-| 360 so'rovnoma | ✓ | Yo'q | NONE | 0 | — | `ReviewCycle` |
-| Ko'p tomonlama (self/manager/peer/subordinate) | ✓ | Yo'q | NONE | 0 | — | `managerId` dan avtomatik |
-| Kompetensiya baholash | ✓ | Yo'q | NONE | 0 | — | `Competency` |
-| Rolga moslik tahlili | ✓ | Yo'q | NONE | 0 | — | — |
-| Bo'lim bo'yicha 360 hisoboti | ✓ | Yo'q | NONE | 0 | — | — |
-| Before/after taqqoslash | ✓ | Yo'q | NONE | 0 | — | — |
-| 360 bildirishnoma chastotasi | ✓ | Yo'q | NONE | 0 | — | — |
-| OJT: checklist + baholash + statistika | ✓ | Yo'q | NONE | 0 | — | `OjtChecklist`, `OjtSession` |
-| OJT sozlanadigan baholash shkalasi | ✓ | Yo'q | NONE | 0 | — | — |
-| OJT bitta sessiyada bir necha kuzatuv | ✓ | Yo'q | NONE | 0 | — | — |
-| Ko'nikma matritsasi | ? | Yo'q | VERIFY | 0 | — | — |
-| **D55–D59 jami: 11 capability** | | | **NONE 10 · VERIFY 1** | **0** | | |
+| 360 so'rovnoma | ✓ | Bor — shablon + sikl, DRAFT→RUNNING→CLOSED, savollar siklga muzlatiladi | FULL | 100 | `reviewCycle.model.js`, `review360.service.js:372` | — |
+| Ko'p tomonlama (self/manager/peer/subordinate) | ✓ | Bor — `managerId` dan avtomatik, guruh ustuvorligi bilan | FULL | 100 | `review360.service.js:110-140` | — |
+| Kompetensiya baholash | ✓ | Bor — katalog, daraja, amal muddati (muddati o'tgan daraja bugun 0) | FULL | 100 | `competency.model.js`, `competency.service.js:225` | — |
+| Rolga moslik tahlili | ✓ | Bor — talab lavozim/bo'lim/filial bo'yicha, `gap = required − effective` | FULL | 100 | `competency.service.js:315-387` | — |
+| Bo'lim bo'yicha 360 hisoboti | ✓ | Qisman — har qator bo'lim bilan keladi, bo'lim kesimidagi jamlanma yo'q | PARTIAL | 50 | `review360.service.js:759-790` | Bo'lim bo'yicha agregat |
+| Before/after taqqoslash | ✓ | Yo'q — ikki siklni yonma-yon qo'yish yo'q | NONE | 0 | — | Sikl juftligi bo'yicha delta |
+| 360 bildirishnoma chastotasi | ✓ | Qisman — ishga tushganda taklif yuboriladi (baholovchi boshiga bitta), chastota/eslatma sozlamasi yo'q | PARTIAL | 50 | `review360.service.js:launch`, `notificationTemplates.seed.js` (`REVIEW360_INVITED`) | Eslatma jadvali |
+| OJT: checklist + baholash + statistika | ✓ | Checklist va baholash bor (vazn, majburiy band, o'tish ostonasi); jamlanma statistika yo'q | PARTIAL | 50 | `ojtChecklist.model.js`, `ojt.service.js:450-533` | Sessiyalar bo'yicha hisobot |
+| OJT sozlanadigan baholash shkalasi | ✓ | Qisman — vazn va ostona sozlanadi, shkala PASS/FAIL/NOT_OBSERVED qat'iy | PARTIAL | 25 | `ojtObservation.model.js:37` | Checklistda `ratingScale` |
+| OJT bitta sessiyada bir necha kuzatuv | ✓ | Bor — band boshiga bitta verdikt, `(session,item)` unique upsert (oflayn qayta yuborishga chidamli) | FULL | 100 | `ojtObservation.model.js:51` | — |
+| Ko'nikma matritsasi | ? | Bor — odam × kompetensiya, katak gap bo'yicha bo'yaladi | FULL | 100 | `competency.service.js:387`, `CompetencyMatrixView.vue` | — |
+| **D55–D59 jami: 11 capability** | | | **FULL 6 · PARTIAL 4 · NONE 1** | **70** | | |
 
 ## D60–D62 · REPORTING / ANALYTICS / COMPLIANCE
 
