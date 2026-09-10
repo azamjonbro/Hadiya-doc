@@ -65,18 +65,18 @@ satrlaridan** qayta hisoblandi:
 
 | Metrika | 2026-09-08 (BLOK 0) | Hozir (BLOK 1–9) |
 |---|:--:|:--:|
-| Vaznsiz (337 capability) | 36,3 | **55,2** |
-| FULL | — | **114** |
+| Vaznsiz (337 capability) | 36,3 | **56,8** |
+| FULL | — | **118** |
 | OURS+ | — | **48** |
-| PARTIAL | — | **57** |
-| NONE | — | **95** |
-| VERIFY | — | **23** |
+| PARTIAL | — | **59** |
+| NONE | — | **91** |
+| VERIFY | — | **21** |
 | **PARITY GAP** (vaznsiz) | ≈64% | **≈46%** |
 
 Sakrash yangi ishning o'zidan emas: BLOK 1–8 (yetkazish, ierarxiya,
 sertifikat, baholash, path, tadbir, qidiruv/KB/compliance, hisobot) allaqachon
-satrlarda hisobga olingan edi, faqat jamlanmagan edi. BLOK 9 ning o'z hissasi to'rt
-bo'limda ko'rinadi: **kontent (D04–D09) 56 → 69**, **authoring (D10–D12)
+satrlarda hisobga olingan edi, faqat jamlanmagan edi. BLOK 9 va 10 ning hissasi besh
+bo'limda ko'rinadi: **AI (D13–D17) 30 → 80**, va: **kontent (D04–D09) 56 → 69**, **authoring (D10–D12)
 11 → 36**, **standartlar/korxona (D80–D95) 30 → 42** (SCORM va subtitr) va
 **media/branding (D74–D79) → 75** (kutubxona va rasm optimizatsiyasi).
 

@@ -2697,6 +2697,24 @@
       "FAILED": "Ошибка"
     },
     "quizButton": "ИИ-вопросы",
-    "quizStarted": "Вопросы генерируются — следите на странице «Создание курса с ИИ»"
+    "quizStarted": "Вопросы генерируются — следите на странице «Создание курса с ИИ»",
+    "translationsTitle": "Переводы",
+    "translationsHint": "Те же блоки, другой язык — виден после подтверждения.",
+    "translateStarted": "Перевод запущен",
+    "translationApproved": "Подтверждено",
+    "translationFailed": "Не удалось",
+    "translationApprovedLabel": "подтверждён",
+    "translationDraftLabel": "черновик",
+    "translationFields": "{count} строк",
+    "approve": "Подтвердить",
+    "settingsTitle": "Бюджет ИИ",
+    "settingsHint": "Сколько токенов генерация может потратить за месяц.",
+    "settingsEnabled": "Генерация ИИ включена",
+    "settingsBudget": "Месячный лимит токенов",
+    "settingsZero": "0 = без лимита.",
+    "settingsUsed": "За {month}: {used} токенов, задач: {jobs}.",
+    "settingsSaved": "Сохранено",
+    "settingsSaveFailed": "Не удалось сохранить",
+    "settingsLoadFailed": "Не удалось загрузить настройки"
   }
 }

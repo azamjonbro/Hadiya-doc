@@ -37,6 +37,9 @@ import { redactPii, PII_RULE_NAMES } from '../src/services/ai/piiRedact.js'
 import { extractSourceText } from '../src/services/ai/sourceExtract.service.js'
 import { aiGenerationService } from '../src/services/ai/aiGeneration.service.js'
 import { topicSourceText, AI_QUIZ_TYPES } from '../src/services/ai/aiQuiz.service.js'
+import { aiTranslateService, collectStrings } from '../src/services/ai/aiTranslate.service.js'
+import { ContentTranslation } from '../src/models/contentTranslation.model.js'
+import { lessonService } from '../src/services/courses/lesson.service.js'
 import { Question } from '../src/models/question.model.js'
 import { QuestionBank } from '../src/models/questionBank.model.js'
 import { aiBudgetService } from '../src/services/ai/aiBudget.service.js'
@@ -51,6 +54,7 @@ const userIds = []
 const courseIds = []
 const jobIds = []
 const bankIds = []
+const translatedIds = []
 
 const actor = () => ({ id: author._id.toString(), permissions: ['course:create', 'course:update'] })
 
@@ -127,6 +131,7 @@ describe('BLOK 10 · AI generation', () => {
   })
 
   after(async () => {
+    await ContentTranslation.deleteMany({ entityId: { $in: [...courseIds, ...translatedIds] } })
     await Question.deleteMany({ bankId: { $in: bankIds } })
     await QuestionBank.deleteMany({ _id: { $in: bankIds } })
     await AiGenerationJob.deleteMany({ requestedBy: { $in: userIds } })
@@ -539,6 +544,202 @@ describe('BLOK 10 · AI generation', () => {
       // are ambiguous on inspection, which is worse than no question.
       assert.deepEqual(AI_QUIZ_TYPES, ['SINGLE_CHOICE', 'MULTI_CHOICE', 'TRUE_FALSE', 'SHORT_ANSWER'])
       AI_QUIZ_TYPES.forEach((type) => assert.ok(PAYLOAD_SCHEMAS[type], `${type} must have a payload schema`))
+    })
+  })
+
+
+  describe('translating without cloning (10.5)', () => {
+    /** A lesson with the block types that carry words in several places. */
+    let translateSeq = 0
+    async function makeLesson() {
+      translateSeq += 1
+      const course = await Course.create({
+        title: `Translate source ${stamp}-${translateSeq}`,
+        slug: `translate-source-${stamp}-${translateSeq}`,
+        status: 'PUBLISHED',
+        createdBy: author._id,
+      })
+      courseIds.push(course._id)
+      const topicRow = await Topic.create({
+        courseId: course._id,
+        title: 'Modul',
+        slug: `translate-topic-${stamp}-${translateSeq}`,
+        status: 'PUBLISHED',
+        createdBy: author._id,
+      })
+      const lesson = await Lesson.create({
+        courseId: course._id,
+        topicId: topicRow._id,
+        title: 'Kaska qoidalari',
+        description: 'Qisqa izoh',
+        status: 'PUBLISHED',
+        blocks: [
+          { type: 'HEADING', text: 'Kirish', level: 2 },
+          { type: 'TEXT', text: '<p>Kaska <strong>har doim</strong> taqiladi.</p>' },
+          { type: 'CODE', text: 'const helmet = true', language: 'js' },
+          { type: 'TABLE', rows: [['Vosita', 'Muddat'], ['Kaska', '2 yil']], hasHeader: true },
+        ],
+        createdBy: author._id,
+      })
+      translatedIds.push(lesson._id)
+      return { course, topic: topicRow, lesson }
+    }
+
+    test('only the words are sent — never the structure', async () => {
+      const { lesson } = await makeLesson()
+      const items = collectStrings('Lesson', lesson.toObject())
+      const ids = items.map((item) => item.id)
+
+      assert.ok(ids.includes('title'))
+      assert.ok(ids.includes('description'))
+      // Addressed by block id, which is what lets the answer be merged back
+      // without touching order or type.
+      assert.ok(ids.some((id) => /^blocks\.[a-f\d]{24}\.text$/.test(id)))
+      // Table cells individually, so a translated table stays a table.
+      assert.ok(ids.some((id) => /rows\.0\.0$/.test(id)))
+      // A CODE block is deliberately left alone: translating an identifier
+      // breaks the sample.
+      const codeBlock = lesson.blocks.find((block) => block.type === 'CODE')
+      assert.equal(
+        ids.some((id) => id === `blocks.${codeBlock._id}.text`),
+        false
+      )
+      // Nothing structural travels.
+      items.forEach((item) => assert.equal(typeof item.text, 'string'))
+    })
+
+    test('the translation is a layer: same ids, same structure, different words', async () => {
+      const { lesson } = await makeLesson()
+      const items = collectStrings('Lesson', lesson.toObject())
+
+      const job = await aiGenerationService.create(actor(), {
+        type: 'TRANSLATION',
+        params: { entity: 'Lesson', entityId: lesson._id.toString(), lang: 'ru' },
+      })
+      jobIds.push(new mongoose.Types.ObjectId(job.id))
+      await aiGenerationService.run(job.id, {
+        generate: async () => ({
+          data: {
+            items: items.map((item) => ({ id: item.id, text: `RU:${item.text}` })),
+          },
+          usage: { model: 'claude-opus-5', inputTokens: 500, outputTokens: 400, cacheReadTokens: 0 },
+        }),
+      })
+
+      const finished = await AiGenerationJob.findById(job.id).lean()
+      assert.equal(finished.status, 'DONE')
+      assert.equal(finished.result.lang, 'ru')
+      assert.equal(finished.result.missing, 0)
+
+      // A draft is not served to a learner: an unread machine translation
+      // in front of an employee is the failure this feature must avoid.
+      const asLearner = await lessonService.getById(
+        { id: author._id.toString(), permissions: ['video:view'] },
+        lesson._id.toString(),
+        { lang: 'ru' }
+      )
+      assert.equal(asLearner.title, 'Kaska qoidalari')
+
+      await aiTranslateService.approve(actor(), finished.result.translationId)
+      const translated = await lessonService.getById(
+        { id: author._id.toString(), permissions: ['video:view'] },
+        lesson._id.toString(),
+        { lang: 'ru' }
+      )
+
+      assert.equal(translated.title, 'RU:Kaska qoidalari')
+      // The ids are the point: reading progress is recorded against them
+      // (9.1), so they have to be identical in either language.
+      const originalIds = lesson.blocks.map((block) => String(block._id))
+      assert.deepEqual(translated.blocks.map((block) => block.id), originalIds)
+      assert.deepEqual(
+        translated.blocks.map((block) => block.type),
+        ['HEADING', 'TEXT', 'CODE', 'TABLE']
+      )
+      // The code block is untouched; the table keeps its shape.
+      assert.equal(translated.blocks[2].text, 'const helmet = true')
+      assert.equal(translated.blocks[3].rows[0][0], 'RU:Vosita')
+      assert.equal(translated.blocks[3].rows.length, 2)
+      // Tags survive the round trip, and the sanitiser still runs.
+      assert.match(translated.blocks[1].text, /<strong>/)
+    })
+
+    test('an id the model invented is ignored, and a missing one is reported', async () => {
+      const { lesson } = await makeLesson()
+      const job = await aiGenerationService.create(actor(), {
+        type: 'TRANSLATION',
+        params: { entity: 'Lesson', entityId: lesson._id.toString(), lang: 'en' },
+      })
+      jobIds.push(new mongoose.Types.ObjectId(job.id))
+      await aiGenerationService.run(job.id, {
+        generate: async () => ({
+          data: {
+            items: [
+              { id: 'title', text: 'Helmet rules' },
+              // An id that was never sent: merging it would put a paragraph
+              // in the lesson that nobody wrote.
+              { id: 'blocks.deadbeefdeadbeefdeadbeef.text', text: 'Ghost paragraph' },
+            ],
+          },
+          usage: { model: 'claude-opus-5', inputTokens: 10, outputTokens: 10, cacheReadTokens: 0 },
+        }),
+      })
+
+      const finished = await AiGenerationJob.findById(job.id).lean()
+      assert.equal(finished.result.ignoredUnknownIds, 1)
+      assert.ok(finished.result.missing > 0)
+
+      const stored = await ContentTranslation.findById(finished.result.translationId).lean()
+      assert.equal(stored.fields['blocks.deadbeefdeadbeefdeadbeef.text'], undefined)
+      assert.equal(stored.fields.title, 'Helmet rules')
+      // A partial translation still merges what it has, and leaves the rest
+      // in the original language rather than blanking it.
+      await aiTranslateService.approve(actor(), finished.result.translationId)
+      const merged = await lessonService.getById(
+        { id: author._id.toString(), permissions: ['video:view'] },
+        lesson._id.toString(),
+        { lang: 'en' }
+      )
+      assert.equal(merged.title, 'Helmet rules')
+      assert.match(merged.blocks[1].text, /har doim/)
+    })
+
+    test('one translation per language, replaced rather than duplicated', async () => {
+      const { lesson } = await makeLesson()
+      const run = async () => {
+        const job = await aiGenerationService.create(actor(), {
+          type: 'TRANSLATION',
+          params: { entity: 'Lesson', entityId: lesson._id.toString(), lang: 'ru' },
+        })
+        jobIds.push(new mongoose.Types.ObjectId(job.id))
+        await aiGenerationService.run(job.id, {
+          generate: async () => ({
+            data: { items: [{ id: 'title', text: `RU ${Date.now()}` }] },
+            usage: { model: 'claude-opus-5', inputTokens: 1, outputTokens: 1, cacheReadTokens: 0 },
+          }),
+        })
+      }
+      await run()
+      await run()
+      // Two rows for the same pair would make "which one is served" a coin
+      // flip; the unique index makes that impossible and the service
+      // upserts.
+      assert.equal(await ContentTranslation.countDocuments({ entity: 'Lesson', entityId: lesson._id, lang: 'ru' }), 1)
+      // And a re-translation goes back to DRAFT: it has not been read.
+      const row = await ContentTranslation.findOne({ entity: 'Lesson', entityId: lesson._id, lang: 'ru' }).lean()
+      assert.equal(row.status, 'DRAFT')
+    })
+
+    test('a course keeps only its title and description', async () => {
+      const course = await Course.create({
+        title: `Kurs ${stamp}`,
+        slug: `translate-course-${stamp}`,
+        description: 'Izoh',
+        createdBy: author._id,
+      })
+      courseIds.push(course._id)
+      const items = collectStrings('Course', course.toObject())
+      assert.deepEqual(items.map((item) => item.id).sort(), ['description', 'title'])
     })
   })
 

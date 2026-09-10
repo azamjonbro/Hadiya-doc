@@ -7,6 +7,7 @@ import { toStoredBlocks, toPublicBlocks, isPublishable, blockReferences } from '
 import { Video } from '../../models/video.model.js'
 import { Material } from '../../models/material.model.js'
 import { courseCompletionService } from './courseCompletion.service.js'
+import { aiTranslateService } from '../ai/aiTranslate.service.js'
 import { logger } from '../../config/logger.js'
 import { ApiError } from '../../utils/ApiError.js'
 
@@ -156,7 +157,15 @@ export const lessonService = {
     return rows.map((lesson) => toPublicLesson(lesson, { includeBlocks: false }))
   },
 
-  async getById(actor, id) {
+  /**
+   * @param {string} [lang] serve an approved translation in this language
+   *   instead (10.5). The structure — blocks, their ids, their order —
+   *   always comes from the original: only the strings are replaced, so
+   *   reading progress recorded against block ids works in either
+   *   language. A draft translation is never served to a learner; an
+   *   author previewing their own content sees it.
+   */
+  async getById(actor, id, { lang = '' } = {}) {
     const lesson = await lessonRepository.findById(id)
     if (!lesson) throw ApiError.notFound('Lesson not found')
     const canManage = canManageCourses(actor)
@@ -166,8 +175,15 @@ export const lessonService = {
     if (lesson.status !== 'PUBLISHED' && !canManage) {
       throw ApiError.notFound('Lesson not found')
     }
-    const payload = toPublicLesson(lesson)
-    return { ...payload, blocks: await expandReferences(payload.blocks, canManage) }
+    const translated = lang
+      ? await aiTranslateService.applyTo('Lesson', lesson.toObject(), lang, { includeDraft: canManage })
+      : lesson
+    const payload = toPublicLesson(translated)
+    return {
+      ...payload,
+      ...(translated.translation ? { translation: translated.translation } : {}),
+      blocks: await expandReferences(payload.blocks, canManage),
+    }
   },
 
   async create(actor, topicId, payload) {

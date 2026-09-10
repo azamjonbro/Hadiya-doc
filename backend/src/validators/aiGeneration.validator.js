@@ -37,3 +37,16 @@ export const quizRequestSchema = z.object({
     .optional()
     .transform((value) => (value === undefined ? undefined : Array.isArray(value) ? value : [value])),
 })
+
+export const translateRequestSchema = z.object({
+  entity: z.enum(['Course', 'Topic', 'Lesson']),
+  entityId: objectId,
+  // The three the interface speaks: a translation the app cannot label is
+  // not usable.
+  lang: z.enum(['uz', 'ru', 'en']),
+})
+
+export const translationListSchema = z.object({
+  entity: z.enum(['Course', 'Topic', 'Lesson']),
+  entityId: objectId,
+})

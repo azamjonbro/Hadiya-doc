@@ -108,17 +108,17 @@
 | Capability | iSp | Bizda | Status | Sc | Evidence | Gap |
 |---|:--:|---|:--:|:--:|---|---|
 | AI o'quv assistenti (chat) | ✓ | Bor, kirish huquqi bo'yicha scope'langan | FULL | 100 | `aiChat.service.js:26-56` | — |
-| AI kurs generatori (fayldan) | ✓ | Yo'q | NONE | 0 | — | `aiCourse.service` + job |
-| AI kurs generatori (mavzudan) | ✓ | Yo'q | NONE | 0 | — | — |
-| AI quiz savol generatsiyasi | ✓ | Yo'q | NONE | 0 | — | `aiQuiz.service` |
+| AI kurs generatori (fayldan) | ✓ | Bor — pdf/docx/pptx → matn → kurs (DRAFT), worker'da | FULL | 100 | `sourceExtract.service.js`, `aiCourse.service.js` | Kalit prodda sozlanmagan |
+| AI kurs generatori (mavzudan) | ✓ | Bor — mavzudan konspekt + darslar (DRAFT) | FULL | 100 | `aiCourse.service.js` | — |
+| AI quiz savol generatsiyasi | ✓ | Bor — mavzu darslaridan, savollar bankiga, 4 tur | PARTIAL | 75 | `aiQuiz.service.js` | Moslash/ketma-ketlik turlari yo'q |
 | AI rasm generatsiyasi | ✓ | Yo'q | NONE | 0 | — | Tashqi provider |
-| AI tarjima (kontent) | ✓ | Yo'q | NONE | 0 | — | `ContentTranslation` |
+| AI tarjima (kontent) | ✓ | Bor — qatlam sifatida, id'lar saqlanadi, tasdiqlashdan keyin beriladi | PARTIAL | 75 | `aiTranslate.service.js`, `contentTranslation.model.js` | Faqat dars o'qish yo'lida qo'llanadi |
 | AI matn yozish/qayta yozish | ✓ | Yo'q (chat bor, editorga ulanmagan) | PARTIAL | 25 | `aiChat.service.js` | Editor ichida |
 | AI o'zbek tili | ✓ (2026-08) | Model qo'llab-quvvatlaydi | FULL | 100 | `anthropicClient.js:15` | — |
 | Inson tasdig'isiz publish bo'lmasligi | ✓ | Arxitekturada: har doim DRAFT | OURS+ | 100 | `course.model.js:11` | — |
-| AI token/xarajat nazorati | ? | Yo'q | VERIFY | 0 | — | `monthlyTokenBudget` |
-| AI audit jurnali | ? | Yo'q | VERIFY | 0 | — | `AI_GENERATION_REQUESTED` |
-| **D13–D17 jami: 11 capability** | | | **FULL 2 · OURS+ 1 · PARTIAL 1 · NONE 5 · VERIFY 2** | **30** | | |
+| AI token/xarajat nazorati | ? | Bor — oylik token chegarasi, API raqamlaridan hisoblanadi | FULL | 100 | `aiBudget.service.js` | — |
+| AI audit jurnali | ? | Bor — so'rov va yakun, token sarfi bilan (manba matnisiz) | FULL | 100 | `aiGeneration.service.js` | — |
+| **D13–D17 jami: 11 capability** | | | **FULL 6 · OURS+ 1 · PARTIAL 3 · NONE 1** | **80** | | |
 
 ## D18–D25 · ASSESSMENT
 

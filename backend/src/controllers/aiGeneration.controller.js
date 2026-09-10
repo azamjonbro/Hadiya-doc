@@ -3,6 +3,7 @@ import { sendSuccess } from '../utils/apiResponse.js'
 import { aiGenerationService } from '../services/ai/aiGeneration.service.js'
 import { aiBudgetService } from '../services/ai/aiBudget.service.js'
 import { extractSourceText } from '../services/ai/sourceExtract.service.js'
+import { aiTranslateService } from '../services/ai/aiTranslate.service.js'
 import { ApiError } from '../utils/ApiError.js'
 
 /** The extension, from the uploaded name — the parser is chosen by it. */
@@ -81,6 +82,30 @@ export const aiGenerationController = {
       sourceChars: sourceText.length,
     })
     sendSuccess(res, job, 'Generation started', 202)
+  }),
+
+  /** Queue a translation of one course, module or lesson. */
+  translate: asyncHandler(async (req, res) => {
+    const { entity, entityId, lang } = req.body
+    const job = await aiGenerationService.create(req.user, {
+      type: 'TRANSLATION',
+      params: { entity, entityId, lang },
+      courseId: entity === 'Course' ? entityId : null,
+      topicId: entity === 'Topic' ? entityId : null,
+    })
+    sendSuccess(res, job, 'Translation started', 202)
+  }),
+
+  translations: asyncHandler(async (req, res) => {
+    sendSuccess(res, await aiTranslateService.list(req.query.entity, req.query.entityId))
+  }),
+
+  approveTranslation: asyncHandler(async (req, res) => {
+    sendSuccess(res, await aiTranslateService.approve(req.user, req.params.id), 'Approved')
+  }),
+
+  removeTranslation: asyncHandler(async (req, res) => {
+    sendSuccess(res, await aiTranslateService.remove(req.params.id), 'Deleted')
   }),
 
   list: asyncHandler(async (req, res) => {
