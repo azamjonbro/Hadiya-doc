@@ -367,7 +367,7 @@
 | Responsive web | ✓ | Bor | FULL | 100 | `BottomNav.vue`, Tailwind | — |
 | **Native ilova (iOS/Android)** | ✓ | Yo'q | N/A | — | — | §24 — PWA tanlandi |
 | PWA (o'rnatiladigan) | ? | Bor — manifest, service worker, oflayn qobiq, yangilanish so'rovi | FULL | 100 | `front/src/sw.js`, `vite.config.js` | — |
-| **Oflayn o'qish** | ✓ | Yo'q | NONE | 0 | — | Workbox + IndexedDB |
+| **Oflayn o'qish** | ✓ | Bor — kursni qurilmaga saqlash (darslar + hujjatlar), IndexedDB | FULL | 100 | `offline/offlineContent.js` | Video ataylab yo'q |
 | **Oflayn progress sinxronizatsiyasi** | ✓ | Yo'q | NONE | 0 | `watchedSegments` merge buni tabiiy qabul qiladi | `clientEventId` |
 | Mobil video player | ✓ | Bor | FULL | 100 | `hls.js`, `VideoPlayer.vue` | — |
 | Mobil hujjat ko'rish | ✓ | Bor | FULL | 100 | `MaterialViewer.vue` | — |
@@ -375,7 +375,7 @@
 | Mobil chat + ovozli xabar | ✓ | Bor | OURS+ | 100 | `VoiceRecorder.vue` | — |
 | Mobil push | ✓ | Yo'q | NONE | 0 | — | D65 |
 | White-label mobil ilova | ✓ | Yo'q | N/A | — | — | §24 |
-| **D66–D67 jami: 9 capability (+2 N/A)** | | | **FULL 5 · OURS+ 1 · NONE 3 · N/A 2** | **67** | | |
+| **D66–D67 jami: 9 capability (+2 N/A)** | | | **FULL 6 · OURS+ 1 · NONE 2 · N/A 2** | **78** | | |
 
 ## D68–D69 · SEARCH / MULTILINGUAL
 

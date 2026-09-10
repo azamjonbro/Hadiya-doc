@@ -87,7 +87,13 @@ o'rnatiladi va **internetsiz ochiladi**; API **ataylab keshlanmaydi**
 autentifikatsiyalangan javob esa umumiy kompyuterda keyingi odamga
 berilishi mumkin). Yangilanish **so'rab** olinadi, avtomatik emas —
 vaqti chegaralangan test o'rtasida ilovani almashtirish yo'qolgan
-urinish. **Keyingi band — 12.2 (oflayn kontent: IndexedDB).**
+urinish. 12.2 (oflayn kontent) ham bajarildi: o'quvchi kursni **o'zi
+tanlab** qurilmaga saqlaydi (darslar + hujjatlar, IndexedDB), reja avval
+ko'rsatiladi, va internetsiz kurs/dars/hujjat saqlangan nusxadan
+o'qiladi — buning uchun **faqat o'qish uchun oflayn sessiya** qo'shildi
+(aks holda oflayn ilova kirish sahifasiga otib yuborardi).
+**Keyingi band — 12.3 (oflayn sinxronizatsiya: `clientEventId` + Background
+Sync, AT-35).**
 
 **Foydalanuvchidan nginx bloki kerak (12.1) — bu shunchaki qulaylik
 emas.** nginx'da `/assets/` uchun `immutable 1y` va `/index.html` uchun
@@ -146,7 +152,7 @@ satrlar BLOK 1–8 davomida yangilangan, jamlanma esa yangilanmagan.
 
 | Metrika | Qiymat |
 |---|:--:|
-| Vaznsiz (336 capability) | **59,9** |
+| Vaznsiz (336 capability) | **60,2** |
 | FULL / OURS+ | **118 / 48** |
 | PARTIAL / NONE / VERIFY | **59 / 91 / 21** |
 | **Gap** | **≈40%** |
@@ -174,7 +180,7 @@ esa login qila olmay 429 oladi va **butun fayl bekor qilinadi**
 lekin `pass` soni tushib qoladi). Toza raqam kerak bo'lsa oldingi
 yugurishdan **15 daqiqa** kutib turing.
 
-Frontend testi ham paydo bo'ldi: `npm --prefix front test` (19 test,
+Frontend testi ham paydo bo'ldi: `npm --prefix front test` (28 test,
 `lessonBlocks.test.js` + `pwa.test.js` — ikkinchisi **build natijasini**
 o'qiydi, ya'ni `dist/` bo'lmasa skip qiladi) — bundler kerak emas, chunki sinaladigan
 mantiq `front/src/utils/` da, komponent ichida emas. Yangi front mantig'ini
@@ -195,7 +201,7 @@ BLOK 8  Hisobot, analitika             ✅
 BLOK 9  Kontent va authoring           ← **BLOK 9 to'liq tugadi** (9.1–9.6); keyingisi 9.5
 BLOK 10 AI                             ✅
 BLOK 11 Korxona                        ← tugadi
-BLOK 12 Mobil va accessibility         ← 12.1 bajarildi
+BLOK 12 Mobil va accessibility         ← 12.1, 12.2 bajarildi
 BLOK 13 Kengaytirilgan baholash
 BLOK 14 Regressiya himoyasi (doimiy)
 ```

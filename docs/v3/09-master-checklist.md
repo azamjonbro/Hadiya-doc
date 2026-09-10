@@ -3100,7 +3100,85 @@
   to'g'ri** yuboriladi (4 qator), ya'ni yangilanish qanday topilganidan
   qat'i nazar ishlaydi, va `workbox-window` mijoz bundle'idan butunlay
   chiqdi.
-- [ ] **12.2** Oflayn kontent — IndexedDB, "oflayn saqlash"
+- [x] **12.2** Oflayn kontent — IndexedDB, "oflayn saqlash"
+  · Bajarildi — **o'quvchi bosadigan tugma**, o'zini to'ldiradigan kesh
+  emas. 12.1 da service worker API javoblarini ataylab keshlamaydi
+  (keshlangan kurs ro'yxati — noto'g'ri ro'yxat); bu yerda esa odam
+  **o'zi tanlagan** kursni qurilmaga oladi, nima qancha joy olishini
+  **oldin** ko'radi va istagan payt o'chiradi.
+  · **Nima saqlanadi:** kursning mundarijasi, **matn darslari** va
+  **hujjatlar**. Nima saqlanmaydi va nega: **video** — HLS segmentlari
+  qisqa muddatli playback token ortida (token muddati o'tadi, ya'ni
+  "saqlangan" video sababsiz ishlamay qoladi, hajmi ham
+  oldindan aytib bo'lmaydi); **test** — savollarni diskda saqlash
+  yaxlitlik muammosi, imkoniyat emas; **SCORM** — API'ning launcher
+  sahifasi va same-origin runtime kerak. UI buni **oldindan aytadi**,
+  chunki videosini kutgan odam buni koridorda, aloqasiz joyda
+  bilib qolardi.
+  · **Reja avval ko'rsatiladi** (`planCourseDownload`): nechta element,
+  taxminan qancha, va **nima tashlab ketiladi** (masalan 25 MB dan katta
+  fayl). Boshlanib, keyin jimgina fayl tashlab ketadigan progress bar —
+  odam kerakli hujjatsiz oflayn qolishining yo'li.
+  · Chegaralar texnik emas, **insoniy**: fayl uchun 25 MB (koridordagi
+  telefonga 60 MB skanni bilmasdan yuklab qo'ymaslik uchun), kurs uchun
+  200 MB, va brauzer kvotasidan 50 MB **zaxira** (precache, sessiya,
+  sozlamalar ham shu budjetda). Brauzer kvotani aytmasa — **ruxsat
+  beriladi**: dalilsiz rad etish rad etishning eng yomon turi.
+  · IndexedDB **kutubxonasiz** (`offline/db.js`, ~90 qator): to'rtta do'kon
+  va to'rtta amal, va tranzaksiya **commit bo'lganda** resolve qiladi —
+  request'da resolve qilish "saqlandi" deb aytib, keyin saqlanmay
+  qolishining yo'li. Bayt'lar alohida do'konda: saqlanganlar ro'yxatini
+  ko'rsatish uchun yuz megabaytni xotiraga o'qish shart emas.
+  `navigator.storage.persist()` **so'raladi** (ixtiyoriy: Chrome beradi,
+  Safari'da yo'q — bermasa ma'lumot evictable bo'ladi, ya'ni avvalgi
+  holat).
+  · **O'qish yo'li:** dars/hujjat/kurs sahifasi so'rov **muvaffaqiyatsiz
+  bo'lsa** saqlangan nusxaga tushadi — onlaynda serverning nusxasi
+  haqiqiy, va muallif almashtirgan hujjat diskdan chizilib turmasligi
+  kerak. Har uchtasida **"Saqlangan nusxa o'qilyapti"** deb aytiladi va
+  progress ko'rsatilmaydi: kurs saqlangan paytdagi foizni **hozirgi**
+  deb ko'rsatish — muhim tomonga qarab yolg'on.
+  · **Kuzatilgan xatti-harakat (bu yerda hal qilindi):** oflayn holatda
+  ilova **kirish sahifasiga otib yuborardi** — access token qisqa
+  muddatli, internetsiz esa refresh qilishning yo'li yo'q, ya'ni odam
+  ataylab yuklab olgan kursi **umuman ochilmaydi**. Endi
+  `offlineOnly` — **faqat o'qish uchun** sessiya: oxirgi haqiqiy
+  kirishdan qolgan **minimal profil** (id, ism, rol) localStorage'da,
+  `permissions` **bo'sh** (diskdan tiklangan eskirgan ruxsat ro'yxati —
+  aynan tiklanmasligi kerak narsa), va router faqat
+  **`meta.offline`** route'larni ochadi (IndexedDB'dan halol chizila
+  oladiganlari). Bu **yangi hech narsa bermaydi**: ma'lumot allaqachon
+  o'sha qurilmada, devtools'dan o'qiladi, va uni shu odam o'zi yuklab
+  olgan. Internet qaytganda (`online`) ilova darhol haqiqiy sessiyaga
+  o'tadi — aks holda odam ulanish qaytganini ko'rib turib, har yozuvi
+  sababsiz muvaffaqiyatsiz bo'lardi.
+  · **Kuzatilgan xatti-harakat (2):** `restoreSession` tarmoq xatosini
+  ham "sessiya rad etildi" deb tushunardi va **`clearSession`** qilardi —
+  ya'ni oflayn bir marta ochilgan ilova eslab qolgan profilni ham
+  o'chirib, odam internet qaytganda **sababsiz chiqib qolgan** bo'lardi.
+  Endi javobsiz xato + oflayn = faqat o'qish rejimi.
+  · **Kuzatilgan xatti-harakat (3):** oflayn holatda har muvaffaqiyatsiz
+  so'rov global `unhandledrejection` orqali **"tarmoq xatosi" toast'i**
+  chiqarardi — saqlangan kursni o'qiyotgan odamga uning nusxasi buzuq
+  deb aytish. Endi tarmoq xatosi + (oflayn yoki `offlineOnly`) =
+  jurnalga yoziladi, ekranga chiqmaydi (banner allaqachon aytgan).
+  · **Kuzatilgan xatti-harakat (4):** hujjat hajmi API'da `fileSize`
+  deb keladi (`sizeBytes` emas), ya'ni birinchi urinishda 40 MB fayl
+  **nol bayt** deb o'qilgan va chegara **hech narsaga qo'llanmagan**.
+  Ikkisi ham o'qiladi, test qadab qo'ydi.
+  · **Tekshirildi** — front testlari 28 (`offlineContent.test.js`: nima
+  saqlanadi, chegaralar, kvota mantiqi, hajm formati — sof funksiyalar,
+  chunki node'da IndexedDB yo'q va soxta IndexedDB soxtani sinaydi) +
+  **brauzerda (CDP) uchidan-uchiga**: haqiqiy kurs (dars + PDF) yaratildi,
+  o'quvchi kirdi, reja ko'rsatildi («2 element, taxminan 384 B» va nima
+  saqlanmasligi), yuklab olindi (IndexedDB: 1 kurs, 1 dars, 1 hujjat,
+  1 blob), **tarmoq butunlay o'chirildi** va: dars sarlavhasi va matni
+  ochildi, ogohlantirish chiqdi, kurs sahifasi saqlangan nusxadan
+  chizildi, saqlangan PDF **canvas'ga render bo'ldi**. Sinov ma'lumotlari
+  (kurs, mavzu, dars, hujjat, odam, 10 sessiya, audit) tozalandi.
+  · **Chetlanish:** oflayn progress yozilmaydi — u 12.3 (navbat +
+  `clientEventId`) ning ishi. Shuning uchun har uchta ekran buni
+  **aytib turadi**, jimgina yo'qotmaydi.
 - [ ] **12.3** Oflayn sinxronizatsiya — `clientEventId` unique indeks,
   Background Sync
   · Qabul: **AT-35**
