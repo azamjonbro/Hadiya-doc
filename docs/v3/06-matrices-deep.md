@@ -171,7 +171,7 @@ Qo'shiladigan 12 tasi shu naqshlarni takrorlaydi — yangi ixtiro kerak emas.
 | 25 | **ReDoS** | ❌ | `course.repository.js:91` escape'siz | **CRITICAL** |
 | 26 | CORS allowlist | ✅ | `app.js:34-43` + test | KEEP |
 | 27 | helmet | ✅ | `app.js:24` | KEEP |
-| 28 | **CSP (SCORM iframe uchun)** | ⚠️ | helmet default `frame-src 'self'` | EXTEND (Phase 7) |
+| 28 | **CSP (SCORM iframe uchun)** | ✅ | 9.3: `scormFrame.middleware.js` — o'sha ikki route uchun `X-Frame-Options` olib tashlanadi, `frame-ancestors 'self' + ilova origin'lari`, `form-action/base-uri/object-src 'none'` | DONE |
 | 29 | Signed URL | ✅ | Mexanizm to'g'ri | KEEP |
 | 30 | **Signed URL host** | ❌ | Loopback (§1.1) | **HIGH** |
 | 31 | Video per-segment auth | ✅ | `videoPlaybackToken.middleware.js` | KEEP |

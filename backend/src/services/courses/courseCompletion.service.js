@@ -6,6 +6,8 @@ import { assessmentRepository } from '../../repositories/assessment.repository.j
 import { assessmentAttemptRepository } from '../../repositories/assessmentAttempt.repository.js'
 import { lessonRepository } from '../../repositories/lesson.repository.js'
 import { lessonProgressRepository } from '../../repositories/lessonProgress.repository.js'
+import { ScormPackage } from '../../models/scormPackage.model.js'
+import { ScormState } from '../../models/scormState.model.js'
 import { courseAssignmentRepository } from '../../repositories/courseAssignment.repository.js'
 import { courseRepository } from '../../repositories/course.repository.js'
 import { notificationService } from '../notifications/notification.service.js'
@@ -14,6 +16,7 @@ import { queueCertificate } from '../../jobs/certificateQueue.js'
 import { pathEnrollmentService } from '../paths/pathEnrollment.service.js'
 import { queueOnboardingEvaluation } from '../../jobs/onboardingQueue.js'
 import { lessonCompletion } from './lessonBlocks.js'
+import { meetsPackage } from '../scorm/scormCmi.js'
 
 /**
  * One definition of "this course is finished", and one place that acts on it.
@@ -43,7 +46,7 @@ const DEFAULT_RULE = { minPercent: 100, requireAllRequired: true }
  * cannot be held back by a lesson nobody has released.
  */
 export async function collectCourseItems(courseId, userId, { publishedOnly = true } = {}) {
-  const [videos, videoRows, materials, materialRows, assessments, attempts, lessons, lessonRows] =
+  const [videos, videoRows, materials, materialRows, assessments, attempts, lessons, lessonRows, packages, scormRows] =
     await Promise.all([
       videoRepository.listByCourse(courseId),
       videoProgressRepository.listByUserAndCourse(userId, courseId),
@@ -53,12 +56,15 @@ export async function collectCourseItems(courseId, userId, { publishedOnly = tru
       assessmentAttemptRepository.listByUserAndCourse(userId, courseId),
       lessonRepository.listByCourse(courseId),
       lessonProgressRepository.listByUserAndCourse(userId, courseId),
+      ScormPackage.find({ courseId }),
+      ScormState.find({ userId, courseId }),
     ])
 
   const visible = (rows) => (publishedOnly ? rows.filter((row) => row.status === 'PUBLISHED') : rows)
   const videoRowById = new Map(videoRows.map((row) => [row.videoId.toString(), row]))
   const materialRowById = new Map(materialRows.map((row) => [row.materialId.toString(), row]))
   const lessonRowById = new Map(lessonRows.map((row) => [row.lessonId.toString(), row]))
+  const scormRowById = new Map(scormRows.map((row) => [row.packageId.toString(), row]))
   // A test is done when it has been *passed*. An attempt that failed is a
   // try, not a completion, and counting it would let a course reach 100%
   // with nothing learned.
@@ -119,6 +125,30 @@ export async function collectCourseItems(courseId, userId, { publishedOnly = tru
       viewedBlocks: progress.viewedBlocks,
       totalBlocks: progress.totalBlocks,
       required: lesson.required !== false,
+    })
+  }
+
+  for (const pkg of visible(packages)) {
+    // A package that never unpacked is not content yet: counting it would
+    // hold every learner of the course at 90% over an author's failed
+    // upload. It also cannot be published (scormPackage.service.js), so
+    // this only guards a course whose package broke after publication.
+    if (pkg.processingStatus !== 'READY') continue
+
+    const row = scormRowById.get(pkg._id.toString())
+    // All-or-nothing, like a video or a test. SCORM's own progress element
+    // (`cmi.progress_measure`) is optional and most exports leave it empty,
+    // so a fraction here would be a number we invented.
+    const complete = row ? meetsPackage(row, pkg.masteryScore) : false
+    items.push({
+      kind: 'scorm',
+      id: pkg._id.toString(),
+      title: pkg.title,
+      share: complete ? 1 : 0,
+      completed: complete,
+      completionPercent: complete ? 100 : 0,
+      scoreRaw: row?.scoreRaw ?? null,
+      required: pkg.required !== false,
     })
   }
 

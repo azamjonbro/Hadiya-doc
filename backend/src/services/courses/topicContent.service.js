@@ -2,6 +2,7 @@ import { videoService } from '../videos/video.service.js'
 import { materialService } from '../materials/material.service.js'
 import { assessmentService } from '../assessments/assessment.service.js'
 import { lessonService } from './lesson.service.js'
+import { scormPackageService } from '../scorm/scormPackage.service.js'
 import { openTopic, reorderContent } from './contentItem.js'
 import { auditLogRepository } from '../../repositories/auditLog.repository.js'
 import { ApiError } from '../../utils/ApiError.js'
@@ -12,11 +13,12 @@ import { ApiError } from '../../utils/ApiError.js'
 // exactly as it was.
 export const topicContentService = {
   async getContent(actor, topicId) {
-    const [videos, materials, assessments, lessons] = await Promise.all([
+    const [videos, materials, assessments, lessons, packages] = await Promise.all([
       videoService.listByTopic(actor, topicId),
       materialService.listByTopic(actor, topicId),
       assessmentService.listSummariesByTopic(actor, topicId),
       lessonService.listByTopic(actor, topicId),
+      scormPackageService.listByTopic(actor, topicId),
     ])
 
     const items = [
@@ -24,6 +26,7 @@ export const topicContentService = {
       ...materials.map((m) => ({ ...m, contentType: m.type })),
       ...assessments.map((a) => ({ ...a, contentType: 'ASSESSMENT' })),
       ...lessons.map((l) => ({ ...l, contentType: 'LESSON' })),
+      ...packages.map((p) => ({ ...p, contentType: 'SCORM' })),
     ]
 
     return items.sort((a, b) => a.order - b.order)

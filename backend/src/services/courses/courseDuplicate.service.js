@@ -4,6 +4,7 @@ import { Video } from '../../models/video.model.js'
 import { Material } from '../../models/material.model.js'
 import { Assessment } from '../../models/assessment.model.js'
 import { Lesson } from '../../models/lesson.model.js'
+import { ScormPackage } from '../../models/scormPackage.model.js'
 import { Quiz } from '../../models/quiz.model.js'
 import { AttentionPolicy } from '../../models/attentionPolicy.model.js'
 import { courseRepository } from '../../repositories/course.repository.js'
@@ -143,7 +144,7 @@ export const courseDuplicateService = {
       })
     )
 
-    const counts = { topics: 0, videos: 0, materials: 0, assessments: 0, lessons: 0, quizzes: 0 }
+    const counts = { topics: 0, videos: 0, materials: 0, assessments: 0, lessons: 0, scorm: 0, quizzes: 0 }
 
     // Old id -> new id, so children can be re-pointed as they are copied.
     const topicIdMap = new Map()
@@ -229,6 +230,21 @@ export const courseDuplicateService = {
         })
       )
       counts.lessons += 1
+    }
+
+    // SCORM packages copy as rows pointing at the *same* extracted files —
+    // `baseKey` and `zipKey` are carried across rather than re-uploaded.
+    // A package is hundreds of megabytes; duplicating a syllabus must not
+    // duplicate that. Deleting either copy checks for the other before it
+    // touches the objects (scormPackage.service.js).
+    const packages = await ScormPackage.find({ courseId }).sort({ order: 1 }).lean()
+    for (const pkg of packages) {
+      const topicId = topicIdMap.get(String(pkg.topicId))
+      if (!topicId) continue
+      await ScormPackage.create(
+        copyOf(pkg, { courseId: course._id, topicId, createdBy: actor.id, updatedBy: null })
+      )
+      counts.scorm += 1
     }
 
     const quizzes = await Quiz.find({ courseId }).lean()

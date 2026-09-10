@@ -7,6 +7,7 @@ import { videosApi } from '@/services/videos'
 import { assessmentsApi } from '@/services/assessments'
 import { materialsApi } from '@/services/materials'
 import { lessonsApi } from '@/services/lessons'
+import { scormApi } from '@/services/scorm'
 // AI o'quv yordamchisi vaqtincha o'chirilgan — pastdagi shablonga qarang.
 // import AiChatPanel from '@/components/AiChatPanel.vue'
 import MaterialViewer from '@/components/MaterialViewer.vue'
@@ -40,6 +41,8 @@ const assessmentsByTopic = ref({})
 const materialsByTopic = ref({})
 // Written lessons (9.2). They read like a page rather than opening a file.
 const lessonsByTopic = ref({})
+// SCORM packages (9.3) — content authored elsewhere, run in an iframe.
+const scormByTopic = ref({})
 const openMaterial = ref(null)
 const openTopics = ref(new Set())
 const progress = ref(null)
@@ -94,7 +97,8 @@ function topicItemCount(topicId) {
     (videosByTopic.value[topicId]?.length ?? 0) +
     (materialsByTopic.value[topicId]?.length ?? 0) +
     (assessmentsByTopic.value[topicId]?.length ?? 0) +
-    (lessonsByTopic.value[topicId]?.length ?? 0)
+    (lessonsByTopic.value[topicId]?.length ?? 0) +
+    (scormByTopic.value[topicId]?.length ?? 0)
   )
 }
 
@@ -131,6 +135,10 @@ function materialProgress(material) {
 
 function assessmentProgress(assessment) {
   return progress.value?.assessments?.[assessment.id] ?? { completed: false }
+}
+
+function scormProgress(pkg) {
+  return progress.value?.scorm?.[pkg.id] ?? { completed: false, successStatus: 'unknown', scoreRaw: null }
 }
 
 function lessonProgress(lesson) {
@@ -171,7 +179,7 @@ async function load() {
   try {
     course.value = await coursesApi.getById(route.params.id)
     topics.value = await coursesApi.listTopics(route.params.id)
-    const [videoLists, materialLists, assessmentLists, lessonLists] = await Promise.all([
+    const [videoLists, materialLists, assessmentLists, lessonLists, scormLists] = await Promise.all([
       Promise.all(topics.value.map((topic) => videosApi.listByTopic(topic.id))),
       // A module without materials is normal, so a failure here degrades to
       // "no materials shown" rather than breaking the whole curriculum — same
@@ -179,11 +187,17 @@ async function load() {
       Promise.all(topics.value.map((topic) => materialsApi.listByTopic(topic.id).catch(() => []))),
       Promise.all(topics.value.map((topic) => assessmentsApi.listByTopic(topic.id).catch(() => []))),
       Promise.all(topics.value.map((topic) => lessonsApi.listByTopic(topic.id).catch(() => []))),
+      Promise.all(topics.value.map((topic) => scormApi.listByTopic(topic.id).catch(() => []))),
     ])
     videosByTopic.value = Object.fromEntries(topics.value.map((topic, i) => [topic.id, videoLists[i]]))
     materialsByTopic.value = Object.fromEntries(topics.value.map((topic, i) => [topic.id, materialLists[i]]))
     assessmentsByTopic.value = Object.fromEntries(topics.value.map((topic, i) => [topic.id, assessmentLists[i]]))
     lessonsByTopic.value = Object.fromEntries(topics.value.map((topic, i) => [topic.id, lessonLists[i]]))
+    // Only the ready ones: a package still unpacking is a row that cannot
+    // be opened, and the author is the one who should see that state.
+    scormByTopic.value = Object.fromEntries(
+      topics.value.map((topic, i) => [topic.id, (scormLists[i] ?? []).filter((p) => p.processingStatus === 'READY')])
+    )
     openTopics.value = new Set(topics.value.slice(0, 1).map((tp) => tp.id))
     await loadProgress()
   } catch (error) {
@@ -412,8 +426,38 @@ onMounted(load)
                   <Icon v-else name="arrow-right" size="14" class="shrink-0 text-ink-muted" />
                 </button>
 
+                <!-- SCORM packages (9.3) -->
+                <button
+                  v-for="pkg in scormByTopic[topic.id]"
+                  :key="pkg.id"
+                  type="button"
+                  class="flex w-full items-center gap-3 px-5 py-3 text-left transition-default hover:bg-surface-2"
+                  @click="router.push(`/scorm/${pkg.id}`)"
+                >
+                  <span
+                    class="flex h-8 w-8 shrink-0 items-center justify-center rounded"
+                    :class="scormProgress(pkg).completed ? 'bg-success/10 text-success' : 'bg-primary/10 text-primary'"
+                  >
+                    <Icon :name="scormProgress(pkg).completed ? 'check' : 'globe'" size="14" />
+                  </span>
+                  <span class="min-w-0 flex-1">
+                    <span class="block truncate text-small font-medium text-ink">{{ pkg.title }}</span>
+                    <span class="block text-caption text-ink-faint">
+                      SCORM {{ pkg.version }}
+                      <template v-if="pkg.masteryScore">· {{ t('scorm.mastery', { score: pkg.masteryScore }) }}</template>
+                    </span>
+                  </span>
+                  <span
+                    v-if="scormProgress(pkg).scoreRaw !== null && scormProgress(pkg).scoreRaw !== undefined"
+                    class="shrink-0 text-caption tabular-nums text-ink-muted"
+                  >
+                    {{ t('scorm.score', { score: scormProgress(pkg).scoreRaw }) }}
+                  </span>
+                  <Icon v-else name="arrow-right" size="14" class="shrink-0 text-ink-muted" />
+                </button>
+
                 <p
-                  v-if="!videosByTopic[topic.id]?.length && !materialsByTopic[topic.id]?.length && !assessmentsByTopic[topic.id]?.length && !lessonsByTopic[topic.id]?.length"
+                  v-if="!videosByTopic[topic.id]?.length && !materialsByTopic[topic.id]?.length && !assessmentsByTopic[topic.id]?.length && !lessonsByTopic[topic.id]?.length && !scormByTopic[topic.id]?.length"
                   class="px-5 py-6 text-center text-small text-ink-faint"
                 >
                   {{ t('videos.empty') }}

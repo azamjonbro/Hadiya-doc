@@ -11,10 +11,13 @@ import { materialController } from '../../controllers/material.controller.js'
 import { assessmentController } from '../../controllers/assessment.controller.js'
 import { topicContentController } from '../../controllers/topicContent.controller.js'
 import { lessonController } from '../../controllers/lesson.controller.js'
+import { scormController } from '../../controllers/scorm.controller.js'
 import { updateTopicSchema, reorderContentSchema } from '../../validators/course.validator.js'
 import { createMaterialMetaSchema } from '../../validators/material.validator.js'
 import { createAssessmentSchema } from '../../validators/assessment.validator.js'
 import { createLessonSchema } from '../../validators/lesson.validator.js'
+import { createScormSchema } from '../../validators/scorm.validator.js'
+import { scormUpload } from './scorm.routes.js'
 import { env } from '../../config/env.js'
 import { ApiError } from '../../utils/ApiError.js'
 
@@ -41,6 +44,26 @@ function uploadSingleMaterial(req, res, next) {
           `File must be ${env.MATERIAL_MAX_FILE_SIZE_MB}MB or smaller`,
           'FILE_TOO_LARGE',
           { limit: env.MATERIAL_MAX_FILE_SIZE_MB }
+        )
+      )
+      return
+    }
+    next(ApiError.badRequest('Invalid upload', 'UPLOAD_ERROR'))
+  })
+}
+
+function uploadSingleScorm(req, res, next) {
+  scormUpload.single('file')(req, res, (err) => {
+    if (!err) {
+      next()
+      return
+    }
+    if (err.code === 'LIMIT_FILE_SIZE') {
+      next(
+        ApiError.badRequest(
+          `Package must be ${env.SCORM_MAX_FILE_SIZE_MB}MB or smaller`,
+          'FILE_TOO_LARGE',
+          { limit: env.SCORM_MAX_FILE_SIZE_MB }
         )
       )
       return
@@ -86,6 +109,15 @@ topicsRouter.post(
   requirePermission(PERMISSIONS.COURSE_UPDATE),
   validateBody(createLessonSchema),
   lessonController.create
+)
+
+topicsRouter.get('/:id/scorm', requirePermission(PERMISSIONS.VIDEO_VIEW), scormController.listByTopic)
+topicsRouter.post(
+  '/:id/scorm',
+  requirePermission(PERMISSIONS.COURSE_UPDATE),
+  uploadSingleScorm,
+  validateBody(createScormSchema),
+  scormController.create
 )
 
 topicsRouter.patch(

@@ -8,6 +8,8 @@ import { assessmentRepository } from '../../repositories/assessment.repository.j
 import { assessmentAttemptRepository } from '../../repositories/assessmentAttempt.repository.js'
 import { lessonRepository } from '../../repositories/lesson.repository.js'
 import { lessonProgressRepository } from '../../repositories/lessonProgress.repository.js'
+import { ScormPackage } from '../../models/scormPackage.model.js'
+import { ScormState } from '../../models/scormState.model.js'
 import { auditLogRepository } from '../../repositories/auditLog.repository.js'
 import { userRepository } from '../../repositories/user.repository.js'
 import { courseAssignmentRepository } from '../../repositories/courseAssignment.repository.js'
@@ -23,6 +25,7 @@ import { notificationService } from '../notifications/notification.service.js'
 import { formatNotificationDate } from '../../utils/notificationFormat.js'
 import { collectCourseItems, summarize, courseCompletionService } from './courseCompletion.service.js'
 import { lessonCompletion } from './lessonBlocks.js'
+import { meetsPackage } from '../scorm/scormCmi.js'
 import { logger } from '../../config/logger.js'
 import { canManageCourses } from '../courses/coursePermissions.js'
 
@@ -78,13 +81,15 @@ async function computeCourseProgress(actor, id, targetUserId) {
   // fraction of its pages that were actually read: two slides of a hundred is
   // 2% of that item, not nothing and not all of it. Videos and tests stay
   // all-or-nothing, which is what completing them already meant.
-  const [materials, materialRows, assessments, attempts, lessons, lessonRows] = await Promise.all([
+  const [materials, materialRows, assessments, attempts, lessons, lessonRows, packages, scormRows] = await Promise.all([
     materialRepository.listByCourse(id),
     materialProgressRepository.listByUserAndCourse(targetUserId, id),
     assessmentRepository.listByCourse(id),
     assessmentAttemptRepository.listByUserAndCourse(targetUserId, id),
     lessonRepository.listByCourse(id),
     lessonProgressRepository.listByUserAndCourse(targetUserId, id),
+    ScormPackage.find({ courseId: id }),
+    ScormState.find({ userId: targetUserId, courseId: id }),
   ])
 
   const visibleMaterials = canManageCourses(actor) ? materials : materials.filter((m) => m.status === 'PUBLISHED')
@@ -128,6 +133,25 @@ async function computeCourseProgress(actor, id, targetUserId) {
     lessonProgress[lessonId] = lessonCompletion(lesson, lessonRowById.get(lessonId))
   }
 
+  // SCORM packages (9.3). Only the ready ones: a package still unpacking is
+  // not something a learner can open, and a curriculum row for it would be
+  // a button that does nothing.
+  const visiblePackages = (canManageCourses(actor) ? packages : packages.filter((p) => p.status === 'PUBLISHED'))
+    .filter((p) => p.processingStatus === 'READY')
+  const scormRowByPackage = new Map(scormRows.map((row) => [row.packageId.toString(), row]))
+  const scormProgress = {}
+  for (const pkg of visiblePackages) {
+    const packageId = pkg._id.toString()
+    const row = scormRowByPackage.get(packageId)
+    scormProgress[packageId] = {
+      completed: row ? meetsPackage(row, pkg.masteryScore) : false,
+      completionStatus: row?.completionStatus ?? 'unknown',
+      successStatus: row?.successStatus ?? 'unknown',
+      scoreRaw: row?.scoreRaw ?? null,
+      totalTimeSeconds: row?.totalTimeSeconds ?? 0,
+    }
+  }
+
   // The percentage comes from the completion service, not from a second
   // calculation here (3.1). Two implementations of "how far through is this
   // person" is how the progress endpoint and the assignment status came to
@@ -152,6 +176,7 @@ async function computeCourseProgress(actor, id, targetUserId) {
     materials: materialProgress,
     assessments: assessmentProgress,
     lessons: lessonProgress,
+    scorm: scormProgress,
   }
 }
 

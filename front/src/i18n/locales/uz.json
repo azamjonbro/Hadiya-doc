@@ -2574,5 +2574,30 @@
     "linkPrompt": "Havola manzili (https://…)",
     "linkInvalid": "Faqat http va https havolalari qo'shiladi.",
     "clear": "Formatni tozalash"
+  },
+  "scorm": {
+    "open": "Ochish",
+    "retry": "Qayta urinish",
+    "required": "Kursni tugatish uchun majburiy",
+    "dropHint": "SCORM paketini (.zip) shu yerga tashlang",
+    "browse": "yoki fayl tanlang",
+    "startUpload": "Yuklashni boshlash",
+    "uploadFailed": "Paketni yuklab bo'lmadi",
+    "manifestNote": "Versiya, boshlang'ich fayl va o'tish bali imsmanifest.xml dan o'qiladi.",
+    "fileCount": "{count} fayl",
+    "mastery": "o'tish bali {score}",
+    "score": "Ball: {score}",
+    "statusPreparing": "Tayyorlanmoqda",
+    "statusFailed": "Xato",
+    "preparing": "Paket tayyorlanmoqda — bir daqiqadan keyin qayta urinib ko'ring.",
+    "failedToPrepare": "Paketni ochib bo'lmadi.",
+    "loadFailed": "Paketni yuklab bo'lmadi",
+    "completed": "Tugatilgan",
+    "passed": "O'tdi",
+    "failed": "O'tmadi",
+    "autoSaved": "Natija paketning o'zi xabar qilganda avtomatik saqlanadi.",
+    "fullscreen": "Butun ekran",
+    "exitFullscreen": "Chiqish",
+    "confirmDelete": "«{title}» paketi o'chiriladi. Davom etamizmi?"
   }
 }

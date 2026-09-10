@@ -63,14 +63,22 @@ foydalanuvchi so'rovi bilan to'xtatilgan ("telegram bog'lama shartmas"),
 kodi `git stash` da. Uni "keyingi band" deb olma; holat paneli uni shunday
 ko'rsatadi, chunki u ro'yxatdagi birinchi `[ ]` bandni oladi.
 
-**Hozir BLOK 9 (Kontent va authoring):** 9.1 va 9.2 bajarildi — matn darsi
-to'liq oqim bilan: `ContentItem` polimorf bazasi, 12 blok turi, blok editori
-(drag-drop, avtosaqlash), o'quvchi sahifasi (`/lessons/:id`) va blok-asosli
-o'qish progressi. **Keyingi band — 9.3 (SCORM 1.2/2004 import).**
+**Hozir BLOK 9 (Kontent va authoring):** 9.1, 9.2 va 9.3 bajarildi —
+matn darsi to'liq oqim bilan (polimorf baza, 12 blok turi, blok editori,
+o'quvchi sahifasi, blok-asosli progress) va **SCORM 1.2/2004 import**
+(worker'da ochish, manifest parseri, launcher sahifadagi runtime API,
+CMI holati, suspend/resume, mastery). **Keyingi band — 9.4 (subtitr/VTT,
+accessibility uchun majburiy).**
 
-E'tibor bering: 9.3 helmet CSP'ga tegadi (`frame-src`) — 9.2 dagi `EMBED`
-bloki ham iframe ishlatadi (`lessonEmbeds.js` dagi host allowlist), shuning
-uchun CSP'ni o'zgartirganda ikkisini birga sina.
+**SCORM haqida bilib turish kerak bo'lgan ikki narsa:**
+1. Paket API origin'idan xizmat qiladi (SCORM runtime API bilan bir origin
+   bo'lishni talab qiladi). Shu sabab `csrf_token` cookie'si
+   `path=/api/v1/auth` ga toraytirildi — aks holda yuklangan paket uni
+   o'qib `/auth/refresh` orqali access token olardi. Qolgan xavf:
+   paket fayllari uchun **alohida host** kerak (DNS yozuvi).
+2. Lokalda MinIO yo'q, shuning uchun S3 legi stub bilan sinalgan.
+   **Serverda birinchi paketni qo'lda yuklab tekshir** va `lms-scorm`
+   bucket borligiga ishonch hosil qil.
 
 ### iSpring parity — hozirgi raqam
 
@@ -88,7 +96,7 @@ satrlar BLOK 1–8 davomida yangilangan, jamlanma esa yangilanmagan.
 Vaznlangan raqam qayta hisoblanmaydi — vazn jadvali repozitoriyda yo'q
 (`docs/v4/01-executive-summary.md` dagi metodologiya eslatmasi).
 
-**Testlar:** `npm --prefix backend test` — 747 test, 2 tasi yiqiladi va
+**Testlar:** `npm --prefix backend test` — 775 test, 2 tasi yiqiladi va
 ikkisi ham **eskidan** yiqilib turadi (`faceVerification`: yuz aniqlanmagan
 rasm; `facePolicy`: hisobni bloklash). Darslarga aloqasi yo'q.
 
@@ -109,7 +117,7 @@ BLOK 5  Learning path + onboarding     ✅
 BLOK 6  Live training, kalendar, topshiriq  ✅
 BLOK 7  Qidiruv, KB, compliance, gamification  ✅
 BLOK 8  Hisobot, analitika             ✅
-BLOK 9  Kontent va authoring           ← 9.1, 9.2 bajarildi; keyingisi 9.3
+BLOK 9  Kontent va authoring           ← 9.1–9.3 bajarildi; keyingisi 9.4
 BLOK 10 AI
 BLOK 11 Korxona
 BLOK 12 Mobil va accessibility

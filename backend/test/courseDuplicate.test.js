@@ -28,6 +28,7 @@ import { Material } from '../src/models/material.model.js'
 import { Assessment } from '../src/models/assessment.model.js'
 import { Quiz } from '../src/models/quiz.model.js'
 import { Lesson } from '../src/models/lesson.model.js'
+import { ScormPackage } from '../src/models/scormPackage.model.js'
 import { CourseAssignment } from '../src/models/courseAssignment.model.js'
 import { User } from '../src/models/user.model.js'
 import { Role } from '../src/models/role.model.js'
@@ -116,6 +117,23 @@ describe('course duplication (3.5)', () => {
       createdBy: admin._id,
     })
 
+    // A SCORM package is the fifth kind (9.3). Its files are not copied —
+    // the copy points at the same extracted prefix — so this also pins down
+    // that `baseKey` travels across.
+    await ScormPackage.create({
+      courseId: source._id,
+      topicId: sourceTopic._id,
+      title: 'Imported package',
+      originalFilename: 'package.zip',
+      version: '1.2',
+      zipKey: `zips/shared-${stamp}.zip`,
+      baseKey: `packages/shared-${stamp}/`,
+      launchHref: 'index.html',
+      processingStatus: 'READY',
+      status: 'PUBLISHED',
+      createdBy: admin._id,
+    })
+
     // A text lesson is the fourth kind of content a topic can hold (9.1),
     // so "every kind" includes one.
     await Lesson.create({
@@ -158,6 +176,7 @@ describe('course duplication (3.5)', () => {
         Assessment.deleteMany({ courseId: id }),
         Quiz.deleteMany({ courseId: id }),
         Lesson.deleteMany({ courseId: id }),
+        ScormPackage.deleteMany({ courseId: id }),
         CourseAssignment.deleteMany({ courseId: id }),
       ])
     }
@@ -168,7 +187,19 @@ describe('course duplication (3.5)', () => {
   })
 
   test('copies every kind of content once', () => {
-    assert.deepEqual(counts, { topics: 1, videos: 1, materials: 1, assessments: 1, lessons: 1, quizzes: 1 })
+    assert.deepEqual(counts, { topics: 1, videos: 1, materials: 1, assessments: 1, lessons: 1, scorm: 1, quizzes: 1 })
+  })
+
+  test('a copied SCORM package points at the same extracted files', async () => {
+    // Hundreds of megabytes are not copied to make an editable duplicate of
+    // a syllabus, so both rows share `baseKey`; deleting either checks for
+    // the other before touching the objects.
+    const [original] = await ScormPackage.find({ courseId: source._id }).lean()
+    const [copied] = await ScormPackage.find({ courseId: copy.id }).lean()
+    assert.equal(copied.baseKey, original.baseKey)
+    assert.equal(copied.zipKey, original.zipKey)
+    assert.notEqual(String(copied._id), String(original._id))
+    assert.equal(copied.processingStatus, 'READY')
   })
 
   test('the copy is a draft, whatever the original was', () => {

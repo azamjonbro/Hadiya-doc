@@ -1825,8 +1825,108 @@
     5. Kurs sarlavhasidagi statistika hamon "0 video" deb sanaydi (dars
     hisoblanmaydi); curriculumdagi element soni esa to'g'ri. Sarlavha
     dizayni 9.2 doirasidan tashqarida, tegilmadi.
-- [ ] **9.3** **SCORM 1.2/2004 import** — `scormPackage`, `scormState`,
+- [x] **9.3** **SCORM 1.2/2004 import** — `scormPackage`, `scormState`,
   iframe API adapter, helmet CSP `frame-src` sozlash
+  · Bajarildi — paket mavzudagi **beshinchi** kontent turi bo'ldi
+  (`contentItem.js` shartnomasiga qo'shildi: umumiy ketma-ketlik, reorder,
+  qoralama ko'rinishi, tugatish qoidasi).
+  · **Import oqimi:** zip yuklanadi (magic-byte tekshiruvi, 300 MB chegara)
+  → S3 ga qo'yiladi → **worker** ochadi (`extractScorm.js`) → manifest
+  o'qiladi → fayllar `packages/<id>/` ga yoziladi → `READY`. So'rov kutmaydi:
+  300 MB kurs brauzer taymautidan uzoq, yuklash esa allaqachon muvaffaqiyatli.
+  Xato bo'lsa sabab **qatorda** saqlanadi va admin panelida ko'rinadi
+  ("paket ochilmadi" degan log muallifga yordam bermaydi); arxiv saqlanib
+  qoladi, shuning uchun `Qayta urinish` 300 MB ni qayta yuklamaydi.
+  · **Manifest haqiqiy parser bilan o'qiladi** (`fast-xml-parser`, prefikslar
+  olib tashlanadi): versiya (`schemaversion`, bo'lmasa namespace'lardan),
+  boshlang'ich fayl (**barg** item → resource href; keyin `sco` tipidagi
+  resource; keyin har qanday href), o'tish bali (1.2 `masteryscore`, 2004
+  `minNormalizedMeasure` 0–1 shkalada). Regexp bilan qilinmadi: manifest
+  o'nlab authoring vositasidan chiqadi va biri `adlcp:scormtype`, boshqasi
+  `adlcp:scormType` yozadi. **Sequencing ataylab o'qilmadi** — 2004
+  sequencing o'zi bir qoidalar dvigateli, yarmini bajarib "qo'lladim" deyish
+  birinchi resursni ochib kontentga o'zi navigatsiya qilishga ruxsat
+  berishdan yomonroq.
+  · **Ikkita versiya, bitta ichki model** (`scormCmi.js`): 1.2 da
+  `cmi.core.lesson_status` bitta element bilan ikki savolga javob beradi,
+  2004 da `completion_status` va `success_status` ajratilgan; ball va vaqt
+  formatlari ham boshqacha. Kirishda bir marta tarjima qilinadi, shundan
+  keyin hisobot, curriculum qatori va tugatish qoidasi bir xil uch maydonni
+  o'qiydi. **1.2 tuzoqi:** yiqilgan test `lesson_status=failed` deb xabar
+  qiladi — bu **tugagan urinish**, shuning uchun `meetsPackage()` uni
+  tugatish deb hisoblamaydi (aks holda AT-02 dagi xato qaytardi), va o'tish
+  bali bo'lsa ball taqqoslanadi (min/max shkalasi bilan).
+  · **`window.parent.API` muammosi va yechimi.** SCORM kontenti LMS'ni
+  oyna zanjiri bo'ylab yuqoriga chiqib topadi; boshqa origin'dagi oynadan
+  xossa o'qish esa taqiqlanadi. SPA `spring.sds-max.uz` da, paket fayllari
+  API da — ya'ni **SPA runtime API'ni tuta olmaydi**. Shuning uchun API o'zi
+  kichik **launcher sahifa** beradi (`scormPlayerPage.js`): u SPA'ning
+  iframe'ida turadi, `window.API` (1.2) va `window.API_1484_11` (2004) ni
+  e'lon qiladi va paketni **ikkinchi**, o'zi bilan bir origin'dagi
+  iframe'ga joylaydi. SPA holatni `postMessage` orqali biladi va
+  o'zgarganini eshitgach **API'dan qayta o'qiydi** — xabar "nimadir
+  o'zgardi" deydi, haqiqatni API aytadi.
+  · **Token URL yo'lida, query'da emas.** Paket o'z assetlarini eksport
+  vaqtida yozilgan nisbiy havolalar bilan yuklaydi va brauzer iframe
+  ichidagi rasmga `Authorization` sarlavhasini qo'shmaydi. Cookie prod'da
+  ishlardi, lokalda esa yo'q (SameSite=None → Secure → https). Shuning
+  uchun `/scorm/:id/f/:token/...` — token **katalog yo'lining** bir qismi,
+  ya'ni paketning nisbiy havolalari ham uni olib yuradi. Imzo
+  `VIDEO_TOKEN_SECRET` bilan, `scope: 'scorm'` claim bilan (video tokeni
+  paketni ochmasin).
+  · **🔴 Yo'l-yo'lakay topilgan xavfsizlik teshigi va tuzatilishi.**
+  Paket API origin'ida JS ishlatadi. `csrf_token` cookie'si `path=/` bo'lib
+  **JS uchun o'qiladigan** edi (double-submit shunday ishlaydi), refresh
+  cookie'si esa so'rovga o'zi qo'shiladi — ya'ni yuklangan paket
+  `document.cookie` dan tokenni o'qib, `POST /auth/refresh` qilib,
+  kursni o'tayotgan odam nomidan **tirik access token** olishi mumkin edi.
+  Endi cookie `path=/api/v1/auth` ga toraytirildi: `document.cookie` faqat
+  o'qiyotgan hujjat yo'liga mos cookie'ni ko'rsatadi, so'rov esa baribir
+  olib boradi. SPA bu cookie'ni hech qachon o'qimagan (token login javob
+  tanasida keladi), eski sessiyalar uchun `path=/` dagi nusxa avval
+  o'chiriladi — aks holda bir xil nomli ikki cookie tasodifiy 403 berardi.
+  · **CSP va freym sarlavhalari** (`scormFrame.middleware.js`): faqat shu
+  ikki route uchun `X-Frame-Options` olib tashlanadi va `frame-ancestors`
+  qo'yiladi (`'self'` + ilova origin'lari). `form-action 'none'`,
+  `base-uri 'none'`, `object-src 'none'`; skript va media cheklanmaydi —
+  eksport qilingan kurs aynan JavaScript, uni buzadigan siyosat funksiyani
+  ishlatilmaydigan qiladi.
+  · **Tekshirildi.** `test/scorm.test.js` — 28 test: manifest (1.2, 2004,
+  namespace'lar, versiya fallback, "bu paket emas"), zip-slip
+  (`../`, URL-kodlangan, `C:\`), o'ram papkasi, eng ustki manifest, prefiks
+  ichida qolish, manifest ko'rsatgan fayl yo'qligi, faqat zip, ketma-ketlik,
+  token (mos kelmagan paket, buzuq token), READY bo'lmagan paketni
+  chiqarish/ochish taqiqi, CMI ikki versiyada, mastery, commit merge,
+  "tugagan tugagan bo'lib qoladi", AT-01/AT-02.
+  · **Va haqiqiy brauzerda** (headless Chrome, CDP), MinIO yo'qligi uchun
+  ~60 satrli S3-mos stub bilan: haqiqiy SCORM 1.2 paketi yuklandi →
+  **worker** ochdi (4 fayl, versiya 1.2, mastery 80, sarlavha manifestdan) →
+  chiqarildi → o'quvchi `/scorm/:id` ni ochdi → paket ichidagi SCO
+  `window.parent.API` ni **topdi**, `student_name` = "E2E Scorm",
+  `mastery_score` = 80, `entry` = `resume`, `suspend_data` = "slide=1"
+  (ya'ni **resume ishlaydi**) → tugatish tugmasi bosildi → server:
+  `completed`, `passed`, ball 90, vaqt 270 s → kurs 100% va "Kurs
+  tugallandi" bildirishnomasi. Konsolda faqat brauzerning `favicon.ico`
+  404 i. Skrinshot ko'rildi. Sinov ma'lumotlari o'chirildi.
+  · **Chetlanishlar:**
+    1. **Qolgan xavf: paket API origin'ida ishlaydi.** Cookie yo'li
+    yopilgani bilan kontent hamon shu origin'dan token talab qilmaydigan
+    endpointlarga murojaat qila oladi. To'g'ri yechim — paket fayllari
+    uchun **alohida host** (masalan `scorm-content.sds-max.uz`), bu DNS
+    yozuvini talab qiladi va bu sessiyada qilib bo'lmaydi. Paketni faqat
+    `course:update` bo'lgan xodim yuklaydi, o'quvchi emas.
+    2. **Sequencing va bir nechta SCO qo'llanmaydi** — birinchi resurs
+    ochiladi, keyin kontentning o'zi navigatsiya qiladi. Ko'p-SCO paketda
+    holat bitta yozuvda yig'iladi.
+    3. **`cmi.interactions` va `cmi.objectives` saqlanadi, lekin hisobotga
+    chiqmaydi** — savol-savol analitika 13.x da.
+    4. **Lokalda MinIO yo'q**, shuning uchun S3 legi haqiqiy MinIO'da
+    sinalmagan; e2e stub bilan qilindi. Serverda birinchi paketni yuklab
+    tekshirish kerak (`lms-scorm` bucket avtomatik yaratilmaydi — MinIO'da
+    bucket policy'lari qo'lda sozlangan).
+    5. **Zip xotirada ochiladi** (jszip): shuning uchun worker konkurentligi
+    1 va ochilgan hajm sakkiz baravar chegara bilan cheklangan (zip bomba).
+    Oqimli ochish kerak bo'lsa — `yauzl`, lekin hozircha kerak emas.
 - [ ] **9.4** **Subtitr / VTT** — ffmpeg pipeline'ga qo'shish, pleyerda `<track>`
   (**accessibility uchun majburiy**)
 - [ ] **9.5** **Media kutubxona** — `mediaAsset`, papkalar, "qayerda ishlatilgan",
