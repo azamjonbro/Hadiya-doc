@@ -13,3 +13,13 @@ export const reportExportQuerySchema = z.object({
   dateFrom: z.coerce.date().optional(),
   dateTo: z.coerce.date().optional(),
 })
+
+/**
+ * The on-screen preview (8.2).
+ *
+ * The same filters as an export minus `format`: there is no file, so there
+ * is no format to choose. The row cap is deliberately not a parameter — a
+ * client that could raise it could turn a preview into an unbounded read,
+ * which is the thing the caps exist to stop.
+ */
+export const reportPreviewQuerySchema = reportExportQuerySchema.omit({ format: true })

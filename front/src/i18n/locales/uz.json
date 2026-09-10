@@ -1224,6 +1224,15 @@
         "READY": "Tayyor",
         "FAILED": "Xato"
       }
+    },
+    "preview": {
+      "open": "Ko'rish",
+      "title": "Hisobotni ko'rish",
+      "loading": "Yuklanmoqda...",
+      "empty": "Bu filtr bo'yicha qator yo'q",
+      "capped": "Ekranda {shown} qator ko'rsatildi, jami {total} ta. To'liq ma'lumot uchun yuklab oling.",
+      "all": "Hammasi ko'rsatildi: {total} qator.",
+      "chart": "Eng yuqori {count} ta"
     }
   },
   "audit": {

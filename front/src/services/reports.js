@@ -29,6 +29,17 @@ export const reportsApi = {
   },
 
   /**
+   * The report on screen, before anyone downloads it (8.2).
+   *
+   * Capped far lower than an export — this goes into a table in a browser —
+   * and it says so, so a preview showing 100 of 8 000 rows is never mistaken
+   * for the report.
+   */
+  preview(type, filters = {}) {
+    return http.get(`/reports/${type}/preview`, { params: toParams(filters) }).then((r) => r.data.data)
+  },
+
+  /**
    * Downloads a report and reports back what the server said about it.
    *
    * The return value is the point. A synchronous export is capped at 5 000

@@ -21,7 +21,12 @@ import { User } from '../src/models/user.model.js'
 import { Role } from '../src/models/role.model.js'
 import { ExportJob } from '../src/models/exportJob.model.js'
 import { hashPassword } from '../src/utils/hash.js'
-import { reportDataService, MAX_ROWS, ASYNC_MAX_ROWS } from '../src/services/reports/reportData.service.js'
+import {
+  reportDataService,
+  MAX_ROWS,
+  ASYNC_MAX_ROWS,
+  PREVIEW_MAX_ROWS,
+} from '../src/services/reports/reportData.service.js'
 import { exportJobService } from '../src/services/reports/exportJob.service.js'
 import { exportQueue, queueExport } from '../src/jobs/exportQueue.js'
 import { S3StorageProvider } from '../src/storage/S3StorageProvider.js'
@@ -130,6 +135,54 @@ describe('AT-22 · export truncation is never silent', () => {
         assert.equal(typeof result.truncated, 'boolean', `${type} must report truncated`)
         assert.ok(result.totalRows >= result.rows.length, `${type} totalRows cannot be below its rows`)
       }
+    })
+  })
+
+  // 8.2 — the report on screen. The preview is a fourth cap, smaller than
+  // both export caps and for a different reason: it lands in a browser table,
+  // where five thousand rows is a tab that stops responding.
+  describe('the on-screen preview', () => {
+    test('is capped far below an export, and says so with the same numbers', async () => {
+      assert.ok(PREVIEW_MAX_ROWS < MAX_ROWS, 'a preview must not fetch what an export fetches')
+
+      const built = await reportDataService.build(
+        adminActor(),
+        'employee-progress',
+        { maxRows: 10 },
+        'en',
+        { scopedUserIds: userIds }
+      )
+
+      assert.equal(built.rows.length, 10)
+      assert.equal(built.totalRows, POPULATION, 'totalRows is what exists, not what came back')
+      assert.ok(built.totalRows > built.rows.length)
+    })
+
+    test('a preview that fits reports no gap between the two counts', async () => {
+      const built = await reportDataService.build(
+        adminActor(),
+        'employee-progress',
+        { maxRows: PREVIEW_MAX_ROWS },
+        'en',
+        { scopedUserIds: userIds }
+      )
+      // Sixty employees, a cap of a hundred.
+      assert.equal(built.rows.length, POPULATION)
+      assert.equal(built.totalRows, POPULATION)
+    })
+
+    test('the preview is fenced by the same scope as the file', async () => {
+      // The screen is not a way around the fence: an empty allow-list means
+      // nothing, never everything.
+      const built = await reportDataService.build(
+        adminActor(),
+        'employee-progress',
+        { maxRows: PREVIEW_MAX_ROWS },
+        'en',
+        { scopedUserIds: [] }
+      )
+      assert.equal(built.rows.length, 0)
+      assert.equal(built.totalRows, 0)
     })
   })
 

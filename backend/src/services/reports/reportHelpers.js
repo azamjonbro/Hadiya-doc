@@ -22,6 +22,13 @@ export const MAX_ROWS = 5000
 // HTTP response — but still bounded.
 export const ASYNC_MAX_ROWS = 100000
 
+// What the on-screen preview fetches (8.2). Far smaller than either export
+// cap, and for a different reason: this one goes into a table in a browser,
+// and five thousand rows in the DOM is a tab that stops responding. The
+// preview answers "is this the report I meant", not "give me the data" —
+// the file is still the way to get all of it.
+export const PREVIEW_MAX_ROWS = 100
+
 /**
  * The row cap for this build.
  *

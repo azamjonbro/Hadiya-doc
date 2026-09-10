@@ -1224,6 +1224,15 @@
         "READY": "Ready",
         "FAILED": "Failed"
       }
+    },
+    "preview": {
+      "open": "Preview",
+      "title": "Report preview",
+      "loading": "Loading...",
+      "empty": "No rows for this filter",
+      "capped": "Showing {shown} rows of {total}. Download the file for all of it.",
+      "all": "Showing all {total} rows.",
+      "chart": "Top {count}"
     }
   },
   "audit": {
