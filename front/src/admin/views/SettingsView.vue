@@ -11,6 +11,7 @@ import Avatar from '@/components/ui/Avatar.vue'
 import AttentionPolicyForm from '@/admin/components/AttentionPolicyForm.vue'
 import FacePolicyForm from '@/admin/components/FacePolicyForm.vue'
 import AiSettingsCard from '@/admin/components/AiSettingsCard.vue'
+import ApiKeysCard from '@/admin/components/ApiKeysCard.vue'
 
 const { t, locale } = useI18n()
 const auth = useAuthStore()
@@ -98,6 +99,9 @@ function onLocaleChange(code) {
       <!-- The AI budget (10.6): SUPERADMIN only, like the other
            platform-wide policies on this page. -->
       <AiSettingsCard v-if="auth.isSuperAdmin" />
+
+      <!-- API keys (11.1): the same authority as the AI budget above. -->
+      <ApiKeysCard v-if="auth.isSuperAdmin" />
 
           <AttentionPolicyForm :readonly="!auth.hasPermission('course:update')" />
         </div>

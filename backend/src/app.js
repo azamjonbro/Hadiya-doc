@@ -7,6 +7,7 @@ import { requestLogger } from './middlewares/requestLogger.middleware.js'
 import { baseRateLimiter } from './middlewares/rateLimit.middleware.js'
 import { errorHandler, notFoundHandler } from './middlewares/error.middleware.js'
 import { v1Router } from './routes/v1/index.js'
+import { publicV1Router } from './routes/public/v1.routes.js'
 import { videoUploadRouter } from './routes/v1/videoUpload.routes.js'
 import { VIDEO_UPLOAD_PATH } from './video/tusServer.js'
 
@@ -52,6 +53,11 @@ export function createApp() {
   app.use(baseRateLimiter)
 
   app.use('/api/v1', v1Router)
+  // The integration surface (11.1). Its own prefix, its own door: every
+  // route here authenticates with an API key and nothing else, and the
+  // payload shapes are versioned in the path so a redesigned screen cannot
+  // break somebody's nightly sync.
+  app.use('/api/public/v1', publicV1Router)
 
   app.use(notFoundHandler)
   app.use(errorHandler)

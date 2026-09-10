@@ -2716,5 +2716,33 @@
     "settingsSaved": "Saqlandi",
     "settingsSaveFailed": "Saqlab bo'lmadi",
     "settingsLoadFailed": "Sozlamalarni yuklab bo'lmadi"
+  },
+  "apiKeys": {
+    "title": "API kalitlar",
+    "hint": "Boshqa tizimlar shu platformadan o'qishi uchun. Faqat o'qish.",
+    "empty": "Hali kalit yo'q.",
+    "loadFailed": "Kalitlarni yuklab bo'lmadi",
+    "newTitle": "Yangi kalit",
+    "namePlaceholder": "Nimaga kerak: HR sinxronizatsiya, BI panel…",
+    "limitLabel": "Daqiqada so'rov",
+    "create": "Kalit yaratish",
+    "createFailed": "Kalit yaratib bo'lmadi",
+    "includePii": "JSHSHIR va e-mail ham berilsin (alohida qaror)",
+    "readOnlyNote": "Kalit hech narsani o'zgartira olmaydi — faqat o'qiydi.",
+    "copyNow": "Kalit faqat hozir ko'rinadi — hoziroq nusxa oling.",
+    "copy": "Nusxa olish",
+    "copied": "Nusxa olindi",
+    "copyFailed": "Nusxa olib bo'lmadi",
+    "stored": "Saqlab oldim",
+    "revoke": "Bekor qilish",
+    "revoked": "Bekor qilindi",
+    "revokeFailed": "Bekor qilib bo'lmadi",
+    "confirmRevoke": "«{name}» kaliti bekor qilinadi va u bilan ishlayotgan integratsiya to'xtaydi. Davom etamizmi?",
+    "activeLabel": "ishlayapti",
+    "revokedLabel": "bekor qilingan",
+    "withPii": "JSHSHIR bilan",
+    "perMinute": "daqiqada {count}",
+    "lastUsed": "oxirgi: {date}",
+    "neverUsed": "hech ishlatilmagan"
   }
 }

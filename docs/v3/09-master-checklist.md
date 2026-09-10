@@ -2319,8 +2319,75 @@
 
 ## BLOK 11 — Korxona (5 hafta)
 
-- [ ] **11.1** `models/apiKey.model.js`, `middlewares/apiKeyAuth.middleware.js`,
+- [x] **11.1** `models/apiKey.model.js`, `middlewares/apiKeyAuth.middleware.js`,
   per-key rate limit, `/api/public/v1`
+  · Bajarildi — kalit **uzun paroli bor foydalanuvchi emas**. Farq uch
+  joyda muhim: kalit rol emas, **aniq va tor scope ro'yxatini** olib
+  yuradi; o'z **so'rov byudjeti** bor (har daqiqada so'rov yuboradigan
+  integratsiya — normal trafik, odamning limiterida esa suiiste'molga
+  o'xshaydi); va uni **hech kimning loginiga tegmasdan** bekor qilish
+  mumkin.
+  · **Sir saqlanmaydi.** Saqlanadigan narsa: `prefix` (ochiq, va qidiruv
+  kaliti) va butun kalitning **argon2 hash**'i — parol bilan bir xil
+  muomala, bir xil sabab bilan: oqib ketgan baza ishlayotgan
+  ma'lumotlarni bermasligi kerak. To'liq kalit **bir marta**, yaratilganda
+  ko'rsatiladi. Prefiks/sir bo'linishi hash'ni amaliy qiladi: ochiq yarmi
+  bo'lmasa, tekshiruv har so'rovda **butun jadval** ustidan argon2
+  taqqoslash bo'lardi.
+  · **Yomon kalitga bitta javob.** `verify()` faqat `null` qaytaradi —
+  bekor qilinganmi, muddati o'tganmi, umuman bo'lmaganmi, farq qilmaydi.
+  Aynan shu — prefikslarni sanab ko'rayotgan odam bilishni xohlaydigan
+  narsa (test bilan qadalgan: ikkita xato holatning **xabari ham bir xil**).
+  · **Bitta avtorizatsiya implementatsiyasi.** Middleware kalit
+  scope'larini `req.user.permissions` ga qo'yadi, ya'ni ommaviy route
+  aynan **o'sha `requirePermission`** bilan yopiladi. Ikkinchi, parallel
+  tekshiruv yozilsa — u ertami-kechmi birinchisidan farq qila boshlaydi.
+  Sintetik rol nomi `API_KEY`: rol bo'yicha yopilgan route'lar
+  (`requireRole`) uni **konstruksiya bo'yicha** rad etadi.
+  · **Ikki eshik tutashmaydi** (test bilan): sessiya tokeni ommaviy API'da
+  401, kalit esa yopiq API'da 401 (u JWT emas). Ommaviy API **faqat
+  o'qiydi**: kalit bilan odam yozish yoki kursni o'chirish — boshqa
+  ko'rib chiqishga muhtoj boshqa mahsulot.
+  · **Per-key rate limit Redis'da sanaladi**, `express-rate-limit` bilan
+  emas: uning standart do'koni **jarayon xotirasi**, API esa pm2 cluster
+  rejimida ishlaydi — 60/daqiqa amalda 60 × worker bo'lardi, bu esa
+  hech kim hisoblab bo'lmaydigan chegara. `INCR` + `EXPIRE` esa
+  worker'lar bo'ylab aniq. `X-RateLimit-*` sarlavhalari qaytariladi
+  (mijoz rad etilishidan **oldin** sekinlashsin). Redis xato bersa —
+  **ochiq yiqiladi**: aks holda hisoblagich yo'qligi ishlayotgan
+  integratsiyani to'xtatadi, ya'ni faraziy yuklama uchun haqiqiy uzilish.
+  · **PII alohida qaror.** `includePii` (standart o'chиq) — "xodimlar
+  ro'yxatini o'qish mumkin" va "hammaning JSHSHIR'ini o'qish mumkin" bir
+  narsa emas, ikkinchisi esa ma'lumotlarni himoya qilish suhbatida paydo
+  bo'ladigan narsa. O'chiq bo'lsa JSHSHIR maskalanadi (`**********1234`)
+  va e-mail bo'sh qaytadi. HR sinxronizatsiyasiga kerak; tugallanishlarni
+  sanaydigan panelga kerak emas.
+  · **Payload'lar alohida yozilgan** (`publicApi.service.js`), ilovaning
+  o'zi ishlatadiganlari emas: SPA o'qiydigan shakllar SPA bilan
+  o'zgaradi, ekran qayta dizayn qilingani uchun buzilgan integratsiya esa
+  — versiyalangan ommaviy API aynan shuning oldini olish uchun bor.
+  Ular ataylab **kichikroq**: HR tizimiga odamning id'si, ismi va qayerda
+  ishlashi kerak, diqqat kuzatuvi sozlamalari emas.
+  · Endpointlar: `GET /me` (integrator birinchi chaqiradigan va "nega
+  403 olaman"ni support suhbatisiz javob beradigan), `/users`,
+  `/courses` (standart holatda **faqat PUBLISHED** — qoralama kimningdir
+  tugallanmagan ishi), `/assignments` (`completedSince` bilan — "kechadan
+  beri kim nimani tugatdi" bitta so'rov), `/certificates` (**serial**
+  bilan, chunki boshqa tizim aynan shuni saqlaydi va ommaviy tekshiruv
+  sahifasi ham shuni tekshiradi).
+  · Kalitlarni boshqarish **SUPERADMIN roli** bilan yopilgan (ruxsat
+  bilan emas): kalit — butun kompaniyani o'qish huquqining uzoq muddatli
+  granti, uni yaratgan odamdan uzoq yashaydi va foydalanuvchi hisobi
+  kabi hech qaysi ekranda ko'rinmaydi. Bu — doimiy kurs o'chirish bilan
+  bir xil sinf.
+  · **Tekshirildi** — 13 test + HTTP orqali: scope ro'yxati, kalit
+  yaratish (bir marta ko'rsatish), ommaviy API'da ishlashi, maskalangan
+  JSHSHIR, yo'q scope'da 403, kalit yopiq API'da 401, JWT ommaviy API'da
+  401, va **daqiqada 5** chegarasi (6-so'rov 429 + `Retry-After`).
+  · **Chetlanish:** kalit **butun kompaniyani** o'qiydi yoki hech narsani
+  — bitta bo'lim bilan cheklash scope'lar ustiga ko'rinmas ikkinchi filtr
+  qo'shardi, va integratsiyaning jimgina xodimlarning bir qismini olishi
+  rad etilishidan yomonroq.
 - [ ] **11.2** `models/webhook.model.js`, `webhookDelivery.model.js`,
   `jobs/webhookQueue.js` (HMAC + 5× retry)
 - [ ] **11.3** OpenAPI — `zod-to-openapi`, `GET /openapi.json`, `/api/docs`

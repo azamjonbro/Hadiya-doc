@@ -401,9 +401,9 @@
 | Capability | iSp | Bizda | Status | Sc | Evidence | Gap |
 |---|:--:|---|:--:|:--:|---|---|
 | REST API (ichki) | ✓ | Bor, layered, `ApiError` envelope | FULL | 100 | `routes/v1/index.js` (34 router) | — |
-| **Tashqi REST API** | ✓ | Yo'q | NONE | 0 | — | `/api/public/v1` + `ApiKey` |
+| **Tashqi REST API** | ✓ | Bor — `/api/public/v1`, faqat o'qish, versiyalangan payload'lar | PARTIAL | 75 | `routes/public/v1.routes.js` | Yozish yo'q; webhook 11.2 da |
 | SOAP API | ✓ | Yo'q | N/A | — | — | §24 — eskirgan protokol |
-| API kalitlari + scope | ✓ (implicit) | Yo'q | NONE | 0 | — | `ApiKey` modeli |
+| API kalitlari + scope | ✓ (implicit) | Bor — argon2 hash, scope'lar, per-key limit, PII bayrog'i | FULL | 100 | `apiKey.service.js`, `apiKeyAuth.middleware.js` | — |
 | Rate limiting | ? | **11 alohida limiter** | OURS+ | 100 | `middlewares/*RateLimit*` | — |
 | OpenAPI hujjati | ? | Qo'lda `.md` | PARTIAL | 25 | `docs/api-contract.md` | `zod-to-openapi` |
 | Idempotency | ? | Yo'q | VERIFY | 0 | — | `Idempotency-Key` |
@@ -417,7 +417,7 @@
 | Albato / Zapier tipidagi | ✓ | Yo'q | NONE | 0 | — | Public API'dan keyin |
 | Storage provider abstraksiyasi | ? | Bor (Local + S3) | OURS+ | 100 | `storage/S3StorageProvider.js` | — |
 | Domain alias | ✓ | Nginx darajasida qo'lda | PARTIAL | 50 | — | — |
-| **D70–D73 jami: 17 capability (+1 N/A)** | | | **FULL 1 · OURS+ 2 · PARTIAL 2 · NONE 8 · VERIFY 3 · N/A 1** | **23** | | |
+| **D70–D73 jami: 16 capability (+1 N/A)** | | | **FULL 2 · OURS+ 2 · PARTIAL 3 · NONE 6 · VERIFY 3 · N/A 1** | **34** | | |
 
 ## D74–D79 · SECURITY / AUDIT / ADMIN / BRANDING / MEDIA / FILES
 
