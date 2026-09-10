@@ -137,7 +137,7 @@ onMounted(load)
 </script>
 
 <template>
-  <div class="mx-auto max-w-7xl px-6 py-8">
+  <div class="mx-auto w-full max-w-[1440px] px-6 lg:px-8 py-8">
     <div class="flex flex-wrap items-end justify-between gap-4">
       <div>
         <h1 class="text-h1 text-ink">{{ t(greetingKey) }}, {{ firstName }}</h1>
