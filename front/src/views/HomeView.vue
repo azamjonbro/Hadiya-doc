@@ -156,11 +156,11 @@ onMounted(load)
           v-for="item in todayItems"
           :key="item.id"
           type="button"
-          class="flex w-64 shrink-0 items-center gap-3 rounded-lg border p-3.5 text-left transition-default hover:shadow-sm"
-          :class="item.urgent ? 'border-danger/25 bg-danger-subtle' : 'border-border bg-surface'"
+          class="flex w-64 shrink-0 items-center gap-3 rounded-md border p-3 text-left transition-default hover:bg-surface-2"
+          :class="item.urgent ? 'border-danger-subtle bg-danger/5' : 'border-border bg-surface'"
           @click="item.kind === 'task' ? router.push('/tasks') : router.push(`/courses/${item.courseId}`)"
         >
-          <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full" :class="item.urgent ? 'bg-danger/15 text-danger' : 'bg-primary-subtle text-primary'">
+          <span class="flex h-8 w-8 shrink-0 items-center justify-center rounded" :class="item.urgent ? 'bg-danger/10 text-danger' : 'bg-primary-subtle text-primary'">
             <Icon :name="item.icon" size="16" />
           </span>
           <div class="min-w-0">

@@ -1,6 +1,8 @@
 <script setup>
 import { computed, onMounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
+import { apiErrorText } from '@/utils/apiError'
+import { useToast } from '@/composables/useToast'
 import { notificationsApi } from '@/services/notifications'
 import AppButton from '@/components/ui/AppButton.vue'
 import EmptyState from '@/components/ui/EmptyState.vue'
@@ -8,6 +10,7 @@ import Skeleton from '@/components/ui/Skeleton.vue'
 import Icon from '@/components/ui/Icon.vue'
 
 const { t } = useI18n()
+const toast = useToast()
 
 const items = ref([])
 const unreadCount = ref(0)
@@ -60,21 +63,42 @@ async function load() {
 }
 
 async function loadMore() {
-  if (!nextCursor.value) return
-  const result = await notificationsApi.list({ limit: 20, cursor: nextCursor.value })
-  items.value = [...items.value, ...result.items]
-  nextCursor.value = result.nextCursor
+  // Wrapped rather than left bare: an unhandled rejection here used to
+  // take the whole handler down silently. No toast — this runs on every
+  // keystroke or scroll, and a banner per failed attempt is worse than
+  // the empty list the reader already sees.
+  try {
+    if (!nextCursor.value) return
+    const result = await notificationsApi.list({ limit: 20, cursor: nextCursor.value })
+    items.value = [...items.value, ...result.items]
+    nextCursor.value = result.nextCursor
+  } catch {
+    /* nothing to show; the list simply does not grow */
+  }
 }
 
 async function markRead(n) {
   if (n.read) return
-  await notificationsApi.markRead(n.id)
+  try {
+    await notificationsApi.markRead(n.id)
+  } catch (error) {
+    // Not marked locally either: a bell that clears itself while the server
+    // still counts the notification unread comes back on the next reload,
+    // which reads as the app losing track of things.
+    toast.error(apiErrorText(error, t('notifications.markFailed')))
+    return
+  }
   n.read = true
   unreadCount.value = Math.max(0, unreadCount.value - 1)
 }
 
 async function markAllRead() {
-  await notificationsApi.markAllRead()
+  try {
+    await notificationsApi.markAllRead()
+  } catch (error) {
+    toast.error(apiErrorText(error, t('notifications.markFailed')))
+    return
+  }
   items.value = items.value.map((n) => ({ ...n, read: true }))
   unreadCount.value = 0
 }

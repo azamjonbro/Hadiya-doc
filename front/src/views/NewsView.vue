@@ -42,10 +42,18 @@ async function load() {
 }
 
 async function loadMore() {
-  if (!nextCursor.value) return
-  const result = await newsApi.feed({ cursor: nextCursor.value })
-  items.value = [...items.value, ...result.items]
-  nextCursor.value = result.nextCursor
+  // Wrapped rather than left bare: an unhandled rejection here used to
+  // take the whole handler down silently. No toast — this runs on every
+  // keystroke or scroll, and a banner per failed attempt is worse than
+  // the empty list the reader already sees.
+  try {
+    if (!nextCursor.value) return
+    const result = await newsApi.feed({ cursor: nextCursor.value })
+    items.value = [...items.value, ...result.items]
+    nextCursor.value = result.nextCursor
+  } catch {
+    /* nothing to show; the list simply does not grow */
+  }
 }
 
 onMounted(load)

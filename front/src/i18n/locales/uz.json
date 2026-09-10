@@ -176,7 +176,13 @@
       "avgCompletionPercent": "O'rtacha bajarilish",
       "avgWatchTimeSeconds": "O'rtacha ko'rish vaqti",
       "newsEngagementPercent": "Yangiliklar bilan qiziqish",
-      "activeSessions": "Faol sessiyalar"
+      "activeSessions": "Faol sessiyalar",
+      "quizAttempts": "Test urinishlari",
+      "quizPassRatePercent": "Testdan o'tish",
+      "certificatesIssued": "Sertifikatlar",
+      "certificatesExpiringSoon": "Muddati tugayotgan",
+      "upcomingEvents": "Yaqin tadbirlar",
+      "pathEnrollmentsActive": "Faol yo'nalishlar"
     },
     "charts": {
       "courseCompletion": "Kurslar bajarilishi",
@@ -196,6 +202,12 @@
       "videos": "Hali video faolligi yo'q",
       "news": "Hali yangilik faolligi yo'q",
       "tasks": "Hali vazifalar yo'q"
+    },
+    "scope": {
+      "company": "Kompaniya",
+      "team": "Mening jamoam",
+      "blocked": "Bu dashboard butun kompaniyani qamraydi, siz esa o'z bo'limingiz bilan cheklangansiz. O'z jamoangiz ko'rsatkichlari alohida sahifada.",
+      "goToTeam": "Jamoa dashboardiga o'tish"
     }
   },
   "courses": {
@@ -329,7 +341,8 @@
     "minutes": "{count} daq.",
     "duplicate": "Nusxalash",
     "duplicateTitle": "Kurs nusxalansinmi?",
-    "duplicateMessage": "«{title}» kursining butun mazmuni (mavzular, video, hujjat, testlar) yangi qoralama kursga ko‘chiriladi. Xodimlarning tayinlovi va progressi ko‘chirilmaydi."
+    "duplicateMessage": "«{title}» kursining butun mazmuni (mavzular, video, hujjat, testlar) yangi qoralama kursga ko‘chiriladi. Xodimlarning tayinlovi va progressi ko‘chirilmaydi.",
+    "loadFailed": "Kurslar ro'yxatini yuklab bo'lmadi"
   },
   "videos": {
     "empty": "Videolar hali yuklanmagan",
@@ -679,7 +692,8 @@
     "createdForCount": "Vazifa {count} ta xodimga biriktirildi",
     "batchDeleteTitle": "Vazifani o'chirish",
     "batchDeleteBody": "Bu vazifa {count} ta xodimga biriktirilgan. O'chirilsa, hammasidan olib tashlanadi.",
-    "confirmDelete": "O'chirish"
+    "confirmDelete": "O'chirish",
+    "updateFailed": "Vazifa holatini o'zgartirib bo'lmadi"
   },
   "events": {
     "title": "Tadbirlar",
@@ -761,7 +775,8 @@
       "ATTENDED": "Keldi",
       "NO_SHOW": "Kelmadi",
       "CANCELLED": "Bekor qildi"
-    }
+    },
+    "loadFailed": "Tadbirni yuklab bo'lmadi"
   },
   "eventTypes": {
     "MEETING": "Uchrashuv",
@@ -781,7 +796,8 @@
       "tasks": "Vazifalar",
       "news": "Yangiliklar",
       "system": "Tizim"
-    }
+    },
+    "markFailed": "Bildirishnomani belgilab bo'lmadi"
   },
   "settings": {
     "title": "Sozlamalar",
@@ -1233,6 +1249,51 @@
       "capped": "Ekranda {shown} qator ko'rsatildi, jami {total} ta. To'liq ma'lumot uchun yuklab oling.",
       "all": "Hammasi ko'rsatildi: {total} qator.",
       "chart": "Eng yuqori {count} ta"
+    },
+    "schedules": {
+      "title": "Rejalashtirilgan hisobotlar",
+      "hint": "Hisobot o'zi tayyorlanadi va tayyor bo'lganda xabar keladi. Fayl saytda qoladi — havola pochtaga yuborilmaydi.",
+      "add": "Reja qo'shish",
+      "empty": "Hozircha reja yo'q",
+      "name": "Nomi",
+      "type": "Hisobot turi",
+      "format": "Format",
+      "cadenceLabel": "Takrorlanishi",
+      "hour": "Soat",
+      "dayOfWeek": "Hafta kuni",
+      "dayOfMonth": "Oy kuni",
+      "recipients": "Kimga xabar berilsin",
+      "recipientsHint": "Ixtiyoriy. Faylni ochish uchun ularda ham eksport huquqi bo'lishi kerak.",
+      "filtersNote": "Yuqoridagi filtrlar shu reja bilan birga saqlanadi.",
+      "save": "Saqlash",
+      "created": "Reja saqlandi",
+      "saveFailed": "Rejani saqlab bo'lmadi",
+      "nameAndTypeRequired": "Nom va hisobot turi kerak",
+      "runNow": "Hozir",
+      "active": "Yoqilgan",
+      "paused": "To'xtatilgan",
+      "nextRun": "Keyingi: {at}",
+      "lastRun": "oxirgi: {at}",
+      "confirmDelete": "«{name}» rejasi o'chirilsinmi?",
+      "cadence": {
+        "DAILY": "Har kuni",
+        "WEEKLY": "Har hafta",
+        "MONTHLY": "Har oy"
+      },
+      "weekday": {
+        "0": "Yakshanba",
+        "1": "Dushanba",
+        "2": "Seshanba",
+        "3": "Chorshanba",
+        "4": "Payshanba",
+        "5": "Juma",
+        "6": "Shanba"
+      },
+      "summary": {
+        "daily": "har kuni {at}",
+        "weekly": "har {day}, {at}",
+        "monthly": "har oyning {day}-kuni, {at}"
+      }
     }
   },
   "audit": {
@@ -1414,7 +1475,11 @@
     "file": "Fayl",
     "presentation": "Prezentatsiya",
     "multimedia": "Multimediya",
-    "test": "Test"
+    "test": "Test",
+    "statusFailed": "Holatni o'zgartirib bo'lmadi",
+    "deleteFailed": "O'chirib bo'lmadi",
+    "downloadFailed": "Yuklab olish havolasini olib bo'lmadi",
+    "createFailed": "Yaratib bo'lmadi"
   },
   "videoReport": {
     "title": "Hisobot",
@@ -2423,5 +2488,8 @@
     "dueBy": "Muddat: {date}",
     "expiredOn": "{date} da muddati tugagan",
     "neverDone": "Hech qachon o‘tmagan"
+  },
+  "questionBanks": {
+    "loadFailed": "Savollar bankini yuklab bo'lmadi"
   }
 }

@@ -212,9 +212,17 @@ function manifestUrl(token) {
 // `renew` carries the token in hand, which is what keeps a lesson already
 // playing from being stopped by the face check on its two-minute refresh.
 async function fetchToken({ renew = false } = {}) {
-  const { token } = await videoAccessApi.issueToken(props.videoId, renew ? currentToken : '')
-  currentToken = token
-  return token
+  // Wrapped rather than left bare: an unhandled rejection here used to
+  // take the whole handler down silently. No toast — this runs on every
+  // keystroke or scroll, and a banner per failed attempt is worse than
+  // the empty list the reader already sees.
+  try {
+    const { token } = await videoAccessApi.issueToken(props.videoId, renew ? currentToken : '')
+    currentToken = token
+    return token
+  } catch {
+    /* nothing to show; the list simply does not grow */
+  }
 }
 
 async function setup() {

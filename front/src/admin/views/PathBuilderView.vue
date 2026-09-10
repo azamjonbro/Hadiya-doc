@@ -122,9 +122,12 @@ async function save() {
 async function openPicker() {
   pickerOpen.value = true
   pickerSelection.value = new Set()
-  if (!courses.value.length) {
+  if (courses.value.length) return
+  try {
     const result = await coursesApi.list({ limit: 100, status: 'PUBLISHED' })
     courses.value = result.items
+  } catch (error) {
+    toast.error(apiErrorText(error, t('courses.loadFailed')))
   }
 }
 

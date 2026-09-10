@@ -112,14 +112,26 @@ async function save() {
 async function openPicker() {
   pickerOpen.value = true
   pickerSelection.value = new Set()
-  if (!banks.value.length) banks.value = await questionsApi.banks()
+  try {
+    if (!banks.value.length) banks.value = await questionsApi.banks()
+  } catch (error) {
+    toast.error(apiErrorText(error, t('questionBanks.loadFailed')))
+    return
+  }
   if (!pickerBankId.value && banks.value.length) pickerBankId.value = banks.value[0].id
   await loadPickerQuestions()
 }
 
 async function loadPickerQuestions() {
   if (!pickerBankId.value) return
-  const result = await questionsApi.list({ bankId: pickerBankId.value, limit: 100 })
+  let result
+  try {
+    result = await questionsApi.list({ bankId: pickerBankId.value, limit: 100 })
+  } catch (error) {
+    pickerQuestions.value = []
+    toast.error(apiErrorText(error, t('questionBanks.loadFailed')))
+    return
+  }
   // Questions already on the paper are filtered out rather than shown
   // greyed: adding one twice would ask it twice and mark it twice.
   const already = new Set(quiz.value?.questionIds ?? [])
@@ -157,7 +169,12 @@ function moveQuestion(index, delta) {
 }
 
 async function addPool() {
-  if (!banks.value.length) banks.value = await questionsApi.banks()
+  try {
+    if (!banks.value.length) banks.value = await questionsApi.banks()
+  } catch (error) {
+    toast.error(apiErrorText(error, t('questionBanks.loadFailed')))
+    return
+  }
   quiz.value.pools.push({ bankId: banks.value[0]?.id ?? '', count: 5, tags: [], difficulty: '' })
 }
 

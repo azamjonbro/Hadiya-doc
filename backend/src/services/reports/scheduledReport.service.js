@@ -95,6 +95,19 @@ async function eligibleRecipients(ids) {
 }
 
 export const scheduledReportService = {
+  /**
+   * Writes a failed build back onto the schedule that asked for it.
+   *
+   * Called by the export worker. Without it a scheduled report could fail
+   * every week — a bad filter, a storage outage — while its row went on
+   * saying it last ran successfully, because the failure happened in a job
+   * the schedule had already stopped watching.
+   */
+  async recordJobFailure(scheduleId, message) {
+    if (!scheduleId) return null
+    return ScheduledReport.findByIdAndUpdate(scheduleId, { $set: { lastError: message } })
+  },
+
   async create(actor, payload) {
     assertKnownType(payload.type)
     const draft = { ...payload, createdBy: actor.id }
@@ -177,6 +190,13 @@ export const scheduledReportService = {
    * keyboard when it runs, so there is nobody to check it against but them.
    */
   async runOnce(schedule, { now = new Date() } = {}) {
+    // Checked again here, not only when the schedule was written. A report
+    // type can be removed after a schedule referring to it exists, and
+    // without this the sweep queues a job that fails in the worker minutes
+    // later — where nothing connects the failure back to the timetable that
+    // caused it, so the schedule keeps reporting success forever.
+    assertKnownType(schedule.type)
+
     const owner = { id: String(schedule.createdBy) }
     const scopedUserIds = await scopedUserIdsFor(owner)
 
@@ -186,6 +206,7 @@ export const scheduledReportService = {
       lang: schedule.lang,
       filters: schedule.filters ?? {},
       scopedUserIds,
+      scheduleId: schedule._id,
       // Everyone who should hear about it, checked now rather than when the
       // schedule was written.
       notify: (await eligibleRecipients(schedule.recipients)).map((user) => String(user._id)),

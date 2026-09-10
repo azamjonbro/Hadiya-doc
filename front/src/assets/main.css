@@ -5,20 +5,20 @@
 :root {
   color-scheme: light;
 
-  --color-bg: 250 250 251;
+  --color-bg: 244 246 248;
   --color-surface: 255 255 255;
-  --color-surface-2: 245 246 248;
-  --color-surface-hover: 240 241 244;
-  --color-border: 227 229 234;
-  --color-border-strong: 209 213 221;
-  --color-text: 17 22 31;
-  --color-text-muted: 100 108 122;
-  --color-text-faint: 148 155 168;
+  --color-surface-2: 250 250 252;
+  --color-surface-hover: 238 240 242;
+  --color-border: 224 224 224;
+  --color-border-strong: 194 194 194;
+  --color-text: 51 51 51;
+  --color-text-muted: 102 102 102;
+  --color-text-faint: 153 153 153;
 
-  --color-primary: 42 79 209;
-  --color-primary-hover: 32 63 173;
+  --color-primary: 0 123 255;
+  --color-primary-hover: 0 105 217;
   --color-primary-foreground: 255 255 255;
-  --color-primary-subtle: 232 236 253;
+  --color-primary-subtle: 230 240 255;
 
   --color-success: 21 128 61;
   --color-success-subtle: 220 250 231;

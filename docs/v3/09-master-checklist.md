@@ -1579,9 +1579,89 @@
     8.1 dagi o'n yettita hisobot mavjud, sinalgan va **hech qayerdan
     ochib bo'lmaydigan** holatda turgan ekan. Ro'yxat endi API'dan
     keladi, o'n yettita nom uch tilga tarjima qilindi.
-- [ ] **8.4** **Rejalashtirilgan hisobotlar** — `scheduledReport.model.js`, cron job
-- [ ] **8.5** **Dashboard kengaytmasi** — test, sertifikat, tadbir, path,
+- [x] **8.4** **Rejalashtirilgan hisobotlar** — `scheduledReport.model.js`, cron job
+  · Bajarildi — `ScheduledReport` modeli, soatlik sweep (`scheduledReportQueue`),
+  `/reports/schedules` CRUD + «hozir ishga tushirish», va `ReportsView` dagi
+  panel. `report:schedule` ruxsati ham shu bilan birinchi marta ish boshladi.
+  · **Rejalashtirilayotgan narsa — eksport, yetkazish emas.** Sweep 8.3 dagi
+  aynan o'sha `ExportJob` ni quradi, oluvchilar esa «tayyor» xabarini oladi.
+  Fayl pochtaga **ilova qilinmaydi** va doimiy URL sifatida berilmaydi:
+  xodimlar ro'yxati eksporti — aynan login ortida qolishi kerak bo'lgan fayl,
+  va pochtada yashaydigan imzolangan havola — yuborilgan sababidan uzoq
+  yashaydigan havola.
+  · **Eng nozik joyi — «keyingi safar qachon».** Uni hech kim kuzatmaydi,
+  ya'ni xato «hisobot jimgina kelmay qo'ydi» yoki «har soatda kelaveradi»
+  ko'rinishida chiqadi. Shuning uchun:
+    - Vaqt **mahalliy** (`APP_TIMEZONE`), UTC emas — 07:00 da kelishi kerak
+    hisobot 03:00 da kelsa, uni hech kim ertalab o'qimaydi.
+    `utils/timezone.js` ga `zonedTimeToUtc` qo'shildi: ikki bosqichli, ya'ni
+    DST almashadigan kunlarda ham to'g'ri (New York bilan tekshirildi).
+    - Keyingi vaqt **kun-kun oldinga yurib** topiladi, oy arifmetikasi bilan
+    emas — «31-fevral» ham, soat siljiydigan kun ham o'sha arifmetikada
+    yashiringan bo'lardi.
+    - Javob **qat'iy kelajakda**: hozirgi lahzani qaytarsa, sweep o'sha
+    rejani har o'tishda qayta qurardi.
+    - `dayOfMonth` **28 da to'xtaydi**. «31-kun» yilning besh oyida yo'q, va
+    uni qabul qilishning har bir usuli — kutilmagan natija: tashlab ketilsa
+    hisobot fevralni jimgina o'tkazib yuboradi, qisqartirilsa «31» aslida
+    «28» degani bo'lib qoladi. Rad etish — kun tanlayotgan odam buni
+    **tanlash paytida** biladigan yagona variant.
+  · Sinov: `test/scheduledReports.test.js` (18 test) — kunlik/haftalik/oylik
+  hisob, fevral, «qat'iy kelajak», soat mahalliyligi; HTTP orqali ruxsat,
+  31-kunning rad etilishi, o'zganing rejasiga tegib bo'lmasligi; sweep
+  muddati kelganini quradi, kelmaganiga tegmaydi, o'chirilganini o'tkazib
+  yuboradi va **bitta buzuq reja qolganlarini to'xtatmaydi**.
+  · Yo'lda topilgan ikki teshik yopildi:
+    1. Sweep faqat navbatga qo'yardi, ya'ni o'chirilgan hisobot turiga
+    ishora qiluvchi eski reja worker ichida yiqilardi va **reja buni bilmasdi**
+    — abadiy «muvaffaqiyatli» deb turardi. Endi tur sweep paytida ham
+    tekshiriladi, va worker'dagi yiqilish `scheduleId` orqali rejaga
+    qaytib yoziladi.
+    2. Oluvchi «tayyor» xabarini olardi-yu, faylni ocholmasdi — `get()`
+    faqat so'ragan odamni qo'yardi. Endi reja oluvchilari ham ochadi
+    (marshrut baribir `report:export` talab qiladi), va **havola berilgan
+    lahza auditga yoziladi** — aks holda async yo'l xodimlar ro'yxatini
+    audit jurnalida ko'rinmasdan olib ketish usuli edi.
+- [x] **8.5** **Dashboard kengaytmasi** — test, sertifikat, tadbir, path,
   compliance metrikalari; `scope` almashtirgichi
+  · Bajarildi — `analytics/dashboardExtra.js` (8.1 dagi `reportBuilders.extra.js`
+  naqshi bo'yicha alohida faylda, chunki asosiy agregatsiyani ikki barobar
+  uzaytirish uni o'qib bo'lmaydigan qilardi).
+  · **Oltita yangi karta:** test urinishlari va o'tish foizi, berilgan
+  sertifikatlar va muddati yaqinlashganlari, yaqin tadbirlar, faol
+  yo'nalishlar (+ tugatilganlar va compliance qoidalari).
+  · **To'rtta yangi grafik:** yo'nalish progressi, tadbir davomati,
+  sertifikatlar oylik trendi, test qiyinligi.
+  · Har birida bitta o'ylangan qaror bor:
+    - `validUntil: null` sertifikat **muddati tugamaydi**, ya'ni «muddati
+    yaqinlashgan» sanog'iga kirmaydi — aks holda bu hech narsa haqidagi
+    ogohlantirish bo'lardi.
+    - Davomat maxrajiga **navbatdagilar va bekor qilganlar kirmaydi**: joy
+    tegmagan odam kelmagan hisoblanmaydi, aks holda uzun navbati bor to'la
+    tadbir «yomon davomat» bo'lib ko'rinardi.
+    - Davomat faqat **o'tib bo'lgan** tadbirlar uchun so'raladi.
+    - Test qiyinligi **3 dan kam urinishli testlarni tashlaydi** — bitta
+    odamning bitta yiqilishi qiyinlik signali emas.
+    - Sertifikat trendi **nol bilan to'ldiriladi**: trend chizig'idagi
+    bo'shliq «ma'lumot yo'q» deb o'qiladi, «hech narsa bo'lmagan» deb emas.
+    - Nol urinishda o'tish foizi **0%**, `NaN` emas — yangi o'rnatilgan
+    tizimda ham sahifa chizilishi kerak.
+  · **Scope almashtirgichi** — `DashboardScopeSwitch.vue`, ikkala dashboardda
+  ham. Bitta payload va filtr emas, ikkita ekran: kompaniya dashboardi —
+  hamma bo'yicha keshlangan agregatsiya, jamoa dashboardi — nomma-nom
+  ro'yxat uchun jonli hisob; ular boshqa savolga javob beradi va shakllari
+  ham boshqacha.
+  · Shu bilan **0.3 dagi chetlanish yopildi**: bo'limga cheklangan rahbar
+  kompaniya dashboardiga kirsa, ilgari 403 xatosi ko'rinardi va yo'l shu
+  yerda tugardi. Endi 403 xato sifatida emas, tushuntirish va jamoa
+  dashboardiga havola sifatida ko'rsatiladi.
+  · Sinov: `test/dashboardMetrics.test.js` (8 test). Da'volar **delta**
+  bo'yicha — bu umumiy dev bazaga qarshi ishlaydi va boshqa fayllar ayni
+  paytda ma'lumot yaratib-o'chirib turadi, ya'ni «aynan to'qqizta sertifikat
+  bor» degan test kodga aloqasi yo'q sabablarga ko'ra tushadigan test.
+  · Yonida: `refresh-cw` ikoni mavjud emas ekan va manager dashboardida
+  **bo'sh joy** chizilardi — 0.10 da `Icon` ga qo'shilgan ogohlantirish
+  buni topdi.
 
 ---
 

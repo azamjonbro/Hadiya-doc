@@ -176,7 +176,13 @@
       "avgCompletionPercent": "Average Completion",
       "avgWatchTimeSeconds": "Average Watch Time",
       "newsEngagementPercent": "News Engagement",
-      "activeSessions": "Active Sessions"
+      "activeSessions": "Active Sessions",
+      "quizAttempts": "Quiz attempts",
+      "quizPassRatePercent": "Quiz pass rate",
+      "certificatesIssued": "Certificates",
+      "certificatesExpiringSoon": "Expiring soon",
+      "upcomingEvents": "Upcoming events",
+      "pathEnrollmentsActive": "Active paths"
     },
     "charts": {
       "courseCompletion": "Course Completion",
@@ -196,6 +202,12 @@
       "videos": "No video activity yet",
       "news": "No news activity yet",
       "tasks": "No tasks yet"
+    },
+    "scope": {
+      "company": "Company",
+      "team": "My team",
+      "blocked": "This dashboard covers the whole company, and you are fenced to your own department. Your team’s figures are on their own page.",
+      "goToTeam": "Go to the team dashboard"
     }
   },
   "courses": {
@@ -329,7 +341,8 @@
     "minutes": "{count} min",
     "duplicate": "Duplicate",
     "duplicateTitle": "Duplicate this course?",
-    "duplicateMessage": "Everything in “{title}” — modules, videos, documents and tests — is copied into a new draft. Assignments and anyone’s progress are not."
+    "duplicateMessage": "Everything in “{title}” — modules, videos, documents and tests — is copied into a new draft. Assignments and anyone’s progress are not.",
+    "loadFailed": "Could not load the course list"
   },
   "videos": {
     "empty": "No videos uploaded yet",
@@ -679,7 +692,8 @@
     "createdForCount": "Task assigned to {count} employees",
     "batchDeleteTitle": "Delete task",
     "batchDeleteBody": "This task is assigned to {count} people. Deleting removes it from all of them.",
-    "confirmDelete": "Delete"
+    "confirmDelete": "Delete",
+    "updateFailed": "Could not change the task status"
   },
   "events": {
     "title": "Events",
@@ -761,7 +775,8 @@
       "ATTENDED": "Attended",
       "NO_SHOW": "Did not come",
       "CANCELLED": "Cancelled"
-    }
+    },
+    "loadFailed": "Could not load the event"
   },
   "eventTypes": {
     "MEETING": "Meeting",
@@ -781,7 +796,8 @@
       "tasks": "Tasks",
       "news": "News",
       "system": "System"
-    }
+    },
+    "markFailed": "Could not mark the notification"
   },
   "settings": {
     "title": "Settings",
@@ -1233,6 +1249,51 @@
       "capped": "Showing {shown} rows of {total}. Download the file for all of it.",
       "all": "Showing all {total} rows.",
       "chart": "Top {count}"
+    },
+    "schedules": {
+      "title": "Scheduled reports",
+      "hint": "The report builds itself and you are told when it is ready. The file stays in the platform — no link is emailed.",
+      "add": "Add a schedule",
+      "empty": "No schedules yet",
+      "name": "Name",
+      "type": "Report type",
+      "format": "Format",
+      "cadenceLabel": "How often",
+      "hour": "Hour",
+      "dayOfWeek": "Day of the week",
+      "dayOfMonth": "Day of the month",
+      "recipients": "Who to tell",
+      "recipientsHint": "Optional. They need export rights of their own to open the file.",
+      "filtersNote": "The filters above are saved with this schedule.",
+      "save": "Save",
+      "created": "Schedule saved",
+      "saveFailed": "Could not save the schedule",
+      "nameAndTypeRequired": "A name and a report type are required",
+      "runNow": "Run now",
+      "active": "On",
+      "paused": "Paused",
+      "nextRun": "Next: {at}",
+      "lastRun": "last: {at}",
+      "confirmDelete": "Delete the schedule \"{name}\"?",
+      "cadence": {
+        "DAILY": "Daily",
+        "WEEKLY": "Weekly",
+        "MONTHLY": "Monthly"
+      },
+      "weekday": {
+        "0": "Sunday",
+        "1": "Monday",
+        "2": "Tuesday",
+        "3": "Wednesday",
+        "4": "Thursday",
+        "5": "Friday",
+        "6": "Saturday"
+      },
+      "summary": {
+        "daily": "every day at {at}",
+        "weekly": "every {day} at {at}",
+        "monthly": "on day {day} at {at}"
+      }
     }
   },
   "audit": {
@@ -1414,7 +1475,11 @@
     "file": "File",
     "presentation": "Presentation",
     "multimedia": "Multimedia",
-    "test": "Test"
+    "test": "Test",
+    "statusFailed": "Could not change the status",
+    "deleteFailed": "Could not delete it",
+    "downloadFailed": "Could not get the download link",
+    "createFailed": "Could not create it"
   },
   "videoReport": {
     "title": "Report",
@@ -2423,5 +2488,8 @@
     "dueBy": "Due {date}",
     "expiredOn": "Expired {date}",
     "neverDone": "Never done"
+  },
+  "questionBanks": {
+    "loadFailed": "Could not load the question bank"
   }
 }

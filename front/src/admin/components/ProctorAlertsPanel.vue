@@ -8,6 +8,8 @@
 // view is an authenticated request the server records.
 import { onBeforeUnmount, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
+import { apiErrorText } from '@/utils/apiError'
+import { useToast } from '@/composables/useToast'
 import { ATTENTION_REASONS } from '@lms/shared'
 import { proctorApi } from '@/services/proctor'
 import AppCard from '@/components/ui/AppCard.vue'
@@ -21,6 +23,7 @@ const props = defineProps({
 })
 
 const { t, locale } = useI18n()
+const toast = useToast()
 const items = ref([])
 const loading = ref(false)
 const objectUrls = ref({})
@@ -61,8 +64,12 @@ async function loadImage(id) {
 }
 
 async function markReviewed(item) {
-  const updated = await proctorApi.markReviewed(item.id)
-  items.value = items.value.map((i) => (i.id === item.id ? { ...i, reviewedAt: updated.reviewedAt } : i))
+  try {
+    const updated = await proctorApi.markReviewed(item.id)
+    items.value = items.value.map((i) => (i.id === item.id ? { ...i, reviewedAt: updated.reviewedAt } : i))
+  } catch (error) {
+    toast.error(apiErrorText(error, t('content.statusFailed')))
+  }
 }
 
 // Object URLs are retained by the document until they are revoked, so a

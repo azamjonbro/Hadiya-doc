@@ -7,6 +7,7 @@ import StatCard from '@/admin/components/dashboard/StatCard.vue'
 import RankedListCard from '@/admin/components/dashboard/RankedListCard.vue'
 import StatusBarList from '@/admin/components/dashboard/StatusBarList.vue'
 import Chart from '@/components/ui/Chart.vue'
+import DashboardScopeSwitch from '@/admin/components/dashboard/DashboardScopeSwitch.vue'
 import AppCard from '@/components/ui/AppCard.vue'
 import Skeleton from '@/components/ui/Skeleton.vue'
 import Icon from '@/components/ui/Icon.vue'
@@ -18,6 +19,10 @@ const auth = useAuthStore()
 const dashboard = ref(null)
 const dashboardLoading = ref(true)
 const dashboardError = ref('')
+// A manager reaching the company dashboard is not an error to display — the
+// cached payload covers people they are fenced from, and the answer is the
+// team dashboard, which is a link and not a message.
+const dashboardScopeBlocked = ref(false)
 
 const canViewDashboard = computed(() => auth.hasPermission('analytics:view:all'))
 
@@ -39,7 +44,11 @@ async function loadDashboard() {
   try {
     dashboard.value = await dashboardApi.get()
   } catch (error) {
-    dashboardError.value = apiErrorText(error)
+    if (error?.response?.data?.code === 'DASHBOARD_SCOPE_FORBIDDEN') {
+      dashboardScopeBlocked.value = true
+    } else {
+      dashboardError.value = apiErrorText(error)
+    }
   } finally {
     dashboardLoading.value = false
   }
@@ -141,10 +150,13 @@ const taskCompletionItems = computed(
         <h1 class="text-h1 text-ink">{{ t(greetingKey) }}, {{ firstName }}</h1>
         <p class="mt-1 text-body text-ink-muted">{{ t('admin.dashboard.subtitle') }}</p>
       </div>
-      <p v-if="dashboard?.generatedAt" class="text-caption text-ink-faint">
-        {{ t('dashboard.generatedAt') }} {{ new Date(dashboard.generatedAt).toLocaleString(locale) }}
-        <span v-if="dashboard.stale"> · {{ t('dashboard.stale') }}</span>
-      </p>
+      <div class="flex flex-wrap items-center gap-3">
+        <p v-if="dashboard?.generatedAt" class="text-caption text-ink-faint">
+          {{ t('dashboard.generatedAt') }} {{ new Date(dashboard.generatedAt).toLocaleString(locale) }}
+          <span v-if="dashboard.stale"> · {{ t('dashboard.stale') }}</span>
+        </p>
+        <DashboardScopeSwitch v-if="canViewDashboard" />
+      </div>
     </div>
 
     <template v-if="!canViewDashboard">
@@ -157,6 +169,15 @@ const taskCompletionItems = computed(
       </div>
       <Skeleton class="mt-6 h-48 w-full" />
     </template>
+
+    <!-- Fenced, not broken. The company figures cover people this manager
+         cannot see; their own team's are one click away. -->
+    <AppCard v-else-if="dashboardScopeBlocked" class="mt-6 space-y-3">
+      <p class="text-small text-ink">{{ t('dashboard.scope.blocked') }}</p>
+      <AppButton size="sm" icon="users" @click="$router.push({ name: 'admin-team-dashboard' })">
+        {{ t('dashboard.scope.goToTeam') }}
+      </AppButton>
+    </AppCard>
 
     <p v-else-if="dashboardError" class="mt-6 text-small text-danger">{{ dashboardError }}</p>
 
@@ -177,6 +198,17 @@ const taskCompletionItems = computed(
         <StatCard size="compact" :label="t('dashboard.cards.avgWatchTimeSeconds')" :value="minutes(dashboard.cards.avgWatchTimeSeconds)" suffix=" min" />
         <StatCard size="compact" :label="t('dashboard.cards.newsEngagementPercent')" :value="dashboard.cards.newsEngagementPercent" suffix="%" />
         <StatCard size="compact" :label="t('dashboard.cards.activeSessions')" :value="dashboard.cards.activeSessions" />
+      </div>
+
+      <!-- What the platform grew in blocks 3-7: assessment, certificates,
+           events, paths and compliance (8.5). -->
+      <div class="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
+        <StatCard size="compact" :label="t('dashboard.cards.quizAttempts')" :value="dashboard.cards.quizAttempts" />
+        <StatCard size="compact" :label="t('dashboard.cards.quizPassRatePercent')" :value="dashboard.cards.quizPassRatePercent" suffix="%" />
+        <StatCard size="compact" :label="t('dashboard.cards.certificatesIssued')" :value="dashboard.cards.certificatesIssued" />
+        <StatCard size="compact" :label="t('dashboard.cards.certificatesExpiringSoon')" :value="dashboard.cards.certificatesExpiringSoon" />
+        <StatCard size="compact" :label="t('dashboard.cards.upcomingEvents')" :value="dashboard.cards.upcomingEvents" />
+        <StatCard size="compact" :label="t('dashboard.cards.pathEnrollmentsActive')" :value="dashboard.cards.pathEnrollmentsActive" />
       </div>
 
       <!-- Attention required -->

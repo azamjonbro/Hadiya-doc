@@ -12,6 +12,7 @@ import Icon from '@/components/ui/Icon.vue'
 import ProgressBar from '@/components/ui/ProgressBar.vue'
 import Skeleton from '@/components/ui/Skeleton.vue'
 import EmptyState from '@/components/ui/EmptyState.vue'
+import DashboardScopeSwitch from '@/admin/components/dashboard/DashboardScopeSwitch.vue'
 
 const { t, locale } = useI18n()
 const router = useRouter()
@@ -74,9 +75,14 @@ onMounted(load)
         <h1 class="text-h1 text-ink">{{ t('team.title') }}</h1>
         <p class="mt-1 max-w-2xl text-small text-ink-muted">{{ t('team.hint') }}</p>
       </div>
-      <AppButton v-if="!loading" size="sm" variant="ghost" icon="refresh-cw" @click="load">
-        {{ t('common.refresh') }}
-      </AppButton>
+      <div class="flex flex-wrap items-center gap-3">
+        <!-- The other half of the switch (8.5): whichever dashboard you are
+             on, the other one is one click away. -->
+        <DashboardScopeSwitch />
+        <AppButton v-if="!loading" size="sm" variant="ghost" icon="refresh" @click="load">
+          {{ t('common.refresh') }}
+        </AppButton>
+      </div>
     </div>
 
     <Skeleton v-if="loading" class="mt-6 h-72 w-full" />

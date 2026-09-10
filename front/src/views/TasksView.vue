@@ -1,6 +1,7 @@
 <script setup>
 import { computed, onMounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
+import { useToast } from '@/composables/useToast'
 import { tasksApi } from '@/services/tasks'
 import AppCard from '@/components/ui/AppCard.vue'
 import AppButton from '@/components/ui/AppButton.vue'
@@ -11,6 +12,7 @@ import Icon from '@/components/ui/Icon.vue'
 import { apiErrorText } from '@/utils/apiError'
 
 const { t, locale } = useI18n()
+const toast = useToast()
 const items = ref([])
 const loading = ref(true)
 const errorMessage = ref('')
@@ -37,8 +39,14 @@ async function load() {
 }
 
 async function setStatus(task, status) {
-  const updated = await tasksApi.update(task.id, { status })
-  items.value = items.value.map((tsk) => (tsk.id === task.id ? updated : tsk))
+  try {
+    const updated = await tasksApi.update(task.id, { status })
+    items.value = items.value.map((tsk) => (tsk.id === task.id ? updated : tsk))
+  } catch (error) {
+    // The row is not moved on failure: showing the new status while the
+    // server still holds the old one is worse than not moving at all.
+    toast.error(apiErrorText(error, t('tasks.updateFailed')))
+  }
 }
 
 function deadlineLabel(date) {

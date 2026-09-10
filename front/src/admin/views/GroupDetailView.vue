@@ -134,9 +134,16 @@ async function onRemoveMember(userId) {
 async function openAddCourses() {
   pickedCourseIds.value = new Set()
   showAddCourses.value = true
-  const result = await coursesApi.list({})
-  const attached = new Set(group.value?.courseIds ?? [])
-  courseOptions.value = result.items.filter((course) => !attached.has(course.id))
+  try {
+    const result = await coursesApi.list({})
+    const attached = new Set(group.value?.courseIds ?? [])
+    courseOptions.value = result.items.filter((course) => !attached.has(course.id))
+  } catch (error) {
+    // The dialog stays open with an empty list rather than vanishing — the
+    // message says why there is nothing to pick from.
+    courseOptions.value = []
+    toast.error(apiErrorText(error, t('courses.loadFailed')))
+  }
 }
 
 function togglePickedCourse(id) {
