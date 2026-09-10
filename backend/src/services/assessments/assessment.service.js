@@ -12,10 +12,7 @@ import { openTopic, visibleRows } from '../courses/contentItem.js'
 import { ApiError } from '../../utils/ApiError.js'
 import { courseCompletionService } from '../courses/courseCompletion.service.js'
 import { logger } from '../../config/logger.js'
-
-function canManageCourses(actor) {
-  return Boolean(actor.permissions?.includes(PERMISSIONS.COURSE_CREATE))
-}
+import { canManageCourses } from '../courses/coursePermissions.js'
 
 // A module test is a timed, single-sitting exam. Both numbers are enforced
 // here rather than in the browser — see assessmentSession.model.js.

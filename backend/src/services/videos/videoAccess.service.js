@@ -8,10 +8,7 @@ import { assertPathItemUnlocked } from '../paths/pathSequence.js'
 import { faceGateService } from '../face/faceGate.service.js'
 import { ApiError } from '../../utils/ApiError.js'
 import { env } from '../../config/env.js'
-
-function canManageCourses(actor) {
-  return Boolean(actor.permissions?.includes(PERMISSIONS.COURSE_CREATE))
-}
+import { canManageCourses } from '../courses/coursePermissions.js'
 
 export const videoAccessService = {
   /**

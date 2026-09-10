@@ -127,3 +127,23 @@ export const courseCategoryCreateSchema = z.object({
 export const courseCategoryUpdateSchema = courseCategoryCreateSchema
   .partial()
   .refine((data) => Object.keys(data).length > 0, { message: 'No fields to update' })
+
+/**
+ * The new order of a topic's contents (9.1).
+ *
+ * The whole list, in the order it should end up, rather than "move this one
+ * to position 3". The caller is a screen showing every item; the order it
+ * displays is the order it means, and a relative move has to be replayed
+ * against a server state that may have changed underneath it.
+ */
+export const reorderContentSchema = z.object({
+  items: z
+    .array(
+      z.object({
+        id: z.string().regex(/^[a-f\d]{24}$/i, 'Invalid id'),
+        contentType: z.enum(['VIDEO', 'FILE', 'PRESENTATION', 'MULTIMEDIA', 'MATERIAL', 'ASSESSMENT', 'LESSON']),
+      })
+    )
+    .min(1)
+    .max(500),
+})

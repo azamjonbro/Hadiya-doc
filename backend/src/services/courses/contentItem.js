@@ -1,8 +1,8 @@
-import { PERMISSIONS } from '@lms/shared'
 import { topicRepository } from '../../repositories/topic.repository.js'
 import { Video } from '../../models/video.model.js'
 import { Material } from '../../models/material.model.js'
 import { Assessment } from '../../models/assessment.model.js'
+import { canManageCourses } from './coursePermissions.js'
 import { ApiError } from '../../utils/ApiError.js'
 
 /**
@@ -57,10 +57,6 @@ export function registerContentModel(kind, model) {
 export function kindOfContentType(contentType) {
   if (['FILE', 'PRESENTATION', 'MULTIMEDIA', 'MATERIAL'].includes(contentType)) return CONTENT_KINDS.MATERIAL
   return CONTENT_KINDS[contentType] ?? null
-}
-
-export function canManageCourses(actor) {
-  return Boolean(actor?.permissions?.includes(PERMISSIONS.COURSE_CREATE))
 }
 
 /**

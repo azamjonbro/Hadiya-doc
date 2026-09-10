@@ -1,4 +1,3 @@
-import { PERMISSIONS } from '@lms/shared'
 import { courseRepository } from '../../repositories/course.repository.js'
 import { topicRepository } from '../../repositories/topic.repository.js'
 import { videoRepository } from '../../repositories/video.repository.js'
@@ -7,14 +6,11 @@ import { aiChatMessageRepository } from '../../repositories/aiChatMessage.reposi
 import { computeAccessFlags } from '../courses/courseAssignmentAccess.js'
 import { getAnthropicClient, AI_CHAT_MODEL } from '../../ai/anthropicClient.js'
 import { ApiError } from '../../utils/ApiError.js'
+import { canManageCourses } from '../courses/coursePermissions.js'
 
 // Last N turns (user+assistant) fed back to the model for conversational
 // continuity — not the full history, to keep request size and cost bounded.
 const HISTORY_CONTEXT_TURNS = 16
-
-function canManageCourses(actor) {
-  return Boolean(actor.permissions?.includes(PERMISSIONS.COURSE_CREATE))
-}
 
 // Same authorization shape as videoAccessService.issueToken: admin/manager
 // tiers (course:create) bypass, everyone else needs PUBLISHED material plus

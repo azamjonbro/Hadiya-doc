@@ -1,19 +1,15 @@
-import { PERMISSIONS } from '@lms/shared'
 import { topicRepository } from '../../repositories/topic.repository.js'
 import { courseRepository } from '../../repositories/course.repository.js'
 import { auditLogRepository } from '../../repositories/auditLog.repository.js'
 import { slugify } from '../../utils/slugify.js'
 import { ApiError } from '../../utils/ApiError.js'
 import { cacheGet, cacheSet, cacheDel } from '../../utils/cache.js'
+import { canManageCourses } from '../courses/coursePermissions.js'
 
 const TOPIC_LIST_CACHE_TTL = 5 * 60
 // Exported so course.service.js can invalidate this list when it deletes a
 // whole course, rather than duplicating the key format on the other side.
 export const topicListCacheKey = (courseId) => `topics:course:${courseId}`
-
-function canManageCourses(actor) {
-  return Boolean(actor.permissions?.includes(PERMISSIONS.COURSE_CREATE))
-}
 
 function toPublicTopic(topic) {
   return {

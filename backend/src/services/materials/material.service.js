@@ -1,4 +1,3 @@
-import { PERMISSIONS } from '@lms/shared'
 import { Material } from '../../models/material.model.js'
 import { materialRepository } from '../../repositories/material.repository.js'
 import { topicRepository } from '../../repositories/topic.repository.js'
@@ -8,12 +7,9 @@ import { S3StorageProvider } from '../../storage/S3StorageProvider.js'
 import { env } from '../../config/env.js'
 import { openTopic, visibleRows } from '../courses/contentItem.js'
 import { ApiError } from '../../utils/ApiError.js'
+import { canManageCourses } from '../courses/coursePermissions.js'
 
 const materialsStorage = new S3StorageProvider(env.S3_BUCKET_MATERIALS)
-
-function canManageCourses(actor) {
-  return Boolean(actor.permissions?.includes(PERMISSIONS.COURSE_CREATE))
-}
 
 function toPublicMaterial(material) {
   return {

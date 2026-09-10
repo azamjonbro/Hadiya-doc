@@ -1,4 +1,3 @@
-import { PERMISSIONS } from '@lms/shared'
 import { Video } from '../../models/video.model.js'
 import { videoRepository } from '../../repositories/video.repository.js'
 import { topicRepository } from '../../repositories/topic.repository.js'
@@ -9,12 +8,9 @@ import { openTopic, visibleRows } from '../courses/contentItem.js'
 import { ApiError } from '../../utils/ApiError.js'
 import { courseCompletionService } from '../courses/courseCompletion.service.js'
 import { logger } from '../../config/logger.js'
+import { canManageCourses } from '../courses/coursePermissions.js'
 
 const originalsStorage = new S3StorageProvider(env.S3_BUCKET_ORIGINALS)
-
-function canManageCourses(actor) {
-  return Boolean(actor.permissions?.includes(PERMISSIONS.COURSE_CREATE))
-}
 
 function toPublicVideo(video) {
   return {

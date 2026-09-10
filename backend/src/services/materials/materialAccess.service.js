@@ -6,12 +6,9 @@ import { faceGateService } from '../face/faceGate.service.js'
 import { S3StorageProvider } from '../../storage/S3StorageProvider.js'
 import { env } from '../../config/env.js'
 import { ApiError } from '../../utils/ApiError.js'
+import { canManageCourses } from '../courses/coursePermissions.js'
 
 const materialsStorage = new S3StorageProvider(env.S3_BUCKET_MATERIALS)
-
-function canManageCourses(actor) {
-  return Boolean(actor.permissions?.includes(PERMISSIONS.COURSE_CREATE))
-}
 
 // Mirrors videoAccess.service.js's issueToken authorization. Reading a file
 // in the in-app viewer and downloading it are the same amount of access, so

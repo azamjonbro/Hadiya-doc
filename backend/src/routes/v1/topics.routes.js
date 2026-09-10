@@ -10,7 +10,7 @@ import { videoController } from '../../controllers/video.controller.js'
 import { materialController } from '../../controllers/material.controller.js'
 import { assessmentController } from '../../controllers/assessment.controller.js'
 import { topicContentController } from '../../controllers/topicContent.controller.js'
-import { updateTopicSchema } from '../../validators/course.validator.js'
+import { updateTopicSchema, reorderContentSchema } from '../../validators/course.validator.js'
 import { createMaterialMetaSchema } from '../../validators/material.validator.js'
 import { createAssessmentSchema } from '../../validators/assessment.validator.js'
 import { env } from '../../config/env.js'
@@ -49,6 +49,15 @@ function uploadSingleMaterial(req, res, next) {
 
 topicsRouter.get('/:id', requirePermission(PERMISSIONS.COURSE_READ), topicController.getById)
 topicsRouter.get('/:id/content', requirePermission(PERMISSIONS.VIDEO_VIEW), topicContentController.get)
+// One sequence across four collections (9.1). course:update, not
+// video:manage: the order of a curriculum is the course's shape, not any one
+// item's setting.
+topicsRouter.patch(
+  '/:id/content/order',
+  requirePermission(PERMISSIONS.COURSE_UPDATE),
+  validateBody(reorderContentSchema),
+  topicContentController.reorder
+)
 topicsRouter.get('/:id/videos', requirePermission(PERMISSIONS.VIDEO_VIEW), videoController.listByTopic)
 
 topicsRouter.get('/:id/materials', requirePermission(PERMISSIONS.VIDEO_VIEW), materialController.listByTopic)

@@ -21,6 +21,7 @@ import { notificationService } from '../notifications/notification.service.js'
 import { formatNotificationDate } from '../../utils/notificationFormat.js'
 import { collectCourseItems, summarize, courseCompletionService } from './courseCompletion.service.js'
 import { logger } from '../../config/logger.js'
+import { canManageCourses } from '../courses/coursePermissions.js'
 
 // Course metadata is read on every catalog/detail page view and written
 // rarely (spec §39) — cached actor-independently (the DTO doesn't vary by
@@ -31,9 +32,6 @@ const courseCacheKey = (id) => `course:${id}`
 
 // Anyone without course:create (i.e. not admin-tier) only ever sees
 // published courses — draft/archived content isn't exposed to the catalog.
-function canManageCourses(actor) {
-  return Boolean(actor.permissions?.includes(PERMISSIONS.COURSE_CREATE))
-}
 
 async function computeCourseProgress(actor, id, targetUserId) {
   const course = await courseRepository.findById(id)
