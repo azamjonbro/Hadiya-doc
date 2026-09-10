@@ -35,6 +35,14 @@ import RichText from '@/components/ui/RichText.vue'
 import ImageUploadField from '@/components/ui/ImageUploadField.vue'
 import SortableList from '@/components/ui/SortableList.vue'
 import LessonBlock from '@/components/lesson/LessonBlock.vue'
+import {
+  BLOCK_TYPES,
+  CALLOUT_VARIANTS,
+  adoptIds,
+  emptyBlock,
+  isComplete,
+  serializeBlock,
+} from '@/utils/lessonBlocks'
 
 const props = defineProps({
   lessonId: { type: String, required: true },
@@ -64,63 +72,22 @@ const blocks = ref([])
 const topicVideos = ref([])
 const topicMaterials = ref([])
 
-/**
- * The twelve types, in the order the add-menu offers them: the written ones
- * first, because that is what a lesson mostly is.
- */
-const BLOCK_TYPES = [
-  { type: 'HEADING', icon: 'bold' },
-  { type: 'TEXT', icon: 'file-text' },
-  { type: 'QUOTE', icon: 'quote' },
-  { type: 'CALLOUT', icon: 'info' },
-  { type: 'CODE', icon: 'code' },
-  { type: 'IMAGE', icon: 'image' },
-  { type: 'GALLERY', icon: 'grid' },
-  { type: 'EMBED', icon: 'globe' },
-  { type: 'VIDEO', icon: 'play' },
-  { type: 'FILE', icon: 'paperclip' },
-  { type: 'TABLE', icon: 'list' },
-  { type: 'DIVIDER', icon: 'minimize' },
-]
-
-const CALLOUT_VARIANTS = ['INFO', 'WARNING', 'SUCCESS', 'DANGER']
-
-// A local key for v-for and drag-drop. A block has no id until it has been
-// saved once, and keying on the array index makes a reorder rebuild every
-// row — which loses the caret of whoever is typing in one.
+// A local key for v-for and drag-drop, handed to emptyBlock(). A block has
+// no id until it has been saved once, and keying on the array index makes a
+// reorder rebuild every row — which loses the caret of whoever is typing.
 let keySeed = 0
 const nextKey = () => `b${(keySeed += 1)}`
 
-function emptyBlock(type) {
-  const base = { _key: nextKey(), type }
-  switch (type) {
-    case 'HEADING':
-      return { ...base, text: '', level: 2 }
-    case 'TEXT':
-    case 'QUOTE':
-    case 'CALLOUT':
-      return { ...base, text: '', author: '', variant: 'INFO' }
-    case 'CODE':
-      return { ...base, text: '', language: '' }
-    case 'IMAGE':
-      return { ...base, url: '', alt: '', caption: '' }
-    case 'GALLERY':
-      return { ...base, items: [{ url: '', alt: '', caption: '' }] }
-    case 'EMBED':
-      return { ...base, url: '', caption: '' }
-    case 'VIDEO':
-      return { ...base, videoId: topicVideos.value[0]?.id ?? '', caption: '' }
-    case 'FILE':
-      return { ...base, materialId: topicMaterials.value[0]?.id ?? '', caption: '' }
-    case 'TABLE':
-      return { ...base, rows: [['', ''], ['', '']], hasHeader: true, caption: '' }
-    default:
-      return base
-  }
-}
-
 function addBlock(type) {
-  blocks.value = [...blocks.value, emptyBlock(type)]
+  blocks.value = [
+    ...blocks.value,
+    emptyBlock(type, {
+      key: nextKey(),
+      // A picker with one option should arrive already chosen.
+      videoId: topicVideos.value[0]?.id ?? '',
+      materialId: topicMaterials.value[0]?.id ?? '',
+    }),
+  ]
 }
 
 function removeBlock(index) {
@@ -158,89 +125,6 @@ function addGalleryItem(block) {
 function removeGalleryItem(block, index) {
   if (block.items.length <= 1) return
   block.items = block.items.filter((_, position) => position !== index)
-}
-
-/**
- * One block in the shape the API takes.
- *
- * Only the fields that type actually has: the local object carries a few
- * spares so switching a callout's variant does not have to create them, and
- * sending an `author` with an IMAGE would be refused by the validator (the
- * schema is a discriminated union, on purpose).
- */
-function serializeBlock(block) {
-  const id = block.id ? { id: block.id } : {}
-  switch (block.type) {
-    case 'HEADING':
-      return { ...id, type: 'HEADING', text: block.text, level: Number(block.level) || 2 }
-    case 'TEXT':
-      return { ...id, type: 'TEXT', text: block.text }
-    case 'QUOTE':
-      return { ...id, type: 'QUOTE', text: block.text, author: block.author ?? '' }
-    case 'CALLOUT':
-      return { ...id, type: 'CALLOUT', text: block.text, variant: block.variant ?? 'INFO' }
-    case 'CODE':
-      return { ...id, type: 'CODE', text: block.text, language: block.language ?? '' }
-    case 'IMAGE':
-      return { ...id, type: 'IMAGE', url: block.url, alt: block.alt ?? '', caption: block.caption ?? '' }
-    case 'GALLERY':
-      return {
-        ...id,
-        type: 'GALLERY',
-        items: (block.items ?? []).filter((item) => item.url).map((item) => ({ ...item })),
-      }
-    case 'EMBED':
-      return { ...id, type: 'EMBED', url: block.url, caption: block.caption ?? '' }
-    case 'VIDEO':
-      return { ...id, type: 'VIDEO', videoId: block.videoId, caption: block.caption ?? '' }
-    case 'FILE':
-      return { ...id, type: 'FILE', materialId: block.materialId, caption: block.caption ?? '' }
-    case 'TABLE':
-      return {
-        ...id,
-        type: 'TABLE',
-        rows: block.rows.map((row) => [...row]),
-        hasHeader: block.hasHeader !== false,
-        caption: block.caption ?? '',
-      }
-    default:
-      return { ...id, type: 'DIVIDER' }
-  }
-}
-
-/**
- * Blocks that are not finished enough to send.
- *
- * The validator refuses an empty TEXT or a urlless IMAGE — correctly, since
- * a stored empty block is content nobody can read. But an author adds a
- * block *before* filling it in, and a 400 on every autosave in between
- * would make the editor look broken. So a half-written block is simply not
- * part of the save, and the header says how many are waiting.
- */
-function isComplete(block) {
-  switch (block.type) {
-    case 'HEADING':
-    case 'TEXT':
-    case 'QUOTE':
-    case 'CALLOUT':
-    case 'CODE':
-      // A rich-text field left untouched can hold an empty tag rather than
-      // an empty string, so this asks whether there is any text in it.
-      return Boolean(String(block.text ?? '').replace(/<[^>]*>/g, '').trim())
-    case 'IMAGE':
-    case 'EMBED':
-      return Boolean(block.url)
-    case 'GALLERY':
-      return (block.items ?? []).some((item) => item.url)
-    case 'VIDEO':
-      return Boolean(block.videoId)
-    case 'FILE':
-      return Boolean(block.materialId)
-    case 'TABLE':
-      return (block.rows ?? []).some((row) => row.some((cell) => String(cell).trim()))
-    default:
-      return true
-  }
 }
 
 const pendingBlocks = computed(() => blocks.value.filter((block) => !isComplete(block)).length)
@@ -283,22 +167,6 @@ async function save() {
   } finally {
     saving.value = false
   }
-}
-
-/**
- * Copies the ids the server assigned onto the local blocks.
- *
- * Position by position against what was actually sent, which is why `save()`
- * keeps that array: the local list may contain half-written blocks that were
- * left out, so the response's third block is not necessarily the local
- * third. Nothing else from the response is adopted — replacing the array
- * would drop the caret of whoever is typing.
- */
-function adoptIds(sent, returned) {
-  sent.forEach((block, index) => {
-    const id = returned?.[index]?.id
-    if (id && block.id !== id) block.id = id
-  })
 }
 
 async function setStatus(next) {

@@ -1,0 +1,1 @@
+import{_ as o}from"./ChatWorkspace-CY47F9Ux.js";import{j as r,o as t}from"./index-D-RLH2si.js";import"./AppCard-BboBD1_p.js";import"./Skeleton-CrIRgiuj.js";import"./EmptyState-DRACJ1qS.js";import"./_plugin-vue_export-helper-DlAUqK2U.js";import"./AppInput-TZZGAoYP.js";import"./employee-3YTd2ELl.js";const l={__name:"ChatView",setup(m){return(p,a)=>(t(),r(o))}};export{l as default};
