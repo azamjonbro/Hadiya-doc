@@ -1,1 +1,0 @@
-import{C as t}from"./index-D-RLH2si.js";const d={getMySummary(){return t.get("/gamification/me").then(a=>a.data.data)},getLeaderboard(){return t.get("/gamification/leaderboard").then(a=>a.data.data.rows)},leaderboard(a){return t.get("/gamification/leaderboard",{params:a}).then(e=>e.data.data)}};export{d as g};

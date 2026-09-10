@@ -1,1 +1,0 @@
-import{o as s,j as t,h as n,X as o,y as r,a2 as l}from"./index-D-RLH2si.js";const c={__name:"Skeleton",props:{as:{type:String,default:"div"},rounded:{type:String,default:"rounded-md"}},setup(e){return(a,d)=>(s(),t(l(e.as),{class:r(["animate-pulse bg-surface-2",e.rounded])},{default:n(()=>[o(a.$slots,"default")]),_:3},8,["class"]))}};export{c as _};
