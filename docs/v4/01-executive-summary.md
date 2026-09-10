@@ -55,7 +55,7 @@ Eng ko'p o'sgan domenlar: xavfsizlik/audit **44,2 → 59,6**, hisobot
 > shuning uchun raqam takrorlanadi. Vaznsiz ustun esa matritsadan
 > to'g'ridan-to'g'ri chiqadi va ikkala usulda ham bir xil.
 
-### Qayta hisob — 2026-09-10 (BLOK 1–9.5 ishidan keyin)
+### Qayta hisob — 2026-09-10 (BLOK 1–9 ishidan keyin)
 
 Matritsa **satrlar darajasida** BLOK 1–8 davomida yangilanib borgan, lekin
 sarlavhadagi umumiy raqam 2026-09-08 dan qimirlamagan — ya'ni yuqoridagi
@@ -63,22 +63,22 @@ sarlavhadagi umumiy raqam 2026-09-08 dan qimirlamagan — ya'ni yuqoridagi
 darsi, blok editori) yozilgandan keyin raqam matritsaning **hozirgi
 satrlaridan** qayta hisoblandi:
 
-| Metrika | 2026-09-08 (BLOK 0) | Hozir (BLOK 1–9.5) |
+| Metrika | 2026-09-08 (BLOK 0) | Hozir (BLOK 1–9) |
 |---|:--:|:--:|
-| Vaznsiz (337 capability) | 36,3 | **54,9** |
-| FULL | — | **113** |
+| Vaznsiz (337 capability) | 36,3 | **55,2** |
+| FULL | — | **114** |
 | OURS+ | — | **48** |
 | PARTIAL | — | **57** |
 | NONE | — | **95** |
-| VERIFY | — | **24** |
+| VERIFY | — | **23** |
 | **PARITY GAP** (vaznsiz) | ≈64% | **≈46%** |
 
 Sakrash yangi ishning o'zidan emas: BLOK 1–8 (yetkazish, ierarxiya,
 sertifikat, baholash, path, tadbir, qidiruv/KB/compliance, hisobot) allaqachon
-satrlarda hisobga olingan edi, faqat jamlanmagan edi. 9.1–9.5 ning o'z hissasi to'rt
+satrlarda hisobga olingan edi, faqat jamlanmagan edi. BLOK 9 ning o'z hissasi to'rt
 bo'limda ko'rinadi: **kontent (D04–D09) 56 → 69**, **authoring (D10–D12)
 11 → 36**, **standartlar/korxona (D80–D95) 30 → 42** (SCORM va subtitr) va
-**media/branding (D74–D79) → 71** (markaziy kutubxona).
+**media/branding (D74–D79) → 75** (kutubxona va rasm optimizatsiyasi).
 
 > **Vaznlangan ustun qayta hisoblanmadi.** Vazn jadvali repozitoriyda yo'q
 > (yuqoridagi metodologiya eslatmasiga qara), shuning uchun bu yerda faqat

@@ -41,6 +41,13 @@ function toPublicAsset(asset) {
     kind: asset.kind,
     mimeType: asset.mimeType,
     size: asset.size,
+    width: asset.width,
+    height: asset.height,
+    // The grid reads this and falls back to `url` — assets uploaded before
+    // 9.6 have no thumbnail, and re-encoding the whole bucket to give them
+    // one is not worth a migration.
+    thumbUrl: asset.thumbUrl || '',
+    originalSize: asset.originalSize,
     createdAt: asset.createdAt,
   }
 }
@@ -55,7 +62,10 @@ export const mediaLibraryService = {
    * An unregistered object is not lost — it is simply not listed, and the
    * orphan sweep leaves anything referenced alone.
    */
-  async register(actor, { key, url, name, mimeType, size, folder }) {
+  async register(
+    actor,
+    { key, url, name, mimeType, size, folder, width, height, thumbKey, thumbUrl, originalMimeType, originalSize }
+  ) {
     try {
       const asset = await MediaAsset.findOneAndUpdate(
         { key },
@@ -68,6 +78,12 @@ export const mediaLibraryService = {
             size,
             folder: normalizeFolder(folder),
             uploadedBy: actor?.id ?? null,
+            ...(width ? { width } : {}),
+            ...(height ? { height } : {}),
+            ...(thumbKey ? { thumbKey } : {}),
+            ...(thumbUrl ? { thumbUrl } : {}),
+            ...(originalMimeType ? { originalMimeType } : {}),
+            ...(originalSize ? { originalSize } : {}),
           },
           $setOnInsert: { kind: 'IMAGE' },
         },
@@ -139,6 +155,7 @@ export const mediaLibraryService = {
     }
 
     await MediaAsset.deleteOne({ _id: asset._id })
+    if (asset.thumbKey) await storage.deleteObject(asset.thumbKey).catch(() => {})
     await storage.deleteObject(asset.key).catch((error) => {
       // The row is gone, so the library is right; an object left behind is
       // the orphan sweep's job rather than a reason to fail the request.

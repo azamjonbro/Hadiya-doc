@@ -36,6 +36,18 @@ const mediaAssetSchema = new Schema(
     folder: { type: String, default: '' },
     mimeType: { type: String, default: '' },
     size: { type: Number, default: 0 },
+    // Dimensions of the stored (WebP) image, and a small version for grids
+    // (9.6). A library page showing forty full-size covers is forty
+    // megabytes; the thumbnail is a few kilobytes each.
+    width: { type: Number, default: 0 },
+    height: { type: Number, default: 0 },
+    thumbKey: { type: String, default: '' },
+    thumbUrl: { type: String, default: '' },
+    // What was uploaded, before the re-encode. Kept because "this used to
+    // be a 4 MB JPEG" is the only way to see whether the conversion is
+    // earning its keep.
+    originalMimeType: { type: String, default: '' },
+    originalSize: { type: Number, default: 0 },
     uploadedBy: { type: Schema.Types.ObjectId, ref: 'User', default: null },
   },
   { timestamps: true }

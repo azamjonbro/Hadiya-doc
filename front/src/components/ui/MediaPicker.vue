@@ -91,7 +91,7 @@ watch(folder, load)
         @click="emit('pick', item)"
       >
         <span class="block aspect-square bg-surface-2">
-          <img :src="item.url" :alt="item.name" class="h-full w-full object-cover" loading="lazy" />
+          <img :src="item.thumbUrl || item.url" :alt="item.name" class="h-full w-full object-cover" loading="lazy" />
         </span>
         <span class="flex items-center gap-1 px-2 py-1.5">
           <Icon name="image" size="12" class="shrink-0 text-ink-faint" />

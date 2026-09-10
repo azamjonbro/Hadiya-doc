@@ -182,7 +182,7 @@ onMounted(load)
         @click="open(item)"
       >
         <span class="block aspect-square bg-surface-2">
-          <img :src="item.url" :alt="item.name" class="h-full w-full object-cover" loading="lazy" />
+          <img :src="item.thumbUrl || item.url" :alt="item.name" class="h-full w-full object-cover" loading="lazy" />
         </span>
         <span class="block px-2 py-1.5">
           <span class="block truncate text-caption font-medium text-ink">{{ item.name || item.key.slice(-14) }}</span>
