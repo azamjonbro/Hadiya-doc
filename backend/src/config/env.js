@@ -109,6 +109,22 @@ const envSchema = z.object({
   MATERIAL_MAX_FILE_SIZE_MB: z.coerce.number().int().positive().default(100),
   MATERIAL_DOWNLOAD_URL_TTL: z.coerce.number().int().positive().default(120),
 
+  // SCORM packages (9.3). Its own private bucket rather than a prefix inside
+  // lms-materials: a package is not one file but a whole extracted website —
+  // hundreds of objects under `<packageId>/` — and mixing that into the
+  // bucket the material viewer lists would make "what files does this
+  // course have" an unanswerable question. Defaulted so an existing
+  // deployment does not fail boot before its env file is touched.
+  S3_BUCKET_SCORM: z.string().min(1).default('lms-scorm'),
+  // Bigger than a material: a Storyline or iSpring export with narration
+  // routinely passes 100 MB. Extraction happens in the worker, not in the
+  // request, so the ceiling is worker memory rather than request latency.
+  SCORM_MAX_FILE_SIZE_MB: z.coerce.number().int().positive().default(300),
+  // How long a launch token is good for. Long enough for a sitting with a
+  // long video in it; the token only ever grants this one package to this
+  // one person, and the state endpoints re-check both.
+  SCORM_LAUNCH_TOKEN_TTL: z.string().default('4h'),
+
   // Private bucket as well — a chat image/voice note/file is private
   // correspondence between two people, so it is only ever served through a
   // short-lived signed URL minted per message render. Defaulted (unlike

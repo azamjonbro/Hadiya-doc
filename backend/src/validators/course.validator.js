@@ -141,7 +141,16 @@ export const reorderContentSchema = z.object({
     .array(
       z.object({
         id: z.string().regex(/^[a-f\d]{24}$/i, 'Invalid id'),
-        contentType: z.enum(['VIDEO', 'FILE', 'PRESENTATION', 'MULTIMEDIA', 'MATERIAL', 'ASSESSMENT', 'LESSON']),
+        contentType: z.enum([
+          'VIDEO',
+          'FILE',
+          'PRESENTATION',
+          'MULTIMEDIA',
+          'MATERIAL',
+          'ASSESSMENT',
+          'LESSON',
+          'SCORM',
+        ]),
       })
     )
     .min(1)

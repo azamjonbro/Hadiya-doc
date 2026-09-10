@@ -8,11 +8,11 @@ import { ApiError } from '../../utils/ApiError.js'
 /**
  * What every piece of content inside a topic has in common (9.1).
  *
- * A topic holds videos, files, presentations, audio, tests — and now lessons
- * — in four different collections. They are different enough to deserve
- * their own models and identical in the three things this file owns: who may
- * see them, where they sit in the sequence, and how that sequence is
- * rewritten.
+ * A topic holds videos, files, presentations, audio, tests, lessons — and
+ * now SCORM packages — in five different collections. They are different
+ * enough to deserve their own models and identical in the three things this
+ * file owns: who may see them, where they sit in the sequence, and how that
+ * sequence is rewritten.
  *
  * The visibility gate is the reason this exists. It was written out three
  * times, word for word, in video.service, material.service and
@@ -21,7 +21,7 @@ import { ApiError } from '../../utils/ApiError.js'
  * fence is one copy that will eventually be wrong — and the one that goes
  * wrong is the one nobody edits, because the other two looked fine.
  *
- * Built up a piece at a time rather than as a rewrite: the four models keep
+ * Built up a piece at a time rather than as a rewrite: the models keep
  * their own shapes and their own routes. What is shared is the contract.
  */
 
@@ -37,18 +37,20 @@ export const CONTENT_KINDS = {
   MATERIAL: 'MATERIAL',
   ASSESSMENT: 'ASSESSMENT',
   LESSON: 'LESSON',
+  SCORM: 'SCORM',
 }
 
 const MODEL_BY_KIND = {
   [CONTENT_KINDS.VIDEO]: Video,
   [CONTENT_KINDS.MATERIAL]: Material,
   [CONTENT_KINDS.ASSESSMENT]: Assessment,
-  // Registered lazily: importing the Lesson model here would make this
-  // module and lesson.model.js import each other.
+  // Registered lazily: importing these models here would make this module
+  // and theirs import each other.
   [CONTENT_KINDS.LESSON]: null,
+  [CONTENT_KINDS.SCORM]: null,
 }
 
-/** Lets the Lesson model join without a circular import. */
+/** Lets a model join the sequence without a circular import. */
 export function registerContentModel(kind, model) {
   MODEL_BY_KIND[kind] = model
 }
