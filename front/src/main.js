@@ -7,6 +7,7 @@ import { bindAuthStore, bindRouter } from './services/http'
 import { useAuthStore } from './stores/auth'
 import { useToast } from './composables/useToast'
 import { apiErrorText } from './utils/apiError'
+import { registerPwa } from './composables/usePwaUpdate'
 import './assets/main.css'
 
 /**
@@ -80,6 +81,11 @@ function bootstrap() {
   // After i18n, because the fallback message is translated.
   reportUnhandled(app)
   app.mount('#app')
+
+  // 12.1 — after the mount, deliberately: registering the worker is not
+  // on the path to the first paint, and a browser that refuses it
+  // (private mode, plain http) must not keep the app from starting.
+  registerPwa()
 }
 
 bootstrap()

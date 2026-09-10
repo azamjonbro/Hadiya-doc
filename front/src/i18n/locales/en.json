@@ -2903,5 +2903,12 @@
     "confirmEnd": "The «{device}» session will be ended. Continue?",
     "confirmEndCurrent": "This is the device you are using. Ending it signs you out here. Continue?",
     "confirmEndOthers": "Every session except this device will be ended. Continue?"
+  },
+  "pwa": {
+    "offline": "You are offline — some data will not refresh.",
+    "updateReady": "A new version is ready.",
+    "reload": "Reload",
+    "later": "Later",
+    "offlineReady": "The app now opens without a network."
   }
 }

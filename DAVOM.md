@@ -79,7 +79,15 @@ redaksiyasi.
 (router'lardan generatsiya, `/api/docs`), 11.4 OIDC SSO (code+PKCE, JIT
 provisioning, claim → rol/bo'lim), 11.5 `Idempotency-Key`, 11.6 TOTP 2FA
 (RFC 6238, shifrlangan sir, zaxira kodlar) + qurilmalar/sessiyalar
-sahifasi. **Keyingi blok — BLOK 12 (PWA, oflayn, a11y).**
+sahifasi.
+
+**Hozir BLOK 12 (Mobil va accessibility):** 12.1 (PWA) bajarildi — ilova
+o'rnatiladi va **internetsiz ochiladi**; API **ataylab keshlanmaydi**
+(keshlangan kurs ro'yxati — noto'g'ri ro'yxat, keshlangan
+autentifikatsiyalangan javob esa umumiy kompyuterda keyingi odamga
+berilishi mumkin). Yangilanish **so'rab** olinadi, avtomatik emas —
+vaqti chegaralangan test o'rtasida ilovani almashtirish yo'qolgan
+urinish. **Keyingi band — 12.2 (oflayn kontent: IndexedDB).**
 
 **⚠️ AI hech qayerda haqiqiy API bilan sinalmagan:** `ANTHROPIC_API_KEY`
 na lokalda, na serverda sozlanmagan (`env` da bo'sh sukut). Kod stub bilan
@@ -111,7 +119,7 @@ satrlar BLOK 1–8 davomida yangilangan, jamlanma esa yangilanmagan.
 
 | Metrika | Qiymat |
 |---|:--:|
-| Vaznsiz (336 capability) | **59,6** |
+| Vaznsiz (336 capability) | **59,9** |
 | FULL / OURS+ | **118 / 48** |
 | PARTIAL / NONE / VERIFY | **59 / 91 / 21** |
 | **Gap** | **≈40%** |
@@ -139,8 +147,9 @@ esa login qila olmay 429 oladi va **butun fayl bekor qilinadi**
 lekin `pass` soni tushib qoladi). Toza raqam kerak bo'lsa oldingi
 yugurishdan **15 daqiqa** kutib turing.
 
-Frontend testi ham paydo bo'ldi: `npm --prefix front test` (14 test,
-`front/test/lessonBlocks.test.js`) — bundler kerak emas, chunki sinaladigan
+Frontend testi ham paydo bo'ldi: `npm --prefix front test` (19 test,
+`lessonBlocks.test.js` + `pwa.test.js` — ikkinchisi **build natijasini**
+o'qiydi, ya'ni `dist/` bo'lmasa skip qiladi) — bundler kerak emas, chunki sinaladigan
 mantiq `front/src/utils/` da, komponent ichida emas. Yangi front mantig'ini
 shu yerga chiqarib sina.
 
@@ -159,7 +168,7 @@ BLOK 8  Hisobot, analitika             ✅
 BLOK 9  Kontent va authoring           ← **BLOK 9 to'liq tugadi** (9.1–9.6); keyingisi 9.5
 BLOK 10 AI                             ✅
 BLOK 11 Korxona                        ← tugadi
-BLOK 12 Mobil va accessibility
+BLOK 12 Mobil va accessibility         ← 12.1 bajarildi
 BLOK 13 Kengaytirilgan baholash
 BLOK 14 Regressiya himoyasi (doimiy)
 ```

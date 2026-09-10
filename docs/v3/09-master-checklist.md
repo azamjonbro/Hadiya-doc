@@ -2981,7 +2981,90 @@
 
 ## BLOK 12 — Mobil va accessibility (4 hafta)
 
-- [ ] **12.1** PWA — `vite-plugin-pwa`, manifest, Workbox
+- [x] **12.1** PWA — `vite-plugin-pwa`, manifest, Workbox
+  · Bajarildi — ilova **o'rnatiladigan** bo'ldi va **internetsiz ochiladi**
+  (brauzerda tekshirilgan: tarmoq o'chirilgach qayta yuklanganda ham
+  qobiq ko'tarildi, kirish formasi chiqdi, `/courses` deep link ham
+  navigation fallback orqali xizmat qildi).
+  · **Nima keshlanadi va nima yo'q — butun dizayn shu.** Ilova
+  **ochilishi** uchun kerak narsalar (qobiq, CSS, shriftlar, ikonkalar)
+  oldindan keshlanadi. **API keshlanmaydi:** keshlangan kurs ro'yxati —
+  noto'g'ri kurs ro'yxati, keshlangan autentifikatsiyalangan javob esa
+  umumiy kompyuterda **keyingi odamga** berilishi mumkin bo'lgan javob.
+  Kontentni oflayn olish — 12.2/12.3: o'quvchining **ataylab** qilgan
+  ishi, IndexedDB da, har o'quvchi uchun alohida.
+  · **`generateSW` bu repozitoriyada ishlamaydi** — o'rniga
+  `injectManifest` va **qo'lda yozilgan `src/sw.js`**. Sabab konkret:
+  workbox worker'ni absolut import yo'llarini **bitta qo'shtirnoq**
+  ichida satrga ulab yasaydi, bu checkout esa nomida apostrof bor
+  papkada turadi (`qo'llanma`) — natijada worker sintaktik jihatdan
+  buzilgan chiqadi va xato `write-sw-using-default-template` ichidagi
+  o'qib bo'lmaydigan parse xatosi bo'lib ko'rinadi. Yon foydasi ham bor:
+  12.3 dagi oflayn navbat uchun **o'zimiz boshqaradigan** worker kerak.
+  · **`registerType: 'prompt'`, `autoUpdate` emas.** Bu — vaqti
+  chegaralangan test topshiradigan platforma: keyingi navigatsiyada
+  ilovani odam ostidan almashtirib qo'yish — yo'qolgan urinish. Yangi
+  versiya **kutadi**, ekranda bir qatorli xabar chiqadi, va **odam
+  bosganda** almashadi (`SKIP_WAITING` xabari → `skipWaiting`). Brauzerda
+  tekshirilgan: birinchi build'da banner yo'q, ikkinchi build'dan keyin
+  «Yangi versiya tayyor.» + «Yangilash» tugmasi, bosilgach yangi worker
+  egallab oldi.
+  · **Precache 2,3 MB** (140 fayl), 6,8 MB emas: `pdf.worker`,
+  `pptx-preview`, `exceljs`, `mammoth.browser` (birgalikda ~4 MB) va
+  `public/mediapipe` + `public/pdfjs` (o'n megabaytlar) **chiqarib
+  tashlangan**. Ular har biri bittagina ekran ortida, ko'pchilik hech
+  qachon ochmaydi — o'rnatishni mobil (ko'pincha hisoblanadigan)
+  ulanishda 7 MB yuklamaga aylantirish uchun sabab yo'q. Birinchi
+  ishlatilganda runtime qoidasi bilan keshlanadi (`CacheFirst`), ya'ni
+  kutish odam **kutishni tabiiy** deb qabul qiladigan paytda bo'ladi.
+  · **Navigation fallback denylist** — `/api/`, `/socket.io/`, `/media/`,
+  `/lms-*`, `/openapi.json`. Bu bo'lmasa worker `/api/...` ga
+  navigatsiyaga **index.html** bilan javob berardi: baland ovozda
+  yiqilishi kerak bo'lgan so'rov **200 + HTML** qaytaradi, ya'ni klient
+  uchun eng yomon shakl. (Prodda API boshqa origin'da — SPA
+  `spring.sds-max.uz`, API `qollanma.sds-max.uz` — ya'ni worker uni
+  umuman ushlamaydi; denylist bir originli dev va kelajakdagi
+  konfiguratsiyalar uchun.)
+  · **Manifest:** `standalone`, `theme_color: #007bff` (brend ko'kligi —
+  o'rnatilgan ilovaning status paneli shu rangda), `lang: uz`, 192/512
+  ikonkalar va **alohida maskable 512** (Android uni launcher shakliga
+  qirqadi, shuning uchun rasm xavfsiz zonada bo'lishi kerak — bir
+  faylni ikki marta e'lon qilish chetlarini kesib qo'yardi). iOS ikonkani
+  faqat `<link rel="apple-touch-icon">` dan oladi, shuning uchun u
+  `index.html` da. Ikonkalar SVG dan `sharp` bilan generatsiya qilingan
+  (tasodifiy fayl emas).
+  · **Oflayn banner** brauzerning `online`/`offline` hodisasidan
+  ishlaydi va `navigator.onLine` ni **dalil emas, ishora** deb muomala
+  qiladi (captive portal "onlayn" deydi) — shuning uchun matn ulanish
+  haqida, nima ishlashi haqida va'da bermaydi. Brauzerda tekshirilgan
+  (CDP tarmoq emulatsiyasi `navigator.onLine` ni o'zgartirmaydi,
+  shuning uchun hodisa qo'lda yuborilib tekshirildi: banner chiqdi va
+  `online` da yo'qoldi).
+  · **Dev'da service worker o'chirilgan** (`devOptions.enabled: false`):
+  dev serverni keshlab qo'yadigan worker — hech kim tushuntirib
+  bera olmaydigan eski bundle bilan o'tadigan yarim kun.
+  · `registerPwa()` **mount'dan keyin** chaqiriladi va xatosi
+  yutiladi: worker ro'yxatga olinmasa (private rejim, oddiy http)
+  ilova aynan shu funksiya paydo bo'lishidan oldingi holatda ishlaydi —
+  ya'ni faqat onlayn.
+  · **Tekshirildi** — front testlari 19 (`front/test/pwa.test.js`:
+  **generatsiya qilingan** worker o'qiladi, konfiguratsiya emas — qobiq
+  keshlanganmi, og'ir viewer'lar **keshlanmaganmi**, `public/` vendor
+  papkalari yo'qmi, precache **3 MB budjeti** ichidami, va worker'da
+  `denylist` bilan `SKIP_WAITING` bormi) + **brauzerda (CDP)**:
+  manifest ulangan, worker `activated`, 140 kesh yozuvi, og'ir
+  chunk'lardan **0** tasi keshda, tarmoq o'chirilgach ilova ochildi,
+  yangi build banner chiqardi va «Yangilash» ishladi.
+  · **Chetlanish:** `vite-plugin-pwa` ning `generateSW` rejimi
+  ishlatilmadi (yuqoridagi apostrof sababi) — plagin faqat manifest
+  injektori sifatida ishlatiladi.
+  · **Diqqat (prod):** Cloudflare `.js` ni o'z standarti bilan
+  keshlaydi, ya'ni `/sw.js` ham eskisi bilan berilishi mumkin — bu
+  yangi versiyaning yetib borishini kechiktiradi (ilova ishlashdan
+  to'xtamaydi). To'g'ri yechim nginx tomonda `location = /sw.js`
+  uchun `Cache-Control: no-cache` — bu foydalanuvchining sudo'sini
+  talab qiladi, shuning uchun deploydan keyin real sarlavhalar
+  o'lchandi va natija DAVOM.md ga yozildi.
 - [ ] **12.2** Oflayn kontent — IndexedDB, "oflayn saqlash"
 - [ ] **12.3** Oflayn sinxronizatsiya — `clientEventId` unique indeks,
   Background Sync

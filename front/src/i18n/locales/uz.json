@@ -2903,5 +2903,12 @@
     "confirmEnd": "«{device}» sessiyasi tugatiladi. Davom etamizmi?",
     "confirmEndCurrent": "Bu — hozirgi qurilma. Tugatilsa, shu yerdan chiqib ketasiz. Davom etamizmi?",
     "confirmEndOthers": "Shu qurilmadan tashqari hamma sessiyalar tugatiladi. Davom etamizmi?"
+  },
+  "pwa": {
+    "offline": "Internet yo'q — ba'zi ma'lumotlar yangilanmaydi.",
+    "updateReady": "Yangi versiya tayyor.",
+    "reload": "Yangilash",
+    "later": "Keyinroq",
+    "offlineReady": "Ilova internetsiz ham ochiladi."
   }
 }

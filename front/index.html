@@ -4,6 +4,14 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Corporate LMS</title>
+    <!-- 12.1 — installable. The manifest itself is injected by
+         vite-plugin-pwa at build time; these are the parts a browser
+         reads before it, and the iOS icon, which iOS takes only from a
+         link tag. -->
+    <meta name="theme-color" content="#007bff" />
+    <meta name="description" content="Kurslar, testlar, sertifikatlar va xodimlar o'quv jarayoni." />
+    <link rel="icon" type="image/png" sizes="64x64" href="/icons/favicon-64.png" />
+    <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
     <!-- Mavzu Vue mount bo'lishidan oldin qo'yiladi: aks holda sahifa avval
          oq holda chizilib, keyin qorong'iga o'tadi (oqarib ketish effekti). -->
     <script>
