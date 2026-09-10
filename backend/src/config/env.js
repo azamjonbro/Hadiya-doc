@@ -186,6 +186,14 @@ const envSchema = z.object({
   // rather than as a broken localhost URL.
   APP_URL: z.string().optional().default(''),
 
+  // The absolute base URL an integration should call, listed in
+  // `/openapi.json` alongside the relative one (11.3). Optional, and
+  // *never* derived from the request: behind the Cloudflare tunnel
+  // `X-Forwarded-Proto` says http on an https deployment, so a document
+  // built from headers would hand every integrator http:// URLs that die
+  // in a redirect.
+  API_PUBLIC_URL: z.string().optional().default(''),
+
   // Outbound email. Empty SMTP_HOST = mail is not configured: every send is
   // recorded as SKIPPED and nothing else changes, so a laptop and a day-one
   // install both work. It is not an error state.

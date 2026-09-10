@@ -72,9 +72,11 @@ hujjat o'qish, kurs konspekti, savollar, tarjima qatlami, token byudjeti +
 PII redaksiyasi va 10.6 ning poydevori (oylik token byudjeti,
 PII redaksiyasi). **Hozir BLOK 11 (Korxona):** 11.1 (API kalitlar + `/api/public/v1`) va
 11.2 (webhook'lar: 6 voqea, HMAC `t=…,v1=…`, 5× eksponensial retry,
-yetkazish jurnali + qayta yuborish, SSRF darvozalari) bajarildi.
-**Keyingi band — 11.3 (OpenAPI: `zod-to-openapi`, `GET /openapi.json`,
-`/api/docs`).**
+yetkazish jurnali + qayta yuborish, SSRF darvozalari) va 11.3 (OpenAPI —
+`GET /openapi.json` + `/api/docs`, **router'lardan generatsiya**:
+middleware'lar o'zlarini teglaydi, hujjat qo'lda yuritilmaydi) bajarildi.
+**Keyingi band — 11.4 (OIDC SSO: JIT provisioning, claim → rol/bo'lim
+mapping).**
 
 **⚠️ AI hech qayerda haqiqiy API bilan sinalmagan:** `ANTHROPIC_API_KEY`
 na lokalda, na serverda sozlanmagan (`env` da bo'sh sukut). Kod stub bilan
@@ -106,7 +108,7 @@ satrlar BLOK 1–8 davomida yangilangan, jamlanma esa yangilanmagan.
 
 | Metrika | Qiymat |
 |---|:--:|
-| Vaznsiz (337 capability) | **57,8** |
+| Vaznsiz (337 capability) | **58,0** |
 | FULL / OURS+ | **118 / 48** |
 | PARTIAL / NONE / VERIFY | **59 / 91 / 21** |
 | **Gap** | **≈42%** |
@@ -114,7 +116,7 @@ satrlar BLOK 1–8 davomida yangilangan, jamlanma esa yangilanmagan.
 Vaznlangan raqam qayta hisoblanmaydi — vazn jadvali repozitoriyda yo'q
 (`docs/v4/01-executive-summary.md` dagi metodologiya eslatmasi).
 
-**Testlar:** `npm --prefix backend test` — 873 test, 2 tasi yiqiladi va
+**Testlar:** `npm --prefix backend test` — 889 test, 887 o'tadi, 2 tasi yiqiladi va
 ikkisi ham **eskidan** yiqilib turadi (`faceVerification`: yuz aniqlanmagan
 rasm; `facePolicy`: hisobni bloklash). Darslarga aloqasi yo'q.
 
@@ -146,7 +148,7 @@ BLOK 7  Qidiruv, KB, compliance, gamification  ✅
 BLOK 8  Hisobot, analitika             ✅
 BLOK 9  Kontent va authoring           ← **BLOK 9 to'liq tugadi** (9.1–9.6); keyingisi 9.5
 BLOK 10 AI                             ✅
-BLOK 11 Korxona                        ← 11.1, 11.2 bajarildi
+BLOK 11 Korxona                        ← 11.1–11.3 bajarildi
 BLOK 12 Mobil va accessibility
 BLOK 13 Kengaytirilgan baholash
 BLOK 14 Regressiya himoyasi (doimiy)

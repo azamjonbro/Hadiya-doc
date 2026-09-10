@@ -405,7 +405,7 @@
 | SOAP API | ✓ | Yo'q | N/A | — | — | §24 — eskirgan protokol |
 | API kalitlari + scope | ✓ (implicit) | Bor — argon2 hash, scope'lar, per-key limit, PII bayrog'i | FULL | 100 | `apiKey.service.js`, `apiKeyAuth.middleware.js` | — |
 | Rate limiting | ? | **11 alohida limiter** | OURS+ | 100 | `middlewares/*RateLimit*` | — |
-| OpenAPI hujjati | ? | Qo'lda `.md` | PARTIAL | 25 | `docs/api-contract.md` | `zod-to-openapi` |
+| OpenAPI hujjati | ? | Router'lardan generatsiya — `GET /openapi.json` (3.1, 370 operatsiya) + `/api/docs` | FULL | 100 | `services/docs/openapi.service.js` | Javob sxemalari yo'q |
 | Idempotency | ? | Yo'q | VERIFY | 0 | — | `Idempotency-Key` |
 | **Webhooks** | ? | Bor — 6 voqea, HMAC (`t=…,v1=…`), 5× retry, yetkazish jurnali + replay, SSRF darvozalari | FULL | 100 | `webhook.service.js`, `webhookQueue.js` | — |
 | **SSO (JWT)** | ✓ | JWT ichkarida ishlatiladi, SSO sifatida emas | NONE | 0 | `utils/tokens.js` | `POST /auth/sso/jwt` |
@@ -417,7 +417,7 @@
 | Albato / Zapier tipidagi | ✓ | Webhook + ommaviy API bilan ulanadi, tayyor konnektor yo'q | PARTIAL | 50 | `webhook.service.js` | Konnektor katalogi |
 | Storage provider abstraksiyasi | ? | Bor (Local + S3) | OURS+ | 100 | `storage/S3StorageProvider.js` | — |
 | Domain alias | ✓ | Nginx darajasida qo'lda | PARTIAL | 50 | — | — |
-| **D70–D73 jami: 16 capability (+1 N/A)** | | | **FULL 3 · OURS+ 2 · PARTIAL 4 · NONE 5 · VERIFY 2 · N/A 1** | **44** | | |
+| **D70–D73 jami: 16 capability (+1 N/A)** | | | **FULL 4 · OURS+ 2 · PARTIAL 3 · NONE 5 · VERIFY 2 · N/A 1** | **49** | | |
 
 ## D74–D79 · SECURITY / AUDIT / ADMIN / BRANDING / MEDIA / FILES
 

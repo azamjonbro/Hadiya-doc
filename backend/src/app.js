@@ -8,6 +8,7 @@ import { baseRateLimiter } from './middlewares/rateLimit.middleware.js'
 import { errorHandler, notFoundHandler } from './middlewares/error.middleware.js'
 import { v1Router } from './routes/v1/index.js'
 import { publicV1Router } from './routes/public/v1.routes.js'
+import { docsRouter } from './routes/docs.routes.js'
 import { videoUploadRouter } from './routes/v1/videoUpload.routes.js'
 import { VIDEO_UPLOAD_PATH } from './video/tusServer.js'
 
@@ -51,6 +52,10 @@ export function createApp() {
   app.use(express.json({ limit: '1mb' }))
   app.use(cookieParser())
   app.use(baseRateLimiter)
+
+  // The generated API reference (11.3). Before the versioned routers
+  // because it describes all of them.
+  app.use(docsRouter)
 
   app.use('/api/v1', v1Router)
   // The integration surface (11.1). Its own prefix, its own door: every

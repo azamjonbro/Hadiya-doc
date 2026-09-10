@@ -2743,7 +2743,8 @@
     "withPii": "JSHSHIR bilan",
     "perMinute": "daqiqada {count}",
     "lastUsed": "oxirgi: {date}",
-    "neverUsed": "hech ishlatilmagan"
+    "neverUsed": "hech ishlatilmagan",
+    "docsLink": "API hujjati (OpenAPI) — barcha endpointlar, ruxsatlar va so'rov shakllari"
   },
   "webhooks": {
     "title": "Webhook'lar",

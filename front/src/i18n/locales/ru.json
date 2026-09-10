@@ -2743,7 +2743,8 @@
     "withPii": "с ЖШШИР",
     "perMinute": "{count} в минуту",
     "lastUsed": "последний: {date}",
-    "neverUsed": "не использовался"
+    "neverUsed": "не использовался",
+    "docsLink": "Документация API (OpenAPI) — все эндпоинты, права и формы запросов"
   },
   "webhooks": {
     "title": "Webhook'и",

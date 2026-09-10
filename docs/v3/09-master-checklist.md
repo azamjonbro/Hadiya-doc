@@ -2534,7 +2534,97 @@
   `NODE_ENV` ga qarab ishlaydi (dev/test'da yoniq, prod'da o'chiq):
   ishlab chiqishda qabul qiluvchi loopback'da bo'ladi, prod'da esa
   ochiq qo'yish — kimdir yozib qo'yishi kerak bo'lgan qaror.
-- [ ] **11.3** OpenAPI — `zod-to-openapi`, `GET /openapi.json`, `/api/docs`
+- [x] **11.3** OpenAPI — `zod-to-openapi`, `GET /openapi.json`, `/api/docs`
+  · Bajarildi — lekin **hujjat qo'lda yozilmaydi, router'lardan
+  generatsiya qilinadi**. `docs/api-contract.md` qo'lda yozilgan va API'ni
+  kimdir oxirgi marta tahrirlashni eslaganday tasvirlaydi; yonma-yon
+  yuritilgan hujjat bir oyda **eng yomon tarzda** eskiradi — nomi
+  o'zgargan endpointni hujjatlaydi va qo'shilgan uchtasini
+  tashlab ketadi.
+  · **Middleware'lar o'zlarini teglaydi.** `validateBody(schema)`,
+  `validateQuery`, `validateParams`, `requirePermission`,
+  `requireAnyPermission`, `requireRole`, `authenticate`, `apiKeyAuth`,
+  `verifyPlaybackToken` — hammasi closure qaytaradi, va o'sha closure'ga
+  `handler.openapi = {...}` yopishtiriladi. Generator esa **haqiqiy
+  zanjirdan** o'qiydi: hech narsa ikkinchi fikr emas. Shuning uchun
+  endpoint rol ostida turib "ochiq" deb hujjatlanishi mumkin emas.
+  · **`routeInventory.js` Express stack'ini kezib chiqadi** (370 route).
+  Muhim qismi — **router darajasidagi `use`ni pastga olib tushish**:
+  `webhooksRouter.use(authenticate)` va `.use(requireRole(SUPERADMIN))`
+  faylning har bir route'ini qo'riqlaydi, lekin **hech qaysisida
+  ko'rinmaydi** — buni hisobga olmagan generator butun faylni ochiq deb
+  yozardi (test bilan qadalgan).
+  · **Zaif joyi bitta va u to'g'ri tomonda:** Express 4 mount prefiksini
+  mounted string emas, `layer.regexp` sifatida saqlaydi, shuning uchun
+  prefiks regexp'dan tiklanadi. Ya'ni bu kod **Express'ning major
+  versiyasiga** nisbatan mo'rt, bizning o'zgarishlarimizga emas — bizning
+  router'lar har hafta o'zgaradi, Express 4 esa yo'q.
+  · **Tavsiflar mexanik, ataylab.** Har endpoint uchun qo'lda proza yo'q,
+  chunki aynan proza chiriydi. Mashina aytadigan narsa: metod, path, qaysi
+  token ochadi, qaysi ruxsat kerak, tana qanday bo'lishi kerak — hammasi
+  konstruksiya bo'yicha rost.
+  · **Konvert — komponent** (`SuccessEnvelope` / `ErrorEnvelope`), 370
+  marta takrorlanmaydi (hujjat bir necha megabayt va o'qib bo'lmas
+  bo'lardi). `data` **ataylab tipsiz**: bu kodda javob shakllari hech
+  yerda validatsiya qilinmaydi, ya'ni bu yerdagi sxema **hech narsa
+  ta'minlamaydigan da'vo** bo'lardi. Xatoda `code` — integratsiya
+  shoxlanadigan barqaror yarmi, `message` — odam uchun.
+  · Endpoint faqat **o'zi qaytara oladigan** status kodlarini sanaydi:
+  ochiq endpoint 403 qaytarmaydi, va uni ro'yxatga qo'shish — shovqin.
+  · **Server sifatida `/` (nisbiy)**, absolut manzil faqat
+  `API_PUBLIC_URL` sozlangan bo'lsa qo'shiladi. So'rov sarlavhalaridan
+  **hech qachon** qurilmaydi: Cloudflare tunnel ostida
+  `X-Forwarded-Proto` https deployment'da ham `http` deydi, va
+  integratorlarga `http://` manzil beradigan hujjat nisbiy path
+  beradiganidan yomonroq (bu xato bir marta barcha material yuklab
+  olishlarini sindirgan — `qollanma-cloudflare-proto`).
+  · **`/api/docs` — o'zimizning sahifa, Swagger UI emas.** Ikki sabab,
+  ikkisi ham bu deploymentdan: (1) API'ning CSP'si helmet'ning standarti
+  (`script-src 'self'`), ya'ni CDN bundle **umuman ishlamaydi va jimgina**
+  ishlamaydi — 9.3 aynan shu sinf xatosiga (`frame-ancestors`) yarim kun
+  yo'qotdi; (2) `swagger-ui-dist`ni lokal berish — SPA'ni allaqachon
+  beradigan o'sha nginx orqali megabaytlik vendor asset, va bularning
+  hammasi 370 qatorli filtrlanadigan ro'yxatni ko'rsatish uchun. Sahifa
+  ikki fayl: HTML va **alohida** `app.js` (inline `<script>` CSP'da rad
+  etiladi). Sahifa `/openapi.json` ni o'qiydi — ya'ni u mashina
+  hujjatida yo'q narsani ko'rsata olmaydi.
+  · **Autentifikatsiyasiz, ataylab.** Endpoint ro'yxati sir emas: SPA bu
+  route'larni har kim o'qiy oladigan JS bundle'dan chaqiradi, ya'ni bu
+  yerdagi login devori faqat **kerak bo'lgan integratordan** yashiradi.
+  Hujjatda **ma'lumot bo'lmasligi** kerak — va yo'q: faqat sxemalar,
+  ruxsat nomlari va status kodlari.
+  · `/api/v1` ostida emas, **app darajasida** mount qilingan: hujjat
+  barcha versiyalarni, `/api/public/v1` ni ham tasvirlaydi. Bitta
+  versiya prefiksi ichida yashagan spec v2 paydo bo'lgan kuni
+  dublikat qilinishi kerak bo'lardi — aynan spec eng kerak bo'lgan payt.
+  · Jarayonda **bir marta** generatsiya qilinadi va keshlanadi: router'lar
+  ishlash paytida o'zgarmaydi, har so'rovda 370 operatsiyani qurish esa
+  buni API'ning eng qimmat route'iga aylantirardi.
+  · `docs/api-contract.md` yuqorisiga eslatma qo'shildi: endpoint
+  ro'yxati bo'yicha **generatsiya qilingan hujjat haqiqat**, bu fayl esa
+  konvert, middleware tartibi va konventsiyalar uchun qoladi. Ikki
+  manba bo'lishi — ikkinchisi darhol eskirishi degani.
+  · **Tekshirildi** — 16 test (hujjat **fixture bilan emas, router
+  stack'i bilan** solishtiriladi: ikki tomonlama — hujjat endpointni
+  tashlab ketmasligi ham, o'ylab chiqarmasligi ham) + rasmiy
+  `@readme/openapi-parser` bilan **`valid: true`** (370 operatsiya, 281
+  path, 55 tag, 524 KB) + **brauzerda CDP orqali**: sahifa CSP ostida
+  render bo'ldi (373 endpoint, 56 guruh), filtr ishladi
+  (`webhooks` → 9), bo'sh holat ko'rindi, konsolda xato yo'q.
+  · **Chetlanish:** `zod-to-openapi` **ishlatilgan**, lekin faqat zod →
+  JSON Schema konvertori sifatida (`registry.registerPath`). Kutubxonaning
+  odatiy usuli — har validatorga `.openapi()` metadata yozib chiqish va
+  path'larni qo'lda e'lon qilish; 60 ta validator va 370 endpoint uchun bu
+  aynan yuqorida aytilgan qo'lda hujjat bo'lardi, faqat JS'da yozilgani
+  bilan. Validatorlarning **birortasi ham o'zgartirilmadi**.
+  · **Chetlanish:** javob sxemalari yo'q (faqat konvert). Ularni yozish —
+  370 endpoint uchun qo'lda ish, va u hech narsa ta'minlamaydi; kerak
+  bo'lsa to'g'ri yo'l — javoblarni ham zod bilan tekshirish, keyin o'sha
+  sxemani generatorga berish.
+  · **Kuzatilgan xatti-harakat:** prefikssiz `app.use(docsRouter)` ni
+  Express `path: '/'` deb ko'rsatadi, va uni prefiks deb qabul qilish
+  `//openapi.json` yasagan edi — hech qaysi mijoz chaqira olmaydigan
+  path. Test bu holatni qadab qo'ydi.
 - [ ] **11.4** OIDC SSO — `services/integrations/oidcClient.js`, JIT provisioning,
   claim → rol/bo'lim mapping
 - [ ] **11.5** `middlewares/idempotency.middleware.js` (`Idempotency-Key`)

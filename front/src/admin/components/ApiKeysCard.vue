@@ -10,6 +10,7 @@
 import { computed, onMounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { apiKeysApi } from '@/services/apiKeys'
+import { API_ORIGIN } from '@/services/apiBase'
 import { useToast } from '@/composables/useToast'
 import { useConfirm } from '@/composables/useConfirm'
 import { apiErrorText } from '@/utils/apiError'
@@ -34,6 +35,11 @@ const form = ref({ name: '', scopes: [], includePii: false, rateLimitPerMinute: 
 const issued = ref(null)
 
 const canCreate = computed(() => form.value.name.trim().length >= 2 && form.value.scopes.length > 0)
+
+// The generated reference (11.3). Built from API_ORIGIN rather than written
+// out, because the docs live on the API host and this page is served from
+// the SPA host — a hardcoded URL would be right in exactly one deployment.
+const docsUrl = `${API_ORIGIN}/api/docs`
 
 async function load() {
   loading.value = true
@@ -173,6 +179,11 @@ onMounted(load)
         {{ t('apiKeys.create') }}
       </AppButton>
       <p class="text-caption text-ink-faint">{{ t('apiKeys.readOnlyNote') }}</p>
+      <p class="text-caption text-ink-faint">
+        <a :href="docsUrl" target="_blank" rel="noopener" class="text-primary hover:underline">
+          {{ t('apiKeys.docsLink') }}
+        </a>
+      </p>
     </div>
   </AppCard>
 </template>

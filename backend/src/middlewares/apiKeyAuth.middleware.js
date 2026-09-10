@@ -101,3 +101,7 @@ export async function apiKeyRateLimit(req, res, next) {
 
   next()
 }
+
+// Tagged for the generated document (11.3): every route behind this door
+// authenticates with a key and nothing else.
+apiKeyAuth.openapi = { kind: 'security', scheme: 'apiKeyAuth' }

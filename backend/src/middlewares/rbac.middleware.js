@@ -1,7 +1,18 @@
 import { ApiError } from '../utils/ApiError.js'
 
+/**
+ * The gates are tagged with what they require (11.3), for the same reason
+ * the validators are: `/openapi.json` is generated from the router stack,
+ * and "which permission does this endpoint need" is the question an
+ * integrator asks first. Read off the real gate, it cannot be out of date.
+ */
+function tag(handler, meta) {
+  handler.openapi = meta
+  return handler
+}
+
 export function requirePermission(permission) {
-  return (req, res, next) => {
+  return tag((req, res, next) => {
     if (!req.user) {
       next(ApiError.unauthorized())
       return
@@ -11,7 +22,7 @@ export function requirePermission(permission) {
       return
     }
     next()
-  }
+  }, { kind: 'permission', permissions: [permission], mode: 'all' })
 }
 
 /**
@@ -28,7 +39,7 @@ export function requirePermission(permission) {
  * obviously also look.
  */
 export function requireAnyPermission(...permissions) {
-  return (req, res, next) => {
+  return tag((req, res, next) => {
     if (!req.user) {
       next(ApiError.unauthorized())
       return
@@ -38,14 +49,14 @@ export function requireAnyPermission(...permissions) {
       return
     }
     next()
-  }
+  }, { kind: 'permission', permissions, mode: 'any' })
 }
 
 // Gates on the role itself rather than on a permission — for the handful of
 // irreversible operations that stay with SUPERADMIN even if the matching
 // permission gets handed to a custom role.
 export function requireRole(...roles) {
-  return (req, res, next) => {
+  return tag((req, res, next) => {
     if (!req.user) {
       next(ApiError.unauthorized())
       return
@@ -55,7 +66,7 @@ export function requireRole(...roles) {
       return
     }
     next()
-  }
+  }, { kind: 'role', roles })
 }
 
 // Allows a user to act on their own resource (req.params[idParam] === their

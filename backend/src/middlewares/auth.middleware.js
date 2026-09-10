@@ -28,3 +28,8 @@ export function authenticate(req, res, next) {
     next(ApiError.unauthorized('Invalid or expired access token', 'INVALID_ACCESS_TOKEN'))
   }
 }
+
+// Tagged so the generated OpenAPI document can say which endpoints need a
+// session token, read from the actual chain rather than from a list
+// somebody maintains beside it (11.3).
+authenticate.openapi = { kind: 'security', scheme: 'bearerAuth' }

@@ -1,5 +1,17 @@
 # API Contract
 
+> **Since 11.3 the authoritative endpoint list is generated**, at
+> `GET /openapi.json` (and readably at `/api/docs`). It is built from the
+> routers themselves — the request schemas come from the `validateBody`
+> middleware that actually runs, and the permissions from the
+> `requirePermission` gate that actually enforces them — so it cannot
+> describe an endpoint this deployment does not serve, or miss one it does.
+>
+> This file stays for what a generated document cannot say: the shape of
+> the envelope, the middleware order a new route should follow, and the
+> conventions below. When the two disagree about an endpoint, the generated
+> document is right and this file is out of date.
+
 Base path: `/api/v1`. Every response uses the standard envelope (spec §37):
 
 ```jsonc

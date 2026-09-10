@@ -2743,7 +2743,8 @@
     "withPii": "with ID numbers",
     "perMinute": "{count} per minute",
     "lastUsed": "last used {date}",
-    "neverUsed": "never used"
+    "neverUsed": "never used",
+    "docsLink": "API reference (OpenAPI) — every endpoint, its permission and its request shape"
   },
   "webhooks": {
     "title": "Webhooks",

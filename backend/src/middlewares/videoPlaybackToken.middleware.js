@@ -18,3 +18,8 @@ export function verifyPlaybackToken(req, res, next) {
     next(error)
   }
 }
+
+// Tagged for the generated document (11.3): these routes carry their own
+// short-lived token in the query rather than a session header, because a
+// <video> element cannot send an Authorization header.
+verifyPlaybackToken.openapi = { kind: 'security', scheme: 'playbackToken' }
