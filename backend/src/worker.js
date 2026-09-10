@@ -1,5 +1,6 @@
 import { Worker } from 'bullmq'
 import { logger } from './config/logger.js'
+import { errorMessage } from './utils/errorMessage.js'
 import { connectDatabase } from './config/db.js'
 import { redisConnection } from './config/redis.js'
 import { VIDEO_PROCESSING_QUEUE } from './jobs/videoProcessingQueue.js'
@@ -245,7 +246,7 @@ async function main() {
   )
 
   exportWorker.on('failed', (job, err) => {
-    logger.error('Export job failed', { jobId: job?.id, error: err.message })
+    logger.error('Export job failed', { jobId: job?.id, error: errorMessage(err) })
   })
 
   await scheduleReminderChecks()

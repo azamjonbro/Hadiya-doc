@@ -91,7 +91,18 @@ const icons = {
   'wifi-off': '<line x1="4" y1="4" x2="20" y2="20"/><path d="M8.2 15.3a5.5 5.5 0 0 1 7-.6"/><path d="M5 11.6a10.5 10.5 0 0 1 4.2-2.4"/><path d="M14.5 9.4a10.5 10.5 0 0 1 4.5 2.2"/><circle cx="12" cy="18.6" r="0.2" fill="currentColor" stroke="none"/>',
 }
 
-const markup = computed(() => icons[props.name] ?? '')
+// An unknown name renders an empty <svg>: a 20px hole where an icon should
+// be, with nothing anywhere saying why. Eight wrong names reached a review
+// that way, so development says so out loud. Production still renders the
+// gap rather than throwing — a typo in an icon name must not take a page
+// down.
+const markup = computed(() => {
+  const found = icons[props.name]
+  if (!found && import.meta.env.DEV) {
+    console.warn(`[Icon] no icon named "${props.name}" — it will render as an empty box`)
+  }
+  return found ?? ''
+})
 </script>
 
 <template>

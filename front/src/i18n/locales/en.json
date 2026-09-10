@@ -1174,7 +1174,24 @@
       "course-progress": "Course Progress",
       "video-analytics": "Video Analytics",
       "news-analytics": "News Analytics",
-      "task-analytics": "Task Analytics"
+      "task-analytics": "Task Analytics",
+      "certificate-register": "Certificate register",
+      "path-progress": "Learning path progress",
+      "quiz-results": "Quiz results",
+      "question-difficulty": "Question difficulty",
+      "compliance-status": "Compliance status",
+      "onboarding-progress": "Onboarding progress",
+      "event-attendance": "Event attendance",
+      "homework-submissions": "Homework submissions",
+      "delivery-log": "Delivery log",
+      "kb-usage": "Knowledge base usage",
+      "group-progress": "Group progress",
+      "department-progress": "Department progress",
+      "overdue-assignments": "Overdue assignments",
+      "enrollment-audit": "Enrolment audit",
+      "badge-awards": "Badge awards",
+      "login-activity": "Login activity",
+      "material-usage": "Material usage"
     },
     "filters": {
       "role": "Role",
@@ -1187,6 +1204,26 @@
       "dateTo": "To",
       "clear": "Clear filters",
       "datePlaceholder": "Select date"
+    },
+    "exports": {
+      "title": "Large exports",
+      "hint": "Files are built in the background. You are notified when one is ready; the link is short-lived.",
+      "truncated": "{exported} rows exported out of {total}. This file is not complete.",
+      "complete": "Complete: {total} rows.",
+      "queueFull": "Queue the full export",
+      "queued": "Export queued. We will tell you when it is ready.",
+      "queueFailed": "Could not queue the export",
+      "rows": "{rows} / {total} rows",
+      "stillCapped": "This export hit the cap too — narrow the filters.",
+      "download": "Download",
+      "linkExpired": "The link has expired. Queue the export again.",
+      "linkFailed": "Could not get the link",
+      "status": {
+        "QUEUED": "Queued",
+        "RUNNING": "Building",
+        "READY": "Ready",
+        "FAILED": "Failed"
+      }
     }
   },
   "audit": {

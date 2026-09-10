@@ -23,6 +23,8 @@ import { ExportJob } from '../src/models/exportJob.model.js'
 import { hashPassword } from '../src/utils/hash.js'
 import { reportDataService, MAX_ROWS, ASYNC_MAX_ROWS } from '../src/services/reports/reportData.service.js'
 import { exportJobService } from '../src/services/reports/exportJob.service.js'
+import { exportQueue, queueExport } from '../src/jobs/exportQueue.js'
+import { S3StorageProvider } from '../src/storage/S3StorageProvider.js'
 import { redisConnection } from '../src/config/redis.js'
 
 const stamp = String(Date.now()).slice(-9)
@@ -31,6 +33,7 @@ const SMALL_CAP = 25
 
 let admin
 const userIds = []
+const queuedBullJobIds = []
 
 const adminActor = () => ({ id: admin._id.toString(), roleName: 'SUPERADMIN', permissions: ['report:export'] })
 
@@ -61,6 +64,8 @@ describe('AT-22 · export truncation is never silent', () => {
   after(async () => {
     await ExportJob.deleteMany({ requestedBy: { $in: userIds } })
     await User.deleteMany({ _id: { $in: userIds } })
+    for (const id of queuedBullJobIds) await exportQueue.remove(id).catch(() => {})
+    await exportQueue.close()
     await mongoose.connection.close()
     await redisConnection.quit()
   })
@@ -157,6 +162,132 @@ describe('AT-22 · export truncation is never silent', () => {
         () => exportJobService.get({ id: new mongoose.Types.ObjectId().toString() }, job._id),
         (error) => error.statusCode === 403
       )
+    })
+
+    // This suite used to stop at exportJobService.create(), which writes the
+    // Mongo row and nothing else. The row was fine; the *queueing* was not,
+    // and so the route that does both answered 500 on every call and no
+    // export was ever built. Anything that claims a job is queued has to go
+    // through the thing that queues it.
+    test('the job actually reaches the queue', async () => {
+      const job = await exportJobService.create(adminActor(), {
+        type: 'employee-progress',
+        format: 'csv',
+        lang: 'en',
+        scopedUserIds: null,
+      })
+      const queued = await queueExport(job._id)
+      queuedBullJobIds.push(queued.id)
+
+      assert.ok(queued.id, 'add() returned no job')
+      assert.equal(queued.data.jobId, String(job._id))
+      // BullMQ namespaces its Redis keys with colons and throws on a custom
+      // id containing one. Naming the rule rather than only the symptom:
+      // the next person reaching for `${prefix}:${id}` here gets a failing
+      // test instead of a 500 in production.
+      assert.ok(!queued.id.includes(':'), 'a BullMQ custom job id cannot contain a colon')
+    })
+
+    test('queueing the same export twice does not build it twice', async () => {
+      const job = await exportJobService.create(adminActor(), {
+        type: 'employee-progress',
+        format: 'csv',
+        lang: 'en',
+        scopedUserIds: null,
+      })
+      const first = await queueExport(job._id)
+      const second = await queueExport(job._id)
+      queuedBullJobIds.push(first.id)
+
+      // Same custom id, so the second add is a no-op rather than a second
+      // full-company aggregation on a shared box.
+      assert.equal(first.id, second.id)
+    })
+
+    /**
+     * The build itself, with storage swapped for a stub.
+     *
+     * MinIO does not run on a development machine here, and without this the
+     * only thing ever exercised was create() — the row — while the part that
+     * turns the row into a file went untested. Stubbing the prototype rather
+     * than injecting a provider keeps the service exactly as production runs
+     * it; only the two calls that need a bucket are replaced.
+     */
+    describe('building the file', () => {
+      const stored = new Map()
+      let realPut
+      let realSign
+
+      before(() => {
+        realPut = S3StorageProvider.prototype.putObject
+        realSign = S3StorageProvider.prototype.getSignedUrl
+        S3StorageProvider.prototype.putObject = async function putObject(key, body) {
+          stored.set(key, body)
+          return { key }
+        }
+        S3StorageProvider.prototype.getSignedUrl = async function getSignedUrl(key) {
+          return `https://storage.test/${key}?signature=stub`
+        }
+      })
+
+      after(() => {
+        S3StorageProvider.prototype.putObject = realPut
+        S3StorageProvider.prototype.getSignedUrl = realSign
+      })
+
+      test('a queued job becomes a stored file with a signed link', async () => {
+        const actor = adminActor()
+        const job = await exportJobService.create(actor, {
+          type: 'employee-progress',
+          format: 'csv',
+          lang: 'en',
+          filters: { department: `Export-${stamp}` },
+          scopedUserIds: null,
+        })
+
+        await exportJobService.run(job._id)
+
+        const finished = await exportJobService.get(actor, String(job._id))
+        assert.equal(finished.status, 'READY', finished.error)
+        assert.ok(finished.rowCount > 0, 'a report of sixty employees produced no rows')
+        assert.equal(finished.totalRows, finished.rowCount, 'the async cap is far above sixty')
+        assert.ok(finished.url?.includes('signature='), 'a ready export must come with a signed link')
+        assert.ok(finished.expiresIn > 0, 'the link has to expire')
+
+        const csv = stored.get(`exports/${job._id}.csv`)
+        assert.ok(csv, 'nothing was written to storage')
+        assert.ok(csv.toString('utf8').split('\n').length > 1, 'the stored file has no rows')
+      })
+
+      test('a storage failure is recorded with a reason, not a blank', async () => {
+        // The real one: a down MinIO throws AggregateError [ECONNREFUSED],
+        // whose `message` is the empty string. The job row was the only
+        // record of the failure, and it said FAILED and nothing else.
+        const broken = new AggregateError(
+          [new Error('connect ECONNREFUSED 127.0.0.1:9000')],
+          '' // exactly what Node produces here
+        )
+        const working = S3StorageProvider.prototype.putObject
+        S3StorageProvider.prototype.putObject = async () => {
+          throw broken
+        }
+
+        const actor = adminActor()
+        const job = await exportJobService.create(actor, {
+          type: 'employee-progress',
+          format: 'csv',
+          lang: 'en',
+          scopedUserIds: null,
+        })
+
+        await assert.rejects(() => exportJobService.run(job._id))
+        S3StorageProvider.prototype.putObject = working
+
+        const failed = await exportJobService.get(actor, String(job._id))
+        assert.equal(failed.status, 'FAILED')
+        assert.ok(failed.error, 'a failed export must say why')
+        assert.match(failed.error, /ECONNREFUSED/)
+      })
     })
 
     test('a queued job carries no download link', async () => {

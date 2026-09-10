@@ -1174,7 +1174,24 @@
       "course-progress": "Прогресс курсов",
       "video-analytics": "Аналитика видео",
       "news-analytics": "Аналитика новостей",
-      "task-analytics": "Аналитика задач"
+      "task-analytics": "Аналитика задач",
+      "certificate-register": "Реестр сертификатов",
+      "path-progress": "Прогресс траекторий",
+      "quiz-results": "Результаты тестов",
+      "question-difficulty": "Сложность вопросов",
+      "compliance-status": "Статус соответствия",
+      "onboarding-progress": "Прогресс адаптации",
+      "event-attendance": "Посещаемость мероприятий",
+      "homework-submissions": "Домашние задания",
+      "delivery-log": "Журнал доставки",
+      "kb-usage": "Использование базы знаний",
+      "group-progress": "Прогресс групп",
+      "department-progress": "Прогресс отделов",
+      "overdue-assignments": "Просроченные назначения",
+      "enrollment-audit": "Аудит назначений",
+      "badge-awards": "Выданные значки",
+      "login-activity": "Активность входов",
+      "material-usage": "Использование материалов"
     },
     "filters": {
       "role": "Роль",
@@ -1187,6 +1204,26 @@
       "dateTo": "По",
       "clear": "Сбросить фильтры",
       "datePlaceholder": "Выберите дату"
+    },
+    "exports": {
+      "title": "Большие экспорты",
+      "hint": "Файлы собираются в фоне. Когда всё готово, придёт уведомление; ссылка короткоживущая.",
+      "truncated": "Выгружено {exported} строк из {total}. Файл неполный.",
+      "complete": "Полностью: {total} строк.",
+      "queueFull": "Поставить полный экспорт в очередь",
+      "queued": "Экспорт поставлен в очередь. Сообщим, когда будет готов.",
+      "queueFailed": "Не удалось поставить экспорт в очередь",
+      "rows": "{rows} / {total} строк",
+      "stillCapped": "Этот экспорт тоже достиг предела — сузьте фильтры.",
+      "download": "Скачать",
+      "linkExpired": "Срок ссылки истёк. Поставьте экспорт в очередь заново.",
+      "linkFailed": "Не удалось получить ссылку",
+      "status": {
+        "QUEUED": "В очереди",
+        "RUNNING": "Готовится",
+        "READY": "Готово",
+        "FAILED": "Ошибка"
+      }
     }
   },
   "audit": {

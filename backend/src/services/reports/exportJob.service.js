@@ -8,6 +8,7 @@ import { S3StorageProvider } from '../../storage/S3StorageProvider.js'
 import { env } from '../../config/env.js'
 import { logger } from '../../config/logger.js'
 import { ApiError } from '../../utils/ApiError.js'
+import { errorMessage } from '../../utils/errorMessage.js'
 
 const exportStorage = new S3StorageProvider(env.S3_BUCKET_MATERIALS)
 
@@ -106,7 +107,13 @@ export const exportJobService = {
       job.status = 'FAILED'
       // The message, not the stack: this is shown to whoever asked for the
       // export, and a stack trace tells them nothing they can act on.
-      job.error = error.message
+      //
+      // Through errorMessage() because `error.message` can be the empty
+      // string — a storage backend that is down throws AggregateError
+      // [ECONNREFUSED] with no message at all, and this row was the only
+      // record of the failure. "FAILED" with a blank reason is the same
+      // silence AT-22 exists to remove, one level down.
+      job.error = errorMessage(error, 'The export could not be built')
       job.finishedAt = new Date()
       await job.save()
       throw error

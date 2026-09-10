@@ -13,13 +13,19 @@ export const exportQueue = new Queue(EXPORT_QUEUE, { connection: redisConnection
  * always a bad filter or a report type that no longer exists, and retrying
  * a full-company aggregation four more times is how a shared box falls
  * over on somebody's typo.
+ *
+ * The custom job id is what makes queueing the same export twice a no-op.
+ * It is joined with a dash, not a colon: BullMQ namespaces its Redis keys
+ * with colons and rejects a custom id containing one — which it does by
+ * throwing at add() time, so every request to this route answered 500 and
+ * no export was ever built.
  */
 export function queueExport(jobId) {
   return exportQueue.add(
     'build',
     { jobId: String(jobId) },
     {
-      jobId: `export:${jobId}`,
+      jobId: `export-${jobId}`,
       attempts: 2,
       backoff: { type: 'exponential', delay: 30_000 },
       removeOnComplete: 50,
