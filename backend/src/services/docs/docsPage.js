@@ -1,3 +1,5 @@
+import { createHash } from 'node:crypto'
+
 /**
  * The human-readable API reference at `/api/docs` (11.3).
  *
@@ -15,7 +17,7 @@
  * document does not say.
  */
 
-export const DOCS_HTML = `<!doctype html>
+const HTML_TEMPLATE = `<!doctype html>
 <html lang="en">
 <head>
 <meta charset="utf-8" />
@@ -86,7 +88,7 @@ export const DOCS_HTML = `<!doctype html>
   </div>
   <div id="out"><p class="empty">Loading…</p></div>
 </main>
-<script src="/api/docs/app.js"></script>
+<script src="/api/docs/app.js?v=__TAG__"></script>
 </body>
 </html>
 `
@@ -220,3 +222,18 @@ export const DOCS_SCRIPT = `(function () {
     })
 })()
 `
+
+/**
+ * The script URL carries a hash of the script (11.3).
+ *
+ * Cloudflare sits in front of this API and caches `.js` for four hours by
+ * its own default — which it did, and served the previous build's script
+ * against the new page for long enough to look like a broken deploy: the
+ * page loaded, fetched a path that no longer existed, and said "could not
+ * load the document". A content-derived query means a changed script is a
+ * different URL and no cache anywhere can serve the old one; the page
+ * itself is sent `no-cache`, so the new URL is picked up immediately.
+ */
+export const DOCS_SCRIPT_TAG = createHash('sha1').update(DOCS_SCRIPT).digest('hex').slice(0, 10)
+
+export const DOCS_HTML = HTML_TEMPLATE.replace('__TAG__', DOCS_SCRIPT_TAG)

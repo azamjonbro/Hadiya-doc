@@ -56,6 +56,9 @@ docsRouter.get(
 docsRouter.get(
   '/api/docs',
   raw('text/html', 'The human-readable API reference', (req, res) => {
+    // Never cached: the page carries the current script's URL, and a stale
+    // copy of it points at a script that no longer exists.
+    res.set('Cache-Control', 'no-cache')
     res.type('html').send(DOCS_HTML)
   })
 )
@@ -67,6 +70,9 @@ docsRouter.get(
 docsRouter.get(
   '/api/docs/app.js',
   raw('application/javascript', "The reference page's own script", (req, res) => {
+    // Safe to cache hard: the page requests it with a hash of its contents
+    // in the query, so a changed script is a different URL.
+    res.set('Cache-Control', 'public, max-age=86400')
     res.type('application/javascript').send(DOCS_SCRIPT)
   })
 )

@@ -2634,6 +2634,14 @@
   ikki path bilan; buning uchun inventarga massiv-path'ni ochish kerak
   bo'ldi, aks holda path `/api/openapi.json,/openapi.json` bo'lib
   qolardi — va OpenAPI validatori bunga e'tiroz ham bildirmaydi).
+  · **Ikkinchi prod xatosi, brauzer tekshiruvi topdi:** Cloudflare `.js`
+  ni **o'z standarti bilan 4 soat** keshlaydi, va yangi sahifaga **oldingi
+  build'ning skripti** berildi — sahifa yuklandi, endi yo'q path'ni
+  so'radi va "hujjatni yuklab bo'lmadi" dedi, ya'ni buzilgan deploy
+  ko'rinishida. Endi skript URL'i **o'z mazmunining hash'ini** olib
+  yuradi (`app.js?v=<sha1>`), sahifaning o'zi esa `no-cache`: o'zgargan
+  skript — boshqa URL, va uni hech qaysi kesh eski nusxa bilan almashtira
+  olmaydi.
 - [ ] **11.4** OIDC SSO — `services/integrations/oidcClient.js`, JIT provisioning,
   claim → rol/bo'lim mapping
 - [ ] **11.5** `middlewares/idempotency.middleware.js` (`Idempotency-Key`)

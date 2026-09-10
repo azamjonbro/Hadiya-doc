@@ -177,6 +177,16 @@ describe('11.3 · the OpenAPI document', () => {
       assert.ok(doc.components.schemas.ErrorEnvelope.properties.code)
     })
 
+    test('the page asks for its script by content hash', async () => {
+      const { DOCS_HTML, DOCS_SCRIPT_TAG } = await import('../src/services/docs/docsPage.js')
+      // Cloudflare caches `.js` for four hours by its own default, and did:
+      // the new page was served with the previous build's script, which
+      // fetched a path that no longer existed. A content-derived query
+      // means a changed script is a different URL.
+      assert.match(DOCS_HTML, new RegExp(`app\\.js\\?v=${DOCS_SCRIPT_TAG}`))
+      assert.equal(DOCS_HTML.includes('__TAG__'), false)
+    })
+
     test('the routes that do not answer with the envelope say so', () => {
       // The document itself, and the page — a promised wrapper that never
       // arrives is worse than no promise.
