@@ -70,6 +70,53 @@ function copyQuestions(questions = []) {
   }))
 }
 
+/**
+ * A lesson's blocks, ready to belong to the copy.
+ *
+ * Two rewrites happen here. Block ids are dropped, because reading progress
+ * points at them and shared ids would let a reader's place in the original
+ * count towards the copy. And VIDEO / FILE blocks are re-pointed at the
+ * copied rows: a lesson referencing content by id would otherwise still
+ * name the *original* course's video, which is both the wrong video and a
+ * way around that course's own access rules.
+ *
+ * A reference whose target was not copied (only possible if the data was
+ * already inconsistent) drops the block rather than carrying a dangling id
+ * into the new course — a missing paragraph is visible, a block pointing at
+ * another course's video is not.
+ */
+function copyBlocks(blocks = [], { videoIdMap, materialIdMap, lessonId }) {
+  const copied = []
+  for (const { _id, ...block } of blocks) {
+    if (block.type === 'VIDEO') {
+      const videoId = videoIdMap.get(String(block.videoId))
+      if (!videoId) {
+        logger.warn('Dropped a lesson VIDEO block with no copied video while duplicating', {
+          lessonId: String(lessonId),
+          videoId: String(block.videoId),
+        })
+        continue
+      }
+      copied.push({ ...block, videoId })
+      continue
+    }
+    if (block.type === 'FILE') {
+      const materialId = materialIdMap.get(String(block.materialId))
+      if (!materialId) {
+        logger.warn('Dropped a lesson FILE block with no copied material while duplicating', {
+          lessonId: String(lessonId),
+          materialId: String(block.materialId),
+        })
+        continue
+      }
+      copied.push({ ...block, materialId })
+      continue
+    }
+    copied.push(block)
+  }
+  return copied
+}
+
 export const courseDuplicateService = {
   async duplicate(actor, courseId, { title } = {}) {
     const source = await courseRepository.findById(courseId)
@@ -100,6 +147,7 @@ export const courseDuplicateService = {
 
     // Old id -> new id, so children can be re-pointed as they are copied.
     const topicIdMap = new Map()
+    const materialIdMap = new Map()
     const videoIdMap = new Map()
 
     const topics = await Topic.find({ courseId }).sort({ order: 1 }).lean()
@@ -138,9 +186,12 @@ export const courseDuplicateService = {
     for (const material of materials) {
       const topicId = topicIdMap.get(String(material.topicId))
       if (!topicId) continue
-      await Material.create(
+      const created = await Material.create(
         copyOf(material, { courseId: course._id, topicId, createdBy: actor.id, updatedBy: null })
       )
+      // Kept for the lesson blocks below: a FILE block names a material by
+      // id, so a copied lesson has to be re-pointed the same way a quiz is.
+      materialIdMap.set(String(material._id), created._id)
       counts.materials += 1
     }
 
@@ -172,7 +223,7 @@ export const courseDuplicateService = {
         copyOf(lesson, {
           courseId: course._id,
           topicId,
-          blocks: (lesson.blocks ?? []).map(({ _id, ...block }) => block),
+          blocks: copyBlocks(lesson.blocks, { videoIdMap, materialIdMap, lessonId: lesson._id }),
           createdBy: actor.id,
           updatedBy: null,
         })

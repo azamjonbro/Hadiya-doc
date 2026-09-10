@@ -3,7 +3,9 @@ import { topicRepository } from '../../repositories/topic.repository.js'
 import { auditLogRepository } from '../../repositories/auditLog.repository.js'
 import { openTopic, visibleRows, nextOrder } from './contentItem.js'
 import { canManageCourses } from './coursePermissions.js'
-import { toStoredBlocks, toPublicBlocks, isPublishable } from './lessonBlocks.js'
+import { toStoredBlocks, toPublicBlocks, isPublishable, blockReferences } from './lessonBlocks.js'
+import { Video } from '../../models/video.model.js'
+import { Material } from '../../models/material.model.js'
 import { courseCompletionService } from './courseCompletion.service.js'
 import { logger } from '../../config/logger.js'
 import { ApiError } from '../../utils/ApiError.js'
@@ -38,6 +40,109 @@ function toPublicLesson(lesson, { includeBlocks = true } = {}) {
   }
 }
 
+/**
+ * A VIDEO or FILE block may only point at content from its own course.
+ *
+ * The reference is what decides who may watch a video: a lesson embedding
+ * `videoId` renders it for anybody who can read the lesson. Without this
+ * check, an author of course A could put course B's video — targeted at a
+ * different branch, or not published at all — into a lesson of their own,
+ * and every rule course B set about it would be bypassed by an id.
+ *
+ * Both collections are asked once with `$in`, not once per block: a lesson
+ * with a dozen attachments should not be a dozen queries (0.9).
+ */
+async function assertReferences(courseId, blocks) {
+  const { videoIds, materialIds } = blockReferences(blocks)
+  if (!videoIds.length && !materialIds.length) return
+
+  const [videos, materials] = await Promise.all([
+    videoIds.length ? Video.countDocuments({ _id: { $in: videoIds }, courseId }) : 0,
+    materialIds.length ? Material.countDocuments({ _id: { $in: materialIds }, courseId }) : 0,
+  ])
+
+  if (videos !== videoIds.length || materials !== materialIds.length) {
+    throw ApiError.badRequest(
+      'A lesson can only reference content from its own course',
+      'REFERENCE_NOT_IN_COURSE',
+      { videos: videoIds.length - videos, materials: materialIds.length - materials }
+    )
+  }
+}
+
+/**
+ * Fills in what a VIDEO or FILE block points at.
+ *
+ * The block stores an id, because the content belongs to the course rather
+ * than to the lesson. The reader needs a title, a poster and a file type to
+ * draw a card, and asking it to fetch each reference itself would be one
+ * request per block — on a lesson with six attachments, six.
+ *
+ * Anything the caller may not see is reported as `unavailable` instead of
+ * being expanded: a lesson that references a video still in processing, or
+ * one an author has withdrawn, shows a placeholder rather than a card that
+ * leads nowhere. Staff previewing a course see drafts, exactly as they do
+ * everywhere else.
+ */
+async function expandReferences(blocks, canManage) {
+  const { videoIds, materialIds } = blockReferences(blocks)
+  if (!videoIds.length && !materialIds.length) return blocks
+
+  const published = canManage ? {} : { status: 'PUBLISHED' }
+  const [videos, materials] = await Promise.all([
+    videoIds.length
+      ? Video.find(
+          { _id: { $in: videoIds }, ...published },
+          { title: 1, posterUrl: 1, duration: 1, processingStatus: 1, status: 1 }
+        ).lean()
+      : [],
+    materialIds.length
+      ? Material.find(
+          { _id: { $in: materialIds }, ...published },
+          { title: 1, type: 1, mimeType: 1, fileSize: 1, allowDownload: 1, status: 1 }
+        ).lean()
+      : [],
+  ])
+
+  const videoById = new Map(videos.map((row) => [String(row._id), row]))
+  const materialById = new Map(materials.map((row) => [String(row._id), row]))
+
+  return blocks.map((block) => {
+    if (block.type === 'VIDEO') {
+      const video = videoById.get(String(block.videoId))
+      if (!video) return { ...block, unavailable: true }
+      return {
+        ...block,
+        video: {
+          id: String(video._id),
+          title: video.title,
+          posterUrl: video.posterUrl,
+          duration: video.duration,
+          processingStatus: video.processingStatus,
+          status: video.status,
+        },
+      }
+    }
+    if (block.type === 'FILE') {
+      const material = materialById.get(String(block.materialId))
+      if (!material) return { ...block, unavailable: true }
+      return {
+        ...block,
+        material: {
+          id: String(material._id),
+          title: material.title,
+          type: material.type,
+          mimeType: material.mimeType,
+          fileSize: material.fileSize,
+          allowDownload: material.allowDownload !== false,
+          status: material.status,
+        },
+      }
+    }
+    return block
+  })
+}
+
 export const lessonService = {
   /**
    * The lessons of one topic, without their blocks.
@@ -54,13 +159,15 @@ export const lessonService = {
   async getById(actor, id) {
     const lesson = await lessonRepository.findById(id)
     if (!lesson) throw ApiError.notFound('Lesson not found')
+    const canManage = canManageCourses(actor)
     // Same answer the other three content types give a learner about a
     // draft: not "you may not see this", but "this does not exist". Somebody
     // who should not read a draft should not learn that one is being written.
-    if (lesson.status !== 'PUBLISHED' && !canManageCourses(actor)) {
+    if (lesson.status !== 'PUBLISHED' && !canManage) {
       throw ApiError.notFound('Lesson not found')
     }
-    return toPublicLesson(lesson)
+    const payload = toPublicLesson(lesson)
+    return { ...payload, blocks: await expandReferences(payload.blocks, canManage) }
   },
 
   async create(actor, topicId, payload) {
@@ -68,6 +175,7 @@ export const lessonService = {
     if (!topic) throw ApiError.notFound('Topic not found')
 
     const blocks = toStoredBlocks(payload.blocks)
+    await assertReferences(topic.courseId, blocks)
     if (payload.status === 'PUBLISHED' && !isPublishable(blocks)) {
       throw ApiError.badRequest('A lesson needs at least one block before it can be published', 'LESSON_EMPTY')
     }
@@ -111,6 +219,7 @@ export const lessonService = {
     if (payload.blocks !== undefined) changes.blocks = toStoredBlocks(payload.blocks)
 
     const blocksAfter = changes.blocks ?? existing.blocks
+    if (changes.blocks !== undefined) await assertReferences(existing.courseId, changes.blocks)
     const statusAfter = payload.status ?? existing.status
     if (statusAfter === 'PUBLISHED' && !isPublishable(blocksAfter)) {
       throw ApiError.badRequest('A lesson needs at least one block before it can be published', 'LESSON_EMPTY')

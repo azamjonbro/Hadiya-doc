@@ -73,7 +73,9 @@
     "delete": "Удалить",
     "refresh": "Обновить",
     "yes": "Верно",
-    "no": "Неверно"
+    "no": "Неверно",
+    "moveUp": "Вверх",
+    "moveDown": "Вниз"
   },
   "auth": {
     "login": {
@@ -1481,8 +1483,7 @@
     "downloadFailed": "Не удалось получить ссылку на скачивание",
     "createFailed": "Не удалось создать",
     "lesson": "Урок",
-    "blockCount": "{count} блок(ов)",
-    "lessonEditorSoon": "Блочный редактор готовится"
+    "blockCount": "{count} блок(ов)"
   },
   "videoReport": {
     "title": "Отчёт",
@@ -2494,5 +2495,82 @@
   },
   "questionBanks": {
     "loadFailed": "Не удалось загрузить банк вопросов"
+  },
+  "lesson": {
+    "blocks": "Блоки",
+    "block": {
+      "heading": "Заголовок",
+      "text": "Текст",
+      "quote": "Цитата",
+      "callout": "Выноска",
+      "code": "Код",
+      "image": "Изображение",
+      "gallery": "Галерея",
+      "embed": "Встраивание",
+      "video": "Видео",
+      "file": "Файл",
+      "table": "Таблица",
+      "divider": "Разделитель"
+    },
+    "callout": {
+      "info": "Информация",
+      "warning": "Предупреждение",
+      "success": "Успех",
+      "danger": "Опасность"
+    },
+    "headingLevel": "H{level}",
+    "titlePlaceholder": "Название урока",
+    "descriptionPlaceholder": "Краткое описание (необязательно)",
+    "minutesPlaceholder": "Время чтения, мин.",
+    "textPlaceholder": "Введите текст…",
+    "quotePlaceholder": "Текст цитаты…",
+    "authorPlaceholder": "Автор (необязательно)",
+    "calloutPlaceholder": "Текст выноски…",
+    "languagePlaceholder": "Язык (js, sql…)",
+    "codePlaceholder": "Код…",
+    "altPlaceholder": "Описание изображения (для скринридера)",
+    "captionPlaceholder": "Подпись (необязательно)",
+    "embedPlaceholder": "Ссылка YouTube, Vimeo или Google",
+    "embedHint": "Разрешены только ссылки YouTube, Vimeo и Google Docs/Drive.",
+    "embedFrame": "Встроенное окно",
+    "required": "Обязательный для завершения курса",
+    "addImage": "Добавить изображение",
+    "addRow": "Строка",
+    "addColumn": "Столбец",
+    "removeRow": "Удалить строку",
+    "removeColumn": "Удалить столбец",
+    "tableHeader": "Первая строка — заголовок",
+    "noVideos": "В этом модуле нет видео — сначала загрузите видео.",
+    "noMaterials": "В этом модуле нет файлов — сначала загрузите файл.",
+    "noBlocks": "Блоков пока нет. Добавьте блок ниже.",
+    "emptyPreview": "Нет завершённых блоков для показа.",
+    "preview": "Просмотр",
+    "edit": "Редактировать",
+    "saving": "Сохранение…",
+    "savedAt": "Сохранено в {time}",
+    "saveFailed": "Не удалось сохранить",
+    "statusFailed": "Не удалось изменить статус",
+    "loadFailed": "Не удалось загрузить урок",
+    "pendingBlocks": "{count} блок(ов) не заполнено — они не сохраняются",
+    "blockIncomplete": "не заполнен",
+    "duplicateBlock": "Дублировать",
+    "untitled": "Урок без названия",
+    "confirmDelete": "Урок «{title}» будет удалён. Продолжить?",
+    "finish": "Я прочитал урок",
+    "finished": "Урок завершён",
+    "finishFailed": "Не удалось завершить",
+    "readToEnd": "Дочитайте урок до конца, чтобы завершить его.",
+    "completed": "Завершён",
+    "completedNote": "Вы завершили этот урок.",
+    "blockUnavailable": "Этот контент вам сейчас недоступен."
+  },
+  "richText": {
+    "bold": "Жирный",
+    "italic": "Курсив",
+    "bulletList": "Список",
+    "link": "Ссылка",
+    "linkPrompt": "Адрес ссылки (https://…)",
+    "linkInvalid": "Разрешены только http и https ссылки.",
+    "clear": "Очистить формат"
   }
 }

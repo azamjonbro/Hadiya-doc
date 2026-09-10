@@ -7,10 +7,12 @@ import { topicsApi } from '@/services/topics'
 import { videosApi } from '@/services/videos'
 import { materialsApi } from '@/services/materials'
 import { assessmentsApi } from '@/services/assessments'
+import { lessonsApi } from '@/services/lessons'
 import { useVideoUpload } from '@/composables/useVideoUpload'
 import MaterialUploadForm from '@/admin/components/MaterialUploadForm.vue'
 import MaterialViewer from '@/components/MaterialViewer.vue'
 import AssessmentEditor from '@/admin/components/AssessmentEditor.vue'
+import LessonEditor from '@/admin/components/LessonEditor.vue'
 import VideoReportPanel from '@/admin/components/VideoReportPanel.vue'
 import ProctorAlertsPanel from '@/admin/components/ProctorAlertsPanel.vue'
 import VideoQuizEditor from '@/admin/components/VideoQuizEditor.vue'
@@ -207,6 +209,36 @@ function onMaterialCreated() {
   load()
 }
 
+// --- Lessons (9.2) ---
+const expandedLessonId = ref(null)
+
+/**
+ * Creates an empty draft and opens the editor on it.
+ *
+ * No dialog asking for a title first: a lesson is written in the editor, and
+ * the title is the first field in it. The order is left to the server, which
+ * counts the end of the topic across all four content types.
+ */
+async function addLesson() {
+  let created = null
+  if (!(await run(async () => {
+    created = await lessonsApi.create(props.topicId, { title: t('content.lesson') })
+  }, 'content.createFailed'))) {
+    return
+  }
+  await load()
+  if (created) expandedLessonId.value = created.id
+}
+
+function onLessonUpdated() {
+  load()
+}
+
+function onLessonRemoved() {
+  expandedLessonId.value = null
+  load()
+}
+
 // --- Assessments ---
 async function addAssessment() {
   if (!(await run(() => assessmentsApi.create(props.topicId, { title: t('content.test'), order: nextOrder() }), 'content.createFailed'))) {
@@ -385,11 +417,7 @@ onMounted(load)
           />
         </template>
 
-        <!-- LESSON row (9.1). Read-only on purpose: the block editor, and
-             with it creating and publishing a lesson, is 9.2. Until then a
-             lesson can only arrive through the API, and this row exists so
-             that when one does, the curriculum shows it instead of drawing
-             an empty line. -->
+        <!-- LESSON row (9.2) -->
         <template v-else-if="item.contentType === 'LESSON'">
           <div class="flex items-center justify-between gap-3">
             <div class="flex min-w-0 items-center gap-2.5">
@@ -408,9 +436,25 @@ onMounted(load)
               <Badge :variant="item.status === 'PUBLISHED' ? 'success' : 'neutral'" size="sm">
                 {{ item.status === 'PUBLISHED' ? t('courses.status.published') : t('courses.status.draft') }}
               </Badge>
-              <span v-if="canManage" class="text-caption text-ink-faint">{{ t('content.lessonEditorSoon') }}</span>
+              <AppButton
+                v-if="canManage"
+                :variant="expandedLessonId === item.id ? 'outline' : 'ghost'"
+                size="sm"
+                icon="pencil"
+                @click="expandedLessonId = expandedLessonId === item.id ? null : item.id"
+              >
+                {{ t('lesson.blocks') }}
+              </AppButton>
             </div>
           </div>
+
+          <LessonEditor
+            v-if="expandedLessonId === item.id"
+            :lesson-id="item.id"
+            :topic-id="topicId"
+            @updated="onLessonUpdated"
+            @removed="onLessonRemoved"
+          />
         </template>
       </li>
     </ul>
@@ -430,6 +474,9 @@ onMounted(load)
         </AppButton>
         <AppButton v-if="canManage" size="sm" variant="ghost" icon="plus" @click="addAssessment">
           {{ t('content.test') }}
+        </AppButton>
+        <AppButton v-if="canManage" size="sm" variant="ghost" icon="plus" @click="addLesson">
+          {{ t('content.lesson') }}
         </AppButton>
       </div>
 

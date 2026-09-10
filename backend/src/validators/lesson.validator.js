@@ -1,14 +1,17 @@
 import { z } from 'zod'
+import { normalizeEmbed, EMBED_ALLOWLIST } from '../services/courses/lessonEmbeds.js'
 
 const objectId = z.string().regex(/^[a-f\d]{24}$/i, 'Invalid id')
 
 /**
- * One block, validated per type (9.1).
+ * One block, validated per type (9.1, extended to twelve in 9.2).
  *
  * A discriminated union rather than one permissive object: a HEADING with no
  * text and an IMAGE with no url are both nonsense, and a shared shape where
- * everything is optional cannot say so. Each of the eight types the editor
- * gains in 9.2 is one more entry in this list.
+ * everything is optional cannot say so. Twelve types, twelve entries — the
+ * union is also what makes the editor's per-type forms safe to trust, since
+ * a form that sends the wrong field gets a 400 rather than a stored block
+ * with an empty body.
  *
  * `id` is optional and, when present, is the id of the block being edited —
  * reading progress is recorded against it, so a paragraph that keeps its id
@@ -33,17 +36,99 @@ const textBlock = z.object({
   text: z.string().min(1).max(20000),
 })
 
+const quoteBlock = z.object({
+  id: objectId.optional(),
+  type: z.literal('QUOTE'),
+  text: z.string().min(1).max(4000),
+  author: z.string().max(200).optional(),
+})
+
+const calloutBlock = z.object({
+  id: objectId.optional(),
+  type: z.literal('CALLOUT'),
+  text: z.string().min(1).max(8000),
+  variant: z.enum(['INFO', 'WARNING', 'SUCCESS', 'DANGER']).optional(),
+})
+
+const codeBlock = z.object({
+  id: objectId.optional(),
+  type: z.literal('CODE'),
+  // Stored verbatim, rendered as text. A sample that mentions a tag has to
+  // survive the round trip, so this one is not sanitised anywhere.
+  text: z.string().min(1).max(20000),
+  language: z.string().max(30).optional(),
+})
+
+const imageUrl = z
+  .string()
+  .url()
+  // `z.string().url()` accepts `javascript:` and `data:` — both are URLs.
+  // Only the two schemes an <img> may load are allowed; origin-pinning to
+  // our own storage waits for the media library (9.5).
+  .refine((value) => /^https?:\/\//i.test(value), { message: 'Image URL must be http(s)' })
+
 const imageBlock = z.object({
   id: objectId.optional(),
   type: z.literal('IMAGE'),
-  url: z
-    .string()
-    .url()
-    // `z.string().url()` accepts `javascript:` and `data:` — both are URLs.
-    // Only the two schemes an <img> may load are allowed; origin-pinning to
-    // our own storage waits for the media library (9.5).
-    .refine((value) => /^https?:\/\//i.test(value), { message: 'Image URL must be http(s)' }),
+  url: imageUrl,
   alt: z.string().max(300).optional(),
+  caption: z.string().max(500).optional(),
+})
+
+const galleryBlock = z.object({
+  id: objectId.optional(),
+  type: z.literal('GALLERY'),
+  items: z
+    .array(
+      z.object({
+        url: imageUrl,
+        alt: z.string().max(300).optional(),
+        caption: z.string().max(500).optional(),
+      })
+    )
+    .min(1)
+    .max(24),
+})
+
+const embedBlock = z.object({
+  id: objectId.optional(),
+  type: z.literal('EMBED'),
+  // Checked against the host allowlist here so the author gets a 400 that
+  // names the problem, and normalised again on the way to storage so the
+  // stored URL is the embeddable one (lessonEmbeds.js).
+  url: z.string().refine((value) => normalizeEmbed(value) !== null, {
+    message: `Embeds are allowed from: ${EMBED_ALLOWLIST.join(', ')}`,
+  }),
+  caption: z.string().max(500).optional(),
+})
+
+// VIDEO and FILE point at content the course already holds. That the id
+// exists *and belongs to this course* is checked in lesson.service, where
+// the course is known — a reference is what decides who may watch a video,
+// so pointing at another course's row would be a way around its access
+// rules.
+const videoBlock = z.object({
+  id: objectId.optional(),
+  type: z.literal('VIDEO'),
+  videoId: objectId,
+  caption: z.string().max(500).optional(),
+})
+
+const fileBlock = z.object({
+  id: objectId.optional(),
+  type: z.literal('FILE'),
+  materialId: objectId,
+  caption: z.string().max(500).optional(),
+})
+
+const tableBlock = z.object({
+  id: objectId.optional(),
+  type: z.literal('TABLE'),
+  // Cells are plain text. Ragged rows are padded on the way in rather than
+  // refused — an author adding a column leaves the rows below it short
+  // until they type, and a table should not fail to save mid-edit.
+  rows: z.array(z.array(z.string().max(2000)).min(1).max(12)).min(1).max(100),
+  hasHeader: z.boolean().optional(),
   caption: z.string().max(500).optional(),
 })
 
@@ -52,7 +137,20 @@ const dividerBlock = z.object({
   type: z.literal('DIVIDER'),
 })
 
-const lessonBlock = z.discriminatedUnion('type', [headingBlock, textBlock, imageBlock, dividerBlock])
+const lessonBlock = z.discriminatedUnion('type', [
+  headingBlock,
+  textBlock,
+  quoteBlock,
+  calloutBlock,
+  codeBlock,
+  imageBlock,
+  galleryBlock,
+  embedBlock,
+  videoBlock,
+  fileBlock,
+  tableBlock,
+  dividerBlock,
+])
 
 // A lesson is a page, not a book. Two hundred blocks is already far past
 // what anybody scrolls, and an unbounded array is a document that cannot be

@@ -18,8 +18,10 @@
 //   - a lesson counts towards completion like a document, by the fraction
 //     actually read (AT-01, AT-04).
 //
-// And one that is specific to lessons: a TEXT block is rich HTML rendered
-// back with `v-html`, so what the server accepts, every reader executes.
+// And two that are specific to lessons: a TEXT block is rich HTML rendered
+// back with `v-html`, so what the server accepts, every reader executes; and
+// a VIDEO or FILE block names course content by id, which is what decides
+// who may watch it — so a lesson may only point inside its own course (9.2).
 
 import { test, describe, before, after } from 'node:test'
 import assert from 'node:assert/strict'
@@ -46,6 +48,7 @@ import { courseCompletionService, collectCourseItems } from '../src/services/cou
 import { nextOrder, countContent, reorderContent } from '../src/services/courses/contentItem.js'
 import { toStoredBlocks, lessonCompletion } from '../src/services/courses/lessonBlocks.js'
 import { createLessonSchema, updateLessonSchema } from '../src/validators/lesson.validator.js'
+import { normalizeEmbed } from '../src/services/courses/lessonEmbeds.js'
 import { deliveryQueue } from '../src/jobs/deliveryQueue.js'
 import { certificateQueue } from '../src/jobs/certificateQueue.js'
 import { redisConnection } from '../src/config/redis.js'
@@ -184,6 +187,167 @@ describe('9.1 · content base and text lessons', () => {
     test('an empty update is refused — it is a client bug, not a no-op', () => {
       assert.equal(updateLessonSchema.safeParse({}).success, false)
       assert.equal(updateLessonSchema.safeParse({ blocks: [] }).success, true)
+    })
+  })
+
+  describe('the twelve block types (9.2)', () => {
+    test('every type round-trips with its own fields', async () => {
+      const { course, topic } = await makeCourse()
+      const video = await Video.create({
+        courseId: course._id,
+        topicId: topic._id,
+        title: 'V',
+        order: 0,
+        status: 'PUBLISHED',
+        createdBy: author._id,
+      })
+      const material = await Material.create({
+        courseId: course._id,
+        topicId: topic._id,
+        type: 'FILE',
+        title: 'M',
+        key: `k-${stamp}-${seq++}`,
+        mimeType: 'application/pdf',
+        status: 'PUBLISHED',
+        createdBy: author._id,
+      })
+
+      const lesson = await lessonService.create(authorActor(), topic._id.toString(), {
+        title: 'Hammasi',
+        blocks: [
+          { type: 'HEADING', text: 'Sarlavha', level: 3 },
+          { type: 'TEXT', text: '<p>Matn</p>' },
+          { type: 'QUOTE', text: '<p>Gap</p>', author: 'Kimdir' },
+          { type: 'CALLOUT', text: '<p>Diqqat</p>', variant: 'WARNING' },
+          { type: 'CODE', text: 'if (a < b) return "<b>"', language: 'js' },
+          { type: 'IMAGE', url: 'https://example.com/a.png', alt: 'a' },
+          { type: 'GALLERY', items: [{ url: 'https://example.com/1.png' }, { url: 'https://example.com/2.png' }] },
+          { type: 'EMBED', url: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ&t=90s' },
+          { type: 'VIDEO', videoId: video._id.toString(), caption: 'Ko\'rish' },
+          { type: 'FILE', materialId: material._id.toString() },
+          { type: 'TABLE', rows: [['A', 'B'], ['1']], hasHeader: true },
+          { type: 'DIVIDER' },
+        ],
+      })
+
+      const by = Object.fromEntries(lesson.blocks.map((block) => [block.type, block]))
+      assert.equal(lesson.blockCount, 12)
+      assert.equal(by.HEADING.level, 3)
+      assert.equal(by.QUOTE.author, 'Kimdir')
+      assert.equal(by.CALLOUT.variant, 'WARNING')
+      // Code is stored verbatim. Running it through the HTML sanitiser
+      // would eat any snippet that mentions a tag.
+      assert.equal(by.CODE.text, 'if (a < b) return "<b>"')
+      assert.equal(by.GALLERY.items.length, 2)
+      // The pasted watch URL is stored in its embeddable form, with the
+      // timestamp kept — fixing it in the reader would mean every reader
+      // guessing.
+      assert.equal(by.EMBED.url, 'https://www.youtube-nocookie.com/embed/dQw4w9WgXcQ?start=90')
+      assert.equal(by.EMBED.provider, 'YOUTUBE')
+      assert.equal(String(by.VIDEO.videoId), video._id.toString())
+      assert.equal(String(by.FILE.materialId), material._id.toString())
+      // The short row is padded rather than refused: an author adding a
+      // column leaves the rows below it short until they type in them.
+      assert.deepEqual(by.TABLE.rows, [['A', 'B'], ['1', '']])
+    })
+
+    test('an embed off the allowlist is refused', async () => {
+      const { topic } = await makeCourse()
+      // The validator says no before the service is reached, and says which
+      // hosts are allowed.
+      const parsed = createLessonSchema.safeParse({
+        title: 'x',
+        blocks: [{ type: 'EMBED', url: 'https://evil.example.com/frame' }],
+      })
+      assert.equal(parsed.success, false)
+      assert.match(parsed.error.issues[0].message, /Embeds are allowed from/)
+
+      // And the storage path refuses it too, so a script or a migration
+      // cannot write a frame that will never render.
+      await assert.rejects(
+        () =>
+          lessonService.create(authorActor(), topic._id.toString(), {
+            title: 'x',
+            blocks: [{ type: 'EMBED', url: 'https://evil.example.com/frame' }],
+          }),
+        { code: 'EMBED_NOT_ALLOWED' }
+      )
+    })
+
+    test('an http embed is refused — it could never render on https', () => {
+      assert.equal(normalizeEmbed('http://www.youtube.com/watch?v=dQw4w9WgXcQ'), null)
+      assert.equal(normalizeEmbed('https://vimeo.com/76979871').provider, 'VIMEO')
+      // Drive's own /view link does not frame; the stored one does.
+      assert.equal(
+        normalizeEmbed('https://drive.google.com/file/d/1AbC/view').url,
+        'https://drive.google.com/file/d/1AbC/preview'
+      )
+    })
+
+    test('a reference is expanded for the reader, or reported unavailable', async () => {
+      const { course, topic } = await makeCourse()
+      const draftVideo = await Video.create({
+        courseId: course._id,
+        topicId: topic._id,
+        title: 'Hali chiqarilmagan',
+        order: 0,
+        status: 'DRAFT',
+        createdBy: author._id,
+      })
+      const lesson = await lessonService.create(authorActor(), topic._id.toString(), {
+        title: 'Havola',
+        blocks: [{ type: 'VIDEO', videoId: draftVideo._id.toString() }],
+        status: 'PUBLISHED',
+      })
+
+      // The author previewing sees the draft video, with its title — the
+      // same rule that lets them see a draft lesson at all.
+      const asAuthor = await lessonService.getById(authorActor(), lesson.id)
+      assert.equal(asAuthor.blocks[0].video.title, 'Hali chiqarilmagan')
+
+      // The learner gets a placeholder rather than a card that leads
+      // nowhere, and nothing about the unpublished video.
+      const asLearner = await lessonService.getById(learnerActor(), lesson.id)
+      assert.equal(asLearner.blocks[0].unavailable, true)
+      assert.equal(asLearner.blocks[0].video, undefined)
+    })
+
+    test('a lesson cannot reference another course’s video', async () => {
+      const mine = await makeCourse()
+      const other = await makeCourse()
+      const theirVideo = await Video.create({
+        courseId: other.course._id,
+        topicId: other.topic._id,
+        title: 'Begona',
+        order: 0,
+        status: 'PUBLISHED',
+        createdBy: author._id,
+      })
+
+      // The reference is what decides who may watch it: without this check
+      // an author could put a video targeted at another branch into their
+      // own lesson and every rule that course set would be bypassed.
+      await assert.rejects(
+        () =>
+          lessonService.create(authorActor(), mine.topic._id.toString(), {
+            title: 'x',
+            blocks: [{ type: 'VIDEO', videoId: theirVideo._id.toString() }],
+          }),
+        { code: 'REFERENCE_NOT_IN_COURSE' }
+      )
+
+      // …and the same on the way in through an edit, not only on create.
+      const lesson = await lessonService.create(authorActor(), mine.topic._id.toString(), {
+        title: 'x',
+        blocks: blocks(1),
+      })
+      await assert.rejects(
+        () =>
+          lessonService.update(authorActor(), lesson.id, {
+            blocks: [{ type: 'FILE', materialId: new mongoose.Types.ObjectId().toString() }],
+          }),
+        { code: 'REFERENCE_NOT_IN_COURSE' }
+      )
     })
   })
 
@@ -579,6 +743,48 @@ describe('9.1 · content base and text lessons', () => {
   })
 
   describe('duplication', () => {
+    test('a VIDEO block is re-pointed at the copied video', async () => {
+      const { course, topic } = await makeCourse()
+      const video = await Video.create({
+        courseId: course._id,
+        topicId: topic._id,
+        title: 'V',
+        order: 0,
+        status: 'PUBLISHED',
+        createdBy: author._id,
+      })
+      const material = await Material.create({
+        courseId: course._id,
+        topicId: topic._id,
+        type: 'FILE',
+        title: 'M',
+        key: `k-${stamp}-${seq++}`,
+        mimeType: 'application/pdf',
+        status: 'PUBLISHED',
+        createdBy: author._id,
+      })
+      await lessonService.create(authorActor(), topic._id.toString(), {
+        title: 'Havolalar',
+        blocks: [
+          { type: 'VIDEO', videoId: video._id.toString() },
+          { type: 'FILE', materialId: material._id.toString() },
+        ],
+        status: 'PUBLISHED',
+      })
+
+      const result = await courseDuplicateService.duplicate(authorActor(), course._id.toString())
+      courseIds.push(new mongoose.Types.ObjectId(result.course.id))
+
+      const [copied] = await Lesson.find({ courseId: result.course.id }).lean()
+      const copiedVideo = await Video.findOne({ courseId: result.course.id }).lean()
+      const copiedMaterial = await Material.findOne({ courseId: result.course.id }).lean()
+      // Still naming the original's rows would be both the wrong video and
+      // a way around the original course's access rules.
+      assert.equal(String(copied.blocks[0].videoId), String(copiedVideo._id))
+      assert.equal(String(copied.blocks[1].materialId), String(copiedMaterial._id))
+      assert.notEqual(String(copied.blocks[0].videoId), String(video._id))
+    })
+
     test('a copied course carries its lessons, with new block ids', async () => {
       const { course, topic } = await makeCourse()
       const lesson = await lessonService.create(authorActor(), topic._id.toString(), {

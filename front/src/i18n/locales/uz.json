@@ -73,7 +73,9 @@
     "delete": "O'chirish",
     "refresh": "Yangilash",
     "yes": "To‘g‘ri",
-    "no": "Noto‘g‘ri"
+    "no": "Noto‘g‘ri",
+    "moveUp": "Yuqoriga",
+    "moveDown": "Pastga"
   },
   "auth": {
     "login": {
@@ -1481,8 +1483,7 @@
     "downloadFailed": "Yuklab olish havolasini olib bo'lmadi",
     "createFailed": "Yaratib bo'lmadi",
     "lesson": "Dars",
-    "blockCount": "{count} blok",
-    "lessonEditorSoon": "Blok editori tayyorlanmoqda"
+    "blockCount": "{count} blok"
   },
   "videoReport": {
     "title": "Hisobot",
@@ -2494,5 +2495,82 @@
   },
   "questionBanks": {
     "loadFailed": "Savollar bankini yuklab bo'lmadi"
+  },
+  "lesson": {
+    "blocks": "Bloklar",
+    "block": {
+      "heading": "Sarlavha",
+      "text": "Matn",
+      "quote": "Iqtibos",
+      "callout": "Diqqat qutisi",
+      "code": "Kod",
+      "image": "Rasm",
+      "gallery": "Galereya",
+      "embed": "Embed",
+      "video": "Video",
+      "file": "Fayl",
+      "table": "Jadval",
+      "divider": "Ajratgich"
+    },
+    "callout": {
+      "info": "Ma'lumot",
+      "warning": "Ogohlantirish",
+      "success": "Muvaffaqiyat",
+      "danger": "Xavf"
+    },
+    "headingLevel": "H{level}",
+    "titlePlaceholder": "Dars nomi",
+    "descriptionPlaceholder": "Qisqa izoh (ixtiyoriy)",
+    "minutesPlaceholder": "O'qish vaqti, daq.",
+    "textPlaceholder": "Matn yozing…",
+    "quotePlaceholder": "Iqtibos matni…",
+    "authorPlaceholder": "Kim aytgan (ixtiyoriy)",
+    "calloutPlaceholder": "Diqqat qaratiladigan matn…",
+    "languagePlaceholder": "Til (js, sql…)",
+    "codePlaceholder": "Kod…",
+    "altPlaceholder": "Rasm tavsifi (screen reader uchun)",
+    "captionPlaceholder": "Izoh (ixtiyoriy)",
+    "embedPlaceholder": "YouTube, Vimeo yoki Google havolasi",
+    "embedHint": "Faqat YouTube, Vimeo va Google Docs/Drive havolalari qo'shiladi.",
+    "embedFrame": "Ichki oyna",
+    "required": "Kursni tugatish uchun majburiy",
+    "addImage": "Rasm qo'shish",
+    "addRow": "Qator",
+    "addColumn": "Ustun",
+    "removeRow": "Qatorni o'chirish",
+    "removeColumn": "Ustunni o'chirish",
+    "tableHeader": "Birinchi qator — sarlavha",
+    "noVideos": "Bu mavzuda video yo'q — avval video yuklang.",
+    "noMaterials": "Bu mavzuda fayl yo'q — avval fayl yuklang.",
+    "noBlocks": "Hali blok yo'q. Pastdan blok qo'shing.",
+    "emptyPreview": "Ko'rsatiladigan tugallangan blok yo'q.",
+    "preview": "Ko'rish",
+    "edit": "Tahrirlash",
+    "saving": "Saqlanmoqda…",
+    "savedAt": "{time} da saqlandi",
+    "saveFailed": "Saqlab bo'lmadi",
+    "statusFailed": "Holatni o'zgartirib bo'lmadi",
+    "loadFailed": "Darsni yuklab bo'lmadi",
+    "pendingBlocks": "{count} blok to'ldirilmagan — ular saqlanmaydi",
+    "blockIncomplete": "to'ldirilmagan",
+    "duplicateBlock": "Nusxalash",
+    "untitled": "Nomsiz dars",
+    "confirmDelete": "«{title}» darsi o'chiriladi. Davom etamizmi?",
+    "finish": "Darsni tugatdim",
+    "finished": "Dars tugatildi",
+    "finishFailed": "Tugatib bo'lmadi",
+    "readToEnd": "Tugatish uchun darsni oxirigacha o'qing.",
+    "completed": "Tugatilgan",
+    "completedNote": "Bu darsni tugatgansiz.",
+    "blockUnavailable": "Bu kontent sizga hozir ochiq emas."
+  },
+  "richText": {
+    "bold": "Qalin",
+    "italic": "Kursiv",
+    "bulletList": "Ro'yxat",
+    "link": "Havola",
+    "linkPrompt": "Havola manzili (https://…)",
+    "linkInvalid": "Faqat http va https havolalari qo'shiladi.",
+    "clear": "Formatni tozalash"
   }
 }

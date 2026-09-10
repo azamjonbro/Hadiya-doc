@@ -1,6 +1,9 @@
 import sanitizeHtml from 'sanitize-html'
 import mongoose from 'mongoose'
 import { KB_SANITIZE_OPTIONS } from '../kb/kbSanitize.js'
+import { normalizeEmbed } from './lessonEmbeds.js'
+import { CALLOUT_VARIANTS } from '../../models/lesson.model.js'
+import { ApiError } from '../../utils/ApiError.js'
 
 /**
  * What a lesson's blocks are allowed to be, and how far through one a reader
@@ -41,6 +44,22 @@ function keepId(block) {
  * a spread stores whatever else the caller sent, and the next reader of the
  * collection cannot tell which fields the platform actually honours.
  */
+const richText = (value) => sanitizeHtml(String(value ?? ''), KB_SANITIZE_OPTIONS)
+
+/**
+ * A table with every row the width of its widest.
+ *
+ * Ragged rows are the editor's normal intermediate state — an author adds a
+ * column and the rows below it are one cell short until they type in them.
+ * Padding here means the reader can draw a grid without counting, and a
+ * table saved mid-edit renders instead of collapsing.
+ */
+function toStoredRows(rows) {
+  const cells = (rows ?? []).map((row) => (row ?? []).map(plainText))
+  const width = cells.reduce((widest, row) => Math.max(widest, row.length), 0)
+  return cells.map((row) => [...row, ...Array(width - row.length).fill('')])
+}
+
 function toStoredBlock(block) {
   const base = keepId(block)
   switch (block.type) {
@@ -52,7 +71,27 @@ function toStoredBlock(block) {
         level: HEADING_LEVELS.includes(Number(block.level)) ? Number(block.level) : 2,
       }
     case 'TEXT':
-      return { ...base, type: 'TEXT', text: sanitizeHtml(String(block.text ?? ''), KB_SANITIZE_OPTIONS) }
+      return { ...base, type: 'TEXT', text: richText(block.text) }
+    case 'QUOTE':
+      return { ...base, type: 'QUOTE', text: richText(block.text), author: plainText(block.author) }
+    case 'CALLOUT':
+      return {
+        ...base,
+        type: 'CALLOUT',
+        text: richText(block.text),
+        variant: CALLOUT_VARIANTS.includes(block.variant) ? block.variant : 'INFO',
+      }
+    case 'CODE':
+      // Not sanitised, and that is the point: a code sample is text, and
+      // running it through an HTML sanitiser would eat half of any snippet
+      // that mentions a tag. The reader renders it as textContent inside
+      // <pre>, so nothing here is ever parsed as markup.
+      return {
+        ...base,
+        type: 'CODE',
+        text: String(block.text ?? ''),
+        language: plainText(block.language).slice(0, 30),
+      }
     case 'IMAGE':
       return {
         ...base,
@@ -65,6 +104,39 @@ function toStoredBlock(block) {
         alt: plainText(block.alt),
         caption: plainText(block.caption),
       }
+    case 'GALLERY':
+      return {
+        ...base,
+        type: 'GALLERY',
+        items: (block.items ?? []).map((item) => ({
+          url: String(item.url ?? ''),
+          alt: plainText(item.alt),
+          caption: plainText(item.caption),
+        })),
+      }
+    case 'EMBED': {
+      const embed = normalizeEmbed(block.url)
+      // The validator has already refused anything off the allowlist, so
+      // reaching here means a script or a migration wrote it. Refusing is
+      // still the right answer: an un-normalised URL is a frame that will
+      // not render, stored as if it would.
+      if (!embed) {
+        throw ApiError.badRequest('That address cannot be embedded', 'EMBED_NOT_ALLOWED', { url: block.url })
+      }
+      return { ...base, type: 'EMBED', url: embed.url, provider: embed.provider, caption: plainText(block.caption) }
+    }
+    case 'VIDEO':
+      return { ...base, type: 'VIDEO', videoId: String(block.videoId), caption: plainText(block.caption) }
+    case 'FILE':
+      return { ...base, type: 'FILE', materialId: String(block.materialId), caption: plainText(block.caption) }
+    case 'TABLE':
+      return {
+        ...base,
+        type: 'TABLE',
+        rows: toStoredRows(block.rows),
+        hasHeader: block.hasHeader !== false,
+        caption: plainText(block.caption),
+      }
     case 'DIVIDER':
       return { ...base, type: 'DIVIDER' }
     default:
@@ -73,6 +145,23 @@ function toStoredBlock(block) {
       // write a block the readers will not understand.
       throw new Error(`Unknown lesson block type: ${block.type}`)
   }
+}
+
+/**
+ * The course content a set of blocks points at.
+ *
+ * Read by lesson.service so it can refuse a lesson that references another
+ * course's video: the reference is what decides who may watch it, and a
+ * lesson is only allowed to point at content from the course it lives in.
+ */
+export function blockReferences(blocks) {
+  const videoIds = []
+  const materialIds = []
+  for (const block of blocks ?? []) {
+    if (block.type === 'VIDEO' && block.videoId) videoIds.push(String(block.videoId))
+    if (block.type === 'FILE' && block.materialId) materialIds.push(String(block.materialId))
+  }
+  return { videoIds: [...new Set(videoIds)], materialIds: [...new Set(materialIds)] }
 }
 
 export function toStoredBlocks(blocks) {

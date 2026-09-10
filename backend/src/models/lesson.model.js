@@ -17,16 +17,40 @@ import { CONTENT_KINDS, registerContentModel } from '../services/courses/content
  */
 
 /**
- * The block types a lesson can hold today.
+ * The twelve block types a lesson can hold (9.2).
  *
- * Four, not the twelve the editor will offer (9.2): a block type the API
- * accepts is a block type it has to validate, sanitise and eventually
- * render, and shipping eight of those before anything can display them
- * would be storing content nobody can read. These four are enough for a
- * real written lesson to exist end to end, and the validator is a
- * discriminated union so each later type is an entry rather than a rewrite.
+ * Chosen so that each one is a thing the editor and the reader can actually
+ * do something with, rather than a label:
+ *
+ *   HEADING TEXT QUOTE CALLOUT CODE   — written matter
+ *   IMAGE GALLERY EMBED               — media the lesson carries itself
+ *   VIDEO FILE                        — a reference to content the course
+ *                                       already holds, not a second copy
+ *   TABLE DIVIDER                     — structure
+ *
+ * What is *not* here is deliberate. A LINK block would be a TEXT block with
+ * one link in it. An in-page quiz would be a fifth content type wearing a
+ * block's clothes — it needs attempts, grading and a pass mark, all of
+ * which the assessment already has (4.2), so a lesson references a test
+ * rather than containing one.
  */
-export const LESSON_BLOCK_TYPES = ['HEADING', 'TEXT', 'IMAGE', 'DIVIDER']
+export const LESSON_BLOCK_TYPES = [
+  'HEADING',
+  'TEXT',
+  'QUOTE',
+  'CALLOUT',
+  'CODE',
+  'IMAGE',
+  'GALLERY',
+  'EMBED',
+  'VIDEO',
+  'FILE',
+  'TABLE',
+  'DIVIDER',
+]
+
+/** What a CALLOUT is for — it decides the colour and the icon, nothing else. */
+export const CALLOUT_VARIANTS = ['INFO', 'WARNING', 'SUCCESS', 'DANGER']
 
 /**
  * Named fields rather than a `data: Mixed` bag.
@@ -40,17 +64,52 @@ export const LESSON_BLOCK_TYPES = ['HEADING', 'TEXT', 'IMAGE', 'DIVIDER']
  * `_id` is kept on purpose: it is what reading progress records, so an
  * author reordering blocks does not reset anybody's place.
  */
+// One image inside a GALLERY. Its own schema so a gallery entry has the
+// same three fields an IMAGE block does, and `_id: false` because nothing
+// records progress against a single photograph.
+const galleryItemSchema = new Schema(
+  {
+    url: { type: String, required: true },
+    alt: { type: String, default: '' },
+    caption: { type: String, default: '' },
+  },
+  { _id: false }
+)
+
 const blockSchema = new Schema(
   {
     type: { type: String, enum: LESSON_BLOCK_TYPES, required: true },
-    // HEADING: the heading text. TEXT: sanitised HTML (see lessonBlocks.js).
+    // HEADING, CODE, QUOTE: plain text. TEXT, CALLOUT: sanitised HTML
+    // (see lessonBlocks.js).
     text: { type: String, default: '' },
     // HEADING only. h1 is the lesson title, so a block starts at h2.
     level: { type: Number, min: 2, max: 4, default: 2 },
-    // IMAGE: a URL from POST /uploads/image.
+    // IMAGE: a URL from POST /uploads/image. EMBED: the normalised iframe
+    // URL — never the address the author pasted (lessonEmbeds.js).
     url: { type: String, default: '' },
     alt: { type: String, default: '' },
     caption: { type: String, default: '' },
+    items: { type: [galleryItemSchema], default: undefined },
+    // VIDEO / FILE: content the course already holds. A reference rather
+    // than a copy, so a video used in a lesson is the same row the
+    // curriculum lists, with the same processing state and the same
+    // playback rules — and re-uploading it to embed it would be absurd.
+    videoId: { type: Schema.Types.ObjectId, ref: 'Video', default: null },
+    materialId: { type: Schema.Types.ObjectId, ref: 'Material', default: null },
+    // QUOTE: who said it.
+    author: { type: String, default: '' },
+    // CALLOUT: which kind of aside this is.
+    variant: { type: String, enum: CALLOUT_VARIANTS, default: 'INFO' },
+    // TABLE: rows of plain-text cells, and whether the first row is the
+    // header. Cells are text, not HTML — a table of formatted fragments is
+    // where a block editor turns into a word processor.
+    rows: { type: [[String]], default: undefined },
+    hasHeader: { type: Boolean, default: true },
+    // CODE: the language label, for the reader's highlighter.
+    language: { type: String, default: '' },
+    // EMBED: which allowlisted service the URL resolved to. Stored so the
+    // reader can label the frame without re-parsing the URL.
+    provider: { type: String, default: '' },
   },
   { _id: true }
 )
