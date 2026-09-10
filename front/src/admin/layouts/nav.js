@@ -14,6 +14,7 @@ export const managementNav = [
     permission: 'analytics:view:all',
   },
   { name: 'news', path: '/bos/news', icon: 'newspaper', labelKey: 'nav.news', permission: 'news:read' },
+  { name: 'media', path: '/bos/media', icon: 'image', labelKey: 'media.title', permission: 'course:update' },
   { name: 'tasks', path: '/bos/tasks', icon: 'check-square', labelKey: 'nav.tasks', permission: 'task:create' },
   { name: 'reports', path: '/bos/reports', icon: 'bar-chart', labelKey: 'nav.reports', permission: 'report:export' },
   { name: 'chat', path: '/bos/chat', icon: 'message-square', labelKey: 'nav.chat', permission: 'chat:support' },

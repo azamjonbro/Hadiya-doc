@@ -63,11 +63,17 @@ foydalanuvchi so'rovi bilan to'xtatilgan ("telegram bog'lama shartmas"),
 kodi `git stash` da. Uni "keyingi band" deb olma; holat paneli uni shunday
 ko'rsatadi, chunki u ro'yxatdagi birinchi `[ ]` bandni oladi.
 
-**Hozir BLOK 9 (Kontent va authoring):** 9.1–9.4 bajarildi —
+**Hozir BLOK 9 (Kontent va authoring):** 9.1–9.5 bajarildi —
 matn darsi to'liq oqim bilan (polimorf baza, 12 blok turi, blok editori,
 o'quvchi sahifasi, blok-asosli progress) va **SCORM 1.2/2004 import**
 (worker'da ochish, manifest parseri, launcher sahifadagi runtime API,
-CMI holati, suspend/resume, mastery). **Keyingi band — 9.5 (media kutubxona).**
+CMI holati, suspend/resume, mastery). **Keyingi band — 9.6 (rasm optimizatsiyasi, `sharp` → webp).**
+
+**Media tozalash haqida:** kechasi 04:40 da sweep ishlaydi, lekin standart
+holatda **faqat hisobot** yozadi (`MEDIA_CLEANUP_DELETE=false`). Prodda
+birinchi marta `npm run media:orphans` bilan hisobotni ko'r — bu deployment
+sweep paydo bo'lishidan oldin ham fayl to'plab kelgan. O'chirishni yoqishdan
+oldin hisobotdagi raqamlar kutilganidek ekaniga ishonch hosil qil.
 
 **SCORM haqida bilib turish kerak bo'lgan ikki narsa:**
 1. Paket API origin'idan xizmat qiladi (SCORM runtime API bilan bir origin
@@ -87,15 +93,15 @@ satrlar BLOK 1–8 davomida yangilangan, jamlanma esa yangilanmagan.
 
 | Metrika | Qiymat |
 |---|:--:|
-| Vaznsiz (337 capability) | **54,5** |
-| FULL / OURS+ | **112 / 48** |
-| PARTIAL / NONE / VERIFY | **56 / 97 / 24** |
+| Vaznsiz (337 capability) | **54,9** |
+| FULL / OURS+ | **113 / 48** |
+| PARTIAL / NONE / VERIFY | **57 / 95 / 24** |
 | **Gap** | **≈45%** |
 
 Vaznlangan raqam qayta hisoblanmaydi — vazn jadvali repozitoriyda yo'q
 (`docs/v4/01-executive-summary.md` dagi metodologiya eslatmasi).
 
-**Testlar:** `npm --prefix backend test` — 789 test, 2 tasi yiqiladi va
+**Testlar:** `npm --prefix backend test` — 799 test, 2 tasi yiqiladi va
 ikkisi ham **eskidan** yiqilib turadi (`faceVerification`: yuz aniqlanmagan
 rasm; `facePolicy`: hisobni bloklash). Darslarga aloqasi yo'q.
 
@@ -116,7 +122,7 @@ BLOK 5  Learning path + onboarding     ✅
 BLOK 6  Live training, kalendar, topshiriq  ✅
 BLOK 7  Qidiruv, KB, compliance, gamification  ✅
 BLOK 8  Hisobot, analitika             ✅
-BLOK 9  Kontent va authoring           ← 9.1–9.4 bajarildi; keyingisi 9.5
+BLOK 9  Kontent va authoring           ← 9.1–9.5 bajarildi; keyingisi 9.5
 BLOK 10 AI
 BLOK 11 Korxona
 BLOK 12 Mobil va accessibility
