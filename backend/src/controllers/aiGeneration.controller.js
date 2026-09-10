@@ -49,6 +49,40 @@ export const aiGenerationController = {
     sendSuccess(res, job, 'Generation started', 202)
   }),
 
+  /**
+   * Questions from a module's own lessons, or from a topic/document.
+   *
+   * A topic is the normal input: a question generated from the lesson the
+   * learner just read is checkable against it (see aiQuiz.service.js).
+   */
+  quiz: asyncHandler(async (req, res) => {
+    const { topicId, topic, count, lang, types, bankId } = req.body
+    let sourceText = ''
+    let sourceName = ''
+
+    if (req.file) {
+      const extracted = await extractSourceText(req.file.buffer, {
+        ext: extensionOf(req.file.originalname),
+        filename: req.file.originalname,
+      })
+      sourceText = extracted.text
+      sourceName = String(req.file.originalname ?? '').slice(0, 200)
+    }
+
+    if (!sourceText && !topicId && !topic) {
+      throw ApiError.badRequest('Give a module, a topic or a document', 'AI_NO_INPUT')
+    }
+
+    const job = await aiGenerationService.create(req.user, {
+      type: 'QUIZ',
+      params: { sourceText, topicId, topic, count, lang, types, bankId },
+      topicId: topicId ?? null,
+      sourceName,
+      sourceChars: sourceText.length,
+    })
+    sendSuccess(res, job, 'Generation started', 202)
+  }),
+
   list: asyncHandler(async (req, res) => {
     sendSuccess(res, await aiGenerationService.listMine(req.user))
   }),

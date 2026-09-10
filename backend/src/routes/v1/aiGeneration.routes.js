@@ -5,7 +5,7 @@ import { authenticate } from '../../middlewares/auth.middleware.js'
 import { requirePermission } from '../../middlewares/rbac.middleware.js'
 import { validateBody } from '../../middlewares/validate.middleware.js'
 import { aiGenerationController } from '../../controllers/aiGeneration.controller.js'
-import { outlineRequestSchema } from '../../validators/aiGeneration.validator.js'
+import { outlineRequestSchema, quizRequestSchema } from '../../validators/aiGeneration.validator.js'
 import { ApiError } from '../../utils/ApiError.js'
 
 export const aiGenerationRouter = Router()
@@ -42,6 +42,17 @@ aiGenerationRouter.post(
   uploadSingleSource,
   validateBody(outlineRequestSchema),
   aiGenerationController.outline
+)
+
+// quiz:configure, not course:create: writing questions is the assessment
+// author's job, and the two are separate keys precisely because they are
+// often separate people (2.4).
+aiGenerationRouter.post(
+  '/quiz',
+  requirePermission(PERMISSIONS.QUIZ_CONFIGURE),
+  uploadSingleSource,
+  validateBody(quizRequestSchema),
+  aiGenerationController.quiz
 )
 
 aiGenerationRouter.get('/jobs', requirePermission(PERMISSIONS.COURSE_CREATE), aiGenerationController.list)

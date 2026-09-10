@@ -10,6 +10,7 @@ import { materialsApi } from '@/services/materials'
 import { assessmentsApi } from '@/services/assessments'
 import { lessonsApi } from '@/services/lessons'
 import { scormApi } from '@/services/scorm'
+import { aiGenerationApi } from '@/services/aiGeneration'
 import { useVideoUpload } from '@/composables/useVideoUpload'
 import MaterialUploadForm from '@/admin/components/MaterialUploadForm.vue'
 import MaterialViewer from '@/components/MaterialViewer.vue'
@@ -289,6 +290,26 @@ async function removeScorm(item) {
   if (!(await confirm.ask({ message: t('scorm.confirmDelete', { title: item.title }) }))) return
   if (!(await run(() => scormApi.remove(item.id), 'content.deleteFailed'))) return
   await load()
+}
+
+// --- AI questions (10.4) ---
+//
+// Lands where the author is already working: a question generated from the
+// lessons of *this* module is checkable against them. The result is a
+// question bank to review, never a live quiz.
+const generatingQuestions = ref(false)
+
+async function generateQuestions() {
+  if (generatingQuestions.value) return
+  generatingQuestions.value = true
+  try {
+    await aiGenerationApi.quiz({ topicId: props.topicId, count: 10 })
+    toast.success(t('ai.quizStarted'))
+  } catch (error) {
+    toast.error(apiErrorText(error, t('ai.startFailed')))
+  } finally {
+    generatingQuestions.value = false
+  }
 }
 
 // --- Assessments ---
@@ -608,6 +629,16 @@ onBeforeUnmount(() => {
         </AppButton>
         <AppButton v-if="canManage" size="sm" variant="ghost" icon="plus" @click="addAssessment">
           {{ t('content.test') }}
+        </AppButton>
+        <AppButton
+          v-if="canManage && auth.hasPermission('quiz:configure')"
+          size="sm"
+          variant="ghost"
+          icon="flame"
+          :loading="generatingQuestions"
+          @click="generateQuestions"
+        >
+          {{ t('ai.quizButton') }}
         </AppButton>
         <AppButton v-if="canManage" size="sm" variant="ghost" icon="plus" @click="addLesson">
           {{ t('content.lesson') }}
