@@ -56,7 +56,7 @@ Bandni boshlashdan oldin tegishli faylni kodda tasdiqla — `docs/v4` matritsasi
 
 ---
 
-## Hozirgi holat (2026-09-08 holatiga)
+## Hozirgi holat (2026-09-10 holatiga)
 
 **BLOK 0 dan bajarilgan:** 0.1, 0.2, 0.3, 0.4, 0.5, 0.7
 **BLOK 0 dan qolgan:** 0.6 (backup + tiklash sinovi), 0.8 (Sentry + socket.io
@@ -166,11 +166,13 @@ ssh homeserver 'pm2 reload qollanma-worker'        # alohida! ikkitasini birga y
 ssh homeserver 'pm2 list'                          # uptime ustuni bilan tasdiqla
 ```
 
-**Oxirgi qadam foydalanuvchida** — `/var/www/spring/front` root egaligida,
-passwordsiz sudo yo'q:
+**Oxirgi qadam — front'ni veb-ildizga ko'chirish.** Ilgari bu yerda «root
+egaligida, passwordsiz sudo yo'q, foydalanuvchi o'zi qilsin» deb yozilgan
+edi. **Bu eskirgan:** `/var/www/spring/front` `azamjonbro:azamjonbro`
+egaligida (`drwxrwxr-x`), ya'ni sudo umuman kerak emas:
 
 ```bash
-ssh -t homeserver 'sudo rsync -a --delete ~/qollanma/front/dist/ /var/www/spring/front/'
+ssh homeserver 'rsync -a --delete ~/qollanma/front/dist/ /var/www/spring/front/'
 ```
 
 Chiqqanini **sahifani yangilab emas**, bundle nomini solishtirib tekshir:
