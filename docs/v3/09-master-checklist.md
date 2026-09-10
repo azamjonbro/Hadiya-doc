@@ -1622,8 +1622,46 @@
     (marshrut baribir `report:export` talab qiladi), va **havola berilgan
     lahza auditga yoziladi** — aks holda async yo'l xodimlar ro'yxatini
     audit jurnalida ko'rinmasdan olib ketish usuli edi.
-- [ ] **8.5** **Dashboard kengaytmasi** — test, sertifikat, tadbir, path,
+- [x] **8.5** **Dashboard kengaytmasi** — test, sertifikat, tadbir, path,
   compliance metrikalari; `scope` almashtirgichi
+  · Bajarildi — `analytics/dashboardExtra.js` (8.1 dagi `reportBuilders.extra.js`
+  naqshi bo'yicha alohida faylda, chunki asosiy agregatsiyani ikki barobar
+  uzaytirish uni o'qib bo'lmaydigan qilardi).
+  · **Oltita yangi karta:** test urinishlari va o'tish foizi, berilgan
+  sertifikatlar va muddati yaqinlashganlari, yaqin tadbirlar, faol
+  yo'nalishlar (+ tugatilganlar va compliance qoidalari).
+  · **To'rtta yangi grafik:** yo'nalish progressi, tadbir davomati,
+  sertifikatlar oylik trendi, test qiyinligi.
+  · Har birida bitta o'ylangan qaror bor:
+    - `validUntil: null` sertifikat **muddati tugamaydi**, ya'ni «muddati
+    yaqinlashgan» sanog'iga kirmaydi — aks holda bu hech narsa haqidagi
+    ogohlantirish bo'lardi.
+    - Davomat maxrajiga **navbatdagilar va bekor qilganlar kirmaydi**: joy
+    tegmagan odam kelmagan hisoblanmaydi, aks holda uzun navbati bor to'la
+    tadbir «yomon davomat» bo'lib ko'rinardi.
+    - Davomat faqat **o'tib bo'lgan** tadbirlar uchun so'raladi.
+    - Test qiyinligi **3 dan kam urinishli testlarni tashlaydi** — bitta
+    odamning bitta yiqilishi qiyinlik signali emas.
+    - Sertifikat trendi **nol bilan to'ldiriladi**: trend chizig'idagi
+    bo'shliq «ma'lumot yo'q» deb o'qiladi, «hech narsa bo'lmagan» deb emas.
+    - Nol urinishda o'tish foizi **0%**, `NaN` emas — yangi o'rnatilgan
+    tizimda ham sahifa chizilishi kerak.
+  · **Scope almashtirgichi** — `DashboardScopeSwitch.vue`, ikkala dashboardda
+  ham. Bitta payload va filtr emas, ikkita ekran: kompaniya dashboardi —
+  hamma bo'yicha keshlangan agregatsiya, jamoa dashboardi — nomma-nom
+  ro'yxat uchun jonli hisob; ular boshqa savolga javob beradi va shakllari
+  ham boshqacha.
+  · Shu bilan **0.3 dagi chetlanish yopildi**: bo'limga cheklangan rahbar
+  kompaniya dashboardiga kirsa, ilgari 403 xatosi ko'rinardi va yo'l shu
+  yerda tugardi. Endi 403 xato sifatida emas, tushuntirish va jamoa
+  dashboardiga havola sifatida ko'rsatiladi.
+  · Sinov: `test/dashboardMetrics.test.js` (8 test). Da'volar **delta**
+  bo'yicha — bu umumiy dev bazaga qarshi ishlaydi va boshqa fayllar ayni
+  paytda ma'lumot yaratib-o'chirib turadi, ya'ni «aynan to'qqizta sertifikat
+  bor» degan test kodga aloqasi yo'q sabablarga ko'ra tushadigan test.
+  · Yonida: `refresh-cw` ikoni mavjud emas ekan va manager dashboardida
+  **bo'sh joy** chizilardi — 0.10 da `Icon` ga qo'shilgan ogohlantirish
+  buni topdi.
 
 ---
 

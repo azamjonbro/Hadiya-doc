@@ -79,7 +79,7 @@ onMounted(load)
         <!-- The other half of the switch (8.5): whichever dashboard you are
              on, the other one is one click away. -->
         <DashboardScopeSwitch />
-        <AppButton v-if="!loading" size="sm" variant="ghost" icon="refresh-cw" @click="load">
+        <AppButton v-if="!loading" size="sm" variant="ghost" icon="refresh" @click="load">
           {{ t('common.refresh') }}
         </AppButton>
       </div>
