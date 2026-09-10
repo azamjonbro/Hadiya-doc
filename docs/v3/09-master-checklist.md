@@ -1525,6 +1525,34 @@
     **storage'dagi obyekt haqida hech narsa bilmaydi** — shuning uchun
     kunlik cleanup job fayllarni o'chiradi, aks holda har bir eksport
     bucket'da abadiy qolardi.
+  → ⚠️ **2026-09-10 da qayta ko'rildi va tugatildi.** Band `[x]` turgan edi,
+    lekin serverdagi ikkala yarim ham foydalanuvchiga yetib bormasdi:
+    1. **Async eksport har chaqiruvda 500 qaytarardi.** BullMQ Redis
+    kalitlarini `:` bilan ajratadi va shu belgi bor custom job id'ni rad
+    etadi; `queueExport` esa `export:${id}` uzatardi — `add()` istisno
+    tashlardi, marshrut 500 berardi, **hech qachon bironta eksport
+    qurilmagan**. Test buni ko'rmagan, chunki u `exportJobService.create()`
+    da to'xtardi — u Mongo qatorini yozadi va navbatga umuman tegmaydi.
+    Endi test `queueExport` ning o'zidan o'tadi, id'da `:` yo'qligini va
+    ikki marta navbatga qo'yish bitta ish ekanini tekshiradi.
+    2. **Kesilganlik ogohlantirishi hisoblanardi, yuborilardi va tashlab
+    yuborilardi.** Brauzer `X-Report-Truncated` ni umuman o'qimasdi, ya'ni
+    8.3 oldini olish uchun yozilgan holat — «5 000 qatorli fayl to'liqdek
+    ko'rinadi» — interfeysda hamon sodir bo'lardi. Endi yuklab olish
+    serverning javobini qaytaradi, kesilgan eksport o'z qatorida shuni
+    aytadi va yonida «to'liq eksportni navbatga qo'y» tugmasi turadi;
+    navbatdagilar uchun alohida panel (holat, qator soni, so'ralganda
+    yangi imzolangan havola — sahifa yuklanganda emas, u 5 daqiqada
+    o'ladi).
+  → Yo'lda ikkita narsa topildi:
+    - **Yiqilgan eksport sababni bo'sh yozardi.** Ishlamayotgan MinIO
+    `AggregateError [ECONNREFUSED]` tashlaydi va uning `message` maydoni
+    bo'sh satr; o'sha qator esa yiqilishning yagona izi edi — «FAILED» va
+    boshqa hech narsa. `utils/errorMessage.js` umumiy javob bo'ldi.
+    - **Ekran 5 ta hisobot turini taklif qilardi, serverda 22 ta bor edi.**
+    8.1 dagi o'n yettita hisobot mavjud, sinalgan va **hech qayerdan
+    ochib bo'lmaydigan** holatda turgan ekan. Ro'yxat endi API'dan
+    keladi, o'n yettita nom uch tilga tarjima qilindi.
 - [ ] **8.4** **Rejalashtirilgan hisobotlar** — `scheduledReport.model.js`, cron job
 - [ ] **8.5** **Dashboard kengaytmasi** — test, sertifikat, tadbir, path,
   compliance metrikalari; `scope` almashtirgichi
