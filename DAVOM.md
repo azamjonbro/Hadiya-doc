@@ -2,7 +2,7 @@
 
 > Bu fayl **yangi sessiyaga tashlash uchun tayyor prompt**. Butun matnni
 > ko'chiring, yoki shunchaki `DAVOM.md` ni o'qib boshlashni ayting.
-> Oxirgi yangilanish: **2026-09-08**.
+> Oxirgi yangilanish: **2026-09-10**.
 >
 > Boshlashdan oldin `git log` va `git status` ni o'qi: shu kuni **parallel
 > sessiya filiallar (branches) ustida ishlagan**, uning tugallanmagan ishi
@@ -58,46 +58,35 @@ Bandni boshlashdan oldin tegishli faylni kodda tasdiqla — `docs/v4` matritsasi
 
 ## Hozirgi holat (2026-09-10 holatiga)
 
-**BLOK 0 dan bajarilgan:** 0.1, 0.2, 0.3, 0.4, 0.5, 0.7
-**BLOK 0 dan qolgan:** 0.6 (backup + tiklash sinovi), 0.8 (Sentry + socket.io
-Redis adapter + o'lik kod), 0.9 (N+1 tuzatishlar), 0.10 (frontend poydevor
-komponentlari)
+**BLOK 0–8 tugadi**, bitta banddan tashqari: **1.8 (Telegram kanali)** —
+foydalanuvchi so'rovi bilan to'xtatilgan ("telegram bog'lama shartmas"),
+kodi `git stash` da. Uni "keyingi band" deb olma; holat paneli uni shunday
+ko'rsatadi, chunki u ro'yxatdagi birinchi `[ ]` bandni oladi.
 
-Bugungi commitlar:
+**Hozir BLOK 9 (Kontent va authoring):** 9.1 bajarildi (`8df9110`) —
+`ContentItem` polimorf bazasi va matn darsi (`Lesson`). **Keyingi band —
+9.2:** blok editori (12 blok turi, drag-drop, autosave) va o'quvchi
+ko'rinishi. 9.1 ataylab backendda qoldirildi: dars hozircha faqat API
+orqali yaratiladi, admin panelida esa faqat o'qish uchun qatori bor.
 
-```
-c45d65d  docs(parity): parity ballini qayta hisoblash
-fe0e315  fix(video-upload): tus http:// URL bermasin (mixed content)
-5ac71c9  feat(audit): audit jurnalini ko'rish (0.7)
-dde64eb  docs(checklist): 0.1–0.5 belgilandi
-9e7114a  fix(storage): presigned URL hosti domendan orqada qolmasin (0.5)
-b6e0379  feat(dashboard): kompaniya dashboardiga kirish nazorati (0.3)
-dfd80c6  feat(report): hisobot eksportida scope + audit (0.3, 0.4)
-```
-
-**0.3 da bir chetlanish bor:** hisobotlar haqiqatan scope'lanadi, dashboard esa
-scope'lanmaydi — `analytics:view:all` bo'lmagan chaqiruvchiga **403** qaytaradi.
-Bo'limga qisqartirilgan dashboard **2.5 (Manager dashboard)** da quriladi.
+Muhimi: chiqarilgan dars kurs foizida **hisoblanadi**, lekin o'quvchi uni
+hali ochib o'qiy olmaydi — 9.2 shu bo'shliqni yopadi.
 
 ### iSpring parity — hozirgi raqam
 
 | Metrika | Qiymat |
 |---|:--:|
-| Vaznsiz (337 capability) | **36,3** |
-| Vaznlangan (yadro ×3, muhim ×2, tor ×1) | **37,3** |
+| Vaznsiz (337 capability) | **≈36,4** |
+| Vaznlangan (yadro ×3, muhim ×2, tor ×1) | **≈37,3** |
 | **Gap** | **≈64%** |
 
-Bo'shliqning yarmi 7 ta domenda: sertifikat+KB (ball 2,6), bildirishnoma
-(21,7), baholash (31,4), 360°/OJT (0), learning path (39,3), authoring (11,4),
-onboarding (11,5).
+Bu raqam 2026-09-08 dagi hisobdan keyin faqat qatorlar darajasida
+yangilanmoqda (`docs/v4/03-parity-matrix.md`); butun bo'yicha qayta hisob
+BLOK 9 tugagach ma'noli bo'ladi.
 
-**Diqqat:** BLOK 0 ning qolgan bandlari (0.6, 0.8, 0.9, 0.10) bu raqamni
-deyarli qimirlatmaydi — ular infratuzilma qarzi, lekin baribir bajariladi.
-Raqamni haqiqatan ko'taradigan birinchi ish — **BLOK 1 (yetkazish qatlami:
-mail servis + queue)**, chunki bildirishnoma domenini ochadi va sertifikat,
-deadline, compliance ham o'sha zanjirdan o'tadi.
-
----
+**Testlar:** `npm --prefix backend test` — 741 test, 2 tasi yiqiladi va
+ikkisi ham **eskidan** yiqilib turadi (`faceVerification`: yuz aniqlanmagan
+rasm; `facePolicy`: hisobni bloklash). Darslarga aloqasi yo'q.
 
 ## Bloklar tartibi
 
