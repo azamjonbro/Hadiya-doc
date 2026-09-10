@@ -6,6 +6,14 @@ const analyticsEventSchema = z.object({
   position: z.number().optional(),
   duration: z.number().optional(),
   metadata: z.record(z.any()).optional().default({}),
+  /**
+   * The client's own id for this event (12.3).
+   *
+   * Optional, because a client from before this existed does not send one
+   * and must keep working. When present it is what makes a replayed
+   * offline queue safe — see videoAnalyticsEvent.model.js.
+   */
+  clientEventId: z.string().trim().min(8).max(64).optional(),
 })
 
 export const videoEventsBatchSchema = z.object({

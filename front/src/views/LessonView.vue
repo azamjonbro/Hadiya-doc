@@ -22,6 +22,7 @@ import Icon from '@/components/ui/Icon.vue'
 import ProgressBar from '@/components/ui/ProgressBar.vue'
 import LessonBlock from '@/components/lesson/LessonBlock.vue'
 import { offlineLesson } from '@/offline/offlineContent'
+import { enqueue } from '@/offline/queue'
 
 const { t } = useI18n()
 const route = useRoute()
@@ -63,9 +64,24 @@ async function flush() {
   pending.clear()
   try {
     progress.value = await lessonsApi.recordBlocks(lesson.value.id, batch)
-  } catch {
-    // Reading is not a transaction. A failed report is retried by putting the
-    // ids back — the next block to scroll into view carries them along.
+  } catch (error) {
+    /**
+     * Offline, putting the ids back would keep them in memory until the
+     * page is closed and then lose them (12.3). They go into the queue
+     * instead — recording read blocks is a set union server-side, so
+     * sending the same batch twice changes nothing.
+     */
+    const network = !error?.response
+    if (network) {
+      const queued = await enqueue({
+        id: `lesson-blocks:${lesson.value.id}:${batch.slice().sort().join(',')}`,
+        url: `/lessons/${lesson.value.id}/progress`,
+        body: { blockIds: batch },
+      })
+      if (queued) return
+    }
+    // Online failure, or nowhere to queue it: retried by putting the ids
+    // back — the next block to scroll into view carries them along.
     batch.forEach((id) => pending.add(id))
   }
 }

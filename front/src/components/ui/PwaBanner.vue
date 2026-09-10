@@ -14,11 +14,16 @@
 import { onMounted, onUnmounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { usePwaUpdate } from '@/composables/usePwaUpdate'
+import { useOfflineQueue } from '@/composables/useOfflineQueue'
 import AppButton from '@/components/ui/AppButton.vue'
 import Icon from '@/components/ui/Icon.vue'
 
 const { t } = useI18n()
 const { needsRefresh, refresh } = usePwaUpdate()
+// 12.3 — how much work is waiting to be sent. Shown next to the offline
+// line, because the two are the same story: something happened here that
+// the server has not heard about yet.
+const { pending } = useOfflineQueue()
 
 const online = ref(true)
 const update = () => {
@@ -53,6 +58,24 @@ onUnmounted(() => {
       >
         <Icon name="alert-triangle" size="14" />
         {{ t('pwa.offline') }}
+        <span v-if="pending" class="text-caption">· {{ t('pwa.pending', { count: pending }) }}</span>
+      </div>
+    </Transition>
+
+    <Transition
+      enter-active-class="transition-default"
+      enter-from-class="translate-y-2 opacity-0"
+      leave-active-class="transition-default"
+      leave-to-class="translate-y-2 opacity-0"
+    >
+      <!-- Online with work still queued: the flush is running or about to,
+           and saying so beats a silent gap between "done" and "recorded". -->
+      <div
+        v-if="online && pending"
+        class="pointer-events-auto flex items-center gap-2 rounded-lg border border-border bg-surface px-3 py-2 text-caption text-ink-muted shadow-sm"
+      >
+        <Icon name="loader" size="13" class="animate-spin" />
+        {{ t('pwa.pending', { count: pending }) }}
       </div>
     </Transition>
 

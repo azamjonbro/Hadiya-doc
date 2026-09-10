@@ -3179,9 +3179,87 @@
   · **Chetlanish:** oflayn progress yozilmaydi — u 12.3 (navbat +
   `clientEventId`) ning ishi. Shuning uchun har uchta ekran buni
   **aytib turadi**, jimgina yo'qotmaydi.
-- [ ] **12.3** Oflayn sinxronizatsiya — `clientEventId` unique indeks,
+- [x] **12.3** Oflayn sinxronizatsiya — `clientEventId` unique indeks,
   Background Sync
-  · Qabul: **AT-35**
+  · Qabul: **AT-35** — bajarildi va test bilan qadalgan.
+  · **Yo'qotilayotgan narsa aniq nima edi:** pleyerning flush'i
+  `fetch(...).catch(() => {})` bo'lgan — lift, podval yoki uzilgan Wi-Fi
+  paytida **besh daqiqa ko'rilgan video jimgina yo'qolardi**. Dars
+  bloklari "keyinroq" uchun xotirada qolardi (sahifa yopilsa — yo'q),
+  hujjat sahifasi ham shunday.
+  · **`clientEventId` + unique indeks — dedupe mexanizmi shu.** Har voqea
+  o'zi **sodir bo'lgan joyda** (pleyerda, ehtimol oflayn) id oladi;
+  serverda `(userId, clientEventId)` bo'yicha **partial unique** indeks
+  bor va `insertMany({ ordered: false })` takrorlarni duplicate-key xatosi
+  sifatida qaytaradi. Ya'ni **alohida "ko'rilgan id'lar" jadvali yo'q** —
+  analitika kolleksiyasining o'zi reyestr, va u bilan kelisha olmaydigan
+  ikkinchi manba ham yo'q.
+  · Nega bu muhim: `videoEventProcessor` dagi **hamma hisoblagich
+  qo'shiladi** (playsCount, watched seconds, tab switches, ballar). Navbat
+  ikki marta yuborilsa (ikki tab, yoki Background Sync retry qo'lda
+  flush bilan poygada) hammasi ikkilanardi. Endi **faqat haqiqatan
+  saqlangan** voqealar hisoblanadi.
+  · **Indeks partial**: 12.3 dan oldingi klient `clientEventId`
+  yubormaydi, va oddiy unique indeks ikkinchi shunday voqeani
+  birinchisiga urib qo'yardi. Indeks **`userId` bilan chegaralangan**:
+  id qurilmada generatsiya qilinadi, ikki qurilma bir xil satr chiqarishi
+  mumkin, va bir odamning voqeasi boshqasining voqeasini
+  **bosib qolmasligi** kerak (test bilan).
+  · **Navbat (front, `offline/queue.js`):** IndexedDB'da, eng eskisidan
+  boshlab yuboriladi. **Tartib muhim**: "dars tugadi" uni asoslagan
+  bloklardan oldin yuborilsa, server rad etadi (o'quvchi haqiqatan
+  yetganini tekshiradi) — shuning uchun yuborilmagan birinchi element'da
+  **to'xtaladi**, keyingilarini oshirib yubormaydi.
+  · **Nima navbatga tushadi:** faqat **takrorlash xavfsiz** bo'lganlar —
+  video voqealari (unique indeks), dars bloklari (to'plamlar birlashmasi),
+  hujjat sahifasi (maksimum), tugatish (idempotent). Yozuv **yaratadigan**
+  amallar bu yerda emas: ular uchun `Idempotency-Key` (11.5) bor, va
+  ular odam ko'rib turgan ataylab qilingan harakatlar, fon telemetriyasi
+  emas.
+  · **Nimani qayta urinishga arziydi** (`isRetryable`, test bilan):
+  javob **umuman yo'q** (tarmoq) — ha; 5xx, 408, 429 — ha; **4xx — yo'q**,
+  chunki server allaqachon javob bergan va yana shunday javob beradi
+  (rad etilgan tana rad etilgan qoladi, 401/403 — sessiya yoki ruxsat
+  yo'q). Buni chalkashtirish ko'rinmas xato: navbat yo 403 ga qarshi
+  abadiy aylanadi, yo birinchi uzilishda ishni tashlab yuboradi.
+  · **Chegaralar:** 20 urinish va 7 kun. Hech narsani tashlamaydigan navbat
+  brauzer **butun bazani** evict qilguncha o'sadi — va u bilan
+  **yaxshi** elementlar ham ketadi. Uch haftalik progress esa hech kimga
+  hech narsa aytmaydi.
+  · **Background Sync — nimani qila oladi va nimani yo'q.** Service worker
+  `sync` hodisasini tab ochiq bo'lmasa ham oladi, lekin bu API'ning har
+  endpointi **sahifada** turadigan Bearer token talab qiladi — worker'da
+  emas. Shuning uchun worker navbatni **o'zi yubormaydi**: u ochiq
+  klientga xabar yuboradi va u flush qiladi; ochiq tab bo'lmasa navbat
+  ilova **keyingi ochilganda** ketadi. Bu bo'shliqni yopish uchun
+  worker'da token saqlash — sessiyadan uzoq yashaydigan joyda
+  hisob ma'lumotini saqlash bo'lardi, telemetriya uchun yomon savdo.
+  · **Kuzatilgan xatti-harakat (tuzatildi):** `online` hodisasida
+  **ikkita** tinglovchi bor (sessiyani tiklash va navbatni yuborish),
+  sessiya esa asinxron tiklanadi — natijada flush **token yo'q** paytda
+  ishlab, hech narsa yubormay, navbatni keyingi qayta yuklashgacha
+  qoldirardi. Endi **token paydo bo'lishi** ham kuzatiladi
+  (`watch(accessToken)`), ya'ni hodisalar qanday tartibda kelsa ham
+  ishlaydi. Brauzerda ko'rindi: tuzatishdan oldin «queue after coming
+  back: 1», keyin «0».
+  · **Tekshirildi** — backend: 5 test (`test/offlineSync.test.js`,
+  **haqiqiy Mongo bilan**, chunki mexanizm **indeksning o'zi** — mock
+  qilingan repozitoriy mock'ni sinardi): **AT-35** (12 voqea, ikki marta
+  flush → `uniqueWatchedSeconds` **300**, 600 emas; playsCount 1;
+  analitikada **12 qator, 24 emas**), ikki flush **bir vaqtda**
+  (`Promise.all` — jami 12 ta qabul), id'siz eski klient ishlaydi,
+  repozitoriy qaysi voqealar yangi ekanini aytadi, va bir odamning id'si
+  boshqasini bosmaydi. Front: 33 test (`offlineQueue.test.js` — nimani
+  qayta urinish mantiqi) + **brauzerda (CDP) uchidan-uchiga**: kurs
+  saqlandi, **tarmoq o'chirildi**, dars oflayn o'qildi va skroll qilindi
+  → navbatda **1** element, banner «yuborilmagan» dedi; tarmoq qaytdi →
+  navbat **0** ga tushdi va serverda dars bloklari **bir marta**
+  (3 blok, 1 qator) yozildi. To'plam: backend 956 test, 954 o'tadi
+  (faqat eskidan yiqilgan ikkita yuz testi). Sinov ma'lumotlari tozalandi.
+  · **Chetlanish:** navbat **flush** paytida bir vaqtda faqat bitta
+  element yuboradi va birinchi muvaffaqiyatsizlikda to'xtaydi — parallel
+  yuborish tezroq bo'lardi, lekin tartibni buzardi (yuqoridagi
+  "tugatish bloklardan oldin" holati).
 - [ ] **12.4** Accessibility — modal focus-trap, ARIA, `:focus-visible`,
   `altText`, rang kontrastini o'lchash, `axe-core` CI
 - [ ] **12.5** Video pleyer — klaviatura shortcut'lari, subtitr tugmasi

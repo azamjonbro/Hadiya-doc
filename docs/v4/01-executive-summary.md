@@ -61,15 +61,15 @@ Matritsa **satrlar darajasida** BLOK 1–8 davomida yangilanib borgan, lekin
 sarlavhadagi umumiy raqam 2026-09-08 dan qimirlamagan — ya'ni yuqoridagi
 36,3 faqat BLOK 0 tugagan holatni aks ettiradi. Har band tugaganda raqam
 matritsaning **hozirgi satrlaridan** qayta
-hisoblanadi — oxirgi hisob 12.2 (oflayn kontent) dan keyin:
+hisoblanadi — oxirgi hisob 12.3 (oflayn sinxronizatsiya, AT-35) dan keyin:
 
 | Metrika | 2026-09-08 (BLOK 0) | Hozir (BLOK 1–11) |
 |---|:--:|:--:|
-| Vaznsiz (336 capability) | 36,3 | **60,2** |
-| FULL | — | **127** |
+| Vaznsiz (336 capability) | 36,3 | **60,5** |
+| FULL | — | **128** |
 | OURS+ | — | **48** |
 | PARTIAL | — | **60** |
-| NONE | — | **83** |
+| NONE | — | **82** |
 | VERIFY | — | **17** |
 | **PARITY GAP** (vaznsiz) | ≈64% | **≈40%** |
 

@@ -2909,7 +2909,8 @@
     "updateReady": "A new version is ready.",
     "reload": "Reload",
     "later": "Later",
-    "offlineReady": "The app now opens without a network."
+    "offlineReady": "The app now opens without a network.",
+    "pending": "{count} changes not sent yet"
   },
   "offline": {
     "save": "Save offline",

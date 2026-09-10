@@ -2909,7 +2909,8 @@
     "updateReady": "Yangi versiya tayyor.",
     "reload": "Yangilash",
     "later": "Keyinroq",
-    "offlineReady": "Ilova internetsiz ham ochiladi."
+    "offlineReady": "Ilova internetsiz ham ochiladi.",
+    "pending": "{count} o'zgarish hali yuborilmagan"
   },
   "offline": {
     "save": "Oflayn saqlash",

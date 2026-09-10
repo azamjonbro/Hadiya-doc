@@ -1,5 +1,6 @@
 import { useAuthStore } from '@/stores/auth'
 import { API_BASE_URL } from '@/services/apiBase'
+import { enqueue, isRetryable } from '@/offline/queue'
 
 const FLUSH_INTERVAL_MS = 10_000
 
@@ -21,7 +22,21 @@ export function useVideoAnalytics(videoId) {
   let flushTimer = null
 
   function pushEvent(eventType, extra = {}) {
-    buffer.push({ eventType, timestamp: new Date().toISOString(), ...extra })
+    /**
+     * Every event carries the id it was created with (12.3).
+     *
+     * Generated here, where the event happens — possibly offline, possibly
+     * hours before it is sent. It is what makes a replayed queue safe: the
+     * server's unique index on `(userId, clientEventId)` rejects the
+     * repeats, so five minutes watched adds 300 seconds however many times
+     * the queue is flushed (AT-35).
+     */
+    buffer.push({
+      eventType,
+      timestamp: new Date().toISOString(),
+      clientEventId: crypto.randomUUID(),
+      ...extra,
+    })
   }
 
   // Lets the attention monitor put its own events on the same buffer, so they
@@ -39,6 +54,7 @@ export function useVideoAnalytics(videoId) {
     if (buffer.length === 0) return
     const events = buffer
     buffer = []
+    const body = { sessionId, videoId, events }
     fetch(`${apiBase()}/analytics/video/events`, {
       method: 'POST',
       keepalive: isFinal,
@@ -46,7 +62,36 @@ export function useVideoAnalytics(videoId) {
         'Content-Type': 'application/json',
         Authorization: `Bearer ${auth.accessToken}`,
       },
-      body: JSON.stringify({ sessionId, videoId, events }),
+      body: JSON.stringify(body),
+    })
+      .then((response) => {
+        // A 5xx or a refused request is not "sent": queue it and let the
+        // queue's own retry deal with it.
+        if (!response.ok && isRetryable(response.status)) queueBatch(body)
+      })
+      .catch(() => {
+        /**
+         * This is what used to lose five minutes of watched video (12.3).
+         *
+         * A lift, a basement, a dropped Wi-Fi — the request fails, and
+         * before this the `.catch(() => {})` threw the events away
+         * silently. Now they wait in IndexedDB and go out when the
+         * connection is back; the ids on them make that safe.
+         */
+        queueBatch(body)
+      })
+  }
+
+  /** One queue entry per batch, keyed by the batch's own event ids. */
+  function queueBatch(body) {
+    enqueue({
+      // Derived from the batch rather than random, so re-queueing the same
+      // batch (a retry that also failed) replaces its entry instead of
+      // adding a second copy of the same work.
+      id: `video:${sessionId}:${body.events[0]?.clientEventId ?? crypto.randomUUID()}`,
+      url: '/analytics/video/events',
+      body,
+      kind: 'VIDEO_EVENTS',
     }).catch(() => {})
   }
 

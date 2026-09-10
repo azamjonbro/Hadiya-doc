@@ -44,8 +44,22 @@ export async function processVideoEvents({ userId, sessionId, videoId, events, d
   const video = await videoRepository.findById(videoId)
   if (!video) throw ApiError.notFound('Video not found')
 
-  // Raw events, bulk-inserted — never one write per event (spec §8).
-  await videoAnalyticsEventRepository.insertMany(
+  /**
+   * Raw events, bulk-inserted — never one write per event (spec §8) — and
+   * the insert is also the **deduplication** (12.3).
+   *
+   * Every counter below is additive: plays, watched seconds, tab switches,
+   * points. A queue flushed twice (two tabs, or a Background Sync retry
+   * racing a manual flush) would double all of them. The unique index on
+   * `(userId, clientEventId)` rejects the repeats, and only the events
+   * that were actually stored are counted here — so five minutes watched
+   * offline adds 300 seconds however often the queue is replayed (AT-35).
+   *
+   * Events with no `clientEventId` (a client from before 12.3) are stored
+   * and counted exactly as before: the index is partial, so they never
+   * collide.
+   */
+  const { inserted, duplicates } = await videoAnalyticsEventRepository.insertMany(
     events.map((e) => ({
       userId,
       sessionId,
@@ -55,9 +69,37 @@ export async function processVideoEvents({ userId, sessionId, videoId, events, d
       position: e.position ?? null,
       duration: e.duration ?? null,
       metadata: e.metadata ?? {},
+      ...(e.clientEventId ? { clientEventId: e.clientEventId } : {}),
       device,
       browser,
     }))
+  )
+
+  if (duplicates.length) {
+    logger.debug('Ignored already-recorded video events', {
+      userId: String(userId),
+      videoId: String(videoId),
+      duplicates: duplicates.length,
+    })
+  }
+
+  // Nothing new in this batch: the session and the progress are already
+  // exactly what these events would have produced.
+  if (!inserted.length) {
+    const unchanged = await videoProgressRepository.findByUserAndVideo(userId, videoId)
+    return {
+      accepted: 0,
+      duplicates: duplicates.length,
+      uniqueWatchedSeconds: unchanged?.uniqueWatchedSeconds ?? 0,
+      completed: Boolean(unchanged?.completedAt),
+      completionPercent: unchanged?.completionPercent ?? 0,
+    }
+  }
+
+  // From here on, only the events that were actually stored count.
+  const accepted = new Set(inserted.map((event) => event.clientEventId ?? null))
+  const countedEvents = events.filter(
+    (event) => !event.clientEventId || accepted.has(event.clientEventId)
   )
 
   const progress = (await videoProgressRepository.findByUserAndVideo(userId, videoId)) ?? EMPTY_PROGRESS
@@ -87,7 +129,7 @@ export async function processVideoEvents({ userId, sessionId, videoId, events, d
   // watched segments further down.
   const inattentiveIntervals = []
 
-  for (const event of events) {
+  for (const event of countedEvents) {
     const at = new Date(event.timestamp)
     if (!sessionStart || at < sessionStart) sessionStart = at
     if (!sessionEnd || at > sessionEnd) sessionEnd = at
@@ -266,5 +308,14 @@ export async function processVideoEvents({ userId, sessionId, videoId, events, d
     })
   }
 
-  return { completionPercent, completed: Boolean(updated.completedAt) }
+  // `accepted`/`duplicates` are what an offline queue needs to decide
+  // whether an item can be dropped: a duplicate is a success, not a
+  // failure to retry (12.3).
+  return {
+    completionPercent,
+    completed: Boolean(updated.completedAt),
+    accepted: countedEvents.length,
+    duplicates: duplicates.length,
+    uniqueWatchedSeconds: updated.uniqueWatchedSeconds ?? 0,
+  }
 }

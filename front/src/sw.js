@@ -103,3 +103,21 @@ registerRoute(
 self.addEventListener('message', (event) => {
   if (event.data?.type === 'SKIP_WAITING') self.skipWaiting()
 })
+
+/**
+ * Background Sync: wake the app when the connection is back (12.3).
+ *
+ * The worker cannot send the queue itself — every endpoint here needs a
+ * Bearer token that lives in the page, not in the worker, and keeping a
+ * credential somewhere that outlives the session would be a bad trade for
+ * telemetry. So this wakes any open client and lets it flush; with no
+ * client open the queue goes out the next time the app is opened.
+ */
+self.addEventListener('sync', (event) => {
+  if (event.tag !== 'qollanma-offline-queue') return
+  event.waitUntil(
+    self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clients) => {
+      for (const client of clients) client.postMessage({ type: 'FLUSH_OFFLINE_QUEUE' })
+    })
+  )
+})

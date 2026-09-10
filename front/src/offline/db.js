@@ -9,9 +9,10 @@
  */
 
 const DB_NAME = 'qollanma-offline'
-// v1: the four stores below. A bump here runs `onupgradeneeded`, which is
-// also the only place a store can be created.
-const DB_VERSION = 1
+// v2 added the `queue` store (12.3). A bump runs `onupgradeneeded`, which
+// is the only place a store can be created — and it must stay additive, or
+// an upgrade would throw away what somebody had already saved.
+const DB_VERSION = 2
 
 export const STORES = {
   // One record per saved course: its metadata and its table of contents,
@@ -24,6 +25,12 @@ export const STORES = {
   // …and their bytes, in a separate store so listing what is saved does
   // not read hundreds of megabytes into memory.
   blobs: 'blobs',
+  /**
+   * Work done offline that the server has not seen yet (12.3): watched
+   * seconds, blocks read, a page turned. Keyed by the id the client
+   * generated, which is also what stops a replay counting twice.
+   */
+  queue: 'queue',
 }
 
 let dbPromise = null
