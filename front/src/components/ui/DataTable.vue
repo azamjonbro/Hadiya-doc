@@ -23,7 +23,14 @@ const props = defineProps({
   // [{ key, label, width, align, cellClass, headClass, skeletonWidth }]
   columns: { type: Array, required: true },
   rows: { type: Array, default: () => [] },
-  // A column name, or a function for rows whose identity is not a plain id.
+  /**
+   * A column name, or a function `(row, index) => key`.
+   *
+   * Falls back to the row's position when neither yields anything. Report
+   * rows are the case that needs it: they are aggregation output with no id
+   * of their own, and without the fallback every row keyed as `undefined`
+   * and Vue reused one DOM row for the whole table.
+   */
   rowKey: { type: [String, Function], default: 'id' },
   loading: { type: Boolean, default: false },
   skeletonRows: { type: Number, default: 6 },
@@ -39,23 +46,27 @@ const props = defineProps({
 
 const emit = defineEmits(['update:selected', 'row-click'])
 
-function keyOf(row) {
-  return typeof props.rowKey === 'function' ? props.rowKey(row) : row[props.rowKey]
+function keyOf(row, index) {
+  const key = typeof props.rowKey === 'function' ? props.rowKey(row, index) : row[props.rowKey]
+  return key ?? index
 }
 
 const allSelected = computed(
-  () => props.rows.length > 0 && props.rows.every((row) => props.selected.has(keyOf(row)))
+  () => props.rows.length > 0 && props.rows.every((row, index) => props.selected.has(keyOf(row, index)))
 )
 
 function toggleAll() {
-  emit('update:selected', allSelected.value ? new Set() : new Set(props.rows.map(keyOf)))
+  emit(
+    'update:selected',
+    allSelected.value ? new Set() : new Set(props.rows.map((row, index) => keyOf(row, index)))
+  )
 }
 
 // A new Set each time rather than mutating: Vue does not track adds and
 // deletes on a Set held in a ref, so mutating it in place updates nothing.
-function toggleOne(row) {
+function toggleOne(row, index) {
   const next = new Set(props.selected)
-  const key = keyOf(row)
+  const key = keyOf(row, index)
   next.has(key) ? next.delete(key) : next.add(key)
   emit('update:selected', next)
 }
@@ -104,7 +115,7 @@ const alignClass = { left: 'text-left', center: 'text-center', right: 'text-righ
 
         <tr
           v-for="(row, index) in rows"
-          :key="keyOf(row)"
+          :key="keyOf(row, index)"
           class="border-b border-border text-small transition-default last:border-0 hover:bg-surface-2"
           :class="clickableRows ? 'cursor-pointer' : ''"
           @click="clickableRows && emit('row-click', row)"
@@ -114,8 +125,8 @@ const alignClass = { left: 'text-left', center: 'text-center', right: 'text-righ
             <input
               type="checkbox"
               class="h-4 w-4 rounded border-border-strong"
-              :checked="selected.has(keyOf(row))"
-              @change="toggleOne(row)"
+              :checked="selected.has(keyOf(row, index))"
+              @change="toggleOne(row, index)"
             />
           </td>
           <td

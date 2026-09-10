@@ -12,6 +12,7 @@ import { scopedUserIdsFor } from '../access/actorScope.js'
 import {
   MAX_ROWS,
   ASYNC_MAX_ROWS,
+  PREVIEW_MAX_ROWS,
   capFor,
   facetRows,
   countFor,
@@ -348,7 +349,7 @@ export const REPORT_TYPES = Object.keys(REPORT_BUILDERS)
 // Re-exported so callers that already import them from here keep working —
 // the constants live in reportHelpers.js now that two builder files need
 // them.
-export { MAX_ROWS, ASYNC_MAX_ROWS }
+export { MAX_ROWS, ASYNC_MAX_ROWS, PREVIEW_MAX_ROWS }
 
 export const reportDataService = {
   // `lang` decides the language of every header and enum value in the file;

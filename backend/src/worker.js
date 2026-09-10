@@ -1,5 +1,6 @@
 import { Worker } from 'bullmq'
 import { logger } from './config/logger.js'
+import { errorMessage } from './utils/errorMessage.js'
 import { connectDatabase } from './config/db.js'
 import { redisConnection } from './config/redis.js'
 import { VIDEO_PROCESSING_QUEUE } from './jobs/videoProcessingQueue.js'
@@ -18,6 +19,8 @@ import { ENROLLMENT_RULE_QUEUE, scheduleEnrollmentRuleSweep } from './jobs/enrol
 import { ONBOARDING_QUEUE, scheduleOnboardingStart } from './jobs/onboardingQueue.js'
 import { COMPLIANCE_QUEUE, scheduleComplianceSweep } from './jobs/complianceQueue.js'
 import { EXPORT_QUEUE, scheduleExportCleanup } from './jobs/exportQueue.js'
+import { SCHEDULED_REPORT_QUEUE, scheduleReportSweep } from './jobs/scheduledReportQueue.js'
+import { scheduledReportService } from './services/reports/scheduledReport.service.js'
 import { exportJobService } from './services/reports/exportJob.service.js'
 import { complianceService } from './services/compliance/compliance.service.js'
 import { RecurringAssignment } from './models/recurringAssignment.model.js'
@@ -245,7 +248,20 @@ async function main() {
   )
 
   exportWorker.on('failed', (job, err) => {
-    logger.error('Export job failed', { jobId: job?.id, error: err.message })
+    logger.error('Export job failed', { jobId: job?.id, error: errorMessage(err) })
+  })
+
+  // 8.4 — the hourly sweep that turns a timetable into export jobs. One at a
+  // time: it only queues work, and the exports themselves are what cost
+  // anything.
+  const scheduledReportWorker = new Worker(
+    SCHEDULED_REPORT_QUEUE,
+    async () => scheduledReportService.runDue(),
+    { connection: redisConnection, concurrency: 1 }
+  )
+
+  scheduledReportWorker.on('failed', (job, err) => {
+    logger.error('Scheduled report sweep failed', { jobId: job?.id, error: errorMessage(err) })
   })
 
   await scheduleReminderChecks()
@@ -253,6 +269,7 @@ async function main() {
   await scheduleOnboardingStart()
   await scheduleComplianceSweep()
   await scheduleExportCleanup()
+  await scheduleReportSweep()
   await scheduleDashboardAggregation()
   const backupsScheduled = await scheduleDailyBackup()
 
@@ -283,6 +300,7 @@ async function main() {
       onboardingWorker.close(),
       complianceWorker.close(),
       exportWorker.close(),
+      scheduledReportWorker.close(),
       reminderWorker.close(),
       dashboardWorker.close(),
       backupWorker.close(),

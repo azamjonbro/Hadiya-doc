@@ -5,12 +5,16 @@ const props = defineProps({
   modelValue: { type: Boolean, default: false },
   title: { type: String, default: '' },
   description: { type: String, default: '' },
-  size: { type: String, default: 'md' }, // sm | md | lg
+  size: { type: String, default: 'md' }, // sm | md | lg | xl
 })
 
 defineEmits(['update:modelValue'])
 
-const sizes = { sm: 'max-w-sm', md: 'max-w-lg', lg: 'max-w-2xl' }
+// xl is for the things that are genuinely wide — a report preview is a
+// nine-column table, and squeezing it into 2xl turns every cell into a
+// two-line wrap. It stays inside the viewport on a phone because the width
+// is a max, not a fixed size.
+const sizes = { sm: 'max-w-sm', md: 'max-w-lg', lg: 'max-w-2xl', xl: 'max-w-5xl' }
 </script>
 
 <template>

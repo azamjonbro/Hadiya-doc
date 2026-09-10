@@ -153,11 +153,41 @@
   Ismi bo'yicha qidiruvga o'tkazildi va yoniga fence hali ham ushlab
   turishini tekshiradigan ikkinchi test qo'shildi.
 
-- [ ] **0.10** `[P]` **Frontend poydevor komponentlari**
+- [x] **0.10** `[P]` **Frontend poydevor komponentlari**
   · `ui/DataTable.vue`, `ui/FilterBar.vue`, `ui/FileDropzone.vue`,
   `ui/SortableList.vue`, `ui/Chart.vue`, `ui/UserPicker.vue`
   · Qabul: mavjud `UsersListView` va `TasksListView` shularga ko'chiriladi va
   qisqaradi (ish haqiqatan qayta ishlatilayotganini isbotlaydi)
+  · Bajarildi. Har bir komponent **allaqachon bir necha joyda takrorlangan
+  markup**dan olindi, "keyin kerak bo'lar" degan taxmindan emas:
+
+  | Komponent | Nechta joyda takrorlangan edi | Hozir kim ishlatadi |
+  |---|---|---|
+  | `DataTable` | jadval qobig'i 6 ta ekranda so'zma-so'z | UsersList, AuditLog |
+  | `FilterBar` | filtr qatori 4 ta ekranda | UsersList, AuditLog, Reports |
+  | `UserPicker` | xodim qidiruvi 6 ta faylda | Tasks, AuditLog, Reports |
+  | `FileDropzone` | 3 ta ekran fayl oladi, faqat 1 tasi drop'ni qabul qilardi | Material, Video |
+  | `SortableList` | Tasks o'z drag holatini yozgan, PathBuilder'da drag umuman yo'q edi | Tasks, PathBuilder |
+  | `Chart` | bitta chart bor edi va u faqat bitta shaklni chizardi | HomeView (chiziq + ustun) |
+
+  · Uchtasi nusxalarning hech birida bo'lmagan narsani qiladi:
+    - `UserPicker` so'rovni debounce qiladi va **kechikib kelgan javobni
+    tashlaydi** — ro'yxatning eski natijaga qaytib "sakrashi" shundan edi.
+    - `SortableList` dragenter/dragleave ni sanaydi, shuning uchun kursor
+    kartalar ustidan o'tganda drop belgisi o'chib-yonmaydi; yonida
+    yuqori/past tugmalari saqlangan — sudrash qulaylik, yagona yo'l emas.
+    - `FileDropzone` — material formasi va import ustasida fayl tashlash
+    brauzerni yarim to'ldirilgan formadan olib ketardi.
+  · **Qator soni halol hisobi:** iste'molchilar −201 qator, komponentlar
+  +782 (o'chirilgan `TrendChart` hisobga olingan). Ya'ni birinchi bosqichda
+  kod **ko'paydi** — yutuq keyingi ekranda, u endi bularning hech birini
+  yozmaydi. PathBuilder (+6) va HomeView (+15) esa qisqarmadi, chunki
+  **yangi imkoniyat oldi**: sudrab tartiblash va formatlanadigan diagramma.
+  · Yonida bitta o'qish xatosi tuzatildi: dashboard'dagi «xodimlar taqsimoti»
+  0-25/25-50/50-75/75-100 shkalasidagi to'rtta bucket, lekin reyting ro'yxati
+  sifatida chizilardi — reyting qiymat bo'yicha saralaydi, ya'ni bir xil
+  raqamlar har kuni boshqa tartibda chiqib, taqsimotning shakli
+  o'qilmasdi. Endi ustunli diagramma.
 
 ---
 
@@ -1458,7 +1488,33 @@
     sanoq). Hech biri haqiqiy emas edi. `--test-concurrency=2` bilan
     to'plam barqaror (677 test, ~90 soniya); sabab va HTTP testlarining
     talablari `backend/TESTING.md` da yozildi.
-- [ ] **8.2** **Hisobotni ekranda ko'rish** — `ReportsView` da jadval + grafik (FL-29)
+- [x] **8.2** **Hisobotni ekranda ko'rish** — `ReportsView` da jadval + grafik (FL-29)
+  · Bajarildi — `GET /reports/:type/preview` JSON qaytaradi (fayl emas), va
+  `ReportsView` da har bir hisobotning yonida «Ko'rish» tugmasi: modal ichida
+  `DataTable` (0.10) + `Chart` (0.10), sonli ustunni tanlash mumkin.
+  · **To'rtinchi chegara.** Preview `PREVIEW_MAX_ROWS = 100` bilan cheklangan
+  — eksportning 5 000 va 100 000 idan boshqa sabab bilan: bu qatorlar
+  brauzerdagi jadvalga tushadi, 5 000 qator esa javob bermaydigan tab
+  degani. Chegara mijozdan **olinmaydi** (`omit({format:true})` sxemasi
+  `maxRows` ni qabul qilmaydi) — aks holda mijoz o'z chegarasini ko'tarib,
+  preview'ni cheksiz o'qishga aylantirardi. Farq jimgina qolmaydi: ekran
+  ham xuddi fayl kabi «100 / 114» deb aytadi.
+  · **Yonida topilgan xato:** `report:view` ruxsati beshta rolga berilgan
+  edi, lekin **hech qayerda tekshirilmasdi** — butun `/reports` router'i
+  `report:export` talab qilardi. Ya'ni **AUTHOR, INSTRUCTOR va MENTOR**
+  (view bor, export yo'q) hisobot marshrutlarining birontasiga ham kira
+  olmasdi, garchi ruxsatlari «ko'rishi mumkin» deb tursa ham. Endi:
+  katalog va preview — `report:view` **yoki** `report:export`; eksport va
+  navbat — faqat `report:export`. Buning uchun `requireAnyPermission()`
+  qo'shildi (`requirePermission(a, b)` ni o'quvchi «ikkalasi ham kerak»
+  deb o'qishi mumkin edi).
+  · Ekranda ko'rish ham audit qilinadi (`REPORT_VIEWED`) — eksportni audit
+  qilishga arzigan narsa fayl emas, xodim ma'lumotining chiqishi edi, u
+  esa ikkala yo'lda ham chiqadi.
+  · Sinov: `test/reportPermissions.test.js` (8 test, HTTP orqali) —
+  ko'ruvchi ko'radi, yuklab ololmaydi, navbatga qo'ya olmaydi; eksport
+  huquqi borga ikkalasi ham ochiq; tokensiz 401; audit yozuvi bor.
+  `reportExport.test.js` ga preview chegarasi va scope fence'i qo'shildi.
 - [x] **8.3** **Async eksport** — `models/exportJob.model.js`, `jobs/exportQueue.js`,
   `MAX_ROWS` kesilganini ochiq ko'rsatish
   · Qabul: **AT-22**
@@ -1495,6 +1551,34 @@
     **storage'dagi obyekt haqida hech narsa bilmaydi** — shuning uchun
     kunlik cleanup job fayllarni o'chiradi, aks holda har bir eksport
     bucket'da abadiy qolardi.
+  → ⚠️ **2026-09-10 da qayta ko'rildi va tugatildi.** Band `[x]` turgan edi,
+    lekin serverdagi ikkala yarim ham foydalanuvchiga yetib bormasdi:
+    1. **Async eksport har chaqiruvda 500 qaytarardi.** BullMQ Redis
+    kalitlarini `:` bilan ajratadi va shu belgi bor custom job id'ni rad
+    etadi; `queueExport` esa `export:${id}` uzatardi — `add()` istisno
+    tashlardi, marshrut 500 berardi, **hech qachon bironta eksport
+    qurilmagan**. Test buni ko'rmagan, chunki u `exportJobService.create()`
+    da to'xtardi — u Mongo qatorini yozadi va navbatga umuman tegmaydi.
+    Endi test `queueExport` ning o'zidan o'tadi, id'da `:` yo'qligini va
+    ikki marta navbatga qo'yish bitta ish ekanini tekshiradi.
+    2. **Kesilganlik ogohlantirishi hisoblanardi, yuborilardi va tashlab
+    yuborilardi.** Brauzer `X-Report-Truncated` ni umuman o'qimasdi, ya'ni
+    8.3 oldini olish uchun yozilgan holat — «5 000 qatorli fayl to'liqdek
+    ko'rinadi» — interfeysda hamon sodir bo'lardi. Endi yuklab olish
+    serverning javobini qaytaradi, kesilgan eksport o'z qatorida shuni
+    aytadi va yonida «to'liq eksportni navbatga qo'y» tugmasi turadi;
+    navbatdagilar uchun alohida panel (holat, qator soni, so'ralganda
+    yangi imzolangan havola — sahifa yuklanganda emas, u 5 daqiqada
+    o'ladi).
+  → Yo'lda ikkita narsa topildi:
+    - **Yiqilgan eksport sababni bo'sh yozardi.** Ishlamayotgan MinIO
+    `AggregateError [ECONNREFUSED]` tashlaydi va uning `message` maydoni
+    bo'sh satr; o'sha qator esa yiqilishning yagona izi edi — «FAILED» va
+    boshqa hech narsa. `utils/errorMessage.js` umumiy javob bo'ldi.
+    - **Ekran 5 ta hisobot turini taklif qilardi, serverda 22 ta bor edi.**
+    8.1 dagi o'n yettita hisobot mavjud, sinalgan va **hech qayerdan
+    ochib bo'lmaydigan** holatda turgan ekan. Ro'yxat endi API'dan
+    keladi, o'n yettita nom uch tilga tarjima qilindi.
 - [ ] **8.4** **Rejalashtirilgan hisobotlar** — `scheduledReport.model.js`, cron job
 - [ ] **8.5** **Dashboard kengaytmasi** — test, sertifikat, tadbir, path,
   compliance metrikalari; `scope` almashtirgichi

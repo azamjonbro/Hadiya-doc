@@ -28,6 +28,19 @@ const exportJobSchema = new Schema(
     // which may be more.
     scopedUserIds: { type: [Schema.Types.ObjectId], default: null },
 
+    /**
+     * Extra people to tell when it is ready, beyond the requester.
+     *
+     * Only a scheduled report fills this in (8.4): nobody is at a keyboard
+     * when it runs, so the audience is the schedule's, while the *data* is
+     * still the schedule owner's — `scopedUserIds` above decides what is in
+     * the file, and this decides who is told the file exists. Being told is
+     * not being able to open it: the download goes through the same
+     * ownership check as any other export.
+     */
+    notify: { type: [{ type: Schema.Types.ObjectId, ref: 'User' }], default: [] },
+    scheduleId: { type: Schema.Types.ObjectId, ref: 'ScheduledReport', default: null },
+
     status: { type: String, enum: ['QUEUED', 'RUNNING', 'READY', 'FAILED'], default: 'QUEUED' },
     rowCount: { type: Number, default: 0 },
     totalRows: { type: Number, default: 0 },

@@ -1174,7 +1174,24 @@
       "course-progress": "Kurslar progressi",
       "video-analytics": "Video tahlili",
       "news-analytics": "Yangiliklar tahlili",
-      "task-analytics": "Vazifalar tahlili"
+      "task-analytics": "Vazifalar tahlili",
+      "certificate-register": "Sertifikatlar reyestri",
+      "path-progress": "Yo'nalish progressi",
+      "quiz-results": "Test natijalari",
+      "question-difficulty": "Savol qiyinligi",
+      "compliance-status": "Compliance holati",
+      "onboarding-progress": "Adaptatsiya progressi",
+      "event-attendance": "Tadbir davomati",
+      "homework-submissions": "Uy vazifalari",
+      "delivery-log": "Yetkazish jurnali",
+      "kb-usage": "Bilimlar bazasi statistikasi",
+      "group-progress": "Guruhlar progressi",
+      "department-progress": "Bo'limlar progressi",
+      "overdue-assignments": "Muddati o'tgan tayinlovlar",
+      "enrollment-audit": "Tayinlovlar auditi",
+      "badge-awards": "Berilgan nishonlar",
+      "login-activity": "Kirish faoliyati",
+      "material-usage": "Materiallardan foydalanish"
     },
     "filters": {
       "role": "Rol",
@@ -1187,6 +1204,35 @@
       "dateTo": "Gacha",
       "clear": "Filtrlarni tozalash",
       "datePlaceholder": "Sanani tanlang"
+    },
+    "exports": {
+      "title": "Katta eksportlar",
+      "hint": "Fayllar fonda quriladi. Tayyor bo'lganda bildirishnoma keladi; havola qisqa muddatli.",
+      "truncated": "{exported} qator yuklandi, jami {total} ta. Fayl to‘liq emas.",
+      "complete": "To'liq: {total} qator.",
+      "queueFull": "To'liq eksportni navbatga qo'yish",
+      "queued": "Eksport navbatga qo'yildi. Tayyor bo'lganda xabar beramiz.",
+      "queueFailed": "Eksportni navbatga qo'yib bo'lmadi",
+      "rows": "{rows} / {total} qator",
+      "stillCapped": "Bu eksport ham chegaraga yetdi — filtr bilan toraytiring.",
+      "download": "Yuklab olish",
+      "linkExpired": "Havola muddati tugagan. Eksportni qaytadan navbatga qo'ying.",
+      "linkFailed": "Havolani olib bo‘lmadi",
+      "status": {
+        "QUEUED": "Navbatda",
+        "RUNNING": "Tayyorlanmoqda",
+        "READY": "Tayyor",
+        "FAILED": "Xato"
+      }
+    },
+    "preview": {
+      "open": "Ko'rish",
+      "title": "Hisobotni ko'rish",
+      "loading": "Yuklanmoqda...",
+      "empty": "Bu filtr bo'yicha qator yo'q",
+      "capped": "Ekranda {shown} qator ko'rsatildi, jami {total} ta. To'liq ma'lumot uchun yuklab oling.",
+      "all": "Hammasi ko'rsatildi: {total} qator.",
+      "chart": "Eng yuqori {count} ta"
     }
   },
   "audit": {

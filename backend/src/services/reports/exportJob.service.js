@@ -8,6 +8,7 @@ import { S3StorageProvider } from '../../storage/S3StorageProvider.js'
 import { env } from '../../config/env.js'
 import { logger } from '../../config/logger.js'
 import { ApiError } from '../../utils/ApiError.js'
+import { errorMessage } from '../../utils/errorMessage.js'
 
 const exportStorage = new S3StorageProvider(env.S3_BUCKET_MATERIALS)
 
@@ -23,7 +24,10 @@ const DOWNLOAD_URL_TTL_SECONDS = 5 * 60
  * widen with it.
  */
 export const exportJobService = {
-  async create(actor, { type, format = 'xlsx', lang = 'uz', filters = {}, scopedUserIds = null }) {
+  async create(
+    actor,
+    { type, format = 'xlsx', lang = 'uz', filters = {}, scopedUserIds = null, notify = [], scheduleId = null }
+  ) {
     const job = await ExportJob.create({
       requestedBy: actor.id,
       type,
@@ -31,6 +35,8 @@ export const exportJobService = {
       lang,
       filters,
       scopedUserIds,
+      notify,
+      scheduleId,
       status: 'QUEUED',
       expiresAt: new Date(Date.now() + RETENTION_DAYS * 24 * 60 * 60 * 1000),
     })
@@ -91,22 +97,34 @@ export const exportJobService = {
       job.finishedAt = new Date()
       await job.save()
 
+      // The requester always, plus a schedule's audience if it has one. The
+      // Set is what stops a schedule's owner being told twice when they are
+      // also on their own recipient list.
+      const audience = [...new Set([String(job.requestedBy), ...(job.notify ?? []).map(String)])]
       await notificationService
-        .notify({
-          userId: job.requestedBy,
-          type: 'REPORT_READY',
-          vars: { reportName: title, rowCount: String(rows.length) },
-          relatedEntityType: 'ExportJob',
-          relatedEntityId: String(job._id),
-        })
-        .catch((error) => logger.warn('Export-ready notice failed', { error: error.message }))
+        .notifyMany(
+          audience.map((userId) => ({
+            userId,
+            type: 'REPORT_READY',
+            vars: { reportName: title, rowCount: String(rows.length) },
+            relatedEntityType: 'ExportJob',
+            relatedEntityId: String(job._id),
+          }))
+        )
+        .catch((error) => logger.warn('Export-ready notice failed', { error: errorMessage(error) }))
 
       return { rows: rows.length, truncated: job.truncated }
     } catch (error) {
       job.status = 'FAILED'
       // The message, not the stack: this is shown to whoever asked for the
       // export, and a stack trace tells them nothing they can act on.
-      job.error = error.message
+      //
+      // Through errorMessage() because `error.message` can be the empty
+      // string — a storage backend that is down throws AggregateError
+      // [ECONNREFUSED] with no message at all, and this row was the only
+      // record of the failure. "FAILED" with a blank reason is the same
+      // silence AT-22 exists to remove, one level down.
+      job.error = errorMessage(error, 'The export could not be built')
       job.finishedAt = new Date()
       await job.save()
       throw error
@@ -114,7 +132,12 @@ export const exportJobService = {
   },
 
   async listFor(actor) {
-    const rows = await ExportJob.find({ requestedBy: actor.id }).sort({ createdAt: -1 }).limit(20).lean()
+    const rows = await ExportJob.find({
+      $or: [{ requestedBy: actor.id }, { notify: actor.id }],
+    })
+      .sort({ createdAt: -1 })
+      .limit(20)
+      .lean()
     return { items: rows.map(toPublicJob) }
   },
 
@@ -127,9 +150,28 @@ export const exportJobService = {
   async get(actor, jobId) {
     const job = await ExportJob.findById(jobId).lean()
     if (!job) throw ApiError.notFound('Export not found')
-    // Somebody else's export is somebody else's data — often the staff
-    // list, filtered to what *they* were allowed to see.
-    if (String(job.requestedBy) !== String(actor.id)) throw ApiError.forbidden('Not your export')
+
+    /**
+     * Two ways to be allowed here, and only two.
+     *
+     * The requester, obviously. And anyone a scheduled report named as a
+     * recipient (8.4) — which is a deliberate act of sharing by someone who
+     * could already see the data, the same as them emailing the file, and
+     * it is recorded below as such.
+     *
+     * The trade-off is worth naming rather than hiding: the file's contents
+     * are bounded by the *schedule owner's* scope, so a recipient fenced
+     * more narrowly than the owner receives more than they could have
+     * exported themselves. That is the owner's decision to make, they are
+     * the one the audit log names as having made it, and the route above
+     * still requires report:export — being told a file exists is not the
+     * same as being able to open it.
+     *
+     * Anything else is somebody else's data, usually the staff list.
+     */
+    const isRequester = String(job.requestedBy) === String(actor.id)
+    const isRecipient = (job.notify ?? []).some((id) => String(id) === String(actor.id))
+    if (!isRequester && !isRecipient) throw ApiError.forbidden('Not your export')
 
     const payload = toPublicJob(job)
     if (job.status === 'READY' && job.fileKey) {
@@ -139,6 +181,24 @@ export const exportJobService = {
         `${job.type}-${new Date(job.createdAt).toISOString().slice(0, 10)}.${job.format}`
       )
       payload.expiresIn = DOWNLOAD_URL_TTL_SECONDS
+
+      // Handing out the link is the moment a copy leaves, so it is recorded
+      // like the synchronous export is — otherwise the async path was the
+      // way to take the staff list without appearing in the audit log.
+      await auditLogRepository
+        .record({
+          actor: actor.id,
+          action: 'REPORT_EXPORTED',
+          entity: 'ExportJob',
+          entityId: String(job._id),
+          metadata: {
+            type: job.type,
+            format: job.format,
+            rowCount: job.rowCount,
+            via: isRequester ? 'export-job' : 'scheduled-report',
+          },
+        })
+        .catch((error) => logger.warn('Export download audit failed', { error: errorMessage(error) }))
     }
     return payload
   },

@@ -220,7 +220,18 @@ const taskCompletionItems = computed(
         <div class="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
           <RankedListCard :title="t('dashboard.charts.courseCompletion')" :items="courseCompletionItems" :empty-text="t('dashboard.empty.courses')" value-suffix="%" />
           <RankedListCard :title="t('dashboard.charts.mostDifficultCourses')" :items="mostDifficultItems" :empty-text="t('dashboard.empty.courses')" value-suffix="%" />
-          <RankedListCard :title="t('dashboard.charts.employeeProgress')" :items="employeeProgressItems" :empty-text="t('dashboard.empty.employees')" />
+          <!-- Bars, not a ranked list: these four are buckets along a scale
+               and their order is 0-25, 25-50, 50-75, 75-100. A ranked list
+               sorts by count, so the same figures came out in a different
+               order every day and the shape of the distribution — which is
+               the only thing this chart is for — was unreadable. -->
+          <Chart
+            type="bar"
+            :title="t('dashboard.charts.employeeProgress')"
+            :series="employeeProgressItems"
+            :empty-text="t('dashboard.empty.employees')"
+            height="h-28"
+          />
           <RankedListCard :title="t('dashboard.charts.mostEngagedEmployees')" :items="mostEngagedItems" :empty-text="t('dashboard.empty.employees')" value-suffix=" min" />
           <RankedListCard :title="t('dashboard.charts.lowestEngagement')" :items="lowestEngagementItems" :empty-text="t('dashboard.empty.employees')" value-suffix=" min" />
           <RankedListCard :title="t('dashboard.charts.mostSkippedVideos')" :items="mostSkippedItems" :empty-text="t('dashboard.empty.videos')" value-suffix="s" />

@@ -14,6 +14,33 @@ export function requirePermission(permission) {
   }
 }
 
+/**
+ * Any one of these permissions opens the route.
+ *
+ * Spelled as its own function rather than as rest arguments on
+ * requirePermission, because `requirePermission(a, b)` reads just as easily
+ * as "needs both" — and a gate whose meaning depends on how the reader
+ * guesses is the wrong kind of gate.
+ *
+ * The case it exists for: a resource two different permissions can reach for
+ * two different reasons. Reading a report on screen is `report:view`; taking
+ * a copy away is `report:export`, and someone who may take a copy may
+ * obviously also look.
+ */
+export function requireAnyPermission(...permissions) {
+  return (req, res, next) => {
+    if (!req.user) {
+      next(ApiError.unauthorized())
+      return
+    }
+    if (!permissions.some((permission) => req.user.permissions?.includes(permission))) {
+      next(ApiError.forbidden(`Missing required permission: one of ${permissions.join(', ')}`))
+      return
+    }
+    next()
+  }
+}
+
 // Gates on the role itself rather than on a permission — for the handful of
 // irreversible operations that stay with SUPERADMIN even if the matching
 // permission gets handed to a custom role.
