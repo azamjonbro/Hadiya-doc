@@ -1,5 +1,4 @@
 import JSZip from 'jszip'
-import path from 'node:path'
 import { ScormPackage } from '../../models/scormPackage.model.js'
 import { S3StorageProvider } from '../../storage/S3StorageProvider.js'
 import { env } from '../../config/env.js'
@@ -8,7 +7,10 @@ import { errorMessage } from '../../utils/errorMessage.js'
 import { parseManifest } from './scormManifest.js'
 import { contentTypeFor, packagePrefix, safeRelativePath } from './scormFiles.js'
 
-const scormStorage = new S3StorageProvider(env.S3_BUCKET_SCORM)
+// Built on demand, and injectable, for the same reason the backup service
+// does it: MinIO needs Docker, which the dev laptops do not run, so the
+// extractor is tested against a file-system stub of the same four methods.
+const defaultStorage = () => new S3StorageProvider(env.S3_BUCKET_SCORM)
 
 /**
  * A package is a zip of a website, and both of those numbers need a ceiling.
@@ -27,6 +29,11 @@ const MAX_UNCOMPRESSED_BYTES = env.SCORM_MAX_FILE_SIZE_MB * 8 * 1024 * 1024
 // a two-minute job out of a ten-second one. Eight rather than eighty
 // because MinIO is on the same little box as everything else.
 const UPLOAD_CONCURRENCY = 8
+
+/** The title the upload put there when nobody typed one. */
+function placeholderTitle(row) {
+  return String(row.originalFilename ?? '').replace(/\.zip$/i, '') || 'SCORM'
+}
 
 async function toBuffer(stream) {
   const chunks = []
@@ -72,7 +79,7 @@ async function inBatches(items, size, worker) {
  * succeeded by the time this starts — which is why failure is recorded on
  * the row rather than thrown at anybody.
  */
-export async function extractScormPackage(packageId) {
+export async function extractScormPackage(packageId, { storage = defaultStorage() } = {}) {
   const row = await ScormPackage.findById(packageId)
   if (!row) {
     logger.warn('SCORM extraction skipped: package is gone', { packageId: String(packageId) })
@@ -82,7 +89,7 @@ export async function extractScormPackage(packageId) {
   await ScormPackage.updateOne({ _id: row._id }, { $set: { processingStatus: 'EXTRACTING', processingError: '' } })
 
   try {
-    const zip = await JSZip.loadAsync(await toBuffer(await scormStorage.getObject(row.zipKey)))
+    const zip = await JSZip.loadAsync(await toBuffer(await storage.getObject(row.zipKey)))
     const names = Object.keys(zip.files).filter((name) => !zip.files[name].dir)
 
     const manifest = findManifestEntry(names)
@@ -119,7 +126,7 @@ export async function extractScormPackage(packageId) {
       if (totalBytes > MAX_UNCOMPRESSED_BYTES) {
         throw new Error('The package expands to more than the allowed size')
       }
-      await scormStorage.putObject(prefix + entry.relative, body, contentTypeFor(entry.relative))
+      await storage.putObject(prefix + entry.relative, body, contentTypeFor(entry.relative))
     })
 
     const updated = await ScormPackage.findByIdAndUpdate(
@@ -135,9 +142,9 @@ export async function extractScormPackage(packageId) {
           masteryScore: parsed.masteryScore,
           fileCount: entries.length,
           totalBytes,
-          // The manifest's own title only fills in a placeholder: an author
-          // who typed a title in our form meant that one.
-          ...(row.title === '' || row.title === path.basename(row.zipKey) ? { title: parsed.title || row.title } : {}),
+          // The manifest's own title only replaces the placeholder: an
+          // author who typed a title in the upload form meant that one.
+          ...(parsed.title && row.title === placeholderTitle(row) ? { title: parsed.title } : {}),
         },
       },
       { new: true }

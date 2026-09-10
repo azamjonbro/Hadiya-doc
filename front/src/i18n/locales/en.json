@@ -2574,5 +2574,30 @@
     "linkPrompt": "Link address (https://…)",
     "linkInvalid": "Only http and https links are allowed.",
     "clear": "Clear formatting"
+  },
+  "scorm": {
+    "open": "Open",
+    "retry": "Try again",
+    "required": "Required to complete the course",
+    "dropHint": "Drop a SCORM package (.zip) here",
+    "browse": "or choose a file",
+    "startUpload": "Start upload",
+    "uploadFailed": "Could not upload the package",
+    "manifestNote": "The version, launch file and mastery score are read from imsmanifest.xml.",
+    "fileCount": "{count} files",
+    "mastery": "pass mark {score}",
+    "score": "Score: {score}",
+    "statusPreparing": "Preparing",
+    "statusFailed": "Failed",
+    "preparing": "The package is being prepared — try again in a minute.",
+    "failedToPrepare": "The package could not be unpacked.",
+    "loadFailed": "Could not load the package",
+    "completed": "Completed",
+    "passed": "Passed",
+    "failed": "Not passed",
+    "autoSaved": "Your result is saved automatically as the package reports it.",
+    "fullscreen": "Full screen",
+    "exitFullscreen": "Exit",
+    "confirmDelete": "The package “{title}” will be deleted. Continue?"
   }
 }

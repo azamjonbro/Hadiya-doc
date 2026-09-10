@@ -16,7 +16,10 @@ import { contentTypeFor, packagePrefix, safeRelativePath } from './scormFiles.js
 import { signLaunchToken } from './scormToken.js'
 import { scormRuntimeService } from './scormRuntime.service.js'
 
-const scormStorage = new S3StorageProvider(env.S3_BUCKET_SCORM)
+// Injectable, like the extractor's: MinIO is not available on the dev
+// laptops, so the upload and file-serving paths are tested against a
+// file-system stub with the same shape.
+const defaultStorage = () => new S3StorageProvider(env.S3_BUCKET_SCORM)
 const MAX_BYTES = env.SCORM_MAX_FILE_SIZE_MB * 1024 * 1024
 
 function toPublicPackage(row) {
@@ -32,6 +35,7 @@ function toPublicPackage(row) {
     order: row.order,
     processingStatus: row.processingStatus,
     processingError: row.processingError,
+    originalFilename: row.originalFilename,
     fileCount: row.fileCount,
     totalBytes: row.totalBytes,
     masteryScore: row.masteryScore,
@@ -95,7 +99,7 @@ export const scormPackageService = {
    * the author sees the package appear and watches it become ready — the
    * same shape as a video upload.
    */
-  async upload(actor, topicId, meta, file) {
+  async upload(actor, topicId, meta, file, { storage = defaultStorage() } = {}) {
     const topic = await topicRepository.findById(topicId)
     if (!topic) throw ApiError.notFound('Topic not found')
     if (!file) throw ApiError.badRequest('No file uploaded', 'FILE_REQUIRED')
@@ -113,14 +117,19 @@ export const scormPackageService = {
     }
 
     const zipKey = `zips/${crypto.randomUUID()}.zip`
-    await scormStorage.putObject(zipKey, file.buffer, 'application/zip')
+    await storage.putObject(zipKey, file.buffer, 'application/zip')
+
+    // A title is required on the row — an untitled item in a curriculum is
+    // a row nobody can identify — so the archive's own name stands in until
+    // the manifest offers a better one (extractScorm.js).
+    const filename = String(file.originalname ?? 'package.zip').replace(/[/\\]/g, '').slice(0, 255)
+    const placeholder = filename.replace(/\.zip$/i, '') || 'SCORM'
 
     const row = await ScormPackage.create({
       topicId,
       courseId: topic.courseId,
-      // The manifest usually carries a better title, and the extractor
-      // fills it in when the author left this empty.
-      title: meta.title?.trim() || '',
+      title: meta.title?.trim() || placeholder,
+      originalFilename: filename,
       description: meta.description ?? '',
       required: meta.required !== false,
       order: meta.order ?? (await nextOrder(topicId)),
@@ -235,10 +244,10 @@ export const scormPackageService = {
     }
   },
 
-  async deleteFiles(row) {
-    const objects = await scormStorage.listObjects(row.baseKey || packagePrefix(row._id.toString()))
-    for (const object of objects) await scormStorage.deleteObject(object.key)
-    if (row.zipKey) await scormStorage.deleteObject(row.zipKey)
+  async deleteFiles(row, { storage = defaultStorage() } = {}) {
+    const objects = await storage.listObjects(row.baseKey || packagePrefix(row._id.toString()))
+    for (const object of objects) await storage.deleteObject(object.key)
+    if (row.zipKey) await storage.deleteObject(row.zipKey)
   },
 
   /**
@@ -308,7 +317,7 @@ export const scormPackageService = {
    * wrote at export time — so it is re-checked here, not only at extraction
    * time (scormFiles.js).
    */
-  async openFile(packageId, rawPath) {
+  async openFile(packageId, rawPath, { storage = defaultStorage() } = {}) {
     const row = await ScormPackage.findById(packageId)
     if (!row || row.processingStatus !== 'READY') throw ApiError.notFound('SCORM package not found')
 
@@ -317,7 +326,7 @@ export const scormPackageService = {
 
     const key = (row.baseKey || packagePrefix(row._id.toString())) + relative
     try {
-      const body = await scormStorage.getObject(key)
+      const body = await storage.getObject(key)
       return { body, contentType: contentTypeFor(relative) }
     } catch {
       throw ApiError.notFound('File not found in package')

@@ -39,6 +39,9 @@ export const router = createRouter({
         // A written lesson reads like a page; the id is the lesson's, not the
         // topic's, so a link to one survives the curriculum being reordered.
         { path: 'lessons/:id', name: 'lesson-detail', component: () => import('@/views/LessonView.vue'), meta: { titleKey: 'nav.courses' } },
+        // A SCORM package runs in an iframe served by the API (9.3); this
+        // route is only the frame around it.
+        { path: 'scorm/:id', name: 'scorm-detail', component: () => import('@/views/ScormView.vue'), meta: { titleKey: 'nav.courses' } },
         {
           path: 'videos/:id/quiz',
           name: 'video-quiz',

@@ -11,6 +11,7 @@ import { videoAccessRouter } from './videoAccess.routes.js'
 import { videoStreamRouter } from './videoStream.routes.js'
 import { materialsRouter } from './materials.routes.js'
 import { lessonsRouter } from './lessons.routes.js'
+import { scormRouter } from './scorm.routes.js'
 import { trashRouter } from './trash.routes.js'
 import { assessmentsRouter } from './assessments.routes.js'
 import { analyticsRouter } from './analytics.routes.js'
@@ -69,6 +70,10 @@ v1Router.use('/video-stream', videoStreamRouter)
 v1Router.use('/materials', materialsRouter)
 // Text lessons — the fourth kind of content a topic can hold (9.1).
 v1Router.use('/lessons', lessonsRouter)
+// SCORM packages — the fifth (9.3). Part of this router answers without a
+// bearer token, authorised by a launch token in the path instead: see
+// scorm.routes.js.
+v1Router.use('/scorm', scormRouter)
 v1Router.use('/trash', trashRouter)
 v1Router.use('/assessments', assessmentsRouter)
 v1Router.use('/analytics', analyticsRouter)

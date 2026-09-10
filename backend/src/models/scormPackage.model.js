@@ -22,6 +22,12 @@ const scormPackageSchema = new Schema(
     courseId: { type: Schema.Types.ObjectId, ref: 'Course', required: true },
     title: { type: String, required: true, trim: true },
     description: { type: String, default: '' },
+    // The name of the uploaded archive. Kept for two reasons: it is what an
+    // author recognises when a package fails to unpack ("which zip was
+    // that?"), and it is the placeholder title — so the extractor can tell
+    // a title nobody typed from one somebody did, and only overwrite the
+    // former with the manifest's.
+    originalFilename: { type: String, default: '' },
 
     // '1.2' or '2004'. Read from the manifest, not from the uploader: the
     // two versions disagree about what "complete" means and about half the

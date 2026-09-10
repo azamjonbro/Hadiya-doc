@@ -2574,5 +2574,30 @@
     "linkPrompt": "Адрес ссылки (https://…)",
     "linkInvalid": "Разрешены только http и https ссылки.",
     "clear": "Очистить формат"
+  },
+  "scorm": {
+    "open": "Открыть",
+    "retry": "Повторить",
+    "required": "Обязательный для завершения курса",
+    "dropHint": "Перетащите SCORM-пакет (.zip) сюда",
+    "browse": "или выберите файл",
+    "startUpload": "Начать загрузку",
+    "uploadFailed": "Не удалось загрузить пакет",
+    "manifestNote": "Версия, стартовый файл и проходной балл читаются из imsmanifest.xml.",
+    "fileCount": "{count} файл(ов)",
+    "mastery": "проходной балл {score}",
+    "score": "Балл: {score}",
+    "statusPreparing": "Подготовка",
+    "statusFailed": "Ошибка",
+    "preparing": "Пакет готовится — попробуйте через минуту.",
+    "failedToPrepare": "Не удалось распаковать пакет.",
+    "loadFailed": "Не удалось загрузить пакет",
+    "completed": "Завершён",
+    "passed": "Зачёт",
+    "failed": "Не зачтено",
+    "autoSaved": "Результат сохраняется автоматически, как только пакет его сообщает.",
+    "fullscreen": "Во весь экран",
+    "exitFullscreen": "Выйти",
+    "confirmDelete": "Пакет «{title}» будет удалён. Продолжить?"
   }
 }

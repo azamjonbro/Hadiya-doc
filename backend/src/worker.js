@@ -5,6 +5,8 @@ import { connectDatabase } from './config/db.js'
 import { redisConnection } from './config/redis.js'
 import { VIDEO_PROCESSING_QUEUE } from './jobs/videoProcessingQueue.js'
 import { processVideo } from './video/processVideo.js'
+import { SCORM_QUEUE } from './jobs/scormQueue.js'
+import { extractScormPackage } from './services/scorm/extractScorm.js'
 import { REMINDER_QUEUE, scheduleReminderChecks } from './jobs/reminderQueue.js'
 import { runDeadlineChecks } from './jobs/reminderJob.js'
 import {
@@ -48,6 +50,20 @@ async function main() {
     { connection: redisConnection, concurrency: 2 }
   )
 
+  // Unpacking a SCORM package: read a zip, write a few hundred objects.
+  // Concurrency 1 on purpose — the whole archive is held in memory to be
+  // read (jszip), and two 300 MB packages at once on a box that also runs
+  // six other sites is how a worker gets killed by the OOM reaper.
+  const scormWorker = new Worker(
+    SCORM_QUEUE,
+    async (job) => {
+      if (job.name === 'extract') {
+        await extractScormPackage(job.data.packageId)
+      }
+    },
+    { connection: redisConnection, concurrency: 1 }
+  )
+
   videoWorker.on('completed', (job) => {
     logger.info('Video processing job completed', { jobId: job.id, videoId: job.data.videoId })
   })
@@ -55,6 +71,19 @@ async function main() {
     logger.error('Video processing job failed', {
       jobId: job?.id,
       videoId: job?.data?.videoId,
+      error: err.message,
+    })
+  })
+
+  scormWorker.on('completed', (job) => {
+    logger.info('SCORM extraction completed', { jobId: job.id, packageId: job.data.packageId })
+  })
+  scormWorker.on('failed', (job, err) => {
+    // The row already carries the reason for the author (extractScorm.js);
+    // this is for whoever reads the logs when several fail at once.
+    logger.error('SCORM extraction failed', {
+      jobId: job?.id,
+      packageId: job?.data?.packageId,
       error: err.message,
     })
   })
@@ -296,6 +325,7 @@ async function main() {
     logger.info(`Received ${signal}, shutting down worker`)
     await Promise.all([
       videoWorker.close(),
+      scormWorker.close(),
       enrollmentRuleWorker.close(),
       onboardingWorker.close(),
       complianceWorker.close(),

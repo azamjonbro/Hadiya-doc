@@ -1,5 +1,6 @@
 <script setup>
-import { computed, onMounted, reactive, ref, watch } from 'vue'
+import { computed, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue'
+import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useConfirm } from '@/composables/useConfirm'
 import { useAuthStore } from '@/stores/auth'
@@ -8,11 +9,13 @@ import { videosApi } from '@/services/videos'
 import { materialsApi } from '@/services/materials'
 import { assessmentsApi } from '@/services/assessments'
 import { lessonsApi } from '@/services/lessons'
+import { scormApi } from '@/services/scorm'
 import { useVideoUpload } from '@/composables/useVideoUpload'
 import MaterialUploadForm from '@/admin/components/MaterialUploadForm.vue'
 import MaterialViewer from '@/components/MaterialViewer.vue'
 import AssessmentEditor from '@/admin/components/AssessmentEditor.vue'
 import LessonEditor from '@/admin/components/LessonEditor.vue'
+import ScormUploadForm from '@/admin/components/ScormUploadForm.vue'
 import VideoReportPanel from '@/admin/components/VideoReportPanel.vue'
 import ProctorAlertsPanel from '@/admin/components/ProctorAlertsPanel.vue'
 import VideoQuizEditor from '@/admin/components/VideoQuizEditor.vue'
@@ -28,6 +31,7 @@ import { apiErrorText } from '@/utils/apiError'
 const props = defineProps({ topicId: { type: String, required: true } })
 
 const { t } = useI18n()
+const router = useRouter()
 const auth = useAuthStore()
 const confirm = useConfirm()
 const toast = useToast()
@@ -239,6 +243,51 @@ function onLessonRemoved() {
   load()
 }
 
+// --- SCORM (9.3) ---
+//
+// Extraction happens in the worker, so a package appears as PENDING and
+// becomes READY a moment later. The panel polls while any package is still
+// being prepared rather than making the author press refresh — and stops as
+// soon as none is, so an idle content panel makes no requests.
+let scormPoll = null
+
+function scheduleScormPoll() {
+  if (scormPoll) return
+  const pending = items.value.some(
+    (item) => item.contentType === 'SCORM' && ['PENDING', 'EXTRACTING'].includes(item.processingStatus)
+  )
+  if (!pending) return
+  scormPoll = window.setTimeout(async () => {
+    scormPoll = null
+    await load()
+    scheduleScormPoll()
+  }, 4000)
+}
+
+function onScormCreated() {
+  addingType.value = null
+  load().then(scheduleScormPoll)
+}
+
+async function toggleScormStatus(item) {
+  if (!(await run(() => scormApi.update(item.id, { status: item.status === 'PUBLISHED' ? 'DRAFT' : 'PUBLISHED' }), 'content.statusFailed'))) {
+    return
+  }
+  await load()
+}
+
+async function retryScorm(item) {
+  if (!(await run(() => scormApi.reprocess(item.id), 'content.statusFailed'))) return
+  await load()
+  scheduleScormPoll()
+}
+
+async function removeScorm(item) {
+  if (!(await confirm.ask({ message: t('scorm.confirmDelete', { title: item.title }) }))) return
+  if (!(await run(() => scormApi.remove(item.id), 'content.deleteFailed'))) return
+  await load()
+}
+
 // --- Assessments ---
 async function addAssessment() {
   if (!(await run(() => assessmentsApi.create(props.topicId, { title: t('content.test'), order: nextOrder() }), 'content.createFailed'))) {
@@ -256,7 +305,14 @@ function onAssessmentRemoved() {
   load()
 }
 
-onMounted(load)
+onMounted(async () => {
+  await load()
+  scheduleScormPoll()
+})
+
+onBeforeUnmount(() => {
+  if (scormPoll) window.clearTimeout(scormPoll)
+})
 </script>
 
 <template>
@@ -456,6 +512,68 @@ onMounted(load)
             @removed="onLessonRemoved"
           />
         </template>
+
+        <!-- SCORM row (9.3) -->
+        <template v-else-if="item.contentType === 'SCORM'">
+          <div class="flex items-center justify-between gap-3">
+            <div class="flex min-w-0 items-center gap-2.5">
+              <span class="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-surface text-ink-faint">
+                <Icon name="globe" size="15" />
+              </span>
+              <div class="min-w-0">
+                <p class="truncate text-small font-medium text-ink">{{ item.title }}</p>
+                <p class="truncate text-caption text-ink-faint">
+                  SCORM {{ item.version }}
+                  <template v-if="item.fileCount">· {{ t('scorm.fileCount', { count: item.fileCount }) }}</template>
+                  <template v-if="item.totalBytes">· {{ formatSize(item.totalBytes) }}</template>
+                  <template v-if="item.masteryScore">· {{ t('scorm.mastery', { score: item.masteryScore }) }}</template>
+                </p>
+                <!-- The reason a failed package failed, where the author is
+                     looking, rather than in a log they cannot read. -->
+                <p v-if="item.processingStatus === 'FAILED'" class="truncate text-caption text-danger">
+                  {{ item.processingError || t('scorm.failedToPrepare') }}
+                </p>
+              </div>
+            </div>
+            <div class="flex shrink-0 items-center gap-1.5">
+              <Badge v-if="item.processingStatus === 'READY'" :variant="item.status === 'PUBLISHED' ? 'success' : 'neutral'" size="sm">
+                {{ item.status === 'PUBLISHED' ? t('courses.status.published') : t('courses.status.draft') }}
+              </Badge>
+              <Badge v-else-if="item.processingStatus === 'FAILED'" variant="danger" size="sm">{{ t('scorm.statusFailed') }}</Badge>
+              <Badge v-else variant="warning" size="sm">{{ t('scorm.statusPreparing') }}</Badge>
+
+              <AppButton
+                v-if="item.processingStatus === 'READY'"
+                variant="ghost"
+                size="sm"
+                icon="eye"
+                @click="router.push(`/scorm/${item.id}`)"
+              >
+                {{ t('scorm.open') }}
+              </AppButton>
+              <template v-if="canManage">
+                <AppButton
+                  v-if="item.processingStatus === 'FAILED'"
+                  variant="ghost"
+                  size="sm"
+                  icon="refresh"
+                  @click="retryScorm(item)"
+                >
+                  {{ t('scorm.retry') }}
+                </AppButton>
+                <AppButton
+                  v-if="item.processingStatus === 'READY'"
+                  variant="ghost"
+                  size="sm"
+                  @click="toggleScormStatus(item)"
+                >
+                  {{ item.status === 'PUBLISHED' ? t('materials.unpublish') : t('materials.publish') }}
+                </AppButton>
+                <AppButton variant="ghost" size="sm" icon="trash" @click="removeScorm(item)" />
+              </template>
+            </div>
+          </div>
+        </template>
       </li>
     </ul>
     <p v-else-if="!loading" class="mt-2 text-small text-ink-faint">{{ t('materials.empty') }}</p>
@@ -477,6 +595,15 @@ onMounted(load)
         </AppButton>
         <AppButton v-if="canManage" size="sm" variant="ghost" icon="plus" @click="addLesson">
           {{ t('content.lesson') }}
+        </AppButton>
+        <AppButton
+          v-if="canManage"
+          size="sm"
+          :variant="addingType === 'SCORM' ? 'outline' : 'ghost'"
+          icon="plus"
+          @click="addingType = addingType === 'SCORM' ? null : 'SCORM'"
+        >
+          SCORM
         </AppButton>
       </div>
 
@@ -532,6 +659,13 @@ onMounted(load)
           </p>
         </div>
       </div>
+
+      <ScormUploadForm
+        v-if="addingType === 'SCORM'"
+        :topic-id="topicId"
+        @created="onScormCreated"
+        @cancel="addingType = null"
+      />
 
       <!-- Material upload form (FILE / PRESENTATION / MULTIMEDIA) -->
       <div v-else-if="['FILE', 'PRESENTATION', 'MULTIMEDIA'].includes(addingType)" class="mt-3">
