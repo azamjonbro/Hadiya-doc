@@ -13,6 +13,8 @@ import { useVideoAnalytics } from '@/composables/useVideoAnalytics'
 import { useAttentionMonitor } from '@/composables/useAttentionMonitor'
 import { useFaceGate } from '@/composables/useFaceGate'
 import AttentionOverlay from './AttentionOverlay.vue'
+import PlayerShortcutsHelp from './PlayerShortcutsHelp.vue'
+import { handleKey } from '@/composables/usePlayerShortcuts'
 import FaceGateOverlay from '@/components/face/FaceGateOverlay.vue'
 import Icon from '@/components/ui/Icon.vue'
 import { apiErrorText } from '@/utils/apiError'
@@ -52,6 +54,87 @@ const WATERMARK_POSITIONS = ['bottom-2 right-2', 'top-2 left-2', 'bottom-2 left-
 const positionIndex = ref(0)
 
 const analytics = useVideoAnalytics(props.videoId)
+
+/**
+ * Keyboard control and a caption button (12.5).
+ *
+ * The native `controls` already handle keys — but only while the video
+ * element has focus, and a learner who has scrolled or clicked the page
+ * presses space expecting the video to pause. So the shortcuts are bound
+ * on the document (see `onKeydown`, which ignores anything typed into a
+ * field) and the keys are the ones people know from YouTube.
+ *
+ * Captions get their own button because the browser buries them: on
+ * desktop Chrome the track menu is inside the settings gear, and a learner
+ * who needs subtitles should not have to go looking. The button drives the
+ * same `textTracks` the native menu does, so the two cannot disagree.
+ */
+const helpOpen = ref(false)
+const captionsOn = ref(false)
+const activeTrackIndex = ref(0)
+
+function trackList() {
+  return videoEl.value ? Array.from(videoEl.value.textTracks ?? []) : []
+}
+
+/** Reads the truth back off the element, rather than trusting our own flag. */
+function syncCaptionState() {
+  const tracks = trackList()
+  const showing = tracks.findIndex((track) => track.mode === 'showing')
+  captionsOn.value = showing !== -1
+  if (showing !== -1) activeTrackIndex.value = showing
+}
+
+function showTrack(index) {
+  const tracks = trackList()
+  tracks.forEach((track, i) => {
+    track.mode = i === index ? 'showing' : 'disabled'
+  })
+  activeTrackIndex.value = index
+  captionsOn.value = true
+}
+
+function toggleCaptions() {
+  const tracks = trackList()
+  if (!tracks.length) return
+  if (captionsOn.value) {
+    tracks.forEach((track) => {
+      track.mode = 'disabled'
+    })
+    captionsOn.value = false
+    return
+  }
+  // Back to whichever track was last on — or the one the author marked
+  // default, which is what `activeTrackIndex` starts as.
+  showTrack(Math.min(activeTrackIndex.value, tracks.length - 1))
+}
+
+function toggleFullscreen() {
+  const container = videoEl.value?.closest('[data-player-root]')
+  if (document.fullscreenElement) {
+    document.exitFullscreen?.()
+    return
+  }
+  // The container rather than the <video>: fullscreen on the element alone
+  // hides the watermark and the monitoring badge, which are the two things
+  // that must stay visible (spec §2).
+  container?.requestFullscreen?.() ?? videoEl.value?.requestFullscreen?.()
+}
+
+function onKeydown(event) {
+  handleKey(event, {
+    media: videoEl.value,
+    // A lockout or the face gate is up: seeking and volume are harmless,
+    // but play is not — the overlay covers the controls and a shortcut
+    // must not be the way around it.
+    blocked: playbackBlocked.value,
+    onCaptions: toggleCaptions,
+    onFullscreen: toggleFullscreen,
+    onHelp: () => {
+      helpOpen.value = !helpOpen.value
+    },
+  })
+}
 
 // ---------------------------------------------------------------------------
 // Camera attention monitoring
@@ -338,6 +421,10 @@ async function loadPolicy() {
 onMounted(() => {
   setup()
   loadPolicy()
+  // Bound on the document, because the keys have to work when the page —
+  // not the video element — has focus (12.5). `handleKey` ignores anything
+  // typed into a field or a dialog.
+  window.addEventListener('keydown', onKeydown)
   clockTimer = setInterval(() => {
     now.value = new Date()
   }, 1000)
@@ -347,6 +434,7 @@ onMounted(() => {
 })
 
 onBeforeUnmount(() => {
+  window.removeEventListener('keydown', onKeydown)
   // Before analytics.detach(), which does the final flush — a pending
   // inattentive stretch has to be on the buffer by then or it is lost.
   if (!monitor.attentive.value) {
@@ -368,7 +456,7 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <div class="relative overflow-hidden rounded-lg bg-black">
+  <div class="relative overflow-hidden rounded-lg bg-black" data-player-root>
     <div v-if="!ready" class="absolute inset-0 z-10 flex aspect-video w-full items-center justify-center bg-surface-2">
       <Icon name="loader" size="28" class="animate-spin text-ink-faint" />
     </div>
@@ -376,7 +464,13 @@ onBeforeUnmount(() => {
          browser refuses a cross-origin track and the menu stays empty.
          `anonymous` rather than `use-credentials` because the token in the
          URL is the authorisation, not a cookie. -->
-    <video ref="videoEl" controls crossorigin="anonymous" class="aspect-video w-full">
+    <video
+      ref="videoEl"
+      controls
+      crossorigin="anonymous"
+      class="aspect-video w-full"
+      @loadedmetadata="syncCaptionState"
+    >
       <track
         v-for="track in subtitles"
         :key="track.id"
@@ -387,6 +481,45 @@ onBeforeUnmount(() => {
         :default="track.isDefault"
       />
     </video>
+    <!-- 12.5 — captions and the shortcut list, in the corner rather than
+         inside the browser's settings menu where nobody finds them. -->
+    <div class="absolute right-2 top-2 z-20 flex items-center gap-1.5">
+      <button
+        v-if="subtitles.length"
+        type="button"
+        class="rounded border border-white/20 bg-black/50 px-2 py-1 text-caption text-white transition-default hover:bg-black/70"
+        :class="captionsOn ? 'border-primary text-primary' : ''"
+        :aria-pressed="captionsOn"
+        :title="t('player.captionsHint')"
+        @click="toggleCaptions"
+      >
+        {{ t('player.captions') }}
+      </button>
+      <!-- A track chooser only when there is a choice to make. -->
+      <select
+        v-if="captionsOn && subtitles.length > 1"
+        class="rounded border border-white/20 bg-black/50 px-1.5 py-1 text-caption text-white"
+        :aria-label="t('player.captionTrack')"
+        :value="activeTrackIndex"
+        @change="showTrack(Number($event.target.value))"
+      >
+        <option v-for="(track, index) in subtitles" :key="track.id" :value="index" class="text-black">
+          {{ track.label || track.lang }}
+        </option>
+      </select>
+      <button
+        type="button"
+        class="rounded border border-white/20 bg-black/50 px-2 py-1 text-caption text-white transition-default hover:bg-black/70"
+        :aria-expanded="helpOpen"
+        :title="t('player.help.title')"
+        @click="helpOpen = !helpOpen"
+      >
+        ?
+      </button>
+    </div>
+
+    <PlayerShortcutsHelp :open="helpOpen" @close="helpOpen = false" />
+
     <div
       class="pointer-events-none absolute select-none rounded bg-black/40 px-2 py-1 font-mono text-[10px] leading-tight text-white/70"
       :class="WATERMARK_POSITIONS[positionIndex]"

@@ -67,7 +67,7 @@
 | Video imzolangan token + segment auth | ? | Bor | OURS+ | 100 | `videoStream.service.js`, `videoPlaybackToken.middleware.js` | — |
 | Watermark | ? | Bor (ism + JSHSHIR) | OURS+ | 100 | `video/AttentionOverlay.vue`, player | — |
 | Video kapitel | ? | Yo'q | VERIFY | 0 | — | — |
-| Subtitr / caption | ✓ (Suite) | Bor — videodan avtomatik chiqarish, .srt/.vtt yuklash, pleyerda `<track>` | FULL | 100 | `processVideo.js`, `subtitleFormat.js`, `VideoPlayer.vue` | — |
+| Subtitr / caption | ✓ (Suite) | Bor — videodan avtomatik chiqarish, .srt/.vtt yuklash, `<track>` + tugma va til tanlash | FULL | 100 | `processVideo.js`, `subtitleFormat.js`, `VideoPlayer.vue` | — |
 | Matn darsi (Page) | ✓ | Bor — 12 blok turi, blok editori, o'quvchi sahifasi, blok-asosli o'qish progressi | FULL | 100 | `lesson.model.js`, `LessonEditor.vue`, `LessonView.vue` | — |
 | Blok shablonlari | ✓ | Yo'q | NONE | 0 | — | `BlockTemplate` |
 | Flashcard / jadval / labeled graphics | ✓ | Jadval bloki bor; flashcard va labeled graphics yo'q | PARTIAL | 25 | `lesson.model.js` (`TABLE`) | Yangi blok turlari |
@@ -461,7 +461,7 @@
 | 150 000 foydalanuvchi miqyosi | ✓ | Hozirgi kod ~5 000 gacha | PARTIAL | 25 | N+1: `reminderJob.js:18-50`; to'liq skan: `dashboardAggregation.js:98`; leaderboard xotirada: `points.service.js:92` | Optimizatsiya + server |
 | CDN | ? | Yo'q | VERIFY | 0 | — | — |
 | **WCAG 2.1 AA** | ? | Audit qilinmagan; ARIA/focus-trap/alt yo'q | VERIFY | 0 | — | Manba tasdiqlanmagan |
-| Subtitr (a11y) | ✓ | Bor — WebVTT, brauzerning o'z CC menyusi orqali | FULL | 100 | `videoStream.routes.js`, `VideoPlayer.vue` | Avtomatik transkripsiya yo'q |
+| Subtitr (a11y) | ✓ | Bor — WebVTT + **ko'rinadigan subtitr tugmasi** va `C` klavishasi (brauzer menyusi tishcha ostida yashiradi) | FULL | 100 | `VideoPlayer.vue`, `usePlayerShortcuts.js` | Avtomatik transkripsiya yo'q |
 | Avtomatik kurs biriktirish | ✓ | Publish paytida bir martalik | PARTIAL | 25 | `course.service.js:170` | `EnrollmentRule` |
 | Development plan avto-biriktirish | ✓ | Yo'q | NONE | 0 | — | — |
 | Avtomatik eslatmalar | ✓ | Bor (kurs + task) | PARTIAL | 50 | `reminderJob.js` | Tadbir, sertifikat, onboarding |

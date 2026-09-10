@@ -3,6 +3,27 @@
     "name": "Corporate LMS",
     "workspace": "Employee workspace"
   },
+  "a11y": {
+    "pagination": "Pagination",
+    "previousPage": "Previous page",
+    "nextPage": "Next page",
+    "page": "Page {page}",
+    "openCalendar": "Open the calendar",
+    "skipToContent": "Skip to main content",
+    "mainNav": "Main navigation",
+    "bottomNav": "Bottom navigation",
+    "dialog": "Dialog",
+    "panel": "Side panel",
+    "closeDialog": "Close",
+    "toggleSidebar": "Collapse or expand the sidebar",
+    "themeDark": "Switch to dark theme",
+    "themeLight": "Switch to light theme",
+    "language": "Choose language",
+    "userMenu": "{name} — account menu",
+    "notificationsUnread": "Notifications: {count} unread",
+    "showPassword": "Show password",
+    "hidePassword": "Hide password"
+  },
   "nav": {
     "dashboard": "Dashboard",
     "courses": "My Courses",
@@ -1540,6 +1561,8 @@
     "openCount": "Times opened"
   },
   "imageUpload": {
+    "preview": "Selected image",
+    "clear": "Remove image",
     "choose": "Click to upload an image",
     "error": "Could not upload image"
   },

@@ -3,6 +3,27 @@
     "name": "Corporate LMS",
     "workspace": "Xodim ish maydoni"
   },
+  "a11y": {
+    "pagination": "Sahifalash",
+    "previousPage": "Oldingi sahifa",
+    "nextPage": "Keyingi sahifa",
+    "page": "{page}-sahifa",
+    "openCalendar": "Kalendarni ochish",
+    "skipToContent": "Asosiy mazmunga o'tish",
+    "mainNav": "Asosiy menyu",
+    "bottomNav": "Pastki menyu",
+    "dialog": "Muloqot oynasi",
+    "panel": "Yon panel",
+    "closeDialog": "Yopish",
+    "toggleSidebar": "Yon menyuni yig'ish yoki ochish",
+    "themeDark": "Qorong'i rejimga o'tish",
+    "themeLight": "Yorug' rejimga o'tish",
+    "language": "Tilni tanlash",
+    "userMenu": "{name} — hisob menyusi",
+    "notificationsUnread": "Bildirishnomalar: {count} ta o'qilmagan",
+    "showPassword": "Parolni ko'rsatish",
+    "hidePassword": "Parolni yashirish"
+  },
   "nav": {
     "dashboard": "Boshqaruv paneli",
     "courses": "Mening kurslarim",
@@ -1540,6 +1561,8 @@
     "openCount": "Ochilgan marta"
   },
   "imageUpload": {
+    "preview": "Tanlangan rasm",
+    "clear": "Rasmni olib tashlash",
     "choose": "Rasm yuklash uchun bosing",
     "error": "Rasmni yuklab bo'lmadi"
   },

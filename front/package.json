@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "test": "node --test test/lessonBlocks.test.js test/pwa.test.js test/offlineContent.test.js test/offlineQueue.test.js",
+    "test": "node --test test/lessonBlocks.test.js test/pwa.test.js test/offlineContent.test.js test/offlineQueue.test.js test/a11yContrast.test.js test/a11yAxe.test.js test/a11yFocusTrap.test.js",
     "preview": "vite preview",
     "assets:mediapipe": "node scripts/fetch-mediapipe-assets.mjs",
     "assets:pdfjs": "node scripts/copy-pdfjs-assets.mjs",
@@ -32,6 +32,8 @@
   "devDependencies": {
     "@vitejs/plugin-vue": "^6.0.8",
     "autoprefixer": "^10.4.20",
+    "axe-core": "^4.13.0",
+    "jsdom": "^29.1.1",
     "postcss": "^8.4.47",
     "tailwindcss": "^3.4.14",
     "vite": "^6.4.3",

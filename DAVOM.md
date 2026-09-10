@@ -99,8 +99,14 @@ ikki marta yuborilsa ham besh daqiqa **300 sekund** qo'shadi, 600 emas
 uzilishda ko'rilgan video **jimgina yo'qolardi**; endi IndexedDB
 navbatiga tushadi va tarmoq qaytganda yuboriladi (Background Sync ochiq
 tabga xabar beradi — token sahifada turadi, worker'da emas).
-**Keyingi band — 12.4 (accessibility) — uni boshqa sessiya
-(`qo-llanma-f1`) olib boryapti; 12.5 (video pleyer klaviaturasi) meniki.**
+12.5 (video pleyer) ham bajarildi: klavishlar endi **document
+darajasida** (native `controls` ularni faqat video fokusda bo'lsa
+ushlaydi — o'quvchi sahifani bosgach `Space` hech narsa qilmasdi),
+YouTube to'plami bilan; yozayotgan odamning klavishasi tegilmaydi;
+lockout paytida `Space` **ishlamaydi** (seek/ovoz ishlaydi); va
+**ko'rinadigan subtitr tugmasi** + til tanlash qo'shildi (brauzer trek
+menyusini sozlamalar tishchasi ostida yashiradi). **12.4
+(accessibility) — boshqa sessiya (`qo-llanma-f1`) olib boryapti.**
 
 **Foydalanuvchidan nginx bloki kerak (12.1) — bu shunchaki qulaylik
 emas.** nginx'da `/assets/` uchun `immutable 1y` va `/index.html` uchun
@@ -187,7 +193,7 @@ esa login qila olmay 429 oladi va **butun fayl bekor qilinadi**
 lekin `pass` soni tushib qoladi). Toza raqam kerak bo'lsa oldingi
 yugurishdan **15 daqiqa** kutib turing.
 
-Frontend testi ham paydo bo'ldi: `npm --prefix front test` (33 test,
+Frontend testi ham paydo bo'ldi: `npm --prefix front test` (146 test,
 `lessonBlocks.test.js` + `pwa.test.js` — ikkinchisi **build natijasini**
 o'qiydi, ya'ni `dist/` bo'lmasa skip qiladi) — bundler kerak emas, chunki sinaladigan
 mantiq `front/src/utils/` da, komponent ichida emas. Yangi front mantig'ini
@@ -208,7 +214,7 @@ BLOK 8  Hisobot, analitika             ✅
 BLOK 9  Kontent va authoring           ← **BLOK 9 to'liq tugadi** (9.1–9.6); keyingisi 9.5
 BLOK 10 AI                             ✅
 BLOK 11 Korxona                        ← tugadi
-BLOK 12 Mobil va accessibility         ← 12.1–12.3 bajarildi
+BLOK 12 Mobil va accessibility         ← 12.1–12.3, 12.5 bajarildi
 BLOK 13 Kengaytirilgan baholash
 BLOK 14 Regressiya himoyasi (doimiy)
 ```

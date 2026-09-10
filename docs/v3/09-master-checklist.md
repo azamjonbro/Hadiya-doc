@@ -3262,7 +3262,63 @@
   "tugatish bloklardan oldin" holati).
 - [ ] **12.4** Accessibility — modal focus-trap, ARIA, `:focus-visible`,
   `altText`, rang kontrastini o'lchash, `axe-core` CI
-- [ ] **12.5** Video pleyer — klaviatura shortcut'lari, subtitr tugmasi
+- [x] **12.5** Video pleyer — klaviatura shortcut'lari, subtitr tugmasi
+  · Bajarildi — pleyer brauzerning **native `controls`** ini ishlatadi,
+  ya'ni klavishlar allaqachon bor edi, **lekin faqat video element fokusda
+  bo'lsa**. Amalda o'quvchi sahifani bosadi, skroll qiladi, tavsifni
+  o'qiydi va keyin `Space` bosadi — fokus `body` da bo'lgani uchun **hech
+  narsa bo'lmaydi** (yoki sahifa pastga siljiydi). Endi klavishlar
+  **document darajasida** bog'langan.
+  · **Klavishlar o'ylab topilmadi:** `Space`/`K` — ijro/pauza, `J`/`L` —
+  10 s, `←`/`→` — 5 s, `0–9` — videoning o'sha o'ndan biriga, `Home`/`End`,
+  `↑`/`↓` — ovoz, `M` — ovozsiz, `C` — subtitr, `F` — butun ekran,
+  `<`/`>` — tezlik, `?` — yorliqlar ro'yxati. Bu YouTube'ning to'plami:
+  o'z to'plamimizni o'ylab topish — har o'quvchi **bizning** to'plamni
+  o'rganishi kerak degani.
+  · **Yozayotgan odamning klavishasi tegilmaydi** (`isTypingTarget`):
+  `input`/`textarea`/`select`, `contenteditable`, va `[role=dialog]`
+  ichidagi hamma narsa. Bu bo'lmasa qidiruv maydonidagi `f` butun ekranga
+  o'tkazadi, izohdagi `Space` videoni to'xtatadi — odam sahifaga
+  ishonishni to'xtatadigan xato sinfi. **Modifikatorli** kombinatsiyalar
+  ham tegilmaydi (`Ctrl+F` — brauzerning qidiruvi, `Cmd+L` — manzil
+  qatori). Ta'sir qilmagan klavishada `preventDefault` **chaqirilmaydi**.
+  · **Shortcut — blokni chetlab o'tish yo'li emas.** Diqqat lockout'i yoki
+  face gate ko'tarilganda `Space` **ishlamaydi** (overlay boshqaruvni
+  yopadi, klaviaturani esa yopa olmaydi), lekin **seek va ovoz ishlaydi** —
+  ular o'quvchining ko'rayotganini o'zgartirmaydi. Pleyerdagi mavjud
+  `play` tinglovchisi (o'tib ketgan har qanday ijroni qaytaradi) ikkinchi
+  himoya qatlami sifatida qoladi.
+  · **Subtitr tugmasi** — checklist aynan shuni so'raydi, va sababi bor:
+  desktop Chrome'da trek menyusi **sozlamalar tishchasi ichida**, ya'ni
+  subtitr kerak bo'lgan odam uni izlab yurishi kerak. Tugma
+  **`textTracks`** ni boshqaradi — brauzerning o'z menyusi bilan **bir xil
+  narsani**, shuning uchun ikkisi bir-biriga qarama-qarshi bo'lishi
+  mumkin emas. Holat elementdan **qayta o'qiladi** (`syncCaptionState`),
+  o'z bayrog'imizga ishonilmaydi. Bir nechta trek bo'lsa til tanlash
+  ochiladi, bitta bo'lsa — yo'q.
+  · **Butun ekran `<video>` ning o'ziga emas, konteynerga** so'raladi:
+  elementning o'zi butun ekranga o'tsa **suv belgisi va kuzatuv nishoni
+  ko'rinmay qoladi** — ular ko'rinib turishi kerak bo'lgan ikki narsa
+  (§2).
+  · `?` — **yorliqlar ro'yxati**: hech kim bilmagan shortcut — hech kim
+  ishlatmagan shortcut. Modal emas, oddiy panel: fokusni olmaydi, ya'ni
+  o'qib turib klavishlarni bosish mumkin.
+  · **Tekshirildi** — 20 test (`front/test/playerShortcuts.test.js`; DOM
+  o'rnida oddiy obyekt, chunki media element to'rtta xossa va ikkita
+  metod orqali ishlatiladi, brauzer bu tekshiruvga hech narsa
+  qo'shmaydi): yozayotgan odamdan klavisha o'g'irlanmasligi, blok
+  paytida `Space` ishlamasligi (seek/ovoz ishlashi), pozitsiya/ovoz
+  chegaralari, `duration` NaN bo'lganda `currentTime = NaN` ga
+  o'tmaslik + **brauzerda (CDP)**: pleyer chizildi, subtitr va `?`
+  tugmalari ko'rindi, 2 `<track>`, `?` panelni ochdi va yopdi,
+  `→` 100→105, `L` →115, `3` →180 (600 ning 30%), `M` ovozni o'chirdi,
+  subtitr tugmasi haqiqiy trekni `showing` ga o'tkazdi va til tanlash
+  chiqdi, `C` o'chirdi, va **maydonga `L` yozish seek qilmadi**.
+  Front to'plami: 146 test (12.4 bilan birga).
+  · **Chetlanish:** lockout holatidagi xatti-harakat faqat unit test bilan
+  qadalgan — brauzerda diqqat lockout'ini majburlash uchun kamera va
+  yuz modeli kerak; pleyerning o'z `play` qo'riqchisi esa 0.x dan beri
+  ishlab turadi.
 
 ---
 
