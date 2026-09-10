@@ -241,8 +241,8 @@ onBeforeUnmount(() => {
     <template v-else>
       <!-- ============ BRIEFING ============ -->
       <template v-if="phase === 'briefing'">
-        <div class="flex items-start gap-3">
-          <span class="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-primary-subtle text-primary">
+        <div class="flex items-start gap-3 bg-surface p-6 rounded-md border border-border shadow-sm">
+          <span class="flex h-11 w-11 shrink-0 items-center justify-center rounded bg-primary/10 text-primary">
             <Icon name="check-square" size="20" />
           </span>
           <div class="min-w-0">
@@ -251,21 +251,21 @@ onBeforeUnmount(() => {
           </div>
         </div>
 
-        <AppCard class="mt-6">
-          <p class="text-caption font-semibold uppercase tracking-widest text-ink-faint">
+        <AppCard class="mt-6 border border-border shadow-sm">
+          <p class="text-[11px] font-bold uppercase tracking-widest text-ink-faint">
             {{ t('assessment.rules.title') }}
           </p>
 
           <div class="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-3">
-            <div class="rounded-lg border border-border bg-surface-2 px-3.5 py-3">
+            <div class="rounded-md border border-border bg-surface-2 px-4 py-3">
               <p class="text-h3 text-ink">{{ briefing.timeLimitMinutes }}</p>
               <p class="mt-0.5 text-caption text-ink-muted">{{ t('assessment.rules.minutes') }}</p>
             </div>
-            <div class="rounded-lg border border-border bg-surface-2 px-3.5 py-3">
+            <div class="rounded-md border border-border bg-surface-2 px-4 py-3">
               <p class="text-h3 text-ink">{{ briefing.questionCount }}</p>
               <p class="mt-0.5 text-caption text-ink-muted">{{ t('assessment.rules.questions') }}</p>
             </div>
-            <div class="rounded-lg border border-border bg-surface-2 px-3.5 py-3">
+            <div class="rounded-md border border-border bg-surface-2 px-4 py-3">
               <p class="text-h3 text-ink">{{ briefing.passScorePercent }}%</p>
               <p class="mt-0.5 text-caption text-ink-muted">{{ t('assessment.rules.passScore') }}</p>
             </div>
@@ -326,7 +326,7 @@ onBeforeUnmount(() => {
         </div>
 
         <!-- exam-body carries user-select:none (see the style block) -->
-        <AppCard class="exam-body">
+        <AppCard class="exam-body border border-border shadow-sm mt-4">
           <div class="space-y-6">
             <div v-for="(question, qIndex) in assessment.questions" :key="question.id">
               <p class="text-small font-medium text-ink">{{ qIndex + 1 }}. {{ question.text }}</p>
@@ -334,10 +334,10 @@ onBeforeUnmount(() => {
                 <label
                   v-for="(option, oIndex) in question.options"
                   :key="option.id"
-                  class="flex cursor-pointer items-start gap-2.5 rounded-md border px-3 py-2.5 text-small transition-default"
+                  class="flex cursor-pointer items-start gap-2.5 rounded-md border px-4 py-3 text-small transition-default"
                   :class="
                     selected[question.id] === oIndex
-                      ? 'border-primary bg-primary-subtle text-ink'
+                      ? 'border-primary bg-primary/5 text-ink'
                       : 'border-border text-ink-muted hover:bg-surface-2'
                   "
                 >
@@ -370,16 +370,16 @@ onBeforeUnmount(() => {
       <!-- ============ RESULT ============ -->
       <template v-else>
         <AppCard
-          class="border"
-          :class="result.passed ? 'border-success bg-success-subtle' : 'border-danger bg-danger-subtle'"
+          class="border shadow-sm"
+          :class="result.passed ? 'border-success bg-success/5' : 'border-danger bg-danger/5'"
         >
           <div class="flex items-center gap-2">
             <Icon
               :name="result.passed ? 'check-circle' : 'alert-circle'"
-              size="22"
+              size="24"
               :class="result.passed ? 'text-success' : 'text-danger'"
             />
-            <p class="text-h3" :class="result.passed ? 'text-success' : 'text-danger'">
+            <p class="text-h2" :class="result.passed ? 'text-success' : 'text-danger'">
               {{ result.passed ? t('assessment.passed') : t('assessment.failed') }}
             </p>
           </div>
@@ -415,19 +415,19 @@ onBeforeUnmount(() => {
     <Teleport to="body">
       <div
         v-if="focusWarning"
-        class="fixed inset-0 z-[130] flex items-center justify-center bg-black/70 p-6 backdrop-blur-sm"
+        class="fixed inset-0 z-[130] flex items-center justify-center bg-black/50 p-6 backdrop-blur-sm"
       >
-        <AppCard class="max-w-md border border-warning">
+        <AppCard class="max-w-md border border-warning shadow-lg">
           <div class="flex items-center gap-2.5">
-            <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-warning-subtle text-warning">
-              <Icon name="alert-triangle" size="20" />
+            <span class="flex h-12 w-12 shrink-0 items-center justify-center rounded bg-warning/10 text-warning">
+              <Icon name="alert-triangle" size="24" />
             </span>
-            <p class="text-h3 text-ink">{{ t('assessment.focus.warningTitle') }}</p>
+            <p class="text-h2 text-ink">{{ t('assessment.focus.warningTitle') }}</p>
           </div>
-          <p class="mt-3 text-small text-ink-muted">
+          <p class="mt-4 text-small text-ink-muted">
             {{ t('assessment.focus.warningBody', { count: focusLossCount, limit: briefing?.focusLossLimit ?? 2 }) }}
           </p>
-          <AppButton class="mt-5" block @click="focusWarning = false">
+          <AppButton class="mt-6" block @click="focusWarning = false">
             {{ t('assessment.focus.warningAck') }}
           </AppButton>
         </AppCard>
