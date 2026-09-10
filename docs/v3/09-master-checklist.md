@@ -1735,7 +1735,96 @@
     tuzatilmadi.
     4. Blok `IMAGE` URL'i faqat sxema bo'yicha tekshiriladi (http/https);
     o'z saqlagichimizga bog'lash media kutubxonasi (**9.5**) bilan keladi.
-- [ ] **9.2** **`Lesson` + blok editor** — 12 blok turi, drag-drop, autosave
+- [x] **9.2** **`Lesson` + blok editor** — 12 blok turi, drag-drop, autosave
+  · Bajarildi — 9.1 ning to'rt blok turi o'n ikkitaga yetdi, ustiga editor va
+  o'quvchi sahifasi qo'shildi.
+  · **O'n ikki tur:** `HEADING TEXT QUOTE CALLOUT CODE` (yozma),
+  `IMAGE GALLERY EMBED` (media), `VIDEO FILE` (kurs kontentiga havola),
+  `TABLE DIVIDER` (struktura). Ataylab yo'q: `LINK` — bu bitta havolasi
+  bo'lgan `TEXT` bloki; **sahifa ichidagi quiz** — u urinish, baholash va
+  o'tish balini talab qiladi, bularning hammasi `Assessment` da bor (4.2),
+  shuning uchun dars testga **havola qiladi**, ichida tutmaydi.
+  · **`VIDEO`/`FILE` — havola, nusxa emas.** Dars kurs allaqachon
+  saqlayotgan videoni id bilan nomlaydi, ya'ni u curriculumdagi bir xil
+  qator, bir xil ishlov holati va bir xil o'ynatish qoidalari bilan.
+  Muhimi: havola **kim ko'rishini ham belgilaydi**, shuning uchun
+  `assertReferences()` boshqa kursning kontentiga havolani rad etadi
+  (`REFERENCE_NOT_IN_COURSE`) — aks holda A kursi muallifi B kursining
+  boshqa filialga yo'naltirilgan videosini o'z darsiga qo'yib, B kursi
+  qo'ygan har bir qoidani id orqali chetlab o'tardi. O'qishda havolalar
+  bitta `$in` so'rovi bilan ochiladi; o'quvchi ko'rmasligi kerak bo'lgan
+  narsa `unavailable: true` bo'lib qaytadi va o'rniga placeholder chiziladi.
+  · **`EMBED` — host allowlist + `sandbox`.** Iframe — sahifaning bir
+  qismini boshqa saytga berish; bizning chrome ichida u ishonchli login
+  formasi chizishi, sahifani shaffof qatlam bilan yopishi yoki har bir
+  o'quvchini uchinchi tomonga xabar qilishi mumkin, "muallif tashladi" esa
+  o'quvchining roziligi emas. Shuning uchun: faqat YouTube, Vimeo,
+  Google Docs/Drive; faqat `https`; URL **normalizatsiya qilinadi** —
+  muallif brauzer satridan `youtube.com/watch?v=…` tashlaydi, bu esa
+  freymda ochilmaydi, saqlanadigan qiymat `youtube-nocookie.com/embed/…`
+  (vaqt belgisi ham saqlanadi). Freymda `allow-same-origin` yo'q va
+  `allow-popups` ataylab berilmagan.
+  · **`CODE` sanitatsiya qilinmaydi** — bu yagona shunday blok. Kod namunasi
+  tegdan gapirsa, HTML sanitizeri uni yeb qo'yadi; shuning uchun matn
+  o'zgarmagan holda saqlanadi va o'quvchi tomonida `textContent` sifatida
+  chiziladi, hech qachon markup sifatida emas.
+  · **Editor** (`LessonEditor.vue`): drag-drop (`SortableList`, klaviatura
+  uchun yuqori/past tugmalari ham), blok nusxalash, har tur uchun o'z
+  formasi, `RichText` (contenteditable + `execCommand`; kutubxona
+  qo'shilmadi — server baribir allowlist bilan tozalaydi, va pastdagi
+  "Chetlanishlar" ga qara), **avtosaqlash** oxirgi tahrirdan 1,2 s keyin,
+  sarlavhada holat ("08:02 da saqlandi" / xato matni), **preview** esa
+  o'quvchining aynan o'sha `LessonBlock.vue` komponenti bilan chiziladi —
+  o'z markupi bilan preview ertami-kechmi yolg'on gapiradi.
+  · **Ikki nozik joy avtosaqlash tufayli:**
+    1. **Blok id'lari qaytib keladi va qoladi.** Progress id'larga yoziladi,
+    ya'ni har saqlashda yangi id berilsa, hammaning joyi nolga tushadi.
+    `adoptIds()` javobni **yuborilgan** massivga qarab moslashtiradi, chunki
+    to'ldirilmagan bloklar saqlashga qo'shilmaydi — mahalliy uchinchi blok
+    javobdagi uchinchi bo'lishi shart emas.
+    2. **To'ldirilmagan blok yuborilmaydi.** Validator bo'sh `TEXT` ni rad
+    etadi (to'g'ri — bo'sh blok o'qilmaydigan kontent), lekin muallif
+    blokni **avval qo'shib**, keyin to'ldiradi; oradagi har avtosaqlashda
+    400 kelsa, editor buzuq ko'rinadi. Shuning uchun yarim yozilgan blok
+    saqlashdan chetda qoladi, sarlavha esa nechtasi kutayotganini aytadi.
+  · **O'quvchi sahifasi** (`LessonView.vue`, `/lessons/:id`): bloklar
+  ketma-ket chiziladi, progress **skroll joyi bilan emas, ekranga chiqqan
+  bloklar bilan** o'lchanadi (`IntersectionObserver`, 1,5 s ga batch
+  qilinadi) — skrollni pastga tortgan odam faqat pastini ko'rgan bo'ladi.
+  Sahifadan chiqishda oxirgi partiya yuboriladi. Curriculumda dars qatori
+  "9 blok · 6 daq. · 9/9 · 100%" ko'rinishida.
+  · **Tekshirildi.** Backend: `test/lesson.test.js` 29 test (12 turning
+  round-trip'i, embed normalizatsiyasi va allowlist, `http` embed rad
+  etilishi, begona kursga havola, havolani ochish va `unavailable`,
+  nusxalashda `videoId`/`materialId` qayta yo'naltirilishi). Frontend:
+  **yangi** `front/test/lessonBlocks.test.js` — 14 test (repozitoriyda
+  birinchi front testi; shu sabab editor mantig'i `utils/lessonBlocks.js`
+  ga chiqarildi, komponentda emas). Va **haqiqiy brauzerda** (headless
+  Chrome, CDP): o'quvchi kirdi → dars sahifasi 9 blokni chizdi → embed
+  `youtube-nocookie` ga aylangan, jadval 6 katak, kod o'zgarmagan →
+  oxirigacha skroll → server 9/9, 100%, `completed: true` → curriculum
+  qatori "9/9 · 100%", kurs 100% (1/1) bo'ldi; admin tomonida "Dars"
+  tugmasi → editor ochildi → 12 blok tugmasi → matn yozildi → 1,2 s dan
+  keyin "saqlandi" va serverda 1 blok. Konsolda birorta xato yoki
+  ogohlantirish yo'q. Skrinshotlar ko'rildi. Sinov ma'lumotlari o'chirildi.
+  · **Chetlanishlar:**
+    1. **`RichText` `document.execCommand` ishlatadi** — rasman
+    deprecated, lekin hamma brauzerda ishlaydigan yagona formatlash API'si.
+    To'rt tugma uchun uchinchi tomon editorini (yuz kilobayt va o'z HTML
+    dialekti bilan) qo'shish oqlanmadi; xavfsizlik chegarasi baribir
+    serverda. Paste faqat oddiy matn sifatida tushadi, aks holda ekranda
+    ko'rinadigan narsa saqlanadigan narsadan farq qilardi.
+    2. **`VIDEO`/`FILE` tanlagichi faqat shu mavzuning kontentini
+    ko'rsatadi.** Backend butun kursga ruxsat beradi; boshqa mavzudan
+    tanlash uchun UI hozircha yo'q (bitta so'rov, keng tarqalgan holat).
+    3. **Blok shablonlari, flashcard, labeled graphics yo'q** — parity
+    matritsasida `PARTIAL` bo'lib turadi, yangi blok turlari kerak.
+    4. **Media hali kutubxonaga bog'lanmagan** — `IMAGE`/`GALLERY` URL'i
+    faqat sxema bo'yicha tekshiriladi (`http(s)`), o'z saqlagichimizga
+    bog'lash va orphan tozalash **9.5** da.
+    5. Kurs sarlavhasidagi statistika hamon "0 video" deb sanaydi (dars
+    hisoblanmaydi); curriculumdagi element soni esa to'g'ri. Sarlavha
+    dizayni 9.2 doirasidan tashqarida, tegilmadi.
 - [ ] **9.3** **SCORM 1.2/2004 import** — `scormPackage`, `scormState`,
   iframe API adapter, helmet CSP `frame-src` sozlash
 - [ ] **9.4** **Subtitr / VTT** — ffmpeg pipeline'ga qo'shish, pleyerda `<track>`

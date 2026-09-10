@@ -292,13 +292,15 @@ const savedLabel = computed(() => {
 
       <template v-else>
         <div class="mt-3 grid gap-2 sm:grid-cols-3">
-          <AppInput v-model="form.description" :placeholder="t('lesson.descriptionPlaceholder')" class="sm:col-span-2" />
           <AppInput
-            v-model="form.estimatedMinutes"
-            type="number"
-            min="0"
-            :placeholder="t('lesson.minutesPlaceholder')"
+            v-model="form.description"
+            :label="t('lesson.descriptionLabel')"
+            :placeholder="t('lesson.descriptionPlaceholder')"
+            class="sm:col-span-2"
           />
+          <!-- Labelled, not just placeheld: the field holds 0 by default, and
+               a box with a bare "0" in it says nothing about what it counts. -->
+          <AppInput v-model="form.estimatedMinutes" type="number" min="0" :label="t('lesson.minutesLabel')" />
         </div>
         <label class="mt-2 flex items-center gap-1.5 text-caption text-ink-muted">
           <input v-model="form.required" type="checkbox" class="h-3.5 w-3.5 rounded border-border-strong text-primary" />

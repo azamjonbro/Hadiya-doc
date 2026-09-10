@@ -55,6 +55,35 @@ Eng ko'p o'sgan domenlar: xavfsizlik/audit **44,2 → 59,6**, hisobot
 > shuning uchun raqam takrorlanadi. Vaznsiz ustun esa matritsadan
 > to'g'ridan-to'g'ri chiqadi va ikkala usulda ham bir xil.
 
+### Qayta hisob — 2026-09-10 (BLOK 1–9.2 ishidan keyin)
+
+Matritsa **satrlar darajasida** BLOK 1–8 davomida yangilanib borgan, lekin
+sarlavhadagi umumiy raqam 2026-09-08 dan qimirlamagan — ya'ni yuqoridagi
+36,3 faqat BLOK 0 tugagan holatni aks ettiradi. Bugun 9.1 va 9.2 (matn
+darsi, blok editori) yozilgandan keyin raqam matritsaning **hozirgi
+satrlaridan** qayta hisoblandi:
+
+| Metrika | 2026-09-08 (BLOK 0) | Hozir (BLOK 1–9.2) |
+|---|:--:|:--:|
+| Vaznsiz (337 capability) | 36,3 | **53,6** |
+| FULL | — | **110** |
+| OURS+ | — | **48** |
+| PARTIAL | — | **55** |
+| NONE | — | **100** |
+| VERIFY | — | **24** |
+| **PARITY GAP** (vaznsiz) | ≈64% | **≈46%** |
+
+Sakrash yangi ishning o'zidan emas: BLOK 1–8 (yetkazish, ierarxiya,
+sertifikat, baholash, path, tadbir, qidiruv/KB/compliance, hisobot) allaqachon
+satrlarda hisobga olingan edi, faqat jamlanmagan edi. 9.1 va 9.2 ning o'z
+hissasi ikki bo'limda ko'rinadi: **kontent (D04–D09) 56 → 65** va
+**authoring (D10–D12) 11 → 36**.
+
+> **Vaznlangan ustun qayta hisoblanmadi.** Vazn jadvali repozitoriyda yo'q
+> (yuqoridagi metodologiya eslatmasiga qara), shuning uchun bu yerda faqat
+> matritsadan to'g'ridan-to'g'ri chiqadigan vaznsiz raqam berilgan. Vaznsiz
+> ballar bo'lim jamilari bilan birga `docs/v4/03-parity-matrix.md` da.
+
 ## 1.2 Bir jumlada
 
 Biz **o'qishni isbotlash** bo'yicha iSpring'dan oldindamiz va **o'quv

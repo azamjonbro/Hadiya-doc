@@ -2562,7 +2562,9 @@
     "readToEnd": "Read to the end of the lesson to finish it.",
     "completed": "Completed",
     "completedNote": "You have completed this lesson.",
-    "blockUnavailable": "This content is not available to you right now."
+    "blockUnavailable": "This content is not available to you right now.",
+    "descriptionLabel": "Short description",
+    "minutesLabel": "Reading time (min.)"
   },
   "richText": {
     "bold": "Bold",

@@ -63,44 +63,53 @@ foydalanuvchi so'rovi bilan to'xtatilgan ("telegram bog'lama shartmas"),
 kodi `git stash` da. Uni "keyingi band" deb olma; holat paneli uni shunday
 ko'rsatadi, chunki u ro'yxatdagi birinchi `[ ]` bandni oladi.
 
-**Hozir BLOK 9 (Kontent va authoring):** 9.1 bajarildi (`8df9110`) —
-`ContentItem` polimorf bazasi va matn darsi (`Lesson`). **Keyingi band —
-9.2:** blok editori (12 blok turi, drag-drop, autosave) va o'quvchi
-ko'rinishi. 9.1 ataylab backendda qoldirildi: dars hozircha faqat API
-orqali yaratiladi, admin panelida esa faqat o'qish uchun qatori bor.
+**Hozir BLOK 9 (Kontent va authoring):** 9.1 va 9.2 bajarildi — matn darsi
+to'liq oqim bilan: `ContentItem` polimorf bazasi, 12 blok turi, blok editori
+(drag-drop, avtosaqlash), o'quvchi sahifasi (`/lessons/:id`) va blok-asosli
+o'qish progressi. **Keyingi band — 9.3 (SCORM 1.2/2004 import).**
 
-Muhimi: chiqarilgan dars kurs foizida **hisoblanadi**, lekin o'quvchi uni
-hali ochib o'qiy olmaydi — 9.2 shu bo'shliqni yopadi.
+E'tibor bering: 9.3 helmet CSP'ga tegadi (`frame-src`) — 9.2 dagi `EMBED`
+bloki ham iframe ishlatadi (`lessonEmbeds.js` dagi host allowlist), shuning
+uchun CSP'ni o'zgartirganda ikkisini birga sina.
 
 ### iSpring parity — hozirgi raqam
 
+2026-09-10 da matritsa satrlaridan **qayta hisoblandi** (skript bilan, qo'lda
+emas). Ilgari bu yerda turgan 36,3 raqami BLOK 0 davriga tegishli edi:
+satrlar BLOK 1–8 davomida yangilangan, jamlanma esa yangilanmagan.
+
 | Metrika | Qiymat |
 |---|:--:|
-| Vaznsiz (337 capability) | **≈36,4** |
-| Vaznlangan (yadro ×3, muhim ×2, tor ×1) | **≈37,3** |
-| **Gap** | **≈64%** |
+| Vaznsiz (337 capability) | **53,6** |
+| FULL / OURS+ | **110 / 48** |
+| PARTIAL / NONE / VERIFY | **55 / 100 / 24** |
+| **Gap** | **≈46%** |
 
-Bu raqam 2026-09-08 dagi hisobdan keyin faqat qatorlar darajasida
-yangilanmoqda (`docs/v4/03-parity-matrix.md`); butun bo'yicha qayta hisob
-BLOK 9 tugagach ma'noli bo'ladi.
+Vaznlangan raqam qayta hisoblanmaydi — vazn jadvali repozitoriyda yo'q
+(`docs/v4/01-executive-summary.md` dagi metodologiya eslatmasi).
 
-**Testlar:** `npm --prefix backend test` — 741 test, 2 tasi yiqiladi va
+**Testlar:** `npm --prefix backend test` — 747 test, 2 tasi yiqiladi va
 ikkisi ham **eskidan** yiqilib turadi (`faceVerification`: yuz aniqlanmagan
 rasm; `facePolicy`: hisobni bloklash). Darslarga aloqasi yo'q.
+
+Frontend testi ham paydo bo'ldi: `npm --prefix front test` (14 test,
+`front/test/lessonBlocks.test.js`) — bundler kerak emas, chunki sinaladigan
+mantiq `front/src/utils/` da, komponent ichida emas. Yangi front mantig'ini
+shu yerga chiqarib sina.
 
 ## Bloklar tartibi
 
 ```
-BLOK 0  Xavfsizlik + infratuzilma      (qolgan: 0.6, 0.8, 0.9, 0.10)
-BLOK 1  Yetkazish qatlami (mail, queue, shablon, push)   ← eng ko'p eshik ochadi
-BLOK 2  Shaxs, ierarxiya, scope (managerId, role.scope, bulk import)
-BLOK 3  Tugatish qoidasi + sertifikat
-BLOK 4  Baholash tizimi (Question bank, Quiz birlashtirish)
-BLOK 5  Learning path + onboarding
-BLOK 6  Live training, kalendar, topshiriq
-BLOK 7  Qidiruv, KB, compliance, gamification
-BLOK 8  Hisobot, analitika
-BLOK 9  Kontent va authoring
+BLOK 0  Xavfsizlik + infratuzilma      ✅
+BLOK 1  Yetkazish qatlami (mail, queue, shablon, push)   ✅ (1.8 to'xtatilgan)
+BLOK 2  Shaxs, ierarxiya, scope        ✅
+BLOK 3  Tugatish qoidasi + sertifikat  ✅
+BLOK 4  Baholash tizimi                ✅
+BLOK 5  Learning path + onboarding     ✅
+BLOK 6  Live training, kalendar, topshiriq  ✅
+BLOK 7  Qidiruv, KB, compliance, gamification  ✅
+BLOK 8  Hisobot, analitika             ✅
+BLOK 9  Kontent va authoring           ← 9.1, 9.2 bajarildi; keyingisi 9.3
 BLOK 10 AI
 BLOK 11 Korxona
 BLOK 12 Mobil va accessibility
@@ -108,7 +117,8 @@ BLOK 13 Kengaytirilgan baholash
 BLOK 14 Regressiya himoyasi (doimiy)
 ```
 
-BLOK 1 va 2 parallel, BLOK 3 va 4 parallel qilinishi mumkin.
+BLOK 9 dan keyingi tartib o'zgarmaydi: 10 (AI), 11 (korxona), 12 (mobil va
+accessibility), 13 (kengaytirilgan baholash), 14 (regressiya himoyasi).
 
 ---
 

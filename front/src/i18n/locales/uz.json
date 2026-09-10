@@ -2562,7 +2562,9 @@
     "readToEnd": "Tugatish uchun darsni oxirigacha o'qing.",
     "completed": "Tugatilgan",
     "completedNote": "Bu darsni tugatgansiz.",
-    "blockUnavailable": "Bu kontent sizga hozir ochiq emas."
+    "blockUnavailable": "Bu kontent sizga hozir ochiq emas.",
+    "descriptionLabel": "Qisqa izoh",
+    "minutesLabel": "O'qish vaqti (daq.)"
   },
   "richText": {
     "bold": "Qalin",
