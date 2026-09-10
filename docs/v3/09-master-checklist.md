@@ -3043,6 +3043,9 @@
   · **Dev'da service worker o'chirilgan** (`devOptions.enabled: false`):
   dev serverni keshlab qo'yadigan worker — hech kim tushuntirib
   bera olmaydigan eski bundle bilan o'tadigan yarim kun.
+  · Yangilanish har **soatda** ham tekshiriladi (`registration.update()`):
+  brauzer navigatsiyada tekshiradi, lekin LMS'da ilovani kun bo'yi ochiq
+  qoldirish — odatiy holat.
   · `registerPwa()` **mount'dan keyin** chaqiriladi va xatosi
   yutiladi: worker ro'yxatga olinmasa (private rejim, oddiy http)
   ilova aynan shu funksiya paydo bo'lishidan oldingi holatda ishlaydi —
@@ -3058,13 +3061,36 @@
   · **Chetlanish:** `vite-plugin-pwa` ning `generateSW` rejimi
   ishlatilmadi (yuqoridagi apostrof sababi) — plagin faqat manifest
   injektori sifatida ishlatiladi.
-  · **Diqqat (prod):** Cloudflare `.js` ni o'z standarti bilan
-  keshlaydi, ya'ni `/sw.js` ham eskisi bilan berilishi mumkin — bu
-  yangi versiyaning yetib borishini kechiktiradi (ilova ishlashdan
-  to'xtamaydi). To'g'ri yechim nginx tomonda `location = /sw.js`
-  uchun `Cache-Control: no-cache` — bu foydalanuvchining sudo'sini
-  talab qiladi, shuning uchun deploydan keyin real sarlavhalar
-  o'lchandi va natija DAVOM.md ga yozildi.
+  · **Prodda o'lchangan va tuzatilgan ikkita narsa.**
+  (1) nginx `.webmanifest` uchun MIME turini bilmaydi va manifestni
+  `application/octet-stream` deb bergan — brauzer bunday manifestni rad
+  etishga haqli, va alomat "ilova o'rnatilmaydi", bizning
+  jurnalimizda esa **hech narsa yo'q**. Endi fayl nomi
+  **`manifest.json`** (`manifestFilename`): `.json` ni har qanday
+  statik server allaqachon biladi.
+  (2) Cloudflare `.js` ni o'z standarti bilan **4 soat** keshlaydi
+  (`max-age=14400`, o'lchandi), ya'ni brauzerning `/sw.js` uchun
+  yangilanish tekshiruvi chekkadan javob oladi va yangi versiya shuncha
+  kechikishi mumkin. To'g'ri yechim — nginx'da `location = /sw.js` uchun
+  `Cache-Control: no-cache` (foydalanuvchining sudo'si kerak, DAVOM.md ga
+  yozildi).
+  · **Kuzatilgan xatti-harakat (brauzer probe topdi):** avval o'sha
+  chekka keshini chetlab o'tish uchun worker URL'iga build shtampi
+  qo'yilgan edi (`/sw.js?v=<build>`). Natija: yangilanish olingandan
+  keyin sahifa yangi build'ga qayta yuklanadi, u **boshqa shtampli** URL
+  ni ro'yxatga oladi, brauzer esa **o'zgargan skript URL'ini yangi
+  versiya deb hisoblaydi** — va so'rov yana chiqadi. Ya'ni har deploydan
+  keyin **tugamaydigan "yangi versiya" halqasi**. Endi URL barqaror
+  (`/sw.js`), va probe buni qadab qo'ydi: yangilanish olingandan keyin
+  so'rov **qaytib chiqmaydi**.
+  · **Kuzatilgan xatti-harakat (2):** `workbox-window` ning
+  `messageSkipWaiting()` yangilanish **brauzer** tomonidan topilganda
+  (bizning `update()` chaqirig'imiz emas) **jimgina hech narsa
+  qilmaydi** — so'rov chiqadi, tugma bosiladi, hech narsa bo'lmaydi va
+  hech qayerda xato yo'q. Endi kutayotgan worker'ga xabar **to'g'ridan
+  to'g'ri** yuboriladi (4 qator), ya'ni yangilanish qanday topilganidan
+  qat'i nazar ishlaydi, va `workbox-window` mijoz bundle'idan butunlay
+  chiqdi.
 - [ ] **12.2** Oflayn kontent — IndexedDB, "oflayn saqlash"
 - [ ] **12.3** Oflayn sinxronizatsiya — `clientEventId` unique indeks,
   Background Sync

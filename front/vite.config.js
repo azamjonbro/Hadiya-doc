@@ -36,6 +36,19 @@ export default defineConfig({
       strategies: 'injectManifest',
       srcDir: 'src',
       filename: 'sw.js',
+      /**
+       * `manifest.json`, not the default `manifest.webmanifest`.
+       *
+       * nginx on the SPA host has no MIME type for `.webmanifest`, so it
+       * served the manifest as `application/octet-stream` — which browsers
+       * are entitled to refuse, and the symptom is an app that simply
+       * cannot be installed with nothing in any log of ours. `.json` is a
+       * type every static server already knows.
+       */
+      manifestFilename: 'manifest.json',
+      // The registration is ours (src/composables/usePwaUpdate.js), so it
+      // can carry the version stamp above.
+      injectRegister: false,
       injectManifest: {
         globPatterns: ['**/*.{js,css,html,woff2}'],
         /**

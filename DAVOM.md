@@ -89,6 +89,20 @@ berilishi mumkin). Yangilanish **so'rab** olinadi, avtomatik emas —
 vaqti chegaralangan test o'rtasida ilovani almashtirish yo'qolgan
 urinish. **Keyingi band — 12.2 (oflayn kontent: IndexedDB).**
 
+**Foydalanuvchidan bitta nginx qatori kerak (12.1):** Cloudflare `.js` ni
+4 soat keshlaydi, shu sababli yangi versiya ochiq turgan brauzerlarga
+shuncha kechikib boradi. Tuzatish (sudo kerak):
+
+```nginx
+# spring.sds-max.uz server bloki ichida
+location = /sw.js {
+  add_header Cache-Control "no-cache, must-revalidate";
+  try_files $uri =404;
+}
+```
+
+Kechikish xato emas, kutish — ilova ishlashdan to'xtamaydi.
+
 **⚠️ AI hech qayerda haqiqiy API bilan sinalmagan:** `ANTHROPIC_API_KEY`
 na lokalda, na serverda sozlanmagan (`env` da bo'sh sukut). Kod stub bilan
 sinalgan (rad javobi va kesilgan javob shakllari ham). Prodda AI ishlashi
