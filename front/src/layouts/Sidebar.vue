@@ -46,11 +46,12 @@ function isActive(path) {
         v-for="item in workspace"
         :key="item.name"
         :to="item.path"
-        class="group mb-0.5 flex items-center gap-3 rounded-md px-2.5 py-2 text-small font-medium transition-default"
-        :class="isActive(item.path) ? 'bg-primary-subtle text-primary' : 'text-ink-muted hover:bg-surface-2 hover:text-ink'"
+        class="relative group mb-1 flex items-center gap-3 px-3 py-2.5 text-small font-medium transition-default overflow-hidden"
+        :class="isActive(item.path) ? 'bg-primary/10 text-primary rounded-md' : 'text-ink-muted hover:bg-surface-2 hover:text-ink rounded-md'"
       >
+        <div v-if="isActive(item.path)" class="absolute left-0 top-0 bottom-0 w-1 bg-primary rounded-r-md"></div>
         <span class="relative shrink-0">
-          <Icon :name="item.icon" size="18" />
+          <Icon :name="item.icon" size="20" />
           <span
             v-if="item.name === 'chat' && chat.unreadTotal > 0"
             class="absolute -right-1.5 -top-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-danger px-1 text-[10px] font-semibold leading-none text-white"
@@ -58,10 +59,10 @@ function isActive(path) {
             {{ chat.unreadTotal > 99 ? '99+' : chat.unreadTotal }}
           </span>
         </span>
-        <span v-if="!ui.sidebarCollapsed" class="truncate">{{ t(item.labelKey) }}</span>
+        <span v-if="!ui.sidebarCollapsed" class="truncate font-semibold">{{ t(item.labelKey) }}</span>
       </router-link>
 
-      <p v-if="!ui.sidebarCollapsed" class="px-2.5 pb-1.5 pt-5 text-caption font-semibold uppercase tracking-widest text-ink-faint">
+      <p v-if="!ui.sidebarCollapsed" class="px-3 pb-1.5 pt-6 text-[11px] font-bold uppercase tracking-widest text-ink-faint">
         {{ t('nav.groupSystem') }}
       </p>
       <div v-else class="my-3 border-t border-border" />
@@ -69,11 +70,12 @@ function isActive(path) {
         v-for="item in system"
         :key="item.name"
         :to="item.path"
-        class="group mb-0.5 flex items-center gap-3 rounded-md px-2.5 py-2 text-small font-medium transition-default"
-        :class="isActive(item.path) ? 'bg-primary-subtle text-primary' : 'text-ink-muted hover:bg-surface-2 hover:text-ink'"
+        class="relative group mb-1 flex items-center gap-3 px-3 py-2.5 text-small font-medium transition-default overflow-hidden"
+        :class="isActive(item.path) ? 'bg-primary/10 text-primary rounded-md' : 'text-ink-muted hover:bg-surface-2 hover:text-ink rounded-md'"
       >
-        <Icon :name="item.icon" size="18" />
-        <span v-if="!ui.sidebarCollapsed" class="truncate">{{ t(item.labelKey) }}</span>
+        <div v-if="isActive(item.path)" class="absolute left-0 top-0 bottom-0 w-1 bg-primary rounded-r-md"></div>
+        <Icon :name="item.icon" size="20" />
+        <span v-if="!ui.sidebarCollapsed" class="truncate font-semibold">{{ t(item.labelKey) }}</span>
       </router-link>
     </nav>
 
