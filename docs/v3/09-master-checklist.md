@@ -2388,8 +2388,152 @@
   — bitta bo'lim bilan cheklash scope'lar ustiga ko'rinmas ikkinchi filtr
   qo'shardi, va integratsiyaning jimgina xodimlarning bir qismini olishi
   rad etilishidan yomonroq.
-- [ ] **11.2** `models/webhook.model.js`, `webhookDelivery.model.js`,
+- [x] **11.2** `models/webhook.model.js`, `webhookDelivery.model.js`,
   `jobs/webhookQueue.js` (HMAC + 5× retry)
+  · Bajarildi — 11.1 ning **ikkinchi yarmi**. Kalit boshqa tizimga savol
+  berish imkonini beradi; webhook esa **savol berish shart emasligini**
+  bildiradi. Bitta tugallanishni bir soat ichida payqash uchun HR tizimi
+  `/api/public/v1/assignments?completedSince=` ni har daqiqada so'rashi
+  kerak — ikki tomonning ham vaqti shunga ketadi, tugallanish esa yana bir
+  daqiqa kechikib keladi.
+  · **Voqealar katalogi yopiq** (`webhookEvents.js`, 6 ta):
+  `user.created`, `user.deactivated`, `assignment.created`,
+  `course.completed`, `course.reopened`, `certificate.issued`. Ro'yxatdagi nom — **majburiyat**;
+  ro'yxatda yo'q nom obuna yaratilganda **rad etiladi**, jimgina hech
+  qachon yetkazilmaydigan qilib qoldirilmaydi. **Wildcard yo'q**:
+  "hammasiga" obuna bo'lgan endpoint o'zi yozilgandan **keyin** o'ylab
+  topilgan voqealarni ola boshlaydi, va bu haqda birinchi xabar — qabul
+  qiluvchining tanimagan payload'da yiqilishi.
+  · **Payload'lar ham alohida yozilgan** (11.1 dagi sabab bilan). Bitta
+  qo'shimcha qoida: **JSHSHIR va e-mail hech qachon yuborilmaydi.**
+  Ommaviy API'da kalitga aniq ruxsat berilishi mumkin, chunki u yerda
+  qabul qiluvchi autentifikatsiyadan o'tib, **aynan o'sha yozuvni**
+  so'ragan. Webhook — teskari yo'nalish: platforma o'zi, boshqa odamning
+  TLS'i orqali, oradagi har bir uzelda jurnalga tushishi mumkin bo'lgan
+  manzilga **surib beradi**. Identifikator kerak bo'lsa — kalit bilan
+  o'qib olinadi.
+  · **Imzo: `t=<unix>,v1=<hex>`** — `HMAC-SHA256(secret, "${t}.${body}")`
+  (Stripe/GitHub shakli, chunki qabul qiluvchida ehtimol allaqachon shu
+  uchun kod bor). **Vaqt tamg'asi imzo ichida** — ataylab: faqat tanani
+  imzolash **muddatsiz haqiqiy token** yasaydi, ya'ni bitta yetkazishni
+  ushlagan odam uni istalgan vaqtda qayta yuborishi mumkin va imzo
+  o'tadi. Tamg'a imzolangani uchun eskirganini rad etish mumkin, uni
+  o'zgartirish esa MAC'ni buzadi (test: 6 daqiqadan keyin o'tmaydi va
+  soxta tamg'a ham o'tmaydi). `v1=` — versiya markeri: algoritm
+  o'zgarishi kerak bo'lsa, bir reliz davomida `v1` va `v2` birga
+  yuboriladi. Solishtirish `timingSafeEqual` bilan: birinchi xato baytda
+  to'xtaydigan taqqoslash soxta MAC'ning **qancha qismi to'g'ri**
+  bo'lganini oshkor qiladi, bu esa qolganini bayt-bayt qurishga yetadi.
+  · **Sir (`secret`) ochiq matnda saqlanadi** — kalitning hash'idan
+  farqli, va assimetriya ayni maqsad: kalitni biz **tekshiramiz** (hash
+  yetarli va aniq yaxshiroq), imzoni esa **o'zimiz yasaymiz** — HMAC har
+  yuborishda sirning o'zini talab qiladi. Zararni cheklaydigan narsa
+  boshqa: bu sir bu yerda **hech narsaga ruxsat bermaydi** — oqib ketsa,
+  u bilan **qabul qiluvchiga** soxta yetkazish yuborish mumkin, bizdan
+  biror narsa o'qish emas. Bir marta ko'rsatiladi va **o'z joyida
+  aylantiriladi** (`rotate-secret`): voqealar, URL va yetkazish tarixi
+  endpoint'ga tegishli, sirga emas.
+  · **5 urinish, 10 sekunddan boshlab eksponensial** (10s, 40s, ~2,5m,
+  ~10m, ~40m). Qayta urinish shart emas emas: qabul qiluvchi — boshqa
+  odamning serveri, va eng ko'p uchraydigan xato — biz chaqirgan paytda
+  ketayotgan deploy. Lekin **abadiy** urinish ham xato: kechagi voqea
+  ertaga yetib borsa, qabul qiluvchi uchun bu ko'pincha umuman
+  yetmaganidan yomonroq, chunki uning holati allaqachon oldinga ketgan.
+  · **`webhookDelivery` yozuvi yuborishdan OLDIN yoziladi** — yozuvning
+  butun qiymati shu tartibda: HTTP chaqiruvi umuman qaytmasa ham,
+  yetkazish PENDING sifatida **bor**, ya'ni "urindik, nimadir bo'ldi"
+  bilan "hech urinmadik" farqlanadi. Keyin yozilgan jurnal esa faqat
+  jarayon omon qolgan xatolarni yozadi. Yozuv shu bilan birga webhook
+  keltiradigan yagona qiziq support savoliga — "bizga kelmadi" —
+  javob: qabul qiluvchi **qaytargan status** va (qisqartirilgan) tanasi
+  sabab bo'ladi. TTL 30 kun, Mongo'ning `expireAfterSeconds` bilan: hech
+  kim eslab turishi kerak bo'lgan tozalash skripti yo'q.
+  · **SSRF — bu yerdagi eng jiddiy xavf** va ikki darvoza bilan yopilgan
+  (`webhookTarget.js`): URL'ni operator beradi, so'rovni esa platforma
+  **tarmoq ichidan** yuboradi va yo'lda **imzolaydi** — ya'ni tekkan
+  joyi haqiqiy chaqiruvni ko'radi. Bu serverda "ichkari" degani yana
+  olti qo'shni sayt, Redis, MinIO va Mongo. (1) obuna yaratilganda
+  **literal tekshiruv**: faqat https (prod'da), loopback/10./172.16-31./
+  192.168./169.254 (bulut metadata!)/100.64-127. (Tailscale)/`::1`/`fc00::`
+  va URL'dagi parol rad etiladi; (2) **har yuborishdan oldin DNS**, chunki
+  kecha ochiq hal bo'lgan nom bugun 127.0.0.1 ga hal bo'lishi mumkin —
+  faqat yaratilganda tekshirish operator o'zi boshqaradigan DNS yozuvi
+  bilan chetlab o'tiladi. **Barcha** manzillar tekshiriladi, birinchisi
+  emas: bittasi ochiq, ikkinchisi ichki bo'lgan javob — tasodif emas, eng
+  qiziq holat. `redirect: 'manual'` — 3xx **muvaffaqiyat emas**: imzolangan
+  so'rovni hech kim tasdiqlamagan URL'ga olib borish bu darvozalarni
+  bekor qiladi. To'liq himoya emas (DNS-rebinding oynasi qoladi —
+  yopish uchun hal qilingan IP'ni **socket'ga qadash** kerak), lekin narxi
+  "URL yozish"dan "poygada g'olib chiqish"ga ko'tariladi, endpoint esa
+  baribir faqat SUPERADMIN qo'lida.
+  · **20 marta ketma-ket muvaffaqiyatsizlikdan keyin endpoint o'zini
+  o'chiradi** va sababini yozadi (UI da matn bilan ko'rinadi): bir hafta
+  o'lik qabul qiluvchi uchun har voqea 5 ta befoyda urinish qo'shadi va
+  jurnal ular bilan to'ladi. Faqat **oxirgi** urinish hisoblanadi (har
+  urinish hisoblansa chegara 4 voqeada yetardi), muvaffaqiyat esa
+  hisoblagichni **nolga tashlaydi** (kamaytirmaydi: ishlaydigan endpoint
+  "kamroq buzuq" emas). Qayta yoqish hisoblagichni tozalaydi — aks holda
+  tuzatilgan endpoint birinchi voqeada yana o'chib qolardi.
+  · **Qayta yuborish (`replay`) — yangi yozuv**, `replayOf` bilan: xato
+  ham tarixning bir qismi ("urindik, o'chgan edi, seshanbada qayta
+  yubordik" — support savolining javobi), birinchi urinishni ustidan
+  yozish esa uni o'chiradi. Payload **ko'chiriladi, qayta qurilmaydi**:
+  qayta yuborishning maqsadi — qabul qiluvchi **o'tkazib yuborgan
+  narsani** yuborish, bugungi ma'lumotdan qurilgan payload esa o'sha
+  id bilan **boshqa voqea** bo'lardi. Yana `ping` (katalogda yo'q,
+  ataylab: unga hech kim obuna bo'lmaydi) — integratsiyaning birinchi
+  savoli "manzil ishlaydimi, imzo tekshiriladimi", va bunga halol javob
+  — bir narsa yuborish.
+  · **Konvert har voqeada bir xil**: `{ id, event, occurredAt, data }`.
+  `id` — yetkazish id'si, ya'ni **dublikatni ajratish kaliti**: webhook
+  konstruksiya bo'yicha *at-least-once* (bizga yetib kelmagan 200 qayta
+  yuboriladi), shuning uchun qabul qiluvchiga dublikatni qanday ajratishni
+  **aytish** — buni yashirishdan arzon. `occurredAt` — voqea **bo'lgan**
+  vaqt, biz yuborgan vaqt emas: to'rtinchi urinishda bir soatdan keyin
+  o'tgan yetkazish bir soatlik voqeaga o'xshamasligi kerak.
+  · Har endpoint uchun **alohida yozuv** (umumiy emas): ikki qabul
+  qiluvchi mustaqil yiqiladi, umumiy urinish hisoblagichi esa allaqachon
+  biriga yetib borgan yetkazishni qayta yuborardi.
+  · `emitWebhookEvent` **hech qachon exception tashlamaydi va so'rov
+  yo'lida natijasi kutilmaydi**: webhook — kimningdir haqiqiy ishining
+  yon effekti, qabul qiluvchining DNS xatosi esa o'quvchining kurs
+  tugatishini yiqitmasligi kerak. Xato jurnalga va yetkazish yozuviga
+  tushadi, javobga emas. Worker'da concurrency **10** — bu yerdagi eng
+  yuqori: har ish bitta tashqi HTTP chaqiruvi va vaqtining hammasini
+  **kutishda** o'tkazadi, chegara CPU yoki xotira emas, socket; bitta
+  sekin qabul qiluvchi boshqa endpointlarning voqealarini ushlab
+  turmasligi kerak.
+  · Boshqarish — **SUPERADMIN roli** (11.1 dagi sabab, bir pog'ona
+  kuchliroq): obuna platformani kompaniya ma'lumotini **tashqariga**,
+  operator tanlagan manzilga yuborishga majbur qiladi, so'rov esa tarmoq
+  ichidan chiqadi.
+  · **Tekshirildi** — 25 test (`test/webhooks.test.js`; qabul qiluvchi —
+  loopback'dagi **haqiqiy HTTP server**, mock'langan `fetch` emas: imzo,
+  sarlavhalar va timeout faqat uchidan-uchiga ma'noga ega) + **HTTP orqali
+  haqiqiy worker bilan**: katalog, SSRF rad etishlari (`169.254.169.254`,
+  `127.0.0.1`, `[::1]`, http, URL'dagi parol), obuna yaratish (sir bir
+  marta), `ping` → qabul qiluvchi **imzoni o'zi tekshirdi va o'tdi**,
+  haqiqiy `user.created` / `assignment.created` (odam yaratildi, kurs
+  tayinlandi), o'quvchi darsni tugatgach **haqiqiy `course.completed`**
+  (`completionPercent: 100`), `user.deactivated`, 500 qaytaradigan qabul
+  qiluvchida **haqiqiy qayta urinish** (qabul qiluvchi `attempt: 1` va
+  `2` ni ko'rdi, yozuv PENDING/HTTP 500 va uning matni bilan), tuzalgach
+  `replay` (`replayOf` bilan, alohida id), sir aylantirilgandan keyin
+  eski sir bilan tekshiruv **o'tmadi**, pauzaga qo'yilgan endpointga
+  hech narsa yuborilmadi, `limit=9999` da 400. Sinov ma'lumotlari
+  (obunalar, yetkazishlar, odam, kurs, dars, audit) tozalandi.
+  · **Kuzatilgan xatti-harakat:** qayta urinish va qo'lda qayta yuborish
+  **birga ishlab**, qabul qiluvchi bitta voqeani ikki marta oldi (BullMQ
+  3-urinishi qabul qiluvchi tuzalgandan keyin o'tdi, biz esa allaqachon
+  `replay` qilgan edik). Bu — *at-least-once*ning aynan o'zi, va
+  konvertdagi `id` shu holat uchun bor.
+  · **Chetlanish:** obuna **o'qish** voqealarini yubormaydi (kim nimani
+  ochdi) — bu telemetriya oqimi, webhook emas, va uni obuna qilib
+  qo'yish qabul qiluvchini kunda million so'rov bilan ko'madi.
+  · **Chetlanish:** `WEBHOOK_ALLOW_PRIVATE_TARGETS` sozlanmagan bo'lsa
+  `NODE_ENV` ga qarab ishlaydi (dev/test'da yoniq, prod'da o'chiq):
+  ishlab chiqishda qabul qiluvchi loopback'da bo'ladi, prod'da esa
+  ochiq qo'yish — kimdir yozib qo'yishi kerak bo'lgan qaror.
 - [ ] **11.3** OpenAPI — `zod-to-openapi`, `GET /openapi.json`, `/api/docs`
 - [ ] **11.4** OIDC SSO — `services/integrations/oidcClient.js`, JIT provisioning,
   claim → rol/bo'lim mapping

@@ -401,23 +401,23 @@
 | Capability | iSp | Bizda | Status | Sc | Evidence | Gap |
 |---|:--:|---|:--:|:--:|---|---|
 | REST API (ichki) | ✓ | Bor, layered, `ApiError` envelope | FULL | 100 | `routes/v1/index.js` (34 router) | — |
-| **Tashqi REST API** | ✓ | Bor — `/api/public/v1`, faqat o'qish, versiyalangan payload'lar | PARTIAL | 75 | `routes/public/v1.routes.js` | Yozish yo'q; webhook 11.2 da |
+| **Tashqi REST API** | ✓ | Bor — `/api/public/v1` (o'qish) + webhook'lar (push) | PARTIAL | 85 | `routes/public/v1.routes.js`, `routes/v1/webhooks.routes.js` | Yozish yo'q — ataylab |
 | SOAP API | ✓ | Yo'q | N/A | — | — | §24 — eskirgan protokol |
 | API kalitlari + scope | ✓ (implicit) | Bor — argon2 hash, scope'lar, per-key limit, PII bayrog'i | FULL | 100 | `apiKey.service.js`, `apiKeyAuth.middleware.js` | — |
 | Rate limiting | ? | **11 alohida limiter** | OURS+ | 100 | `middlewares/*RateLimit*` | — |
 | OpenAPI hujjati | ? | Qo'lda `.md` | PARTIAL | 25 | `docs/api-contract.md` | `zod-to-openapi` |
 | Idempotency | ? | Yo'q | VERIFY | 0 | — | `Idempotency-Key` |
-| **Webhooks** | ? | Yo'q | VERIFY | 0 | — | Manba tasdiqlanmagan |
+| **Webhooks** | ? | Bor — 6 voqea, HMAC (`t=…,v1=…`), 5× retry, yetkazish jurnali + replay, SSRF darvozalari | FULL | 100 | `webhook.service.js`, `webhookQueue.js` | — |
 | **SSO (JWT)** | ✓ | JWT ichkarida ishlatiladi, SSO sifatida emas | NONE | 0 | `utils/tokens.js` | `POST /auth/sso/jwt` |
 | OIDC / Entra ID | ✓ | Yo'q | NONE | 0 | — | OIDC client |
 | SAML | ? | Yo'q | VERIFY | 0 | — | Manba tasdiqlanmagan |
 | Avtomatik provisioning (JIT) | ✓ | Yo'q | NONE | 0 | — | — |
 | HR tizimi (BambooHR/Salesforce) | ✓ | Yo'q | NONE | 0 | — | XLSX import + API |
 | Zoom / Meet / Teams | ✓ | Yo'q | NONE | 0 | — | D39 |
-| Albato / Zapier tipidagi | ✓ | Yo'q | NONE | 0 | — | Public API'dan keyin |
+| Albato / Zapier tipidagi | ✓ | Webhook + ommaviy API bilan ulanadi, tayyor konnektor yo'q | PARTIAL | 50 | `webhook.service.js` | Konnektor katalogi |
 | Storage provider abstraksiyasi | ? | Bor (Local + S3) | OURS+ | 100 | `storage/S3StorageProvider.js` | — |
 | Domain alias | ✓ | Nginx darajasida qo'lda | PARTIAL | 50 | — | — |
-| **D70–D73 jami: 16 capability (+1 N/A)** | | | **FULL 2 · OURS+ 2 · PARTIAL 3 · NONE 6 · VERIFY 3 · N/A 1** | **34** | | |
+| **D70–D73 jami: 16 capability (+1 N/A)** | | | **FULL 3 · OURS+ 2 · PARTIAL 4 · NONE 5 · VERIFY 2 · N/A 1** | **44** | | |
 
 ## D74–D79 · SECURITY / AUDIT / ADMIN / BRANDING / MEDIA / FILES
 

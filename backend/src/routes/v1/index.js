@@ -51,6 +51,7 @@ import { settingsRouter } from './settings.routes.js'
 import { mediaRouter } from './media.routes.js'
 import { aiGenerationRouter } from './aiGeneration.routes.js'
 import { apiKeysRouter } from './apiKeys.routes.js'
+import { webhooksRouter } from './webhooks.routes.js'
 
 export const v1Router = Router()
 
@@ -124,3 +125,4 @@ v1Router.use('/media', mediaRouter)
 v1Router.use('/ai', aiGenerationRouter)
 // Managing the keys that open /api/public/v1 (11.1).
 v1Router.use('/api-keys', apiKeysRouter)
+v1Router.use('/webhooks', webhooksRouter)

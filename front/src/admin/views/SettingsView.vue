@@ -12,6 +12,7 @@ import AttentionPolicyForm from '@/admin/components/AttentionPolicyForm.vue'
 import FacePolicyForm from '@/admin/components/FacePolicyForm.vue'
 import AiSettingsCard from '@/admin/components/AiSettingsCard.vue'
 import ApiKeysCard from '@/admin/components/ApiKeysCard.vue'
+import WebhooksCard from '@/admin/components/WebhooksCard.vue'
 
 const { t, locale } = useI18n()
 const auth = useAuthStore()
@@ -102,6 +103,7 @@ function onLocaleChange(code) {
 
       <!-- API keys (11.1): the same authority as the AI budget above. -->
       <ApiKeysCard v-if="auth.isSuperAdmin" />
+      <WebhooksCard v-if="auth.isSuperAdmin" />
 
           <AttentionPolicyForm :readonly="!auth.hasPermission('course:update')" />
         </div>
