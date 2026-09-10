@@ -23,7 +23,7 @@ function onLocaleChange(code) {
 </script>
 
 <template>
-  <div class="mx-auto max-w-2xl px-6 py-8">
+  <div class="mx-auto w-full max-w-[1440px] px-6 lg:px-8 py-8">
     <h1 class="text-h1 text-ink">{{ t('settings.title') }}</h1>
 
     <!-- Everyone who can reach this page came from the employee side and can

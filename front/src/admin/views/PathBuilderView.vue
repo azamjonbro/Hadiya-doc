@@ -188,7 +188,7 @@ onMounted(async () => {
 </script>
 
 <template>
-  <div class="mx-auto max-w-4xl px-6 py-8">
+  <div class="mx-auto w-full max-w-[1440px] px-6 lg:px-8 py-8">
     <button type="button" class="flex items-center gap-1.5 text-small text-ink-muted hover:text-ink" @click="router.push('/bos/paths')">
       <Icon name="chevron-left" size="16" />
       {{ t('paths.adminTitle') }}
