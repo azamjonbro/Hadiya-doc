@@ -469,7 +469,7 @@
 | Trash avtomatik tozalash | ? | Bor | OURS+ | 100 | `trash.service.js` (`listExpired`) | — |
 | Workflow qoida dvigateli | ✓ (smart filters) | Yo'q — har biri qo'lda kodlangan | NONE | 0 | — | `AutomationRule` |
 | Tavsiyalar | ? | Faqat `continueLearning` | PARTIAL | 25 | `HomeView.vue` | `recommendation.service` |
-| **SCORM 1.2 / 2004 import** | ✓ | Yo'q | NONE | 0 | — | Runtime + `ScormState` |
+| **SCORM 1.2 / 2004 import** | ✓ | Bor — import, manifest o'qish, runtime API (1.2 va 2004), CMI holati, suspend/resume, mastery | PARTIAL | 75 | `extractScorm.js`, `scormPlayerPage.js`, `scormCmi.js` | Sequencing va ko'p-SCO yo'q |
 | **xAPI** | ✓ | Yo'q | NONE | 0 | — | LRS endpoint |
 | cmi5 | ? | Yo'q | N/A | — | — | §24 |
 | PowerPoint add-in (desktop) | ✓ (Suite) | Yo'q | N/A | — | — | §24 |
@@ -479,4 +479,4 @@
 | E-commerce | ? | Yo'q | N/A | — | — | §24 |
 | Multi-tenant (organization izolyatsiyasi) | ✓ | Yo'q | N/A | — | — | §24 |
 | 24/7 support + SLA | ✓ | — | N/A | — | — | Mahsulot emas, xizmat |
-| **D80–D95 jami: 24 capability (+5 N/A)** | | | **OURS+ 5 · PARTIAL 4 · NONE 5 · VERIFY 5 · N/A 5** | **33** | | |
+| **D80–D95 jami: 19 capability** | | | **OURS+ 5 · PARTIAL 5 · NONE 4 · VERIFY 5** | **37** | | |

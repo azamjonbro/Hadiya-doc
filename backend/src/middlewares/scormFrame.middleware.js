@@ -34,7 +34,12 @@ import { env } from '../config/env.js'
  * CSRF cookie the refresh endpoint checks — was closed in cookies.js.
  */
 export function scormFrameHeaders(req, res, next) {
-  const ancestors = env.allowedOrigins.length ? env.allowedOrigins.join(' ') : "'self'"
+  // `'self'` as well as the app origins, and not only for tidiness: the
+  // package's own files are framed by the launcher page, which is on *this*
+  // origin. Leaving it out blocks the inner frame — the browser refuses the
+  // navigation and the launcher is left holding an empty iframe, which is
+  // exactly how this was found.
+  const ancestors = ["'self'", ...env.allowedOrigins].join(' ')
 
   res.removeHeader('X-Frame-Options')
   res.setHeader(
