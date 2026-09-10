@@ -42,7 +42,50 @@ export async function probeVideo(filePath) {
     durationSeconds: Math.round(duration),
     width: videoStream.width ?? 0,
     height: videoStream.height ?? 0,
+    // Subtitle streams carried inside the container (9.4). An .mkv or an
+    // .mp4 from a recording tool routinely has them, and they are the
+    // cheapest captions the platform will ever get: already timed, already
+    // in the right language, already in the file.
+    subtitleStreams: (data.streams ?? [])
+      .filter((stream) => stream.codec_type === 'subtitle')
+      .map((stream, order) => ({
+        // `-map 0:s:N` counts subtitle streams, not streams — so the
+        // position among the subtitle streams is what ffmpeg needs, not
+        // the absolute stream index.
+        subtitleIndex: order,
+        codec: stream.codec_name ?? '',
+        language: stream.tags?.language ?? '',
+        title: stream.tags?.title ?? '',
+      })),
   }
+}
+
+/**
+ * Which subtitle codecs can become WebVTT.
+ *
+ * Text formats convert; bitmap ones (DVD, Blu-ray and the VobSub family)
+ * are pictures of text and would need OCR. Skipping them with a log beats
+ * failing the whole video over a track nobody asked for.
+ */
+const TEXT_SUBTITLE_CODECS = new Set(['subrip', 'srt', 'webvtt', 'mov_text', 'ass', 'ssa', 'text'])
+
+export function isConvertibleSubtitle(codec) {
+  return TEXT_SUBTITLE_CODECS.has(String(codec ?? '').toLowerCase())
+}
+
+/** Pulls one embedded subtitle stream out as a WebVTT file. */
+export async function extractSubtitleTrack({ inputPath, subtitleIndex, outputPath }) {
+  await runCommand('ffmpeg', [
+    '-y',
+    '-i',
+    inputPath,
+    '-map',
+    `0:s:${subtitleIndex}`,
+    '-c:s',
+    'webvtt',
+    outputPath,
+  ])
+  return outputPath
 }
 
 export async function transcodeToHls({ inputPath, outputDir, height, segmentSeconds = 6 }) {

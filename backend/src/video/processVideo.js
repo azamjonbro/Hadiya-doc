@@ -7,7 +7,8 @@ import { videoRepository } from '../repositories/video.repository.js'
 import { S3StorageProvider } from '../storage/S3StorageProvider.js'
 import { env } from '../config/env.js'
 import { logger } from '../config/logger.js'
-import { probeVideo, transcodeToHls, extractThumbnail } from './ffmpegUtils.js'
+import { probeVideo, transcodeToHls, extractThumbnail, extractSubtitleTrack, isConvertibleSubtitle } from './ffmpegUtils.js'
+import { countCues } from '../services/videos/subtitleFormat.js'
 
 const originalsStorage = new S3StorageProvider(env.S3_BUCKET_ORIGINALS)
 const processedStorage = new S3StorageProvider(env.S3_BUCKET_PROCESSED)
@@ -115,6 +116,55 @@ export async function processVideo(videoId) {
       'application/vnd.apple.mpegurl'
     )
 
+    // Captions that came inside the file (9.4).
+    //
+    // Extracted after the renditions rather than before, so a broken
+    // subtitle stream cannot cost the video its transcode — the pipeline
+    // has already done the expensive part by here, and a caption failure
+    // is logged and dropped rather than raised.
+    const subtitles = []
+    for (const stream of metadata.subtitleStreams ?? []) {
+      if (!isConvertibleSubtitle(stream.codec)) {
+        logger.info('Skipped a bitmap subtitle stream — it would need OCR', {
+          videoId,
+          codec: stream.codec,
+        })
+        continue
+      }
+      // `und` is what a container says when nobody set a language. Kept as
+      // a real value rather than guessed at: an author can rename the
+      // track, and mislabelling Uzbek as Russian is worse than "unknown".
+      const lang = (stream.language || 'und').toLowerCase().slice(0, 8)
+      const vttPath = path.join(workDir, `sub-${stream.subtitleIndex}.vtt`)
+      try {
+        await extractSubtitleTrack({ inputPath: originalPath, subtitleIndex: stream.subtitleIndex, outputPath: vttPath })
+        const body = await fs.readFile(vttPath)
+        const cueCount = countCues(body.toString())
+        if (!cueCount) {
+          logger.info('Skipped an empty embedded subtitle track', { videoId, lang })
+          continue
+        }
+        const key = `${remotePrefix}/subtitles/${stream.subtitleIndex}-${lang}.vtt`
+        await processedStorage.putObject(key, body, 'text/vtt; charset=utf-8')
+        subtitles.push({
+          lang,
+          label: stream.title || '',
+          key,
+          source: 'EMBEDDED',
+          // The first embedded track shows by default; a video with
+          // captions nobody has to find is the point of doing this at all.
+          isDefault: subtitles.length === 0,
+          cueCount,
+        })
+      } catch (error) {
+        logger.warn('Could not extract an embedded subtitle track', {
+          videoId,
+          subtitleIndex: stream.subtitleIndex,
+          error: error.message,
+        })
+      }
+    }
+
     const thumbnailPath = path.join(workDir, 'thumbnail.jpg')
     await extractThumbnail({
       inputPath: originalPath,
@@ -132,9 +182,16 @@ export async function processVideo(videoId) {
       qualities: producedQualities.map((q) => q.name),
       duration: metadata.durationSeconds,
       processingError: '',
+      // Only when the file had some: a re-process of a video whose
+      // captions were uploaded by hand must not wipe them.
+      ...(subtitles.length ? { subtitles } : {}),
     })
 
-    logger.info('Video processing finished', { videoId, qualities: producedQualities.map((q) => q.name) })
+    logger.info('Video processing finished', {
+      videoId,
+      qualities: producedQualities.map((q) => q.name),
+      subtitles: subtitles.length,
+    })
   } catch (error) {
     logger.error('Video processing failed', { videoId, error: error.message })
     await videoRepository.updateById(videoId, {

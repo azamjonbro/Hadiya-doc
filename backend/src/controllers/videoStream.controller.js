@@ -12,6 +12,16 @@ function extensionOf(filename) {
 }
 
 export const videoStreamController = {
+  subtitle: asyncHandler(async (req, res) => {
+    const { body, lang } = await videoStreamService.getSubtitle(req.params.videoId, req.params.trackId)
+    res.setHeader('Content-Type', 'text/vtt; charset=utf-8')
+    res.setHeader('Content-Language', lang)
+    // Private and short: the URL carries a token that expires, and a shared
+    // cache holding the body would outlive it.
+    res.setHeader('Cache-Control', 'private, max-age=300')
+    body.pipe(res)
+  }),
+
   masterManifest: asyncHandler(async (req, res) => {
     const content = await videoStreamService.getMasterManifest(req.params.videoId, req.query.token)
     res.setHeader('Content-Type', CONTENT_TYPE_BY_EXTENSION['.m3u8'])
