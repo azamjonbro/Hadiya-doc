@@ -6,6 +6,7 @@ import { errorMessage } from '../../utils/errorMessage.js'
 import { ApiError } from '../../utils/ApiError.js'
 import { aiBudgetService } from './aiBudget.service.js'
 import { aiCourseService } from './aiCourse.service.js'
+import { aiQuizService } from './aiQuiz.service.js'
 
 /**
  * Starting, running and reading generation jobs (10.1).
@@ -22,6 +23,7 @@ import { aiCourseService } from './aiCourse.service.js'
 // generator, which uses it in place of the model call.
 const RUNNERS = {
   COURSE_OUTLINE: (job, deps) => aiCourseService.run(job, deps),
+  QUIZ: (job, deps) => aiQuizService.run(job, deps),
 }
 
 function toPublicJob(job) {

@@ -36,8 +36,12 @@ import { hashPassword } from '../src/utils/hash.js'
 import { redactPii, PII_RULE_NAMES } from '../src/services/ai/piiRedact.js'
 import { extractSourceText } from '../src/services/ai/sourceExtract.service.js'
 import { aiGenerationService } from '../src/services/ai/aiGeneration.service.js'
+import { topicSourceText, AI_QUIZ_TYPES } from '../src/services/ai/aiQuiz.service.js'
+import { Question } from '../src/models/question.model.js'
+import { QuestionBank } from '../src/models/questionBank.model.js'
 import { aiBudgetService } from '../src/services/ai/aiBudget.service.js'
 import { settingsService } from '../src/services/settings/settings.service.js'
+import { PAYLOAD_SCHEMAS } from '../src/validators/question.validator.js'
 import { aiGenerationQueue } from '../src/jobs/aiGenerationQueue.js'
 import { redisConnection } from '../src/config/redis.js'
 
@@ -46,6 +50,7 @@ let author
 const userIds = []
 const courseIds = []
 const jobIds = []
+const bankIds = []
 
 const actor = () => ({ id: author._id.toString(), permissions: ['course:create', 'course:update'] })
 
@@ -122,6 +127,8 @@ describe('BLOK 10 · AI generation', () => {
   })
 
   after(async () => {
+    await Question.deleteMany({ bankId: { $in: bankIds } })
+    await QuestionBank.deleteMany({ _id: { $in: bankIds } })
     await AiGenerationJob.deleteMany({ requestedBy: { $in: userIds } })
     await Lesson.deleteMany({ courseId: { $in: courseIds } })
     await Topic.deleteMany({ courseId: { $in: courseIds } })
@@ -364,6 +371,174 @@ describe('BLOK 10 · AI generation', () => {
       await assert.rejects(() => aiGenerationService.create(actor(), { type: 'HAIKU', params: {} }), {
         code: 'AI_UNKNOWN_TYPE',
       })
+    })
+  })
+
+
+  describe('generating questions (10.4)', () => {
+    /** A module with two written lessons, which is the normal input. */
+    let quizSeq = 0
+    async function makeTopicWithLessons() {
+      quizSeq += 1
+      const course = await Course.create({
+        title: `Quiz source ${stamp}-${quizSeq}`,
+        slug: `quiz-source-${stamp}-${quizSeq}`,
+        status: 'PUBLISHED',
+        createdBy: author._id,
+      })
+      courseIds.push(course._id)
+      const topicRow = await Topic.create({
+        courseId: course._id,
+        title: 'Himoya vositalari',
+        slug: `quiz-topic-${stamp}-${quizSeq}`,
+        status: 'PUBLISHED',
+        createdBy: author._id,
+      })
+      await Lesson.create({
+        courseId: course._id,
+        topicId: topicRow._id,
+        title: 'Kaska',
+        blocks: [
+          { type: 'HEADING', text: 'Kaska', level: 2 },
+          { type: 'TEXT', text: '<p>Kaska <strong>har doim</strong> taqiladi. Telefon 901234567.</p>' },
+          { type: 'TABLE', rows: [['Vosita', 'Muddat'], ['Kaska', '2 yil']], hasHeader: true },
+        ],
+        createdBy: author._id,
+      })
+      return { course, topic: topicRow }
+    }
+
+    const QUESTIONS = {
+      questions: [
+        {
+          type: 'SINGLE_CHOICE',
+          text: 'Kaska qachon taqiladi?',
+          explanation: 'Darsda: har doim.',
+          difficulty: 'EASY',
+          options: [
+            { text: 'Har doim', isCorrect: true },
+            { text: 'Faqat yozda', isCorrect: false },
+          ],
+        },
+        { type: 'TRUE_FALSE', text: 'Kaska muddati 2 yil.', correct: true, explanation: 'Jadvalda.' },
+        { type: 'SHORT_ANSWER', text: 'Kaskaning muddati necha yil?', accepted: ['2', 'ikki'], explanation: 'Jadvalda.' },
+      ],
+    }
+
+    const stubQuiz = (payload = QUESTIONS) =>
+      async () => ({
+        data: payload,
+        usage: { model: 'claude-opus-5', inputTokens: 900, outputTokens: 600, cacheReadTokens: 0 },
+      })
+
+    test('the module’s own lessons become the source', async () => {
+      const { topic: topicRow } = await makeTopicWithLessons()
+      const source = await topicSourceText(topicRow._id)
+      // Prose, not markup: the model needs what the callout says, not that
+      // it was a callout.
+      assert.match(source, /Kaska har doim taqiladi/)
+      assert.doesNotMatch(source, /<strong>/)
+      // A table becomes rows a sentence can be built from.
+      assert.match(source, /Kaska \| 2 yil/)
+    })
+
+    test('questions land in a bank, with the payload shapes the validator wants', async () => {
+      const { course, topic: topicRow } = await makeTopicWithLessons()
+      const job = await aiGenerationService.create(actor(), {
+        type: 'QUIZ',
+        params: { topicId: topicRow._id.toString(), count: 3 },
+        topicId: topicRow._id,
+      })
+      jobIds.push(new mongoose.Types.ObjectId(job.id))
+      await aiGenerationService.run(job.id, { generate: stubQuiz() })
+
+      const finished = await AiGenerationJob.findById(job.id).lean()
+      assert.equal(finished.status, 'DONE')
+      bankIds.push(new mongoose.Types.ObjectId(finished.result.bankId))
+      assert.equal(finished.result.questions, 3)
+      // A bank, not a live quiz: unreviewed questions must not reach
+      // learners, and a bank is what gets reviewed and reused (4.1).
+      const bank = await QuestionBank.findById(finished.result.bankId).lean()
+      assert.match(bank.name, /Himoya vositalari/)
+      assert.deepEqual(bank.tags, ['ai'])
+
+      const questions = await Question.find({ bankId: bank._id }).lean()
+      const single = questions.find((question) => question.type === 'SINGLE_CHOICE')
+      assert.equal(single.payload.options.filter((option) => option.isCorrect).length, 1)
+      assert.equal(questions.find((question) => question.type === 'TRUE_FALSE').payload.correct, true)
+      assert.deepEqual(questions.find((question) => question.type === 'SHORT_ANSWER').payload.accepted, ['2', 'ikki'])
+      questions.forEach((question) => assert.ok(question.explanation, 'every question explains its answer'))
+      assert.ok(course)
+    })
+
+    test('a question the validator refuses is dropped, not stored', async () => {
+      const { topic: topicRow } = await makeTopicWithLessons()
+      const job = await aiGenerationService.create(actor(), {
+        type: 'QUIZ',
+        params: { topicId: topicRow._id.toString(), count: 2 },
+        topicId: topicRow._id,
+      })
+      jobIds.push(new mongoose.Types.ObjectId(job.id))
+      await aiGenerationService.run(job.id, {
+        generate: stubQuiz({
+          questions: [
+            // Two correct options in a single-choice question: the JSON
+            // schema cannot express "exactly one", and this grades
+            // everybody wrong if it is stored.
+            {
+              type: 'SINGLE_CHOICE',
+              text: 'Ikki javobi bor',
+              options: [
+                { text: 'A', isCorrect: true },
+                { text: 'B', isCorrect: true },
+              ],
+            },
+            { type: 'TRUE_FALSE', text: 'Yaxshi savol', correct: false },
+          ],
+        }),
+      })
+
+      const finished = await AiGenerationJob.findById(job.id).lean()
+      bankIds.push(new mongoose.Types.ObjectId(finished.result.bankId))
+      assert.equal(finished.result.questions, 1)
+      assert.equal(finished.result.rejected.length, 1)
+      assert.match(finished.result.rejected[0].reason, /exactly one correct option/)
+      assert.equal(await Question.countDocuments({ bankId: finished.result.bankId }), 1)
+    })
+
+    test('a module with nothing written says so instead of inventing questions', async () => {
+      const course = await Course.create({
+        title: `Empty quiz source ${stamp}`,
+        slug: `empty-quiz-source-${stamp}`,
+        createdBy: author._id,
+      })
+      courseIds.push(course._id)
+      const emptyTopic = await Topic.create({
+        courseId: course._id,
+        title: 'Faqat video',
+        slug: `empty-quiz-topic-${stamp}`,
+        createdBy: author._id,
+      })
+
+      const job = await aiGenerationService.create(actor(), {
+        type: 'QUIZ',
+        params: { topicId: emptyTopic._id.toString() },
+        topicId: emptyTopic._id,
+      })
+      jobIds.push(new mongoose.Types.ObjectId(job.id))
+      await aiGenerationService.run(job.id, { generate: stubQuiz() })
+
+      const finished = await AiGenerationJob.findById(job.id).lean()
+      assert.equal(finished.status, 'FAILED')
+      assert.match(finished.error, /no written lessons/)
+    })
+
+    test('every generated question is one of the four reliable types', () => {
+      // Matching and sequence questions need exactly one correct
+      // arrangement; a model asked for those writes plausible pairs that
+      // are ambiguous on inspection, which is worse than no question.
+      assert.deepEqual(AI_QUIZ_TYPES, ['SINGLE_CHOICE', 'MULTI_CHOICE', 'TRUE_FALSE', 'SHORT_ANSWER'])
+      AI_QUIZ_TYPES.forEach((type) => assert.ok(PAYLOAD_SCHEMAS[type], `${type} must have a payload schema`))
     })
   })
 

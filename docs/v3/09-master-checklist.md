@@ -2178,7 +2178,46 @@
   SDK taymautiga urилardi (`aiRun.js` chegaradan yuqorisini oqim bilan
   yuboradi). `max_tokens` ga urilgan javob esa `AI_TRUNCATED` — parse
   bo'lgan bo'lsa ham, u kesilgan JSON.
-- [ ] **10.4** `aiQuiz.service.js` — yangi `Question` modeliga
+- [x] **10.4** `aiQuiz.service.js` — yangi `Question` modeliga
+  · Bajarildi — savollar **mavzuning o'z darslaridan** yoziladi: mavzu
+  darslari matnga qaytariladi (bloklar prozaga, jadval qatorlarga) va
+  manba shu bo'ladi. Sababi: o'quvchi hozir o'qigan darsdan yasalgan
+  savolni **tekshirib bo'ladi**, modelning umumiy bilimidan yasalgani esa
+  kurs hech qachon aytmagan narsa haqida.
+  · **Natija — savollar banki, tirik test emas.** Bank ko'rib chiqiladi,
+  tahrirlanadi va qayta ishlatiladi (4.1 ning ma'nosi shu); tirik test
+  yaratish tekshirilmagan savollarni o'quvchi oldiga qo'yardi. Bank
+  `ai` tegi bilan belgilanadi.
+  · **To'rt tur, o'n to'rtta emas:** `SINGLE_CHOICE`, `MULTI_CHOICE`,
+  `TRUE_FALSE`, `SHORT_ANSWER`. Moslash (`MATCHING`) va ketma-ketlik
+  (`SEQNCE`) savollari **aynan bitta** to'g'ri joylashuvni talab qiladi;
+  modeldan so'ralganda u ishonarli, lekin ko'rib chiqilganda **noaniq**
+  juftliklar yozadi — bu savol yo'qidan yomonroq, chunki tekshiruvchi
+  buni sezishi kerak.
+  · **Har bir savol o'sha validatordan o'tadi** (`PAYLOAD_SCHEMAS`) —
+  muallif yozgani o'tadigan validatordan. Aynan shu joyda "bitta savolda
+  bitta to'g'ri javob" qoidasi majburlanadi: JSON sxema buni ifodalay
+  olmaydi, ikki to'g'ri javobli single-choice savol esa **hammani xato**
+  deb baholaydi. O'tmagan savol saqlanmaydi va sababi bilan hisobotda
+  ko'rinadi; birortasi ham o'tmasa — ish **xato** deb belgilanadi (bo'sh
+  bank "ishladi" degan taassurot beradi).
+  · **Variant id'lari serverda beriladi** (`o1`, `o2`), modeldan
+  so'ralmaydi: urinish o'zi tanlagan id'ni yozadi, ya'ni id'lar barqaror
+  va savol ichida yakka bo'lishi shart, model esa identifikator o'ylab
+  chiqarishga qo'yilsa ertami-kechmi bittasini takrorlaydi. **Bu testda
+  topilgan xato edi** — birinchi versiya id bermasdi va validator
+  savollarni jimgina rad etardi.
+  · **Yozilmagan mavzu rad etiladi** (`AI_NO_SOURCE_CONTENT`) — faqat
+  video va fayldan iborat mavzuda o'qiydigan narsa yo'q, sarlavhadan
+  savol o'ylab chiqarishdan ko'ra shuni aytish to'g'ri.
+  · Ruxsat: **`quiz:configure`**, `course:create` emas — savol yozish
+  baholash muallifining ishi va bu ikkisi ataylab alohida kalit (2.4).
+  · UI: muallif ishlayotgan joyda — mavzu kontent panelida "AI savollar"
+  tugmasi.
+  · **Tekshirildi** — 5 test: mavzu matnini yig'ish (markup yo'q, jadval
+  qatorlari bor), bankka tushishi va payload shakllari, validator rad
+  etgan savol saqlanmasligi, yozilmagan mavzu, va to'rt turning
+  ro'yxatiga qadalgan test.
 - [ ] **10.5** `aiTranslate.service.js` + `models/contentTranslation.model.js`
   (struktura va ID'lar saqlanadi)
 - [ ] **10.6** Token byudjeti (`Settings.ai.monthlyTokenBudget`), AI audit,

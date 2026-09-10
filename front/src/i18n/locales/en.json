@@ -2695,6 +2695,8 @@
       "RUNNING": "Writing",
       "DONE": "Ready",
       "FAILED": "Failed"
-    }
+    },
+    "quizButton": "AI questions",
+    "quizStarted": "Questions are being written — follow it on the AI page"
   }
 }

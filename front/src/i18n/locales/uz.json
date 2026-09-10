@@ -2695,6 +2695,8 @@
       "RUNNING": "Yozilmoqda",
       "DONE": "Tayyor",
       "FAILED": "Xato"
-    }
+    },
+    "quizButton": "AI savollar",
+    "quizStarted": "Savollar yozilmoqda — «AI bilan kurs yaratish» sahifasida kuzatishingiz mumkin"
   }
 }
