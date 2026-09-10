@@ -2697,6 +2697,24 @@
       "FAILED": "Failed"
     },
     "quizButton": "AI questions",
-    "quizStarted": "Questions are being written — follow it on the AI page"
+    "quizStarted": "Questions are being written — follow it on the AI page",
+    "translationsTitle": "Translations",
+    "translationsHint": "Same blocks, another language — shown once approved.",
+    "translateStarted": "Translation started",
+    "translationApproved": "Approved",
+    "translationFailed": "That did not work",
+    "translationApprovedLabel": "approved",
+    "translationDraftLabel": "draft",
+    "translationFields": "{count} strings",
+    "approve": "Approve",
+    "settingsTitle": "AI budget",
+    "settingsHint": "How many tokens generation may spend in a month.",
+    "settingsEnabled": "AI generation is on",
+    "settingsBudget": "Monthly token ceiling",
+    "settingsZero": "0 = no ceiling.",
+    "settingsUsed": "{month}: {used} tokens across {jobs} jobs.",
+    "settingsSaved": "Saved",
+    "settingsSaveFailed": "Could not save",
+    "settingsLoadFailed": "Could not load the settings"
   }
 }

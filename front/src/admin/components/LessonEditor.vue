@@ -23,6 +23,7 @@ import { computed, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { lessonsApi } from '@/services/lessons'
 import { topicsApi } from '@/services/topics'
+import { aiGenerationApi } from '@/services/aiGeneration'
 import { useToast } from '@/composables/useToast'
 import { useConfirm } from '@/composables/useConfirm'
 import { apiErrorText } from '@/utils/apiError'
@@ -198,6 +199,59 @@ async function remove() {
   }
 }
 
+/**
+ * Translations of this lesson (10.5).
+ *
+ * A layer, not a copy: the same lesson served in another language, with the
+ * same block ids — which is what keeps reading progress working whichever
+ * language it is read in. A machine translation starts as a draft and is
+ * not shown to learners until somebody approves it.
+ */
+const translations = ref([])
+const translating = ref('')
+
+async function loadTranslations() {
+  try {
+    translations.value = await aiGenerationApi.translations({ entity: 'Lesson', entityId: props.lessonId })
+  } catch {
+    translations.value = []
+  }
+}
+
+async function translate(lang) {
+  if (translating.value) return
+  translating.value = lang
+  try {
+    await aiGenerationApi.translate({ entity: 'Lesson', entityId: props.lessonId, lang })
+    toast.success(t('ai.translateStarted'))
+    // The job runs in the worker; the row appears when it finishes.
+    window.setTimeout(loadTranslations, 4000)
+  } catch (error) {
+    toast.error(apiErrorText(error, t('ai.startFailed')))
+  } finally {
+    translating.value = ''
+  }
+}
+
+async function approveTranslation(row) {
+  try {
+    await aiGenerationApi.approveTranslation(row.id)
+    await loadTranslations()
+    toast.success(t('ai.translationApproved'))
+  } catch (error) {
+    toast.error(apiErrorText(error, t('ai.translationFailed')))
+  }
+}
+
+async function removeTranslation(row) {
+  try {
+    await aiGenerationApi.removeTranslation(row.id)
+    await loadTranslations()
+  } catch (error) {
+    toast.error(apiErrorText(error, t('ai.translationFailed')))
+  }
+}
+
 async function load() {
   loading.value = true
   hydrating = true
@@ -229,7 +283,10 @@ async function load() {
   }
 }
 
-onMounted(load)
+onMounted(() => {
+  load()
+  loadTranslations()
+})
 watch([form, blocks], scheduleSave, { deep: true })
 
 onBeforeUnmount(() => {
@@ -515,6 +572,40 @@ const savedLabel = computed(() => {
             <p class="mt-4 text-small text-ink-faint">{{ t('lesson.noBlocks') }}</p>
           </template>
         </SortableList>
+
+        <!-- Translations (10.5) -->
+        <div class="mt-4 border-t border-border pt-3">
+          <p class="text-caption font-medium text-ink-muted">{{ t('ai.translationsTitle') }}</p>
+          <div class="mt-1.5 flex flex-wrap items-center gap-1.5">
+            <AppButton
+              v-for="lang in ['uz', 'ru', 'en']"
+              :key="lang"
+              variant="ghost"
+              size="sm"
+              :loading="translating === lang"
+              @click="translate(lang)"
+            >
+              {{ t(`locales.${lang}`) }}
+            </AppButton>
+            <span class="text-caption text-ink-faint">{{ t('ai.translationsHint') }}</span>
+          </div>
+
+          <ul v-if="translations.length" class="mt-2 space-y-1">
+            <li v-for="row in translations" :key="row.id" class="flex items-center gap-2 text-caption">
+              <Badge :variant="row.status === 'APPROVED' ? 'success' : 'neutral'" size="sm">
+                {{ t(`locales.${row.lang}`) }}
+              </Badge>
+              <span class="text-ink-muted">
+                {{ row.status === 'APPROVED' ? t('ai.translationApprovedLabel') : t('ai.translationDraftLabel') }}
+                · {{ t('ai.translationFields', { count: row.fields }) }}
+              </span>
+              <AppButton v-if="row.status !== 'APPROVED'" variant="ghost" size="sm" @click="approveTranslation(row)">
+                {{ t('ai.approve') }}
+              </AppButton>
+              <AppButton variant="ghost" size="sm" icon="trash" @click="removeTranslation(row)" />
+            </li>
+          </ul>
+        </div>
 
         <!-- Add a block -->
         <div class="mt-4 flex flex-wrap gap-1.5 border-t border-border pt-3">

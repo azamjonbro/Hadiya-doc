@@ -2697,6 +2697,24 @@
       "FAILED": "Xato"
     },
     "quizButton": "AI savollar",
-    "quizStarted": "Savollar yozilmoqda — «AI bilan kurs yaratish» sahifasida kuzatishingiz mumkin"
+    "quizStarted": "Savollar yozilmoqda — «AI bilan kurs yaratish» sahifasida kuzatishingiz mumkin",
+    "translationsTitle": "Tarjimalar",
+    "translationsHint": "Bir xil bloklar, boshqa til — tasdiqlangandan keyin ko'rinadi.",
+    "translateStarted": "Tarjima boshlandi",
+    "translationApproved": "Tasdiqlandi",
+    "translationFailed": "Bajarib bo'lmadi",
+    "translationApprovedLabel": "tasdiqlangan",
+    "translationDraftLabel": "qoralama",
+    "translationFields": "{count} qator",
+    "approve": "Tasdiqlash",
+    "settingsTitle": "AI byudjeti",
+    "settingsHint": "Generatsiya oyiga qancha token sarflashi mumkin.",
+    "settingsEnabled": "AI generatsiyasi yoqilgan",
+    "settingsBudget": "Oylik token chegarasi",
+    "settingsZero": "0 = chegara yo'q.",
+    "settingsUsed": "{month} da {used} token, {jobs} ta ish.",
+    "settingsSaved": "Saqlandi",
+    "settingsSaveFailed": "Saqlab bo'lmadi",
+    "settingsLoadFailed": "Sozlamalarni yuklab bo'lmadi"
   }
 }

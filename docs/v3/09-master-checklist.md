@@ -2218,10 +2218,102 @@
   qatorlari bor), bankka tushishi va payload shakllari, validator rad
   etgan savol saqlanmasligi, yozilmagan mavzu, va to'rt turning
   ro'yxatiga qadalgan test.
-- [ ] **10.5** `aiTranslate.service.js` + `models/contentTranslation.model.js`
+- [x] **10.5** `aiTranslate.service.js` + `models/contentTranslation.model.js`
   (struktura va ID'lar saqlanadi)
-- [ ] **10.6** Token byudjeti (`Settings.ai.monthlyTokenBudget`), AI audit,
+  · Bajarildi — tarjima **qatlam**, nusxa emas. Muqobil variant (kursni
+  ikkinchi kursga ko'chirish) ko'p platformalar qiladigan narsa va bir oy
+  ichida buziladi: ikkisi bir-biridan uzoqlashadi, progress o'quvchi
+  qaysi birini ochganiga yoziladi, asl nusxadagi tuzatish esa nusxaga
+  hech qachon yetib bormaydi.
+  · **Shuning uchun id'lar saqlanishi shart** — va bu dizaynning o'zidan
+  kelib chiqadi: modelga `{ id, text }` ro'yxati beriladi va u **o'sha
+  id'larni** tarjima qilingan matn bilan qaytaradi. U blok turlarini,
+  tartibni yoki tuzilmani ko'rmaydi ham, yoza olmaydi ham. Ya'ni tarjima
+  darsni qayta tartiblay olmaydi, blok o'ylab chiqara olmaydi, birortasini
+  tashlab keta olmaydi; 9.1 dan beri progress yoziladigan blok id'lari esa
+  **konstruksiya bo'yicha** saqlanadi. Prompt ham kichik bo'ladi: o'ttiz
+  bloklik dars — o'ttizta qisqa satr, qayta chiqarish kerak bo'lgan hujjat
+  emas.
+  · **`fields` yo'l bo'yicha kalitlanadi** (`title`,
+  `blocks.<blockId>.text`, `blocks.<id>.rows.2.1`), hujjat shaklining
+  ikkinchi nusxasi emas. **`CODE` bloki ataylab tarjima qilinmaydi** —
+  identifikatorni tarjima qilish namunani buzadi.
+  · **Model o'ylab chiqargan id e'tiborsiz qoldiriladi** (test bilan):
+  yuborilmagan id qatlamga asl hujjatda yo'q maydonni yozardi va o'qishda
+  birlashtirish darsda **hech kim yozmagan paragrafni** paydo qilardi.
+  Yetishmagan id'lar esa **hisobda ko'rsatiladi** ("3 ta yetishmadi"),
+  chunki jimgina bo'shliq — asl tilida qolgan paragraf.
+  · **Faqat tasdiqlangan tarjima o'quvchiga beriladi**: o'qilmagan mashina
+  tarjimasi xodim oldida — bu funksiya oldini olishi kerak bo'lgan asosiy
+  nosozlik. Muallif (kurs boshqarishi mumkin bo'lgan) qoralamani ko'radi.
+  Qayta tarjima qilinsa — holat yana `DRAFT` (u o'qilmagan).
+  · Bir til uchun **bitta** qator (unique indeks + upsert): ikkita qator
+  "qaysi biri beriladi" degan savolni tanga tashlashga aylantirardi.
+  · **Yetkazish:** `GET /lessons/:id?lang=ru` — tuzilma har doim asl
+  qatordan, faqat satrlar almashtiriladi; birlashtirilgan bloklar ham
+  **o'sha sanitizer'dan** o'tadi (tarjima "teglarni saqladim" deb yangi
+  teg qo'shgan bo'lishi mumkin).
+  · UI: dars editorida tarjima paneli (til tugmalari, holat, tasdiqlash,
+  o'chirish).
+  · **Tekshirildi** — 5 test: faqat so'zlar yuborilishi (markup yo'q,
+  jadval kataklari alohida, `CODE` chetda), qatlamning birlashishi (bir
+  xil id, bir xil turlar, boshqa so'zlar), o'ylab chiqarilgan id va
+  yetishmagan id, bir tilga bitta qator + qayta `DRAFT`, va kursning faqat
+  sarlavha/izohi.
+  · **Chetlanish:** hozircha faqat **dars** o'qish yo'lida `?lang=`
+  qo'llaniladi. Katalogdagi kurs sarlavhalari, mavzu nomlari va boshqa
+  o'qish yo'llari asl tilda qoladi — buning uchun har bir o'qish joyi
+  qatlamdan so'rashi kerak, bu esa alohida ish (12.x dagi kontent i18n).
+- [x] **10.6** Token byudjeti (`Settings.ai.monthlyTokenBudget`), AI audit,
   PII himoyasi testi
+  · Bajarildi — uchtasi ham 10.1–10.5 bilan birga qurildi, chunki ular
+  chegaradagi narsalar:
+  · **Byudjet.** `Settings.ai.monthlyTokenBudget` (0 = chegara yo'q) va
+  alohida `generationEnabled`. Chegara **so'rov soni emas, token**: bir
+  darsdan test yozish va 200 betlik qo'llanmadan kurs yasash ikki
+  darajaga farq qiladi, so'rovlarni sanash esa yo arzonlarini bloklardi,
+  yo bir nechta qimmatini o'tkazib yuborardi. Har bir ish o'z sarfini
+  **API ning o'z raqamlari** bilan yozadi (taxmin emas) — byudjetni
+  umuman mumkin qiladigan narsa shu.
+  · Byudjet ish **boshlanishidan oldin** tekshiriladi va **keyin**
+  yoziladi, ya'ni bitta ish chegaradan **o'tib ketishi mumkin** — bu
+  halol xatti-harakat: muqobili "chegaradan oshishi mumkin" degan har
+  qanday so'rovni rad etish, bu esa har oyning oxirgi uchdan birini
+  bloklardi.
+  · **Alohida o'chirgich** ataylab: AI ni butunlay o'chirmoqchi bo'lgan
+  kompaniya chegarani nolga qo'yib, mualliflar "byudjet tugadi" degan
+  sababni o'qishiga majbur bo'lmasligi kerak (`AI_DISABLED` vs
+  `AI_BUDGET_EXCEEDED`).
+  · **Audit:** har bir ish `AI_GENERATION_REQUESTED` va
+  `AI_GENERATION_COMPLETED` sifatida yoziladi — turi, manba nomi,
+  belgilar soni, natija va token sarfi bilan. **Manba matni yozilmaydi**:
+  audit jurnalini odamlar o'qiydi va uning ichidagi yuz kilobayt
+  qo'llanma hech kimga yordam bermaydi.
+  · **PII himoyasi (`piiRedact.js`)** — generatsiya mualliflar o'z
+  kompyuteridan olgan hujjatlar ustida ishlaydi, HR bo'limidagi hujjatlar
+  esa o'quv materiali emas: "xavfsizlik brifingi" eksporti odatda
+  **davomat ro'yxatini** olib yuradi, bu yerda esa davomat ro'yxati
+  JSHSHIR degani. Model API'siga yuborilsa — hech kim so'ramagan va hech
+  kim sezmagan shaxsiy ma'lumot oshkoraligi.
+  · Shuning uchun matn **chiqishda** tozalanadi (prompt qurilishidan
+  oldin): JSHSHIR (14 raqam), pasport (AA1234567), 16–20 raqamli hisob,
+  e-mail, telefon. **O'chirish emas, o'rin egallovchi**: `[JSHSHIR]` bo'lgan
+  gap hamon gap bo'lib o'qiladi va model javobi manba shaklini saqlaydi.
+  Prompt modelga o'rin egallovchilarni **qayta ishlab chiqmaslikni** ham
+  aytadi.
+  · **Bu poydevor, kafolat emas** — ism naqsh bilan aniqlanmaydi va
+  tozalanmaydi; platforma majburlay oladigan qoida shu: **identifikatorlar
+  sayohat qilmaydi**. Bu checklistda ham, kodda ham shunday yozilgan.
+  · **Tekshirildi** — 6 test: har bir identifikator turi, **har bir
+  qoidaning haqiqatan ishga tushishi** (ro'yxatga qo'shilib, hech qachon
+  chaqirilmaydigan qoida — aynan shu test tutadigan nosozlik), **oddiy
+  kurs matni tegilmasligi** ("2026 yilda 15 kishi" `[NUMBER]` ga
+  aylanmasin), redaksiyaning **prompt qurilishidan oldin** bo'lishi
+  (yuborilgan satr tekshiriladi), byudjetning yig'ilishi, tugagan
+  byudjetning ishni **boshlanishidan oldin** to'xtatishi va
+  `AI_DISABLED`.
+  · UI: admin sozlamalarida "AI byudjeti" kartasi (faqat SUPERADMIN) va
+  AI sahifasida shu oyning sarfi.
 
 ---
 

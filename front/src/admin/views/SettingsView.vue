@@ -10,6 +10,7 @@ import AppSelect from '@/components/ui/AppSelect.vue'
 import Avatar from '@/components/ui/Avatar.vue'
 import AttentionPolicyForm from '@/admin/components/AttentionPolicyForm.vue'
 import FacePolicyForm from '@/admin/components/FacePolicyForm.vue'
+import AiSettingsCard from '@/admin/components/AiSettingsCard.vue'
 
 const { t, locale } = useI18n()
 const auth = useAuthStore()
@@ -94,6 +95,10 @@ function onLocaleChange(code) {
         <h2 class="text-small font-semibold text-ink">{{ t('attention.admin.title') }}</h2>
         <p class="mt-1 text-caption text-ink-faint">{{ t('attention.admin.globalHint') }}</p>
         <div class="mt-4">
+      <!-- The AI budget (10.6): SUPERADMIN only, like the other
+           platform-wide policies on this page. -->
+      <AiSettingsCard v-if="auth.isSuperAdmin" />
+
           <AttentionPolicyForm :readonly="!auth.hasPermission('course:update')" />
         </div>
       </AppCard>

@@ -31,6 +31,27 @@ export const aiGenerationApi = {
     return http.post('/ai/quiz', formData).then((r) => r.data.data)
   },
 
+  /**
+   * A translation of one course, module or lesson. The result is a layer
+   * over the original — same ids, same structure, translated strings.
+   */
+  translate({ entity, entityId, lang }) {
+    return http.post('/ai/translate', { entity, entityId, lang }).then((r) => r.data.data)
+  },
+
+  translations({ entity, entityId }) {
+    return http.get('/ai/translations', { params: { entity, entityId } }).then((r) => r.data.data)
+  },
+
+  // Approving is what makes a machine translation visible to learners.
+  approveTranslation(id) {
+    return http.patch(`/ai/translations/${id}/approve`).then((r) => r.data.data)
+  },
+
+  removeTranslation(id) {
+    return http.delete(`/ai/translations/${id}`).then((r) => r.data.data)
+  },
+
   jobs() {
     return http.get('/ai/jobs').then((r) => r.data.data)
   },

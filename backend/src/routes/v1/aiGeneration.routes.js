@@ -3,9 +3,14 @@ import multer from 'multer'
 import { PERMISSIONS } from '@lms/shared'
 import { authenticate } from '../../middlewares/auth.middleware.js'
 import { requirePermission } from '../../middlewares/rbac.middleware.js'
-import { validateBody } from '../../middlewares/validate.middleware.js'
+import { validateBody, validateQuery } from '../../middlewares/validate.middleware.js'
 import { aiGenerationController } from '../../controllers/aiGeneration.controller.js'
-import { outlineRequestSchema, quizRequestSchema } from '../../validators/aiGeneration.validator.js'
+import {
+  outlineRequestSchema,
+  quizRequestSchema,
+  translateRequestSchema,
+  translationListSchema,
+} from '../../validators/aiGeneration.validator.js'
 import { ApiError } from '../../utils/ApiError.js'
 
 export const aiGenerationRouter = Router()
@@ -53,6 +58,32 @@ aiGenerationRouter.post(
   uploadSingleSource,
   validateBody(quizRequestSchema),
   aiGenerationController.quiz
+)
+
+// Translating content is editing it, so it takes the same key as editing:
+// course:update. Approving is the same authority — the person who publishes
+// a translation is the person who owns the content.
+aiGenerationRouter.post(
+  '/translate',
+  requirePermission(PERMISSIONS.COURSE_UPDATE),
+  validateBody(translateRequestSchema),
+  aiGenerationController.translate
+)
+aiGenerationRouter.get(
+  '/translations',
+  requirePermission(PERMISSIONS.COURSE_UPDATE),
+  validateQuery(translationListSchema),
+  aiGenerationController.translations
+)
+aiGenerationRouter.patch(
+  '/translations/:id/approve',
+  requirePermission(PERMISSIONS.COURSE_UPDATE),
+  aiGenerationController.approveTranslation
+)
+aiGenerationRouter.delete(
+  '/translations/:id',
+  requirePermission(PERMISSIONS.COURSE_UPDATE),
+  aiGenerationController.removeTranslation
 )
 
 aiGenerationRouter.get('/jobs', requirePermission(PERMISSIONS.COURSE_CREATE), aiGenerationController.list)

@@ -7,6 +7,7 @@ import { ApiError } from '../../utils/ApiError.js'
 import { aiBudgetService } from './aiBudget.service.js'
 import { aiCourseService } from './aiCourse.service.js'
 import { aiQuizService } from './aiQuiz.service.js'
+import { aiTranslateService } from './aiTranslate.service.js'
 
 /**
  * Starting, running and reading generation jobs (10.1).
@@ -24,6 +25,7 @@ import { aiQuizService } from './aiQuiz.service.js'
 const RUNNERS = {
   COURSE_OUTLINE: (job, deps) => aiCourseService.run(job, deps),
   QUIZ: (job, deps) => aiQuizService.run(job, deps),
+  TRANSLATION: (job, deps) => aiTranslateService.run(job, deps),
 }
 
 function toPublicJob(job) {

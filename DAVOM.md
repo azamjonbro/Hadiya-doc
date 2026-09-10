@@ -67,9 +67,11 @@ ko'rsatadi, chunki u ro'yxatdagi birinchi `[ ]` bandni oladi.
 matn darsi to'liq oqim bilan (polimorf baza, 12 blok turi, blok editori,
 o'quvchi sahifasi, blok-asosli progress) va **SCORM 1.2/2004 import**
 (worker'da ochish, manifest parseri, launcher sahifadagi runtime API,
-CMI holati, suspend/resume, mastery). **Hozir BLOK 10 (AI):** 10.1–10.4 bajarildi (generatsiya ishlari, hujjat
-o'qish, kurs konspekti, savollar) va 10.6 ning poydevori (oylik token byudjeti,
-PII redaksiyasi). **Keyingi band — 10.5 (tarjima + `contentTranslation`).**
+CMI holati, suspend/resume, mastery). **Hozir BLOK 10 (AI):** **BLOK 10 to'liq tugadi** (10.1–10.6): generatsiya ishlari,
+hujjat o'qish, kurs konspekti, savollar, tarjima qatlami, token byudjeti +
+PII redaksiyasi va 10.6 ning poydevori (oylik token byudjeti,
+PII redaksiyasi). **Keyingi blok — BLOK 11 (Korxona): birinchi band 11.1 — `apiKey` modeli,
+`apiKeyAuth` middleware, per-key rate limit, `/api/public/v1`.**
 
 **⚠️ AI hech qayerda haqiqiy API bilan sinalmagan:** `ANTHROPIC_API_KEY`
 na lokalda, na serverda sozlanmagan (`env` da bo'sh sukut). Kod stub bilan
@@ -101,15 +103,15 @@ satrlar BLOK 1–8 davomida yangilangan, jamlanma esa yangilanmagan.
 
 | Metrika | Qiymat |
 |---|:--:|
-| Vaznsiz (337 capability) | **55,2** |
-| FULL / OURS+ | **114 / 48** |
-| PARTIAL / NONE / VERIFY | **57 / 95 / 23** |
-| **Gap** | **≈45%** |
+| Vaznsiz (337 capability) | **56,8** |
+| FULL / OURS+ | **118 / 48** |
+| PARTIAL / NONE / VERIFY | **59 / 91 / 21** |
+| **Gap** | **≈43%** |
 
 Vaznlangan raqam qayta hisoblanmaydi — vazn jadvali repozitoriyda yo'q
 (`docs/v4/01-executive-summary.md` dagi metodologiya eslatmasi).
 
-**Testlar:** `npm --prefix backend test` — 830 test, 2 tasi yiqiladi va
+**Testlar:** `npm --prefix backend test` — 835 test, 2 tasi yiqiladi va
 ikkisi ham **eskidan** yiqilib turadi (`faceVerification`: yuz aniqlanmagan
 rasm; `facePolicy`: hisobni bloklash). Darslarga aloqasi yo'q.
 
@@ -131,8 +133,8 @@ BLOK 6  Live training, kalendar, topshiriq  ✅
 BLOK 7  Qidiruv, KB, compliance, gamification  ✅
 BLOK 8  Hisobot, analitika             ✅
 BLOK 9  Kontent va authoring           ← **BLOK 9 to'liq tugadi** (9.1–9.6); keyingisi 9.5
-BLOK 10 AI                             ← 10.1–10.4 bajarildi
-BLOK 11 Korxona
+BLOK 10 AI                             ✅
+BLOK 11 Korxona                        ← keyingisi
 BLOK 12 Mobil va accessibility
 BLOK 13 Kengaytirilgan baholash
 BLOK 14 Regressiya himoyasi (doimiy)

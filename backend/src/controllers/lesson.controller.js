@@ -13,7 +13,8 @@ export const lessonController = {
   }),
 
   getById: asyncHandler(async (req, res) => {
-    sendSuccess(res, await lessonService.getById(req.user, req.params.id))
+    // `?lang=` serves an approved translation of the same lesson (10.5).
+    sendSuccess(res, await lessonService.getById(req.user, req.params.id, { lang: req.query.lang }))
   }),
 
   update: asyncHandler(async (req, res) => {
