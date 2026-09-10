@@ -17,6 +17,8 @@ import { pathEnrollmentService } from '../paths/pathEnrollment.service.js'
 import { queueOnboardingEvaluation } from '../../jobs/onboardingQueue.js'
 import { lessonCompletion } from './lessonBlocks.js'
 import { meetsPackage } from '../scorm/scormCmi.js'
+import { emitWebhookEvent } from '../integrations/webhook.service.js'
+import { userRepository } from '../../repositories/user.repository.js'
 
 /**
  * One definition of "this course is finished", and one place that acts on it.
@@ -234,6 +236,18 @@ export const courseCompletionService = {
           score: `${summary.completionPercent}%`,
         })
       }
+      // 11.2 — on the transition, for the same reason the notification is:
+      // the event is "somebody finished this", not "somebody is still
+      // finished". `evaluate` runs after every video and every page, so
+      // emitting on the state rather than the change would send one webhook
+      // per click for the rest of the course's life.
+      await emitWebhookEvent('course.completed', {
+        user: await userRepository.findById(String(userId)),
+        course,
+        completionPercent: summary.completionPercent,
+        completedAt: new Date(),
+      })
+
       // Queued on the transition, so finishing a course once queues one job.
       // A course with no template configured is filtered out by the worker
       // rather than here — that keeps "does this course certify" in one
@@ -265,6 +279,14 @@ export const courseCompletionService = {
           completionPercent: `${summary.completionPercent}%`,
         })
       }
+      // A completion an external system already recorded has been withdrawn.
+      // Not emitting this would leave every integration holding a
+      // compliance status the platform no longer agrees with.
+      await emitWebhookEvent('course.reopened', {
+        user: await userRepository.findById(String(userId)),
+        course,
+        completionPercent: summary.completionPercent,
+      })
     }
 
     // A course is often a step in a programme. Re-evaluating here means

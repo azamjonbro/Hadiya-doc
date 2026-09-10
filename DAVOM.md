@@ -70,10 +70,11 @@ o'quvchi sahifasi, blok-asosli progress) va **SCORM 1.2/2004 import**
 CMI holati, suspend/resume, mastery). **Hozir BLOK 10 (AI):** **BLOK 10 to'liq tugadi** (10.1–10.6): generatsiya ishlari,
 hujjat o'qish, kurs konspekti, savollar, tarjima qatlami, token byudjeti +
 PII redaksiyasi va 10.6 ning poydevori (oylik token byudjeti,
-PII redaksiyasi). **Hozir BLOK 11 (Korxona):** 11.1 bajarildi — API kalitlar (argon2 hash,
-scope'lar, per-key Redis limiti, PII bayrog'i) va `/api/public/v1` (faqat
-o'qish, versiyalangan payload'lar). **Keyingi band — 11.2 (webhook'lar:
-HMAC + 5× retry).**
+PII redaksiyasi). **Hozir BLOK 11 (Korxona):** 11.1 (API kalitlar + `/api/public/v1`) va
+11.2 (webhook'lar: 6 voqea, HMAC `t=…,v1=…`, 5× eksponensial retry,
+yetkazish jurnali + qayta yuborish, SSRF darvozalari) bajarildi.
+**Keyingi band — 11.3 (OpenAPI: `zod-to-openapi`, `GET /openapi.json`,
+`/api/docs`).**
 
 **⚠️ AI hech qayerda haqiqiy API bilan sinalmagan:** `ANTHROPIC_API_KEY`
 na lokalda, na serverda sozlanmagan (`env` da bo'sh sukut). Kod stub bilan
@@ -105,17 +106,26 @@ satrlar BLOK 1–8 davomida yangilangan, jamlanma esa yangilanmagan.
 
 | Metrika | Qiymat |
 |---|:--:|
-| Vaznsiz (337 capability) | **57,3** |
+| Vaznsiz (337 capability) | **57,8** |
 | FULL / OURS+ | **118 / 48** |
 | PARTIAL / NONE / VERIFY | **59 / 91 / 21** |
-| **Gap** | **≈43%** |
+| **Gap** | **≈42%** |
 
 Vaznlangan raqam qayta hisoblanmaydi — vazn jadvali repozitoriyda yo'q
 (`docs/v4/01-executive-summary.md` dagi metodologiya eslatmasi).
 
-**Testlar:** `npm --prefix backend test` — 848 test, 2 tasi yiqiladi va
+**Testlar:** `npm --prefix backend test` — 873 test, 2 tasi yiqiladi va
 ikkisi ham **eskidan** yiqilib turadi (`faceVerification`: yuz aniqlanmagan
 rasm; `facePolicy`: hisobni bloklash). Darslarga aloqasi yo'q.
+
+**To'plamni ketma-ket ikki marta yugurtirmang.** `security.test.js`
+ataylab noto'g'ri parol bilan login qiladi va **login limiterini**
+(15 daqiqa oyna, `loginRateLimit.middleware.js`) yoqadi; u bilan
+yonma-yon (`--test-concurrency=2`) ishlaydigan `faceVerification.test.js`
+esa login qila olmay 429 oladi va **butun fayl bekor qilinadi**
+(`cancelled`, `fail 0` — shuning uchun jamlanma "0 xato" deb ko'rsatadi,
+lekin `pass` soni tushib qoladi). Toza raqam kerak bo'lsa oldingi
+yugurishdan **15 daqiqa** kutib turing.
 
 Frontend testi ham paydo bo'ldi: `npm --prefix front test` (14 test,
 `front/test/lessonBlocks.test.js`) — bundler kerak emas, chunki sinaladigan
@@ -136,7 +146,7 @@ BLOK 7  Qidiruv, KB, compliance, gamification  ✅
 BLOK 8  Hisobot, analitika             ✅
 BLOK 9  Kontent va authoring           ← **BLOK 9 to'liq tugadi** (9.1–9.6); keyingisi 9.5
 BLOK 10 AI                             ✅
-BLOK 11 Korxona                        ← 11.1 bajarildi
+BLOK 11 Korxona                        ← 11.1, 11.2 bajarildi
 BLOK 12 Mobil va accessibility
 BLOK 13 Kengaytirilgan baholash
 BLOK 14 Regressiya himoyasi (doimiy)

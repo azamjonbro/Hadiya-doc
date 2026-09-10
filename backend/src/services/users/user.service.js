@@ -14,6 +14,7 @@ import { ApiError } from '../../utils/ApiError.js'
 import { courseAssignmentService } from '../courses/courseAssignment.service.js'
 import { chatService } from '../chat/chat.service.js'
 import { taskService } from '../tasks/task.service.js'
+import { emitWebhookEvent } from '../integrations/webhook.service.js'
 import { logger } from '../../config/logger.js'
 import { queueUserEvaluation } from '../../jobs/enrollmentRuleQueue.js'
 import { TEMPLATE_TYPES } from '../notifications/notificationTemplates.seed.js'
@@ -448,6 +449,11 @@ export const userService = {
       })
     }
 
+    // Fire-and-forget by design (11.2): emitWebhookEvent never throws, and
+    // an HR system's endpoint being down must not fail the account that was
+    // just created.
+    await emitWebhookEvent('user.created', { user })
+
     return toPublicUser(user, role)
   },
 
@@ -641,6 +647,10 @@ export const userService = {
       entity: 'User',
       entityId: id,
     })
+
+    // The offboarding signal an integration actually wants: whoever holds
+    // this person's other accounts learns about it without polling.
+    await emitWebhookEvent('user.deactivated', { user: updated })
 
     return toPublicUser(updated, role)
   },

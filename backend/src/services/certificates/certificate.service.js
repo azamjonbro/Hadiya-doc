@@ -8,6 +8,7 @@ import { auditLogRepository } from '../../repositories/auditLog.repository.js'
 import { notificationService } from '../notifications/notification.service.js'
 import { formatNotificationDate } from '../../utils/notificationFormat.js'
 import { logger } from '../../config/logger.js'
+import { emitWebhookEvent } from '../integrations/webhook.service.js'
 
 /**
  * Issuing, and the rules that keep one completion from producing two
@@ -168,6 +169,16 @@ export const certificateService = {
         error: error.message,
       })
     }
+
+    // 11.2 — emitted from `announce` rather than from the two `issueFor*`
+    // methods: those are called from a queue that retries, and a
+    // duplicate-key retry returns the certificate that already exists, so
+    // emitting there would send the same issue twice. `announce` runs once,
+    // on the transition, which is also where the notification is sent.
+    await emitWebhookEvent('certificate.issued', {
+      user: await userRepository.findById(String(certificate.userId)),
+      certificate,
+    })
   },
 
   /**

@@ -8,6 +8,7 @@ import { notificationService } from '../notifications/notification.service.js'
 import { isCourseVisibleToActor } from './courseVisibility.js'
 import { formatNotificationDate } from '../../utils/notificationFormat.js'
 import { hasUnscopedAccess } from '../access/actorScope.js'
+import { emitWebhookEvent } from '../integrations/webhook.service.js'
 
 function toPublicAssignment(assignment) {
   return {
@@ -88,6 +89,11 @@ export const courseAssignmentService = {
       relatedEntityType: 'Course',
       relatedEntityId: courseId,
     })
+
+    // 11.2 — the event an external system needs to mirror "this person now
+    // owes this training". Only the admin/manager path emits it; a
+    // self-enrolment is not a mandate somebody else has to track.
+    await emitWebhookEvent('assignment.created', { user: targetUser, course, assignment })
 
     return toPublicAssignment(assignment)
   },

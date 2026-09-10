@@ -10,6 +10,8 @@ import { extractScormPackage } from './services/scorm/extractScorm.js'
 import { MEDIA_CLEANUP_QUEUE, scheduleMediaCleanup } from './jobs/mediaCleanupQueue.js'
 import { sweepOrphans } from './services/media/mediaCleanup.service.js'
 import { AI_GENERATION_QUEUE } from './jobs/aiGenerationQueue.js'
+import { WEBHOOK_QUEUE } from './jobs/webhookQueue.js'
+import { webhookDeliveryService } from './services/integrations/webhookDelivery.service.js'
 import { aiGenerationService } from './services/ai/aiGeneration.service.js'
 import { REMINDER_QUEUE, scheduleReminderChecks } from './jobs/reminderQueue.js'
 import { runDeadlineChecks } from './jobs/reminderJob.js'
@@ -106,6 +108,40 @@ async function main() {
     },
     { connection: redisConnection, concurrency: 2 }
   )
+
+  // Webhook deliveries (11.2). Concurrency 10, higher than anything else
+  // here: each job is one outbound HTTP call that spends its time waiting
+  // on somebody else's server, so the limit is sockets rather than CPU or
+  // memory — and one slow receiver must not delay every other endpoint's
+  // events behind it.
+  const webhookWorker = new Worker(
+    WEBHOOK_QUEUE,
+    async (job) => {
+      if (job.name !== 'deliver') return null
+      // attemptsMade counts the attempts that have already finished, so the
+      // one now running is one past it; `isFinal` is what turns a
+      // still-retrying delivery into a FAILED row rather than leaving it
+      // PENDING forever.
+      const attempt = job.attemptsMade + 1
+      return webhookDeliveryService.attempt(job.data.deliveryId, {
+        attempt,
+        isFinal: attempt >= (job.opts.attempts ?? 1),
+      })
+    },
+    { connection: redisConnection, concurrency: 10 }
+  )
+
+  webhookWorker.on('failed', (job, err) => {
+    // Debug, not error: a failed attempt is normal operation for a webhook
+    // and the delivery row carries the reason for the operator. Logging
+    // every retry at error level would make a single dead endpoint look
+    // like a platform incident.
+    logger.debug('Webhook delivery attempt failed', {
+      deliveryId: job?.data?.deliveryId,
+      attempt: job?.attemptsMade,
+      error: err.message,
+    })
+  })
 
   aiWorker.on('failed', (job, err) => {
     // The row carries the reason for the author; this is for the operator
@@ -358,6 +394,7 @@ async function main() {
   logger.info('Onboarding worker started (daily hireDate check + per-user evaluation)')
   logger.info('Compliance worker started (daily recurring-training sweep)')
   logger.info('Export worker started (async report builds + daily file cleanup)')
+  logger.info('Webhook worker started (5 attempts, exponential from 10s)')
   logger.info(
     isMailConfigured()
       ? `Delivery worker started (SMTP ${env.SMTP_HOST}:${env.SMTP_PORT})`
@@ -376,6 +413,7 @@ async function main() {
       scormWorker.close(),
       mediaWorker.close(),
       aiWorker.close(),
+      webhookWorker.close(),
       enrollmentRuleWorker.close(),
       onboardingWorker.close(),
       complianceWorker.close(),

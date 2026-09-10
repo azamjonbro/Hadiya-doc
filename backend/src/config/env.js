@@ -127,6 +127,20 @@ const envSchema = z.object({
   // Same shape as BACKUP_ENABLED, and for the same reason: a destructive
   // scheduled job should be a decision somebody made, not a default.
   MEDIA_CLEANUP_DELETE: z.coerce.boolean().default(false),
+  // How long a webhook delivery may take before it is treated as failed
+  // (11.2). Short on purpose: a receiver that takes ten seconds to answer
+  // is a receiver doing its work inline instead of queueing it, and the
+  // worker holding that connection open is not delivering anything else.
+  WEBHOOK_TIMEOUT_MS: z.coerce.number().int().min(1000).max(30000).default(8000),
+  // Whether a webhook may point at a private address, and whether http is
+  // allowed at all. The endpoint URL is operator-supplied and the request
+  // leaves from inside the network, so without this guard the platform can
+  // be aimed at 169.254.169.254 or a neighbour site on loopback — and it
+  // signs the request on the way (see webhookTarget.js). Left unset it
+  // follows NODE_ENV: on in development and tests, where the receiver is a
+  // local server, off in production. Explicit `true` in production is a
+  // decision somebody has to write down.
+  WEBHOOK_ALLOW_PRIVATE_TARGETS: z.enum(['true', 'false']).optional(),
   // Bigger than a material: a Storyline or iSpring export with narration
   // routinely passes 100 MB. Extraction happens in the worker, not in the
   // request, so the ceiling is worker memory rather than request latency.
@@ -356,6 +370,11 @@ if (parsed.data.FACE_VERIFICATION_REQUIRED && !parsed.data.FACE_VERIFICATION_ENA
 
 export const env = {
   ...parsed.data,
+  // Unset means "follow NODE_ENV" — see the field's comment above.
+  WEBHOOK_ALLOW_PRIVATE_TARGETS:
+    parsed.data.WEBHOOK_ALLOW_PRIVATE_TARGETS === undefined
+      ? !isProduction
+      : parsed.data.WEBHOOK_ALLOW_PRIVATE_TARGETS === 'true',
   allowedOrigins: parsed.data.ALLOWED_ORIGINS.split(',')
     .map((origin) => origin.trim())
     .filter(Boolean),
