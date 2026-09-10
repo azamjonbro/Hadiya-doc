@@ -30,16 +30,31 @@ import './assets/main.css'
 function reportUnhandled(app) {
   const toast = useToast()
 
+  /**
+   * A failed request gets its real reason; anything else gets a generic
+   * line.
+   *
+   * apiErrorText answers "no response" with "network error", which is right
+   * for a request and wrong for a TypeError in a render function — telling
+   * somebody their connection dropped when the truth is a bug in this code
+   * sends them to restart their router.
+   */
+  const describe = (reason) => {
+    const isRequestFailure =
+      Boolean(reason?.response) || ['ECONNABORTED', 'ERR_NETWORK'].includes(reason?.code)
+    return isRequestFailure ? apiErrorText(reason) : i18n.global.t('errors.unknown')
+  }
+
   app.config.errorHandler = (error, instance, info) => {
     console.error('[vue]', info, error)
-    toast.error(apiErrorText(error))
+    toast.error(describe(error))
   }
 
   window.addEventListener('unhandledrejection', (event) => {
-    // Axios cancellations are a normal part of a typeahead being retyped.
+    // A cancelled request is a typeahead being retyped, not a failure.
     if (event.reason?.code === 'ERR_CANCELED' || event.reason?.name === 'CanceledError') return
     console.error('[unhandled]', event.reason)
-    toast.error(apiErrorText(event.reason))
+    toast.error(describe(event.reason))
   })
 }
 
