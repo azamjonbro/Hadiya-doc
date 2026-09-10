@@ -65,10 +65,7 @@ export const settingsService = {
     const set = {}
     for (const section of SETTINGS_SECTIONS) {
       if (!payload[section]) continue
-      for (const [key, value] of Object.entries(payload[section])) {
-        if (value === undefined) continue
-        set[`${section}.${key}`] = value
-      }
+      flatten(payload[section], section, set)
     }
     if (!Object.keys(set).length) return this.get()
 
@@ -95,6 +92,32 @@ export const settingsService = {
       logger.warn('Could not clear the settings cache', { error: error.message })
     })
   },
+}
+
+/**
+ * Turns `{ sso: { claims: { email: 'mail' } } }` into
+ * `{ 'sso.claims.email': 'mail' }`.
+ *
+ * One level of flattening was enough until 11.4: every section was flat, so
+ * `$set: { 'sso.claims': {...} }` was the same thing. The SSO section has a
+ * nested `claims` object, and setting it whole means a screen that sends
+ * one changed claim name **erases the other eight** — the kind of data loss
+ * that looks like the save worked.
+ *
+ * Arrays are values, not objects to merge into: editing a list of role
+ * rules or allowed domains is replacing it, and merging by index would
+ * make removing the first entry impossible.
+ */
+function flatten(value, prefix, out) {
+  for (const [key, entry] of Object.entries(value)) {
+    if (entry === undefined) continue
+    const path = `${prefix}.${key}`
+    if (entry && typeof entry === 'object' && !Array.isArray(entry) && !(entry instanceof Date)) {
+      flatten(entry, path, out)
+      continue
+    }
+    out[path] = entry
+  }
 }
 
 function toPublicSettings(settings) {

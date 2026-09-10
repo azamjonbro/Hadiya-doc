@@ -127,6 +127,118 @@ const aiSchema = new Schema(
   { _id: false }
 )
 
+/**
+ * Single sign-on (11.4) — the parts a company configures, not the secrets.
+ *
+ * The issuer, client id and client secret are in the environment, the same
+ * split the mail section uses: a client secret in a settings document is a
+ * secret in every backup, in whatever the admin screen renders, and in the
+ * first settings response somebody forgets to mask. What lives here is the
+ * switch and the **mapping** — which claim carries a department, which
+ * group makes somebody an admin — because those are decisions an
+ * administrator makes and changes without a deploy.
+ */
+const ssoSchema = new Schema(
+  {
+    // Configured (env) and enabled (here) are separate: a half-configured
+    // provider must not put a broken button on the login page, and a
+    // working one must be switchable off without unsetting credentials.
+    enabled: { type: Boolean, default: false },
+    // What the button says. A company's employees know "Entra ID" or
+    // "korporativ hisob", not "OIDC".
+    buttonLabel: { type: String, default: '', trim: true },
+    scopes: { type: [String], default: ['openid', 'profile', 'email'] },
+
+    /**
+     * Whether an unknown identity may create an account.
+     *
+     * Off by default. On, the first login provisions the person; off, an
+     * identity with no matching account is refused with a message that
+     * says so, which is what a company that manages its roster elsewhere
+     * wants.
+     */
+    autoProvision: { type: Boolean, default: false },
+    defaultRoleName: { type: String, default: 'EMPLOYEE' },
+    /**
+     * Domains allowed to sign in at all.
+     *
+     * A shared identity provider (a tenant with guests, or a provider like
+     * Google) will happily authenticate somebody who has nothing to do
+     * with this company. Empty means "any domain the provider vouches
+     * for", which is only safe with a single-tenant provider.
+     */
+    allowedEmailDomains: { type: [String], default: [] },
+
+    /**
+     * Which claim carries what.
+     *
+     * Claim names are not standardised beyond a handful: `email` and
+     * `name` usually exist, a department almost never does under the same
+     * name twice. Configured rather than guessed, so a new provider is a
+     * settings change instead of a release.
+     */
+    claims: {
+      type: new Schema(
+        {
+          // The login identifier. This platform keys people by JSHSHIR, so
+          // provisioning needs a claim that carries it — see
+          // oidcAuth.service.js on why an account is not invented without
+          // one.
+          jshshir: { type: String, default: '' },
+          email: { type: String, default: 'email' },
+          firstName: { type: String, default: 'given_name' },
+          lastName: { type: String, default: 'family_name' },
+          fullName: { type: String, default: 'name' },
+          department: { type: String, default: '' },
+          branch: { type: String, default: '' },
+          position: { type: String, default: '' },
+          employeeNumber: { type: String, default: '' },
+        },
+        { _id: false }
+      ),
+      default: () => ({}),
+    },
+
+    /**
+     * claim → role. First match wins, in order.
+     *
+     * Ordered rather than "highest role wins": which of two roles is
+     * higher is a judgement this model does not have, while the order of a
+     * list is something an administrator can see and change.
+     */
+    roleRules: {
+      type: [
+        new Schema(
+          {
+            claim: { type: String, required: true },
+            // The value to look for. `equals` matches a string claim;
+            // for a list claim (`groups`) it matches if the list contains it.
+            equals: { type: String, required: true },
+            roleName: { type: String, required: true },
+          },
+          { _id: false }
+        ),
+      ],
+      default: [],
+    },
+
+    /**
+     * Whether every login refreshes name, department and role from the
+     * claims.
+     *
+     * On by default: the point of SSO with mapping is that the identity
+     * provider is the source of truth for who somebody is and where they
+     * work, and a platform that reads that once at provisioning drifts
+     * from the directory within a quarter. It deliberately does **not**
+     * touch `isActive` — deactivating is a decision with consequences
+     * (assignments, certificates) and a claim's absence is too weak a
+     * signal for it.
+     */
+    syncOnLogin: { type: Boolean, default: true },
+  },
+  { _id: false }
+)
+
 const settingsSchema = new Schema(
   {
     // A fixed id is what makes this a singleton: there is no way to create
@@ -140,6 +252,7 @@ const settingsSchema = new Schema(
     locale: { type: localeSchema, default: () => ({}) },
     security: { type: securitySchema, default: () => ({}) },
     ai: { type: aiSchema, default: () => ({}) },
+    sso: { type: ssoSchema, default: () => ({}) },
     updatedBy: { type: Schema.Types.ObjectId, ref: 'User', default: null },
   },
   { timestamps: true, _id: false }
@@ -154,6 +267,7 @@ export const SETTINGS_SECTIONS = [
   'locale',
   'security',
   'ai',
+  'sso',
 ]
 
 export const Settings = model('Settings', settingsSchema)

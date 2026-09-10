@@ -118,6 +118,24 @@ async function issueFaceChallengeIfRequired(user) {
   return { requiresFaceVerification: true, verificationToken }
 }
 
+/**
+ * Turns "this is definitely them" into a session.
+ *
+ * Exported so single sign-on (11.4) finishes a login through the exact
+ * same path a password login does — including the face challenge, which is
+ * a second factor on the *person*, not on the password: an SSO login that
+ * skipped it would be a way around a policy somebody switched on.
+ */
+export async function establishSession(user, meta) {
+  const pendingFaceVerification = await issueFaceChallengeIfRequired(user)
+  if (pendingFaceVerification) return pendingFaceVerification
+
+  const role = await roleRepository.findById(user.roleId)
+  const accessToken = generateAccessToken(user, role)
+  const { refreshToken } = await issueSession(user, meta)
+  return { accessToken, refreshToken, user: toPublicUser(user, role) }
+}
+
 export const authService = {
   async login({ identifier, password, captchaToken }, meta) {
     await verifyCaptcha(captchaToken)
@@ -182,14 +200,7 @@ export const authService = {
       userAgent: meta.userAgent,
     })
 
-    const pendingFaceVerification = await issueFaceChallengeIfRequired(user)
-    if (pendingFaceVerification) return pendingFaceVerification
-
-    const role = await roleRepository.findById(user.roleId)
-    const accessToken = generateAccessToken(user, role)
-    const { refreshToken } = await issueSession(user, meta)
-
-    return { accessToken, refreshToken, user: toPublicUser(user, role) }
+    return establishSession(user, meta)
   },
 
   async refresh(refreshToken, meta) {

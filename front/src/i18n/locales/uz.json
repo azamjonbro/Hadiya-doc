@@ -99,7 +99,29 @@
       "highlight2": "Kurslar, soatlar va kunlik ketma-ketlik bo'yicha o'sishingizni ko'ring",
       "highlight3": "Korporativ darajadagi xavfsizlik, kirishlar qayd etiladi"
     },
-    "logout": "Chiqish"
+    "logout": "Chiqish",
+    "sso": {
+      "or": "yoki",
+      "button": "Korporativ hisob bilan kirish",
+      "startFailed": "Kirishni boshlab bo'lmadi",
+      "signingIn": "Kirilyapti…",
+      "failedTitle": "Kirish amalga oshmadi",
+      "backToLogin": "Kirish sahifasiga qaytish",
+      "errors": {
+        "generic": "Kirish amalga oshmadi. Yana urinib ko'ring.",
+        "access_denied": "Kirishga ruxsat berilmadi.",
+        "SSO_DOMAIN_NOT_ALLOWED": "Bu manzil bilan bu yerga kirish mumkin emas.",
+        "SSO_NO_ACCOUNT": "Bu hisob bu yerda mavjud emas, avtomatik yaratish esa o'chirilgan.",
+        "SSO_NO_IDENTIFIER_CLAIM": "Hisobni avtomatik yaratish uchun JSHSHIR claim'i sozlanmagan.",
+        "ACCOUNT_INACTIVE": "Bu hisob faol emas.",
+        "SSO_STATE_UNKNOWN": "Kirish urinishi eskirgan — qaytadan boshlang.",
+        "SSO_HANDOFF_UNKNOWN": "Kirish kodi eskirgan — qaytadan boshlang.",
+        "SSO_DISABLED": "Korporativ hisob bilan kirish o'chirilgan.",
+        "SSO_NOT_CONFIGURED": "Korporativ hisob bilan kirish sozlanmagan.",
+        "SSO_ROLE_UNKNOWN": "SSO sozlamalarida mavjud bo'lmagan rol ko'rsatilgan.",
+        "SSO_FAILED": "Kirish amalga oshmadi. Administratorga murojaat qiling."
+      }
+    }
   },
   "forbidden": {
     "code": "403",
@@ -2786,5 +2808,44 @@
     "replay": "Qayta yuborish",
     "replayQueued": "Qayta yuborish navbatga qo'yildi",
     "replayFailed": "Qayta yuborib bo'lmadi"
+  },
+  "sso": {
+    "title": "Korporativ hisob (SSO)",
+    "hint": "Xodimlar o'z korporativ hisobi bilan kirsin. Provayder manzili va kalitlari server sozlamalarida (env), bu yerda faqat kalit emas — moslashtirish.",
+    "configured": "server sozlangan",
+    "notConfigured": "server sozlanmagan",
+    "notConfiguredHint": "OIDC_ISSUER, OIDC_CLIENT_ID, OIDC_CLIENT_SECRET va OIDC_REDIRECT_URI to'ldirilmagan — buni server administratori qiladi.",
+    "loadFailed": "Sozlamalarni yuklab bo'lmadi",
+    "saved": "Saqlandi",
+    "saveFailed": "Saqlab bo'lmadi",
+    "enabled": "Kirish sahifasida SSO tugmasi ko'rinsin",
+    "buttonLabel": "Tugma matni",
+    "buttonLabelPlaceholder": "Masalan: Korporativ hisob bilan kirish",
+    "defaultRole": "Standart rol",
+    "autoProvision": "Yangi hisobni o'zi yaratsin (JIT)",
+    "autoProvisionHint": "O'chirilgan bo'lsa, bu yerda hisobi yo'q odam kirolmaydi. Yoqilgan bo'lsa, JSHSHIR claim'i ham sozlangan bo'lishi kerak.",
+    "syncOnLogin": "Har kirishda ism, bo'lim va rolni provayderdan yangilash",
+    "syncOnLoginHint": "Bo'sh claim mavjud qiymatni o'chirmaydi, va hisob faolligiga tegilmaydi.",
+    "allowedDomains": "Ruxsat etilgan domenlar",
+    "allowedDomainsHint": "Bo'sh qoldirilsa — provayder tasdiqlagan har qanday manzil kiradi. Umumiy provayderda (mehmon hisoblari bor tenant) bu xavfli. Subdomen hisobga olinmaydi.",
+    "claimsTitle": "Claim → maydon",
+    "claimsHint": "Claim nomlari provayderdan provayderga farq qiladi. Bo'sh qoldirilgan maydon o'qilmaydi.",
+    "claim": {
+      "jshshir": "JSHSHIR claim'i",
+      "email": "E-mail",
+      "firstName": "Ism",
+      "lastName": "Familiya",
+      "fullName": "To'liq ism",
+      "department": "Bo'lim",
+      "branch": "Filial",
+      "position": "Lavozim"
+    },
+    "claimJshshirPlaceholder": "masalan: personnel_id",
+    "rulesTitle": "Claim → rol",
+    "rulesHint": "Birinchi mos kelgan qoida ishlaydi. Ro'yxat claim'i (masalan groups) ichida qiymat bo'lsa mos keladi. Katta-kichik harf farq qiladi.",
+    "ruleClaim": "Claim",
+    "ruleEquals": "Qiymat",
+    "ruleRole": "Rol",
+    "addRule": "Qoida qo'shish"
   }
 }

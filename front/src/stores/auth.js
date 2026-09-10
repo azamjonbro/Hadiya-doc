@@ -86,6 +86,24 @@ export const useAuthStore = defineStore('auth', {
       return { requiresFaceVerification: false }
     },
 
+    /**
+     * Finishes a single sign-on login (11.4).
+     *
+     * The code came back in the callback URL; the API turns it into
+     * exactly what `POST /auth/login` returns, including the face
+     * challenge case, so this store keeps being the only place that
+     * decides what "logged in" means.
+     */
+    async completeSso(code) {
+      const { ssoApi } = await import('@/services/sso')
+      const session = await ssoApi.exchange(code)
+      if (session.requiresFaceVerification) {
+        return { requiresFaceVerification: true, verificationToken: session.verificationToken }
+      }
+      this.setSession(session)
+      return { requiresFaceVerification: false }
+    },
+
     // Completes a login that stopped at a face-verification challenge.
     // photoBlob is one JPEG frame from useFaceVerification's capture().
     async completeFaceLogin(verificationToken, photoBlob) {

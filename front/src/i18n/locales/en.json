@@ -99,7 +99,29 @@
       "highlight2": "See your growth across courses, hours and streaks",
       "highlight3": "Enterprise-grade security, logged and monitored access"
     },
-    "logout": "Log out"
+    "logout": "Log out",
+    "sso": {
+      "or": "or",
+      "button": "Sign in with your work account",
+      "startFailed": "Could not start the sign-in",
+      "signingIn": "Signing in…",
+      "failedTitle": "Sign-in failed",
+      "backToLogin": "Back to sign-in",
+      "errors": {
+        "generic": "The sign-in did not complete. Try again.",
+        "access_denied": "Access was not granted.",
+        "SSO_DOMAIN_NOT_ALLOWED": "That address is not allowed to sign in here.",
+        "SSO_NO_ACCOUNT": "This identity has no account here, and automatic creation is switched off.",
+        "SSO_NO_IDENTIFIER_CLAIM": "Automatic account creation needs the identifier claim configured.",
+        "ACCOUNT_INACTIVE": "This account is deactivated.",
+        "SSO_STATE_UNKNOWN": "That sign-in attempt expired — start again.",
+        "SSO_HANDOFF_UNKNOWN": "That sign-in code expired — start again.",
+        "SSO_DISABLED": "Signing in with a work account is switched off.",
+        "SSO_NOT_CONFIGURED": "Signing in with a work account is not configured.",
+        "SSO_ROLE_UNKNOWN": "The SSO mapping names a role that does not exist.",
+        "SSO_FAILED": "The sign-in did not complete. Contact an administrator."
+      }
+    }
   },
   "forbidden": {
     "code": "403",
@@ -2786,5 +2808,44 @@
     "replay": "Send again",
     "replayQueued": "Resend queued",
     "replayFailed": "Could not send it again"
+  },
+  "sso": {
+    "title": "Work account (SSO)",
+    "hint": "Employees sign in with their work account. The provider address and the secret are server configuration (env); this screen holds the mapping, and nothing secret.",
+    "configured": "server configured",
+    "notConfigured": "server not configured",
+    "notConfiguredHint": "OIDC_ISSUER, OIDC_CLIENT_ID, OIDC_CLIENT_SECRET and OIDC_REDIRECT_URI are empty — a server administrator sets those.",
+    "loadFailed": "Could not load the settings",
+    "saved": "Saved",
+    "saveFailed": "Could not save",
+    "enabled": "Show the SSO button on the sign-in page",
+    "buttonLabel": "Button text",
+    "buttonLabelPlaceholder": "e.g. Sign in with your work account",
+    "defaultRole": "Default role",
+    "autoProvision": "Create accounts automatically (JIT)",
+    "autoProvisionHint": "Off means somebody with no account here cannot sign in. On, the identifier claim must be configured too.",
+    "syncOnLogin": "Refresh name, department and role from the provider on every sign-in",
+    "syncOnLoginHint": "An empty claim never blanks an existing value, and account activation is left alone.",
+    "allowedDomains": "Allowed domains",
+    "allowedDomainsHint": "Empty means any address the provider vouches for — unsafe on a shared provider or a tenant with guests. Subdomains do not match.",
+    "claimsTitle": "Claim → field",
+    "claimsHint": "Claim names differ between providers. An empty field is not read.",
+    "claim": {
+      "jshshir": "Identifier (JSHSHIR) claim",
+      "email": "E-mail",
+      "firstName": "First name",
+      "lastName": "Last name",
+      "fullName": "Full name",
+      "department": "Department",
+      "branch": "Branch",
+      "position": "Position"
+    },
+    "claimJshshirPlaceholder": "e.g. personnel_id",
+    "rulesTitle": "Claim → role",
+    "rulesHint": "The first matching rule wins. A list claim (groups, say) matches when it contains the value. Case-sensitive.",
+    "ruleClaim": "Claim",
+    "ruleEquals": "Value",
+    "ruleRole": "Role",
+    "addRule": "Add a rule"
   }
 }

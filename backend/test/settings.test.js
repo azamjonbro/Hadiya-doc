@@ -156,5 +156,36 @@ describe('platform settings (7.6)', () => {
       assert.ok(!JSON.stringify(entry.metadata).includes('noreply@example.com'))
       await AuditLog.deleteMany({ action: 'SETTINGS_UPDATED', actor: actor.id })
     })
+
+    test('a nested section merges key by key rather than being replaced (11.4)', async () => {
+      const { Settings } = await import('../src/models/settings.model.js')
+      const { AuditLog } = await import('../src/models/auditLog.model.js')
+      const saved = (await Settings.findById('global').lean())?.sso ?? null
+
+      await settingsService.update(actor, {
+        sso: { claims: { email: 'mail', department: 'dept' } },
+      })
+      // One changed claim name must not erase the other eight — the shape
+      // of data loss that looks like the save worked.
+      await settingsService.update(actor, { sso: { claims: { email: 'upn' } } })
+      const after = await settingsService.section('sso')
+      assert.equal(after.claims.email, 'upn')
+      assert.equal(after.claims.department, 'dept')
+      assert.deepEqual(
+        (await AuditLog.findOne({ action: 'SETTINGS_UPDATED' }).sort({ createdAt: -1 }).lean()).metadata.fields,
+        ['sso.claims.email']
+      )
+
+      // A list, though, is replaced: merging by index would make removing
+      // the first entry impossible.
+      await settingsService.update(actor, { sso: { allowedEmailDomains: ['a.uz', 'b.uz'] } })
+      await settingsService.update(actor, { sso: { allowedEmailDomains: ['b.uz'] } })
+      assert.deepEqual((await settingsService.section('sso')).allowedEmailDomains, ['b.uz'])
+
+      if (saved) await Settings.updateOne({ _id: 'global' }, { $set: { sso: saved } })
+      else await Settings.updateOne({ _id: 'global' }, { $unset: { sso: '' } })
+      await settingsService.invalidate()
+      await AuditLog.deleteMany({ action: 'SETTINGS_UPDATED', actor: actor.id })
+    })
   })
 })

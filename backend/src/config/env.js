@@ -194,6 +194,27 @@ const envSchema = z.object({
   // in a redirect.
   API_PUBLIC_URL: z.string().optional().default(''),
 
+  /**
+   * OIDC single sign-on (11.4). Empty issuer = SSO is not configured, and
+   * the endpoints answer 503 rather than half-working.
+   *
+   * The **credentials live here, not in Settings** — the same split the
+   * mail section uses: the environment holds the secret, the database holds
+   * the switch and the mapping. A client secret in a settings document is a
+   * secret that appears in a backup, in a settings API response somebody
+   * forgets to mask, and in whatever the admin screen renders.
+   */
+  OIDC_ISSUER: z.string().optional().default(''),
+  OIDC_CLIENT_ID: z.string().optional().default(''),
+  OIDC_CLIENT_SECRET: z.string().optional().default(''),
+  // Where the identity provider sends the browser back. Configured rather
+  // than built from the request: it has to match the redirect URI
+  // registered with the provider **exactly**, and behind the Cloudflare
+  // tunnel a request-derived one would say http on an https deployment —
+  // which the provider then refuses with an error that names neither
+  // reason.
+  OIDC_REDIRECT_URI: z.string().optional().default(''),
+
   // Outbound email. Empty SMTP_HOST = mail is not configured: every send is
   // recorded as SKIPPED and nothing else changes, so a laptop and a day-one
   // install both work. It is not an error state.

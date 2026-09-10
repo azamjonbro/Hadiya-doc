@@ -1,5 +1,5 @@
 <script setup>
-import { ref } from 'vue'
+import { onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useAuthStore } from '@/stores/auth'
@@ -10,6 +10,7 @@ import AppInput from '@/components/ui/AppInput.vue'
 import AppButton from '@/components/ui/AppButton.vue'
 import Icon from '@/components/ui/Icon.vue'
 import FaceVerificationPanel from '@/components/face/FaceVerificationPanel.vue'
+import { ssoApi } from '@/services/sso'
 
 const { t } = useI18n()
 const route = useRoute()
@@ -27,9 +28,48 @@ const errorMessage = ref('')
 // same page, rather than a separate route (there is nothing to bookmark or
 // navigate to mid-login).
 const pendingVerificationToken = ref('')
+
+/**
+ * Single sign-on (11.4).
+ *
+ * The button is drawn only when the API says SSO is both configured and
+ * switched on — a button that leads to a 503 is worse than no button, and
+ * this is also how a deployment with no identity provider keeps a login
+ * page with nothing extra on it.
+ */
+const sso = ref({ available: false, buttonLabel: '' })
+const ssoStarting = ref(false)
+
+async function startSso() {
+  ssoStarting.value = true
+  try {
+    const redirect = typeof route.query.redirect === 'string' ? route.query.redirect : ''
+    // A full navigation, not a router push: the next stop is the identity
+    // provider's own domain.
+    window.location.assign(await ssoApi.start(redirect))
+  } catch (error) {
+    errorMessage.value = apiErrorText(error, t('auth.sso.startFailed'))
+    ssoStarting.value = false
+  }
+}
 const faceState = ref('idle')
 const faceErrorMessage = ref('')
 const faceVerification = useFaceVerification()
+
+onMounted(async () => {
+  // A face challenge handed back by the SSO callback: the panel lives here,
+  // so the callback page sends the token rather than duplicating it.
+  const faceToken = typeof route.query.faceToken === 'string' ? route.query.faceToken : ''
+  if (faceToken) pendingVerificationToken.value = faceToken
+
+  try {
+    sso.value = await ssoApi.status()
+  } catch {
+    // A login page that fails to load because an optional feature's status
+    // call failed would be a worse outcome than no SSO button.
+    sso.value = { available: false, buttonLabel: '' }
+  }
+})
 
 function goHome() {
   const redirect = typeof route.query.redirect === 'string' ? route.query.redirect : null
@@ -191,6 +231,25 @@ const highlights = [
               {{ submitting ? t('auth.login.submitting') : t('auth.login.submit') }}
             </AppButton>
           </form>
+
+          <template v-if="sso.available">
+            <div class="mt-6 flex items-center gap-3">
+              <span class="h-px flex-1 bg-border" />
+              <span class="text-caption text-ink-faint">{{ t('auth.sso.or') }}</span>
+              <span class="h-px flex-1 bg-border" />
+            </div>
+            <AppButton
+              class="mt-4"
+              variant="secondary"
+              block
+              size="lg"
+              icon="shield"
+              :loading="ssoStarting"
+              @click="startSso"
+            >
+              {{ sso.buttonLabel || t('auth.sso.button') }}
+            </AppButton>
+          </template>
 
           <p class="mt-6 flex items-start gap-2 text-caption text-ink-faint">
             <Icon name="shield" size="14" class="mt-0.5 shrink-0" />

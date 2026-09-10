@@ -408,16 +408,16 @@
 | OpenAPI hujjati | ? | Router'lardan generatsiya — `GET /openapi.json` (3.1, 370 operatsiya) + `/api/docs` | FULL | 100 | `services/docs/openapi.service.js` | Javob sxemalari yo'q |
 | Idempotency | ? | Yo'q | VERIFY | 0 | — | `Idempotency-Key` |
 | **Webhooks** | ? | Bor — 6 voqea, HMAC (`t=…,v1=…`), 5× retry, yetkazish jurnali + replay, SSRF darvozalari | FULL | 100 | `webhook.service.js`, `webhookQueue.js` | — |
-| **SSO (JWT)** | ✓ | JWT ichkarida ishlatiladi, SSO sifatida emas | NONE | 0 | `utils/tokens.js` | `POST /auth/sso/jwt` |
-| OIDC / Entra ID | ✓ | Yo'q | NONE | 0 | — | OIDC client |
-| SAML | ? | Yo'q | VERIFY | 0 | — | Manba tasdiqlanmagan |
-| Avtomatik provisioning (JIT) | ✓ | Yo'q | NONE | 0 | — | — |
+| **SSO (JWT)** | ✓ | OIDC bor; imzolangan JWT SSO alohida yozilmadi | PARTIAL | 60 | `oidcAuth.service.js` | Ataylab — OIDC qoplaydi |
+| OIDC / Entra ID | ✓ | Bor — code+PKCE, JWKS imzo tekshiruvi, nonce, discovery | FULL | 100 | `oidcClient.js`, `auth/sso/*` | — |
+| SAML | ? | Yo'q — ataylab (§07 REMOVE: bu muhitda AD yo'q) | N/A | — | — | OIDC bilan qoplanadi |
+| Avtomatik provisioning (JIT) | ✓ | Bor — claim → rol/bo'lim, har kirishda sync | FULL | 100 | `oidcAuth.service.js`, `ssoClaimMap.js` | JSHSHIR claim'i shart |
 | HR tizimi (BambooHR/Salesforce) | ✓ | Yo'q | NONE | 0 | — | XLSX import + API |
 | Zoom / Meet / Teams | ✓ | Yo'q | NONE | 0 | — | D39 |
 | Albato / Zapier tipidagi | ✓ | Webhook + ommaviy API bilan ulanadi, tayyor konnektor yo'q | PARTIAL | 50 | `webhook.service.js` | Konnektor katalogi |
 | Storage provider abstraksiyasi | ? | Bor (Local + S3) | OURS+ | 100 | `storage/S3StorageProvider.js` | — |
 | Domain alias | ✓ | Nginx darajasida qo'lda | PARTIAL | 50 | — | — |
-| **D70–D73 jami: 16 capability (+1 N/A)** | | | **FULL 4 · OURS+ 2 · PARTIAL 3 · NONE 5 · VERIFY 2 · N/A 1** | **49** | | |
+| **D70–D73 jami: 15 capability (+2 N/A)** | | | **FULL 6 · OURS+ 2 · PARTIAL 4 · NONE 2 · VERIFY 1 · N/A 2** | **70** | | |
 
 ## D74–D79 · SECURITY / AUDIT / ADMIN / BRANDING / MEDIA / FILES
 

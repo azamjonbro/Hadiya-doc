@@ -17,6 +17,14 @@ export const router = createRouter({
   history: createWebHistory(),
   routes: [
     { path: '/login', name: 'login', component: () => import('@/views/LoginView.vue'), meta: { public: true } },
+    // Where the identity provider's redirect lands (11.4). Public by
+    // necessity: nobody is signed in yet — that is what this page is for.
+    {
+      path: '/sso/callback',
+      name: 'sso-callback',
+      component: () => import('@/views/SsoCallbackView.vue'),
+      meta: { public: true },
+    },
     { path: '/403', name: 'forbidden', component: () => import('@/views/ForbiddenView.vue'), meta: { public: true } },
     { path: '/401', name: 'unauthorized', component: () => import('@/views/UnauthorizedView.vue'), meta: { public: true } },
     // Where the QR code on a printed certificate points. Public, and

@@ -61,17 +61,23 @@ Matritsa **satrlar darajasida** BLOK 1–8 davomida yangilanib borgan, lekin
 sarlavhadagi umumiy raqam 2026-09-08 dan qimirlamagan — ya'ni yuqoridagi
 36,3 faqat BLOK 0 tugagan holatni aks ettiradi. Har band tugaganda raqam
 matritsaning **hozirgi satrlaridan** qayta
-hisoblanadi — oxirgi hisob 11.3 (generatsiya qilinadigan OpenAPI) dan keyin:
+hisoblanadi — oxirgi hisob 11.4 (OIDC SSO) dan keyin:
 
 | Metrika | 2026-09-08 (BLOK 0) | Hozir (BLOK 1–11) |
 |---|:--:|:--:|
-| Vaznsiz (337 capability) | 36,3 | **58,0** |
-| FULL | — | **121** |
+| Vaznsiz (336 capability) | 36,3 | **59,0** |
+| FULL | — | **123** |
 | OURS+ | — | **48** |
 | PARTIAL | — | **60** |
-| NONE | — | **88** |
-| VERIFY | — | **20** |
-| **PARITY GAP** (vaznsiz) | ≈64% | **≈42%** |
+| NONE | — | **85** |
+| VERIFY | — | **19** |
+| **PARITY GAP** (vaznsiz) | ≈64% | **≈41%** |
+
+Hisoblanadigan capability soni 337 dan **336** ga tushdi: SAML 11.4 da
+**N/A** ga o'tdi — `07-scores-dependencies.md` da u REMOVE deb belgilangan
+(bu muhitda Active Directory yo'q, SAML esa OIDC'dan sezilarli qimmat), va
+qilinmaydigan ish nolga baholanib o'rtachani pasaytirib turishi — hisobot
+emas, shovqin.
 
 Sakrash yangi ishning o'zidan emas: BLOK 1–8 (yetkazish, ierarxiya,
 sertifikat, baholash, path, tadbir, qidiruv/KB/compliance, hisobot) allaqachon

@@ -2642,8 +2642,149 @@
   yuradi (`app.js?v=<sha1>`), sahifaning o'zi esa `no-cache`: o'zgargan
   skript — boshqa URL, va uni hech qaysi kesh eski nusxa bilan almashtira
   olmaydi.
-- [ ] **11.4** OIDC SSO — `services/integrations/oidcClient.js`, JIT provisioning,
+- [x] **11.4** OIDC SSO — `services/integrations/oidcClient.js`, JIT provisioning,
   claim → rol/bo'lim mapping
+  · Bajarildi — **authorization code + PKCE**, hammasi server tomonda.
+  SPA authorization code'ni ham, ID token'ni ham **ko'rmaydi**: u
+  **handoff kod** oladi va uni `POST /auth/login` qaytaradigan aynan
+  o'sha payloadga almashtiradi. Nega odatdagi "token'ni fragment'da
+  qaytarish" emas: (1) URL'dagi token brauzer tarixida, keyingi
+  yuklanadigan sahifaning referrer'ida va redirect'ni yozadigan har bir
+  jurnalda qoladi; (2) bu yo'l bilan SSO **bir xil sessiya
+  mexanikasida** tugaydi — bitta refresh cookie, bitta CSRF token, bitta
+  yuz tekshiruvi siyosati — ikkinchi, vaqt o'tib ajralib ketadigan
+  mexanizm emas.
+  · **Kutubxona olinmadi, `node:crypto`.** Kerak bo'lgani — bitta oqim va
+  bitta imzo turkumi (JWKS ustidan RSA/ECDSA). Kutubxona **aynan
+  yashiradigan** narsa — qaysi claim tekshiriladi va qaysi biri shunchaki
+  bor — bu yerda `verifyIdToken` ichida, bir ekranda o'qiladi.
+  · **Faqat ID token'ga ishoniladi.** `userinfo` chaqirilmaydi: u o'sha
+  claim'larni **imzosiz** qaytaradi. Imzosi tekshirilgan token — dalil;
+  JSON javob — shunchaki bitta fetch.
+  · **`alg` tokendan olinmaydi**, qat'iy jadvaldan tanlanadi: tokenning
+  o'zi aytgan algoritmni qabul qilish — `alg: none` va HMAC-confusion
+  hujumlari aynan shunday ishlaydi (ikkisi ham test bilan qadalgan,
+  ikkinchisi **ochiq kalitni HMAC siri** qilib imzolab ko'radi).
+  · Tekshiriladigan claim'lar, shu tartibda: **imzo** (undan oldin token
+  — shunchaki kimdir yuborgan satr), `iss`, `aud` (bizning client_id
+  ro'yxatda bo'lishi kerak — aks holda bu **o'sha provayderdagi boshqa
+  ilova** uchun berilgan haqiqiy token, ya'ni confused-deputy), `azp`
+  (bir nechta audience bo'lsa), `exp`/`nbf` (60 s skew — kattaroq oyna
+  qayta ishlatilgan token uchun kattaroq oyna), `sub`, va **`nonce`** —
+  bu brauzer boshlagan aynan shu kirishga bog'lash.
+  · **JWKS `kid` bo'yicha keshlanadi**, va noma'lum `kid` da **bir marta**
+  qayta olinadi: provayderlar kalitni ogohlantirmasdan aylantiradi, va
+  keshlangan JWKS — kechagi ishlagan kirishning bugun to'xtashining
+  odatiy sababi. Faqat noma'lum `kid` da qayta olish esa buni har
+  kirishda provayderga so'rovga aylantirmaydi.
+  · **Discovery** olinadi, qo'lda sozlanmaydi (endpointlar va JWKS manzili
+  — provayderning o'zgartirish huquqi), lekin **hujjatdagi `issuer`
+  so'ralgan issuer bilan bir xil bo'lishi** shart: aks holda kimdir
+  boshqa provayder nomidan javob berayapti, va undan keyingi har bir
+  `iss` tekshiruvi **noto'g'ri nomni** tekshirardi.
+  · **Sirlar env'da, mapping bazada** — pochta bo'limidagi bilan bir xil
+  bo'linish. Settings ichidagi client secret — har bir zaxira
+  nusxasidagi, admin ekrani render qiladigan va kimdir maskalashni
+  esdan chiqargan birinchi settings javobidagi sir. `sso` bo'limida
+  esa hech qanday sir yo'q: kalit/qiymat mapping'i, guruh → rol
+  qoidalari, domen ro'yxati, ikkita bayroq.
+  · **`state`, `nonce` va PKCE verifier — Redis'da**, cookie'da emas:
+  callback provayderdan **cross-site redirect** sifatida keladi, va
+  `SameSite=Lax` cookie bunday redirectlarning ba'zilarida
+  **yuborilmaydi** — "bir brauzerda ishlaydi, boshqasida sababsiz
+  ishlamaydi" degan xato aynan shundan. `state` **getdel** bilan
+  o'qiladi (bir martalik: callback'idan omon qolgan state — qayta
+  ishlatiladigan kirish), handoff kod ham xuddi shunday.
+  · **PKCE confidential client'da ham** ishlatiladi: secret kim
+  almashtirayotganini isbotlaydi, PKCE esa **uni so'ragan aynan o'sha
+  brauzer** almashtirayotganini — o'g'irlangan kod aynan shu ikkinchisini
+  yengib o'tadi.
+  · **Kimni tanish tartibi tor va ataylab shunday:** `ssoSubject` →
+  JSHSHIR claim'i → e-mail. `sub` — provayder barqarorligini
+  kafolatlaydigan **yagona** identifikator; e-mail esa odam ketganda
+  vorisiga o'tadi, va aynan shu tarzda bir odam boshqasining hisobiga
+  kirib qoladi (test: mailbox o'zgardi, hisob **bitta** qoldi). E-mail
+  va JSHSHIR faqat **mavjud** hisobni bir marta bog'lash uchun.
+  · **JIT provisioning JSHSHIR claim'ini talab qiladi.** Platforma
+  odamlarni JSHSHIR bilan kalitlaydi — u login, u sertifikatda, u HR
+  eksporti mos keladigan maydon — va milliy identifikator uchun
+  o'ylab topilgan placeholder yozib qo'yish mumkin emas. Claim
+  sozlanmagan bo'lsa kirish **aynan shu sababni aytib** rad etiladi.
+  (**Chetlanish:** shu sababli har qanday IdP bilan "shundoq"
+  provisioning ishlamaydi — deployment qaysi claim JSHSHIR olib
+  yurishini ko'rsatishi kerak.)
+  · **Ko'rinadigan ism uchun zaxira zanjiri**: `name`/halflar → e-mail'ning
+  @ dan oldingi qismi → JSHSHIR. Minimal ID token faqat `sub` olib
+  yuradi (bu mutlaqo to'g'ri token, va testlar birinchi navbatda
+  shunisini yasadi); eng ahamiyatsiz claim yo'qligi uchun kirishni rad
+  etish yoki bo'sh ism saqlash — ikkisi ham yomonroq.
+  · **`syncOnLogin`** (standart yoniq): har kirishda ism, bo'lim, filial,
+  lavozim va **rol** claim'lardan yangilanadi — mapping bilan SSO'ning
+  ma'nosi shu, va bir marta o'qib qo'ygan platforma bir chorakda
+  katalogdan ajralib ketadi. Ikki muhim cheklov: **bo'sh claim mavjud
+  qiymatni o'chirmaydi** (provayder `department` yubormasa, qo'lda
+  qo'yilgan bo'lim o'chsa — odam bo'lim bo'yicha tayinlangan
+  kurslardan jimgina chiqib ketardi), va **`isActive` ga tegilmaydi**
+  (o'chirishning oqibatlari bor, claim yo'qligi esa bunga juda kuchsiz
+  signal). Qoida **umuman sozlanmagan bo'lsa rol tegilmaydi** — aks
+  holda har SSO kirishi hammani standart rolga qaytarardi, SSO'ni
+  sozlagan administratorni ham (test bilan qadalgan).
+  · **O'chirilgan hisob SSO orqali qaytmaydi**: katalogda
+  autentifikatsiyadan o'tish — bu yerda bo'lish huquqi emas, o'chirishning
+  butun ma'nosi shu.
+  · **Domen ro'yxati**: umumiy provayder (mehmon hisoblari bor tenant,
+  yoki Google) bu kompaniyaga aloqasi yo'q odamni ham xotirjam
+  tasdiqlaydi. Bo'sh ro'yxat — "provayder kafolatlagan har kim", va u
+  faqat single-tenant provayderda xavfsiz. **Subdomen mos kelmaydi**:
+  `example.uz` ruxsat bersa `guests.example.uz` yo'q — mehmonlar
+  ko'pincha aynan subdomenda.
+  · **Ochiq redirect yopilgan**: `?redirect=` faqat **bitta** `/` bilan
+  boshlanadigan nisbiy path (`//evil.example` ham rad etiladi) — aks
+  holda bu kirish fishing sahifasini haqiqiyga o'xshatib turardi
+  (HTTP bilan tekshirilgan: 400 VALIDATION_ERROR).
+  · **`/callback` — bu API'dagi yagona endpoint** javobi envelope emas:
+  uning chaqiruvchisi SPA'ning HTTP klienti emas, **redirect'ni
+  kuzatayotgan brauzer**, va JSON xato tanasi odamni API domenida
+  qaytish yo'li yo'q holda qoldirardi. Shuning uchun u SPA'ga
+  `?error=<code>` bilan redirect qiladi va SPA uni tarjima qiladi.
+  · **Kesh muddatlari:** discovery va JWKS 1 soat, `state` 10 daqiqa
+  (parol + MFA + bir lahza o'ylash), handoff 60 sekund (bitta redirect
+  va bitta so'rov).
+  · **Yon topilma (tuzatildi):** `settingsService.update` bir pog'ona
+  chuqurlikda `$set` qilardi (`sso.claims` **butunlay** almashtirilardi).
+  11.4 gacha har bo'lim tekis bo'lgani uchun bu farq qilmagan; endi esa
+  bitta claim nomini o'zgartirgan ekran **qolgan sakkiztasini
+  o'chirardi** — saqlash ishlaganday ko'rinadigan ma'lumot yo'qolishi.
+  Endi ichma-ich yassilanadi, massivlar esa qiymat sifatida
+  almashtiriladi (ro'yxatni indeks bo'yicha birlashtirish birinchi
+  elementni o'chirishni imkonsiz qilardi). `settings.test.js` ga
+  regressiya testi qo'shildi.
+  · **Tekshirildi** — 25 test (`test/oidcSso.test.js`; to'plam 916 test,
+  914 o'tadi — faqat eskidan yiqilib turgan ikkita yuz testi; **haqiqiy IdP**:
+  loopback'dagi HTTP server discovery, JWKS va yangi generatsiya
+  qilingan RSA kalit bilan imzolangan ID token beradi — mock'langan
+  verifier har qanday tekshiruvni tashlab ketgan implementatsiyani
+  o'tkazib yuborardi) + **HTTP orqali to'liq oqim**: `/start` →
+  provayderning `/authorize` → bizning `/callback` → SPA'ga handoff
+  redirect → `/exchange` → sessiya (access token bilan `/users/me` 200),
+  handoff **ikkinchi marta 401**, guruh claim'i qo'shilgach rol
+  **ADMIN** ga o'tdi va bo'lim yangilandi, mehmon domeni
+  `?error=SSO_DOMAIN_NOT_ALLOWED` bilan qaytarildi, ochiq redirect
+  400 oldi + **brauzerda (CDP)**: kirish sahifasida tugma sozlangan
+  matn bilan chiqdi, bosilgach provayderga ketdi va oqim oxirida
+  bosh sahifada "Xayrli kech, Probe" — ya'ni provisioning qilingan
+  odam haqiqatan kirdi (`csrf_token` localStorage'da). Sinov
+  ma'lumotlari (4 hisob, sessiyalar, audit, bildirishnomalar) o'chirildi
+  va `sso` bo'limi **aynan avvalgi holatiga** qaytarildi.
+  · **Chetlanish:** SAML yo'q (`07-scores-dependencies.md` da REMOVE —
+  bu muhitda Active Directory yo'q, SAML esa OIDC'dan sezilarli
+  qimmat). `POST /auth/sso/jwt` (imzolangan JWT SSO) ham yozilmadi:
+  OIDC bor bo'lgach, u faqat kalitni qo'lda ulashish yo'li bilan
+  bir xil natijaga olib boradi.
+  · **Chetlanish:** logout provayder tomonda **sessiyani yopmaydi**
+  (RP-initiated logout). Bizdagi chiqish o'z sessiyamizni tugatadi;
+  IdP'dan chiqish — brauzerdagi boshqa ilovalarga ham ta'sir qiladigan
+  qaror, va uni SSO bilan birga jimgina yoqib qo'yish to'g'ri emas.
 - [ ] **11.5** `middlewares/idempotency.middleware.js` (`Idempotency-Key`)
 - [ ] **11.6** TOTP 2FA, foydalanuvchi sessiyalari sahifasi
 

@@ -14,6 +14,9 @@ import {
   passwordResetConfirmSchema,
 } from '../../validators/auth.validator.js'
 import { faceRouter } from './face.routes.js'
+import { ssoController } from '../../controllers/sso.controller.js'
+import { validateQuery } from '../../middlewares/validate.middleware.js'
+import { ssoCallbackSchema, ssoExchangeSchema, ssoStartSchema } from '../../validators/sso.validator.js'
 
 export const authRouter = Router()
 
@@ -42,4 +45,24 @@ authRouter.post(
   passwordResetRateLimiter,
   validateBody(passwordResetConfirmSchema),
   authController.confirmPasswordReset
+)
+
+/**
+ * Single sign-on (11.4).
+ *
+ * Unauthenticated by nature — this is how somebody signs in — and under
+ * the same `authRateLimiter` as the rest of `/auth`. `/callback` is a GET
+ * because the identity provider redirects a browser to it, and `/exchange`
+ * is the SPA turning the handoff code into a session.
+ */
+authRouter.get('/sso/status', ssoController.status)
+authRouter.get('/sso/start', validateQuery(ssoStartSchema), ssoController.start)
+authRouter.get('/sso/callback', validateQuery(ssoCallbackSchema), ssoController.callback)
+authRouter.post(
+  '/sso/exchange',
+  // The same limiter a password login gets: the handoff code is
+  // single-use and short-lived, but guessing at one should still cost.
+  loginRateLimiter,
+  validateBody(ssoExchangeSchema),
+  ssoController.exchange
 )

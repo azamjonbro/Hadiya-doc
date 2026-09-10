@@ -78,5 +78,54 @@ export const updateSettingsSchema = z
         generationEnabled: z.boolean().optional(),
       })
       .optional(),
+    // Single sign-on (11.4). Only the mapping and the switch — the issuer
+    // and the client secret are environment configuration, so there is
+    // nothing secret in this section and nothing here to mask on the way
+    // out.
+    sso: z
+      .object({
+        enabled: z.boolean().optional(),
+        buttonLabel: z.string().trim().max(60).optional(),
+        scopes: z.array(z.string().trim().min(1).max(60)).min(1).max(12).optional(),
+        autoProvision: z.boolean().optional(),
+        defaultRoleName: z.string().trim().min(2).max(40).optional(),
+        // Domains, not e-mail addresses: "@" is the usual mistake and it
+        // would silently match nothing.
+        allowedEmailDomains: z
+          .array(
+            z
+              .string()
+              .trim()
+              .toLowerCase()
+              .regex(/^[a-z0-9.-]+\.[a-z]{2,}$/, 'A bare domain, e.g. example.uz')
+          )
+          .max(20)
+          .optional(),
+        claims: z
+          .object({
+            jshshir: z.string().trim().max(60).optional(),
+            email: z.string().trim().max(60).optional(),
+            firstName: z.string().trim().max(60).optional(),
+            lastName: z.string().trim().max(60).optional(),
+            fullName: z.string().trim().max(60).optional(),
+            department: z.string().trim().max(60).optional(),
+            branch: z.string().trim().max(60).optional(),
+            position: z.string().trim().max(60).optional(),
+            employeeNumber: z.string().trim().max(60).optional(),
+          })
+          .optional(),
+        roleRules: z
+          .array(
+            z.object({
+              claim: z.string().trim().min(1).max(60),
+              equals: z.string().trim().min(1).max(200),
+              roleName: z.string().trim().min(2).max(40),
+            })
+          )
+          .max(30)
+          .optional(),
+        syncOnLogin: z.boolean().optional(),
+      })
+      .optional(),
   })
   .refine((data) => Object.keys(data).length > 0, { message: 'No settings to update' })

@@ -37,6 +37,21 @@ const userSchema = new Schema(
     // to accounts without guessing at names.
     employeeNumber: { type: String, default: undefined, trim: true },
 
+    /**
+     * The identity provider's own id for this person (11.4).
+     *
+     * `sub` is the only identifier a provider guarantees is stable, so it
+     * is what an SSO login matches on. E-mail is not: a mailbox gets
+     * reassigned when somebody leaves, and matching on it is how their
+     * successor ends up signing into their account. Absent for everybody
+     * who signs in with a password, hence the partial unique index below —
+     * a plain one would let the second such account collide with the first.
+     */
+    ssoSubject: { type: String, default: undefined, trim: true },
+    // Which provider vouched for them, so a deployment that changes
+    // identity providers can tell whose link is stale.
+    ssoProvider: { type: String, default: '' },
+
     // Which office the employee belongs to — a separate axis from
     // `department`. A branch is *where* ("Toshkent"), a department is *what*
     // ("Marketing"), and a course can target either or both.
@@ -101,6 +116,13 @@ userSchema.index(
   { unique: true, partialFilterExpression: { passportSeries: { $type: 'string' } } }
 )
 userSchema.index({ email: 1 }, { unique: true, partialFilterExpression: { email: { $type: 'string' } } })
+// Partial for the same reason as the three above: only SSO users have one,
+// and two people must never share a provider subject — that would be one
+// person able to sign in as the other.
+userSchema.index(
+  { ssoSubject: 1 },
+  { unique: true, partialFilterExpression: { ssoSubject: { $type: 'string' } } }
+)
 
 // Partial like the two above, and for the same reason: employeeNumber is
 // optional, and a plain unique index would make the second employee without
