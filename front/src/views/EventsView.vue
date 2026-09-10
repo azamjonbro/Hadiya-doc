@@ -117,11 +117,11 @@ onMounted(load)
 
     <template v-else-if="items.length">
       <div v-for="group in groups" :key="group.key" class="mt-8 first:mt-6">
-        <h2 class="mb-3 text-caption font-semibold uppercase tracking-widest text-ink-faint">{{ group.label }}</h2>
+        <h2 class="mb-3 text-[11px] font-bold uppercase tracking-widest text-ink-faint">{{ group.label }}</h2>
         <div class="relative space-y-4 border-l border-border pl-6">
           <div v-for="ev in group.items" :key="ev.id" class="relative">
-            <span class="absolute -left-[29px] top-1.5 h-3 w-3 rounded-full border-2 border-surface bg-primary" />
-            <AppCard hover class="cursor-pointer" @click="router.push(`/events/${ev.id}`)">
+            <span class="absolute -left-[29px] top-1.5 h-3 w-3 rounded-sm border-2 border-surface bg-primary" />
+            <AppCard hover class="cursor-pointer border border-border shadow-sm" @click="router.push(`/events/${ev.id}`)">
               <div class="flex items-start justify-between gap-3">
                 <div class="min-w-0">
                   <div class="flex items-center gap-2">

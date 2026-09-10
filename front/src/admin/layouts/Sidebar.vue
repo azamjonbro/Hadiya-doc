@@ -32,41 +32,34 @@ function onNavigate() {
   </Transition>
 
   <aside
-    class="fixed inset-y-0 left-0 z-50 flex h-screen shrink-0 -translate-x-full flex-col border-r border-border bg-surface transition-transform duration-200 lg:sticky lg:top-0 lg:translate-x-0"
-    :class="[ui.mobileNavOpen ? 'translate-x-0' : '', ui.sidebarCollapsed ? 'lg:w-18' : 'lg:w-64', 'w-64']"
+    class="flex h-full shrink-0 flex-col border-r border-border bg-surface transition-[width] duration-200"
+    :class="ui.sidebarCollapsed ? 'w-18' : 'w-64'"
   >
-    <div class="flex h-16 items-center gap-2.5 px-4" :class="ui.sidebarCollapsed ? 'lg:justify-center lg:px-0' : ''">
-      <div class="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-primary text-primary-foreground">
-        <Icon name="shield" size="16" />
-      </div>
-      <div class="min-w-0" :class="ui.sidebarCollapsed ? 'lg:hidden' : ''">
-        <p class="truncate text-small font-semibold text-ink">{{ t('admin.app.name') }}</p>
-        <p class="truncate text-caption text-ink-faint">{{ auth.user?.role }}</p>
-      </div>
-    </div>
-
-    <nav class="flex-1 overflow-y-auto px-3 py-3">
+    <nav class="flex-1 overflow-y-auto px-4 py-6">
+      <p v-if="!ui.sidebarCollapsed" class="px-2 pb-2 text-[11px] font-bold uppercase tracking-widest text-ink-faint">
+        {{ t('nav.groupWorkspace') }}
+      </p>
       <router-link
         v-for="item in workspaceNav"
         :key="item.name"
         :to="item.path"
-        class="group mb-0.5 flex items-center gap-3 rounded-md px-2.5 py-2 text-small font-medium transition-default"
-        :class="isActive(item.path) ? 'bg-primary-subtle text-primary' : 'text-ink-muted hover:bg-surface-2 hover:text-ink'"
+        class="group mb-1 flex items-center gap-3 rounded-lg px-2 py-2.5 text-small font-semibold transition-default"
+        :class="isActive(item.path) ? 'bg-primary text-white' : 'text-ink-muted hover:bg-surface-2 hover:text-ink'"
         @click="onNavigate"
       >
         <Icon :name="item.icon" size="18" />
-        <span :class="ui.sidebarCollapsed ? 'lg:hidden' : ''">{{ t(item.labelKey) }}</span>
+        <span v-if="!ui.sidebarCollapsed">{{ t(item.labelKey) }}</span>
       </router-link>
 
-      <p class="px-2.5 pb-1.5 pt-5 text-caption font-semibold uppercase tracking-widest text-ink-faint" :class="ui.sidebarCollapsed ? 'lg:hidden' : ''">
+      <p v-if="!ui.sidebarCollapsed" class="px-2 pb-2 pt-6 text-[11px] font-bold uppercase tracking-widest text-ink-faint">
         {{ t('nav.groupManagement') }}
       </p>
       <router-link
         v-for="item in management"
         :key="item.name"
         :to="item.path"
-        class="group mb-0.5 flex items-center gap-3 rounded-md px-2.5 py-2 text-small font-medium transition-default"
-        :class="isActive(item.path) ? 'bg-primary-subtle text-primary' : 'text-ink-muted hover:bg-surface-2 hover:text-ink'"
+        class="group mb-1 flex items-center gap-3 rounded-lg px-2 py-2.5 text-small font-semibold transition-default"
+        :class="isActive(item.path) ? 'bg-primary text-white' : 'text-ink-muted hover:bg-surface-2 hover:text-ink'"
         @click="onNavigate"
       >
         <span class="relative shrink-0">
@@ -78,40 +71,33 @@ function onNavigate() {
             {{ chat.unreadTotal > 99 ? '99+' : chat.unreadTotal }}
           </span>
         </span>
-        <span :class="ui.sidebarCollapsed ? 'lg:hidden' : ''">{{ t(item.labelKey) }}</span>
+        <span v-if="!ui.sidebarCollapsed">{{ t(item.labelKey) }}</span>
       </router-link>
 
-      <p class="px-2.5 pb-1.5 pt-5 text-caption font-semibold uppercase tracking-widest text-ink-faint" :class="ui.sidebarCollapsed ? 'lg:hidden' : ''">
+      <p v-if="!ui.sidebarCollapsed" class="px-2 pb-2 pt-6 text-[11px] font-bold uppercase tracking-widest text-ink-faint">
         {{ t('nav.groupSystem') }}
       </p>
       <router-link
         v-for="item in systemNav"
         :key="item.name"
         :to="item.path"
-        class="group mb-0.5 flex items-center gap-3 rounded-md px-2.5 py-2 text-small font-medium transition-default"
-        :class="isActive(item.path) ? 'bg-primary-subtle text-primary' : 'text-ink-muted hover:bg-surface-2 hover:text-ink'"
+        class="group mb-1 flex items-center gap-3 rounded-lg px-2 py-2.5 text-small font-semibold transition-default"
+        :class="isActive(item.path) ? 'bg-primary text-white' : 'text-ink-muted hover:bg-surface-2 hover:text-ink'"
         @click="onNavigate"
       >
         <Icon :name="item.icon" size="18" />
-        <span :class="ui.sidebarCollapsed ? 'lg:hidden' : ''">{{ t(item.labelKey) }}</span>
+        <span v-if="!ui.sidebarCollapsed">{{ t(item.labelKey) }}</span>
       </router-link>
     </nav>
 
     <div class="border-t border-border p-3">
       <button
         type="button"
-        class="mb-1 hidden w-full items-center justify-center rounded-md py-1.5 text-ink-faint transition-default hover:bg-surface-2 hover:text-ink lg:flex"
+        class="flex w-full items-center justify-center rounded py-1.5 text-ink-faint transition-default hover:bg-surface-2 hover:text-ink"
         @click="ui.toggleSidebar()"
       >
         <Icon :name="ui.sidebarCollapsed ? 'chevron-right' : 'chevron-left'" size="16" />
       </button>
-      <router-link to="/bos/settings" class="flex items-center gap-2.5 rounded-md px-1.5 py-2 transition-default hover:bg-surface-2" :class="ui.sidebarCollapsed ? 'lg:justify-center' : ''">
-        <Avatar :name="auth.user?.fullName ?? ''" size="sm" />
-        <div class="min-w-0 text-left" :class="ui.sidebarCollapsed ? 'lg:hidden' : ''">
-          <p class="truncate text-small font-medium text-ink">{{ auth.user?.fullName }}</p>
-          <p class="truncate text-caption text-ink-faint">{{ auth.user?.role }}</p>
-        </div>
-      </router-link>
     </div>
   </aside>
 </template>

@@ -449,7 +449,7 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div class="mx-auto max-w-4xl px-6 py-8">
+  <div class="mx-auto w-full max-w-[1440px] px-6 lg:px-8 py-8">
     <h1 class="text-h1 text-ink">{{ t('reports.title') }}</h1>
     <p class="mt-1 text-body text-ink-muted">{{ t('reports.subtitle') }}</p>
 

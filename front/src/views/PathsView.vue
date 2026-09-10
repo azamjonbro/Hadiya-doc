@@ -62,7 +62,7 @@ const kindVariant = { ONBOARDING: 'info', CERTIFICATION: 'success', DEVELOPMENT:
     <p class="mt-1 text-small text-ink-muted">{{ t('paths.subtitle') }}</p>
 
     <div v-if="loading" class="mt-6 space-y-3">
-      <Skeleton v-for="n in 3" :key="n" class="h-28 w-full rounded-xl" />
+      <Skeleton v-for="n in 3" :key="n" class="h-28 w-full rounded-md border border-border" />
     </div>
 
     <EmptyState
@@ -81,7 +81,7 @@ const kindVariant = { ONBOARDING: 'info', CERTIFICATION: 'success', DEVELOPMENT:
             v-for="path in mine"
             :key="path.id"
             hover
-            class="cursor-pointer p-5"
+            class="cursor-pointer p-6 border border-border shadow-sm"
             @click="router.push(`/paths/${path.id}`)"
           >
             <div class="flex flex-wrap items-start justify-between gap-3">
@@ -110,7 +110,7 @@ const kindVariant = { ONBOARDING: 'info', CERTIFICATION: 'success', DEVELOPMENT:
       <section v-if="available.length" class="mt-8">
         <h2 class="text-h3 text-ink">{{ t('paths.available') }}</h2>
         <div class="mt-3 space-y-3">
-          <AppCard v-for="path in available" :key="path.id" class="flex flex-wrap items-center justify-between gap-4 p-5">
+          <AppCard v-for="path in available" :key="path.id" class="flex flex-wrap items-center justify-between gap-4 p-6 border border-border shadow-sm">
             <div class="min-w-0">
               <div class="flex items-center gap-2">
                 <h3 class="truncate text-h3 text-ink">{{ path.title }}</h3>

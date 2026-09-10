@@ -74,52 +74,54 @@ onMounted(load)
 
     <template v-else-if="items.length">
       <!-- Featured -->
-      <AppCard padding="none" hover class="mt-6 cursor-pointer overflow-hidden" @click="router.push(`/news/${featured.id}`)">
+      <AppCard padding="none" hover class="mt-6 cursor-pointer overflow-hidden border border-border shadow-sm" @click="router.push(`/news/${featured.id}`)">
         <div class="flex flex-col lg:flex-row">
           <div
-            class="media-dark flex h-56 shrink-0 items-center justify-center lg:h-auto lg:w-1/2"
+            class="flex h-56 shrink-0 items-center justify-center bg-surface-2 border-r border-border lg:h-auto lg:w-1/2"
             :style="featured.cover ? `background-image:url(${featured.cover});background-size:cover;background-position:center` : ''"
           >
-            <Icon v-if="!featured.cover" name="newspaper" size="36" class="text-white/50" />
+            <Icon v-if="!featured.cover" name="newspaper" size="48" class="text-ink-faint" />
           </div>
-          <div class="flex flex-1 flex-col justify-center p-7">
-            <Badge variant="primary" dot>{{ t('news.featured') }}</Badge>
-            <h2 class="mt-3 text-h1 text-ink">{{ featured.title }}</h2>
-            <p class="mt-3 flex items-center gap-3 text-small text-ink-faint">
-              <span>{{ new Date(featured.publishAt).toLocaleDateString(locale, { day: 'numeric', month: 'long', year: 'numeric' }) }}</span>
+          <div class="flex flex-1 flex-col justify-center p-7 lg:p-10">
+            <div class="mb-4">
+              <Badge variant="primary">{{ t('news.featured') }}</Badge>
+            </div>
+            <h2 class="text-h1 text-ink leading-tight">{{ featured.title }}</h2>
+            <div class="mt-5 flex items-center gap-2 text-small font-medium text-ink-muted">
+              <span><Icon name="calendar" size="14" class="inline mr-1" />{{ new Date(featured.publishAt).toLocaleDateString(locale, { day: 'numeric', month: 'long', year: 'numeric' }) }}</span>
               <span>·</span>
-              <span>{{ readingMinutes(featured.content) }} {{ t('common.minRead') }}</span>
-            </p>
-            <AppButton class="mt-5 self-start" icon="arrow-right" icon-position="right">{{ t('common.viewDetails') }}</AppButton>
+              <span><Icon name="clock" size="14" class="inline mr-1" />{{ readingMinutes(featured.content) }} {{ t('common.minRead') }}</span>
+            </div>
+            <AppButton class="mt-6 self-start" icon="arrow-right" icon-position="right">{{ t('common.viewDetails') }}</AppButton>
           </div>
         </div>
       </AppCard>
 
       <!-- Latest grid -->
-      <section class="mt-10">
-        <h2 class="mb-4 text-h3 text-ink">{{ t('news.latest') }}</h2>
-        <div class="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
+      <section class="mt-10 border-t border-border pt-8">
+        <h2 class="mb-5 text-h2 text-ink">{{ t('news.latest') }}</h2>
+        <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
           <AppCard
             v-for="item in rest"
             :key="item.id"
             padding="none"
             hover
-            class="flex cursor-pointer flex-col overflow-hidden"
+            class="flex cursor-pointer flex-col overflow-hidden border border-border shadow-sm"
             @click="router.push(`/news/${item.id}`)"
           >
             <div
-              class="flex h-36 items-center justify-center bg-surface-2 text-ink-faint"
+              class="flex h-40 items-center justify-center bg-surface-2 border-b border-border text-ink-faint"
               :style="item.cover ? `background-image:url(${item.cover});background-size:cover;background-position:center` : ''"
             >
-              <Icon v-if="!item.cover" name="newspaper" size="22" />
+              <Icon v-if="!item.cover" name="newspaper" size="24" />
             </div>
-            <div class="flex flex-1 flex-col p-4">
-              <h3 class="line-clamp-2 text-small font-semibold text-ink">{{ item.title }}</h3>
-              <p class="mt-auto flex items-center gap-2 pt-3 text-caption text-ink-faint">
+            <div class="flex flex-1 flex-col p-5">
+              <h3 class="line-clamp-2 text-small font-semibold text-ink leading-snug">{{ item.title }}</h3>
+              <div class="mt-auto pt-4 flex items-center gap-1.5 text-caption font-medium text-ink-muted">
                 <span>{{ new Date(item.publishAt).toLocaleDateString(locale) }}</span>
                 <span>·</span>
                 <span>{{ readingMinutes(item.content) }} {{ t('common.minRead') }}</span>
-              </p>
+              </div>
             </div>
           </AppCard>
         </div>

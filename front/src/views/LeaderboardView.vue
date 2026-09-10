@@ -41,17 +41,17 @@ onMounted(load)
     <p v-if="errorMessage && !loading" class="mt-4 text-small text-danger">{{ errorMessage }}</p>
 
     <template v-else-if="summary">
-      <AppCard class="mt-6">
+      <AppCard class="mt-6 border border-border shadow-sm">
         <div class="flex flex-wrap items-center justify-between gap-4">
           <div>
-            <p class="text-caption font-semibold uppercase tracking-widest text-ink-faint">{{ t('gamification.myPoints') }}</p>
+            <p class="text-[11px] font-bold uppercase tracking-widest text-ink-faint">{{ t('gamification.myPoints') }}</p>
             <p class="mt-1 text-h1 text-ink">{{ summary.totalPoints }}</p>
           </div>
           <div v-if="summary.badges.length" class="flex flex-wrap gap-2">
             <span
               v-for="code in summary.badges"
               :key="code"
-              class="flex items-center gap-1.5 rounded-full bg-primary-subtle px-3 py-1.5 text-small font-medium text-primary"
+              class="flex items-center gap-1.5 rounded bg-primary/10 px-3 py-1.5 text-small font-semibold text-primary border border-primary/20"
             >
               <Icon :name="BADGE_ICONS[code] ?? 'award'" size="14" />
               {{ t(`gamification.badges.${code}.title`) }}
@@ -61,17 +61,17 @@ onMounted(load)
         </div>
       </AppCard>
 
-      <AppCard class="mt-6" padding="none">
+      <AppCard class="mt-6 border border-border shadow-sm" padding="none">
         <ul class="divide-y divide-border">
           <li
             v-for="(row, index) in rows"
             :key="row.userId"
-            class="flex items-center gap-3 px-4 py-3"
-            :class="row.userId === auth.user?.id ? 'bg-primary-subtle' : ''"
+            class="flex items-center gap-3 px-5 py-4"
+            :class="row.userId === auth.user?.id ? 'bg-primary/5' : ''"
           >
-            <span class="w-6 shrink-0 text-center text-small font-semibold text-ink-faint">{{ index + 1 }}</span>
-            <Avatar :name="row.fullName" :src="row.avatar" size="sm" />
-            <span class="min-w-0 flex-1 truncate text-small font-medium text-ink">{{ row.fullName }}</span>
+            <span class="w-6 shrink-0 text-center text-small font-bold text-ink-muted">{{ index + 1 }}</span>
+            <Avatar :name="row.fullName" :src="row.avatar" size="sm" class="rounded border border-border" />
+            <span class="min-w-0 flex-1 truncate text-small font-semibold text-ink">{{ row.fullName }}</span>
             <span class="shrink-0 text-small font-semibold text-ink">{{ row.totalPoints }}</span>
           </li>
         </ul>

@@ -75,18 +75,18 @@ onMounted(load)
           </div>
 
           <div class="space-y-3">
-            <AppCard v-for="task in col.items" :key="task.id" :class="task.effectiveStatus === 'OVERDUE' ? 'border-danger/30' : ''">
+            <AppCard v-for="task in col.items" :key="task.id" class="border shadow-sm" :class="task.effectiveStatus === 'OVERDUE' ? 'border-danger/30' : 'border-border'">
               <div class="flex items-start justify-between gap-2">
                 <p class="text-small font-semibold text-ink" :class="task.status === 'COMPLETED' ? 'text-ink-faint line-through' : ''">{{ task.title }}</p>
                 <Badge :variant="priorityVariant[task.priority]" size="sm">{{ t('tasks.priority.' + task.priority) }}</Badge>
               </div>
-              <p v-if="task.description" class="mt-1.5 line-clamp-2 text-caption text-ink-muted">{{ task.description }}</p>
+              <p v-if="task.description" class="mt-2 line-clamp-2 text-caption text-ink-muted leading-relaxed">{{ task.description }}</p>
 
-              <div class="mt-3 flex items-center justify-between">
+              <div class="mt-4 flex items-center justify-between">
                 <span
                   v-if="task.deadline"
-                  class="flex items-center gap-1 text-caption"
-                  :class="task.effectiveStatus === 'OVERDUE' ? 'font-medium text-danger' : 'text-ink-faint'"
+                  class="flex items-center gap-1.5 text-caption font-medium"
+                  :class="task.effectiveStatus === 'OVERDUE' ? 'text-danger' : 'text-ink-muted'"
                 >
                   <Icon name="clock" size="12" />
                   {{ deadlineLabel(task.deadline) }}
@@ -100,7 +100,7 @@ onMounted(load)
               </div>
             </AppCard>
 
-            <p v-if="col.items.length === 0" class="rounded-lg border border-dashed border-border py-8 text-center text-caption text-ink-faint">—</p>
+            <p v-if="col.items.length === 0" class="rounded border border-dashed border-border py-8 text-center text-caption text-ink-faint">—</p>
           </div>
         </div>
       </div>

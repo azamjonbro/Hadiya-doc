@@ -56,23 +56,23 @@ onBeforeUnmount(() => analytics.stop())
     <p v-if="errorMessage" class="mt-4 text-small text-danger">{{ errorMessage }}</p>
 
     <template v-else-if="news">
-      <h1 class="mt-5 text-display text-ink">{{ news.title }}</h1>
-      <div class="mt-4 flex items-center gap-3 text-small text-ink-faint">
-        <span>{{ t('news.publishedOn') }} {{ new Date(news.publishAt).toLocaleDateString(locale, { day: 'numeric', month: 'long', year: 'numeric' }) }}</span>
+      <h1 class="mt-6 text-h1 text-ink leading-tight">{{ news.title }}</h1>
+      <div class="mt-4 flex items-center gap-3 text-small text-ink-muted font-medium">
+        <span><Icon name="calendar" size="14" class="inline mr-1" />{{ new Date(news.publishAt).toLocaleDateString(locale, { day: 'numeric', month: 'long', year: 'numeric' }) }}</span>
         <span>·</span>
-        <span>{{ readingMinutes(news.content) }} {{ t('common.minRead') }}</span>
+        <span><Icon name="clock" size="14" class="inline mr-1" />{{ readingMinutes(news.content) }} {{ t('common.minRead') }}</span>
       </div>
 
       <div
         v-if="news.cover"
-        class="mt-6 h-72 rounded-xl bg-surface-2"
+        class="mt-8 h-80 rounded-md border border-border shadow-sm bg-surface-2"
         :style="`background-image:url(${news.cover});background-size:cover;background-position:center`"
       />
 
-      <div class="mt-8 whitespace-pre-wrap text-body leading-relaxed text-ink">{{ news.content }}</div>
+      <div class="mt-10 whitespace-pre-wrap text-body leading-relaxed text-ink">{{ news.content }}</div>
 
-      <div v-if="news.tags?.length" class="mt-8 flex flex-wrap gap-2">
-        <span v-for="tag in news.tags" :key="tag" class="rounded-full bg-surface-2 px-3 py-1 text-caption font-medium text-ink-muted">#{{ tag }}</span>
+      <div v-if="news.tags?.length" class="mt-10 flex flex-wrap gap-2 pt-6 border-t border-border">
+        <span v-for="tag in news.tags" :key="tag" class="rounded border border-border bg-surface-2 px-3 py-1 text-caption font-semibold text-ink-muted">#{{ tag }}</span>
       </div>
     </template>
   </div>

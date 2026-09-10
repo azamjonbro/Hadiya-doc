@@ -65,7 +65,7 @@ onMounted(load)
     <p class="mt-1 text-small text-ink-muted">{{ t('certificates.subtitle') }}</p>
 
     <div v-if="loading" class="mt-6 space-y-3">
-      <Skeleton v-for="n in 3" :key="n" class="h-28 w-full rounded-xl" />
+      <Skeleton v-for="n in 3" :key="n" class="h-28 w-full rounded-md border border-border" />
     </div>
 
     <EmptyState
@@ -77,7 +77,7 @@ onMounted(load)
     />
 
     <div v-else class="mt-6 space-y-3">
-      <AppCard v-for="certificate in sorted" :key="certificate.id" class="p-5">
+      <AppCard v-for="certificate in sorted" :key="certificate.id" class="p-6 border border-border shadow-sm">
         <div class="flex flex-wrap items-start justify-between gap-4">
           <div class="min-w-0">
             <div class="flex items-center gap-2">

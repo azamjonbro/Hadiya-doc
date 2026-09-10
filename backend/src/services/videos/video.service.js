@@ -1,19 +1,16 @@
-import { PERMISSIONS } from '@lms/shared'
 import { Video } from '../../models/video.model.js'
 import { videoRepository } from '../../repositories/video.repository.js'
 import { topicRepository } from '../../repositories/topic.repository.js'
 import { auditLogRepository } from '../../repositories/auditLog.repository.js'
 import { S3StorageProvider } from '../../storage/S3StorageProvider.js'
 import { env } from '../../config/env.js'
+import { openTopic, visibleRows } from '../courses/contentItem.js'
 import { ApiError } from '../../utils/ApiError.js'
 import { courseCompletionService } from '../courses/courseCompletion.service.js'
 import { logger } from '../../config/logger.js'
+import { canManageCourses } from '../courses/coursePermissions.js'
 
 const originalsStorage = new S3StorageProvider(env.S3_BUCKET_ORIGINALS)
-
-function canManageCourses(actor) {
-  return Boolean(actor.permissions?.includes(PERMISSIONS.COURSE_CREATE))
-}
 
 function toPublicVideo(video) {
   return {
@@ -42,14 +39,8 @@ function toPublicVideo(video) {
 
 export const videoService = {
   async listByTopic(actor, topicId) {
-    const topic = await topicRepository.findById(topicId)
-    if (!topic) throw ApiError.notFound('Topic not found')
-    const canManage = canManageCourses(actor)
-    if (topic.status !== 'PUBLISHED' && !canManage) throw ApiError.notFound('Topic not found')
-
-    const rows = await videoRepository.listByTopic(topicId)
-    const visible = canManage ? rows : rows.filter((v) => v.status === 'PUBLISHED')
-    return visible.map(toPublicVideo)
+    const { canManage } = await openTopic(actor, topicId)
+    return visibleRows(await videoRepository.listByTopic(topicId), canManage).map(toPublicVideo)
   },
 
   async getById(actor, id) {

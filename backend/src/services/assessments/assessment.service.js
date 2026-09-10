@@ -8,13 +8,11 @@ import { computeAccessFlags } from '../courses/courseAssignmentAccess.js'
 import { faceGateService } from '../face/faceGate.service.js'
 import { auditLogRepository } from '../../repositories/auditLog.repository.js'
 import { pointsService } from '../gamification/points.service.js'
+import { openTopic, visibleRows } from '../courses/contentItem.js'
 import { ApiError } from '../../utils/ApiError.js'
 import { courseCompletionService } from '../courses/courseCompletion.service.js'
 import { logger } from '../../config/logger.js'
-
-function canManageCourses(actor) {
-  return Boolean(actor.permissions?.includes(PERMISSIONS.COURSE_CREATE))
-}
+import { canManageCourses } from '../courses/coursePermissions.js'
 
 // A module test is a timed, single-sitting exam. Both numbers are enforced
 // here rather than in the browser — see assessmentSession.model.js.
@@ -170,13 +168,8 @@ export const assessmentService = {
   toAssessmentSummary,
 
   async listByTopic(actor, topicId) {
-    const topic = await topicRepository.findById(topicId)
-    if (!topic) throw ApiError.notFound('Topic not found')
-    const canManage = canManageCourses(actor)
-    if (topic.status !== 'PUBLISHED' && !canManage) throw ApiError.notFound('Topic not found')
-
-    const rows = await assessmentRepository.listByTopic(topicId)
-    const visible = canManage ? rows : rows.filter((a) => a.status === 'PUBLISHED')
+    const { canManage } = await openTopic(actor, topicId)
+    const visible = visibleRows(await assessmentRepository.listByTopic(topicId), canManage)
     // Learners get summaries only. Handing them the question text here
     // would defeat start() being the single gate on the questions — the
     // curriculum list would otherwise be a way to read the whole test

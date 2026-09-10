@@ -39,12 +39,23 @@ function pickLocale(code) {
 </script>
 
 <template>
-  <header class="flex h-16 shrink-0 items-center justify-between gap-4 border-b border-border bg-surface px-4 lg:px-6">
-    <div class="flex min-w-0 items-center gap-3">
-      <button type="button" class="rounded-md p-2 text-ink-muted transition-default hover:bg-surface-2 lg:hidden" @click="ui.mobileNavOpen = true">
+  <header class="flex h-16 shrink-0 items-center justify-between gap-4 border-b border-border bg-surface px-6 w-full shadow-sm">
+    <div class="flex min-w-0 items-center gap-6">
+      <div class="flex items-center gap-2.5">
+        <div class="flex h-8 w-8 shrink-0 items-center justify-center rounded bg-primary text-primary-foreground">
+          <Icon name="graduation-cap" size="18" />
+        </div>
+        <p class="truncate text-body font-bold tracking-wide text-ink hidden sm:block">{{ t('app.name') }} <span class="text-primary text-caption bg-primary-subtle px-1 rounded ml-1">ADMIN</span></p>
+      </div>
+      
+      <div class="h-6 w-px bg-border hidden lg:block"></div>
+      
+      <button type="button" class="hidden rounded-md p-2 text-ink-muted transition-default hover:bg-surface-2 lg:flex" @click="ui.toggleSidebar()">
         <Icon name="menu" size="18" />
       </button>
-      <p class="truncate text-h3 text-ink">{{ t(route.meta.titleKey || 'nav.dashboard') }}</p>
+      <div class="min-w-0 hidden lg:block">
+        <p class="truncate text-h3 text-ink font-semibold">{{ t(route.meta.titleKey || 'nav.dashboard') }}</p>
+      </div>
     </div>
 
     <div class="flex items-center gap-1.5">
@@ -79,27 +90,31 @@ function pickLocale(code) {
       </router-link>
 
       <div ref="profileRef" class="relative ml-1">
-        <button type="button" class="flex items-center gap-2 rounded-md p-1 transition-default hover:bg-surface-2" @click="profileOpen = !profileOpen">
-          <Avatar :name="auth.user?.fullName ?? ''" size="sm" />
+        <button type="button" class="flex items-center gap-2.5 rounded px-2 py-1 transition-default hover:bg-surface-2" @click="profileOpen = !profileOpen">
+          <Avatar :name="auth.user?.fullName ?? ''" size="sm" class="border border-border rounded" />
+          <div class="hidden text-left lg:block max-w-[120px]">
+            <p class="truncate text-[13px] font-semibold text-ink leading-tight">{{ auth.user?.fullName }}</p>
+          </div>
+          <Icon name="chevron-down" size="14" class="text-ink-muted hidden lg:block" />
         </button>
         <Transition enter-active-class="transition-default" enter-from-class="opacity-0 scale-95" leave-active-class="transition-default" leave-to-class="opacity-0 scale-95">
-          <div v-if="profileOpen" class="absolute right-0 z-20 mt-2 w-52 rounded-md border border-border bg-surface p-1 shadow-md">
-            <div class="px-2.5 py-2">
-              <p class="truncate text-small font-medium text-ink">{{ auth.user?.fullName }}</p>
-              <p class="truncate text-caption text-ink-faint">{{ auth.user?.email }}</p>
+          <div v-if="profileOpen" class="absolute right-0 z-20 mt-2 w-56 rounded border border-border bg-surface p-1 shadow-sm">
+            <div class="px-3 py-2.5">
+              <p class="truncate text-small font-semibold text-ink">{{ auth.user?.fullName }}</p>
+              <p class="truncate text-caption text-ink-muted mt-0.5">{{ auth.user?.email }}</p>
             </div>
             <div class="my-1 border-t border-border" />
             <!-- The way back. Same session, same tokens — this is a router
                  push inside one SPA, so nothing is re-authenticated. -->
-            <router-link to="/" class="flex items-center gap-2 rounded-md px-2.5 py-1.5 text-small text-ink transition-default hover:bg-surface-2" @click="profileOpen = false">
+            <router-link to="/" class="flex items-center gap-2 rounded px-3 py-2 text-small text-ink transition-default hover:bg-surface-2" @click="profileOpen = false">
               <Icon name="home" size="15" />
               {{ t('settings.adminPanel.backToUser') }}
             </router-link>
-            <router-link to="/bos/settings" class="flex items-center gap-2 rounded-md px-2.5 py-1.5 text-small text-ink transition-default hover:bg-surface-2" @click="profileOpen = false">
+            <router-link to="/bos/settings" class="flex items-center gap-2 rounded px-3 py-2 text-small text-ink transition-default hover:bg-surface-2" @click="profileOpen = false">
               <Icon name="settings" size="15" />
               {{ t('nav.settings') }}
             </router-link>
-            <button type="button" class="flex w-full items-center gap-2 rounded-md px-2.5 py-1.5 text-small text-danger transition-default hover:bg-danger-subtle" @click="onLogout">
+            <button type="button" class="flex w-full items-center gap-2 rounded px-3 py-2 text-small text-danger transition-default hover:bg-danger/10 mt-1" @click="onLogout">
               <Icon name="log-out" size="15" />
               {{ t('auth.logout') }}
             </button>

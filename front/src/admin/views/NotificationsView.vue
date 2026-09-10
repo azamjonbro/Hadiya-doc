@@ -107,7 +107,7 @@ onMounted(load)
 </script>
 
 <template>
-  <div class="mx-auto max-w-3xl px-6 py-8">
+  <div class="mx-auto w-full max-w-[1440px] px-6 lg:px-8 py-8">
     <div class="flex items-center justify-between">
       <div>
         <h1 class="text-h1 text-ink">{{ t('notifications.title') }}</h1>

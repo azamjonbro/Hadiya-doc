@@ -247,8 +247,8 @@ onMounted(load)
 </script>
 
 <template>
-  <div class="mx-auto max-w-4xl px-6 py-8">
-    <div class="flex flex-wrap items-center justify-between gap-3">
+  <div class="mx-auto w-full max-w-[1440px] px-6 lg:px-8 py-8">
+    <div class="flex flex-wrap items-center justify-between gap-3 pb-4 border-b border-border">
       <div>
         <h1 class="text-h1 text-ink">{{ t('events.adminTitle') }}</h1>
         <p class="mt-1 text-small text-ink-muted">{{ t('events.adminSubtitle') }}</p>
@@ -269,14 +269,14 @@ onMounted(load)
 
     <template v-else>
       <section v-for="group in [{ key: 'upcoming', rows: upcoming }, { key: 'past', rows: past }]" :key="group.key">
-        <h2 v-if="group.rows.length" class="mt-8 text-caption font-semibold uppercase tracking-widest text-ink-faint">
+        <h2 v-if="group.rows.length" class="mt-6 mb-4 text-h3 text-ink">
           {{ t(`events.${group.key}`) }}
         </h2>
-        <div class="mt-3 space-y-3">
-          <AppCard v-for="event in group.rows" :key="event.id" class="flex flex-wrap items-center justify-between gap-4 p-4">
-            <div class="min-w-0">
-              <div class="flex flex-wrap items-center gap-2">
-                <p class="truncate font-medium text-ink">{{ event.title }}</p>
+        <div class="space-y-3">
+          <AppCard v-for="event in group.rows" :key="event.id" class="flex flex-wrap items-center justify-between gap-4 p-5">
+            <div class="min-w-0 flex-1">
+              <div class="flex flex-wrap items-center gap-2 mb-1.5">
+                <p class="truncate text-[15px] font-semibold text-ink">{{ event.title }}</p>
                 <Badge variant="neutral" size="sm">{{ t('eventTypes.' + event.type) }}</Badge>
                 <Badge v-if="event.status === 'CANCELLED'" variant="danger" size="sm">{{ t('events.cancelled') }}</Badge>
                 <Badge v-if="event.mode !== 'OFFLINE'" variant="info" size="sm">{{ t(`events.mode.${event.mode}`) }}</Badge>

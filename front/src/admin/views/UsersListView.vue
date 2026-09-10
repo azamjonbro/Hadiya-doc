@@ -347,9 +347,11 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="mx-auto max-w-7xl px-6 py-8">
-    <div class="flex flex-wrap items-center justify-between gap-3">
-      <h1 class="text-h1 text-ink">{{ t('users.title') }}</h1>
+  <div class="mx-auto w-full max-w-[1440px] px-6 lg:px-8 py-8">
+    <div class="flex flex-wrap items-center justify-between gap-3 pb-4 border-b border-border mb-6">
+      <div>
+        <h1 class="text-h1 text-ink">{{ t('users.title') }}</h1>
+      </div>
       <div class="flex items-center gap-2">
         <!-- Its own permission (§8.2): creating one account and creating
              three hundred are different decisions. -->

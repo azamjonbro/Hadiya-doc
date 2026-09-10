@@ -3,10 +3,7 @@ import { courseRepository } from '../../repositories/course.repository.js'
 import { courseQuestionRepository } from '../../repositories/courseQuestion.repository.js'
 import { userRepository } from '../../repositories/user.repository.js'
 import { ApiError } from '../../utils/ApiError.js'
-
-function canManageCourses(actor) {
-  return Boolean(actor.permissions?.includes(PERMISSIONS.COURSE_CREATE))
-}
+import { canManageCourses } from '../courses/coursePermissions.js'
 
 async function loadVisibleCourse(actor, courseId) {
   const course = await courseRepository.findById(courseId)

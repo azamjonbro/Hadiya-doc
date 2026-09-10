@@ -1,8 +1,8 @@
-import { PERMISSIONS } from '@lms/shared'
 import { videoRepository } from '../../repositories/video.repository.js'
 import { topicRepository } from '../../repositories/topic.repository.js'
 import { videoProgressRepository } from '../../repositories/videoProgress.repository.js'
 import { ApiError } from '../../utils/ApiError.js'
+import { canManageCourses } from '../courses/coursePermissions.js'
 
 /**
  * Sequential course progression: a lesson opens only once the one before it
@@ -13,9 +13,6 @@ import { ApiError } from '../../utils/ApiError.js'
  * bytes. Disabling the row in the sidebar is presentation; a lock that
  * exists only in the sidebar is bypassed by typing the URL.
  */
-function canManageCourses(actor) {
-  return Boolean(actor.permissions?.includes(PERMISSIONS.COURSE_CREATE))
-}
 
 // Course order is topic order first, then video order inside the topic —
 // the same order the curriculum renders, so "the previous lesson" means

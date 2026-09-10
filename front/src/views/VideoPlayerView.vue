@@ -143,15 +143,15 @@ watch(() => route.params.id, load)
                fails to load: the reason is the message, not an error. -->
           <div
             v-if="isLocked"
-            class="flex aspect-video items-center justify-center rounded-lg border border-border bg-surface-2 px-6"
+            class="flex aspect-video items-center justify-center rounded-md border border-border bg-surface-2 px-6 shadow-sm"
           >
             <div class="max-w-sm text-center">
-              <span class="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-surface text-ink-faint">
+              <span class="mx-auto flex h-12 w-12 items-center justify-center rounded bg-surface border border-border text-ink-faint">
                 <Icon name="lock" size="22" />
               </span>
-              <p class="mt-3 text-h3 text-ink">{{ t('videos.lockedTitle') }}</p>
-              <p class="mt-1.5 text-small text-ink-muted">{{ t('videos.lockedHint') }}</p>
-              <AppButton v-if="blockingVideo" class="mt-4" icon="play" @click="goToVideo(blockingVideo.id)">
+              <p class="mt-4 text-h3 text-ink">{{ t('videos.lockedTitle') }}</p>
+              <p class="mt-2 text-small text-ink-muted">{{ t('videos.lockedHint') }}</p>
+              <AppButton v-if="blockingVideo" class="mt-5" icon="play" @click="goToVideo(blockingVideo.id)">
                 {{ blockingVideo.title }}
               </AppButton>
             </div>
@@ -164,8 +164,9 @@ watch(() => route.params.id, load)
             :course-id="video.courseId"
             @timeupdate="onTimeupdate"
             @ended="onEnded"
+            class="rounded-md overflow-hidden border border-border shadow-sm"
           />
-          <div v-else class="flex aspect-video items-center justify-center rounded-lg border border-border bg-surface-2">
+          <div v-else class="flex aspect-video items-center justify-center rounded-md border border-border bg-surface-2 shadow-sm">
             <div class="text-center">
               <Icon name="video" size="26" class="mx-auto text-ink-faint" />
               <p class="mt-2 text-small text-ink-muted">{{ t(`videos.processing.${video.processingStatus}`) }}</p>
@@ -186,10 +187,10 @@ watch(() => route.params.id, load)
 
             <!-- The lesson quiz is its own page now, so this is a hand-off
                  rather than a panel competing with the player. -->
-            <AppCard v-if="video.hasQuiz" class="mt-6 flex flex-wrap items-center justify-between gap-3">
+            <AppCard v-if="video.hasQuiz" class="mt-6 flex flex-wrap items-center justify-between gap-4 border border-border shadow-sm">
               <div class="min-w-0">
-                <p class="text-caption font-semibold uppercase tracking-widest text-ink-faint">{{ t('quiz.title') }}</p>
-                <p class="mt-0.5 text-small text-ink-muted">
+                <p class="text-[11px] font-bold uppercase tracking-widest text-ink-faint">{{ t('quiz.title') }}</p>
+                <p class="mt-1 text-small text-ink-muted font-medium">
                   {{ videoEnded || isCompleted ? t('quiz.readyHint') : t('quiz.watchFirstHint') }}
                 </p>
               </div>
@@ -237,43 +238,43 @@ watch(() => route.params.id, load)
           <Skeleton v-for="i in 4" :key="i" class="h-14 w-full" />
         </div>
         <div v-else class="max-h-[70vh] space-y-3 overflow-y-auto pr-1">
-          <AppCard v-for="topic in topics" :key="topic.id" padding="none" class="overflow-hidden">
-            <button type="button" class="flex w-full items-center justify-between px-4 py-3 text-left transition-default hover:bg-surface-2" @click="toggleTopic(topic.id)">
+          <AppCard v-for="topic in topics" :key="topic.id" padding="none" class="overflow-hidden border border-border shadow-sm">
+            <button type="button" class="flex w-full items-center justify-between px-5 py-4 text-left transition-default hover:bg-surface-2" @click="toggleTopic(topic.id)">
               <div class="min-w-0">
-                <p class="text-caption font-semibold uppercase tracking-widest text-ink-faint">{{ t('courses.topics.title') }} {{ topic.order }}</p>
-                <p class="mt-0.5 truncate text-small font-semibold text-ink">{{ topic.title }}</p>
+                <p class="text-[11px] font-bold uppercase tracking-widest text-ink-faint">{{ t('courses.topics.title') }} {{ topic.order }}</p>
+                <p class="mt-1 truncate text-small font-semibold text-ink">{{ topic.title }}</p>
               </div>
-              <Icon :name="openTopics.has(topic.id) ? 'chevron-up' : 'chevron-down'" size="15" class="shrink-0 text-ink-faint" />
+              <Icon :name="openTopics.has(topic.id) ? 'chevron-up' : 'chevron-down'" size="16" class="shrink-0 text-ink-muted" />
             </button>
-            <div v-if="openTopics.has(topic.id)" class="divide-y divide-border border-t border-border">
+            <div v-if="openTopics.has(topic.id)" class="divide-y divide-border border-t border-border bg-surface">
               <template v-for="v in videosByTopic[topic.id]" :key="v.id">
                 <button
                   type="button"
-                  class="flex w-full items-center gap-2.5 px-4 py-2.5 text-left transition-default hover:bg-surface-2 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-transparent"
-                  :class="v.id === video?.id ? 'bg-primary-subtle' : ''"
+                  class="flex w-full items-center gap-3 px-5 py-3 text-left transition-default hover:bg-surface-2 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-transparent"
+                  :class="v.id === video?.id ? 'bg-primary/5' : ''"
                   :disabled="v.processingStatus !== 'READY' || lockState(v.id).locked"
                   :title="lockState(v.id).locked ? t('videos.lockedHint') : ''"
                   @click="goToVideo(v.id)"
                 >
                   <span
-                    class="flex h-6 w-6 shrink-0 items-center justify-center rounded-full"
+                    class="flex h-7 w-7 shrink-0 items-center justify-center rounded"
                     :class="
                       lockState(v.id).completed
-                        ? 'bg-success-subtle text-success'
+                        ? 'bg-success/10 text-success'
                         : v.id === video?.id
-                          ? 'bg-primary text-primary-foreground'
+                          ? 'bg-primary text-primary'
                           : 'bg-surface-2 text-ink-muted'
                     "
                   >
-                    <Icon :name="sidebarIcon(v)" size="11" />
+                    <Icon :name="sidebarIcon(v)" size="12" />
                   </span>
                   <span
-                    class="min-w-0 flex-1 truncate text-caption"
-                    :class="v.id === video?.id ? 'font-medium text-ink' : 'text-ink-muted'"
+                    class="min-w-0 flex-1 truncate text-small"
+                    :class="v.id === video?.id ? 'font-semibold text-primary' : 'font-medium text-ink'"
                   >
                     {{ v.title }}
                   </span>
-                  <span v-if="v.duration" class="shrink-0 text-caption text-ink-faint">{{ formatDuration(v.duration) }}</span>
+                  <span v-if="v.duration" class="shrink-0 text-caption text-ink-muted">{{ formatDuration(v.duration) }}</span>
                 </button>
 
                 <!-- The lesson's quiz sits right under it, reachable once

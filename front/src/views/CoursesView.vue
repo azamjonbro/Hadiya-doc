@@ -111,13 +111,14 @@ onMounted(load)
 </script>
 
 <template>
-  <div class="mx-auto max-w-7xl px-6 py-8">
-    <div class="flex flex-wrap items-center justify-between gap-4">
-      <div>
-        <h1 class="text-h1 text-ink">{{ t('courses.myLearning') }}</h1>
-      </div>
-      <div class="w-full max-w-xs">
-        <AppInput v-model="search" icon="search" :placeholder="t('courses.searchPlaceholder')" />
+  <div class="mx-auto w-full max-w-[1440px] px-6 lg:px-8 py-8">
+    <div class="flex items-center justify-between border-b border-border pb-4">
+      <h2 class="text-h2 text-ink">{{ t('courses.myLearning') }}</h2>
+      <div class="flex items-center gap-4 text-small">
+        <label class="flex items-center gap-2 cursor-pointer text-ink-muted hover:text-ink transition-default">
+          <input v-model="showCompleted" type="checkbox" class="h-4 w-4 rounded border-border-strong text-primary focus:ring-primary/30" />
+          {{ t('courses.showCompleted') }}
+        </label>
       </div>
     </div>
 
@@ -141,26 +142,26 @@ onMounted(load)
           :key="a.id"
           padding="none"
           hover
-          class="flex cursor-pointer flex-col overflow-hidden"
+          class="cursor-pointer overflow-hidden border border-border shadow-sm flex flex-col"
           @click="router.push(`/courses/${a.courseId}`)"
         >
           <div
-            class="flex h-32 items-center justify-center bg-surface-2 text-ink-faint"
+            class="flex h-36 shrink-0 items-center justify-center bg-surface-2 text-ink-faint"
             :style="a.course?.cover ? `background-image:url(${a.course.cover});background-size:cover;background-position:center` : ''"
           >
             <Icon v-if="!a.course?.cover" name="book-open" size="24" />
           </div>
-          <div class="flex flex-1 flex-col p-4">
-            <div class="flex items-center gap-1.5">
+          <div class="flex flex-1 flex-col p-5">
+            <div class="flex items-center gap-2 mb-3">
               <Badge :variant="a.mandatory ? 'primary' : 'neutral'" size="sm">{{ a.mandatory ? t('courses.mandatory') : t('courses.optional') }}</Badge>
               <Badge :variant="badgeVariant(a)" size="sm">{{ badgeLabel(a) }}</Badge>
             </div>
-            <h3 class="mt-2.5 line-clamp-2 text-small font-semibold text-ink">{{ a.course?.title }}</h3>
-            <p v-if="a.course?.description" class="mt-1 line-clamp-2 text-caption text-ink-faint">{{ a.course.description }}</p>
-            <div class="mt-auto pt-3.5">
-              <div class="mb-1.5 flex items-center justify-between text-caption text-ink-faint">
+            <h3 class="line-clamp-2 text-small font-semibold text-ink leading-snug">{{ a.course?.title }}</h3>
+            <p v-if="a.course?.description" class="mt-2 line-clamp-2 text-caption text-ink-muted leading-relaxed">{{ a.course.description }}</p>
+            <div class="mt-auto pt-4 border-t border-border border-dashed">
+              <div class="mb-2 flex items-center justify-between text-caption font-medium text-ink-muted">
                 <span>{{ courseProgress(a.courseId) }}%</span>
-                <span v-if="a.deadline">{{ t('courses.deadline') }}: {{ new Date(a.deadline).toLocaleDateString(locale) }}</span>
+                <span v-if="a.deadline" class="flex items-center gap-1"><Icon name="clock" size="12"/>{{ new Date(a.deadline).toLocaleDateString(locale) }}</span>
               </div>
               <ProgressBar :value="a.status === 'COMPLETED' ? 100 : courseProgress(a.courseId)" size="sm" />
             </div>
@@ -171,7 +172,9 @@ onMounted(load)
 
       <!-- Discover more -->
       <section v-if="discoverCatalog.length" class="mt-12">
-        <h2 class="mb-4 text-h3 text-ink">{{ t('courses.catalog') }}</h2>
+        <div class="flex items-center justify-between border-b border-border pb-4">
+          <h2 class="text-h2 text-ink">{{ t('courses.catalog') }}</h2>
+        </div>
         <div class="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
           <AppCard
             v-for="course in discoverCatalog"
