@@ -14,7 +14,7 @@
 |---|:--:|---|:--:|:--:|---|---|
 | Kurs yaratish/tahrirlash | ✓ | Bor | FULL | 100 | `course.service.js:281-322` | — |
 | Draft / Published / Archived | ✓ | Bor | FULL | 100 | `course.model.js:11` | — |
-| Kursni nusxalash | ✓ | Bor — chuqur nusxa (mavzu/video/material/test+savol), media havola qilinadi | FULL | 100 | `courseDuplicate.service.js`, `courses.routes.js:82-85` | — |
+| Kursni nusxalash | ✓ | Bor — chuqur nusxa (mavzu/video/material/dars/test+savol), media havola qilinadi | FULL | 100 | `courseDuplicate.service.js`, `courses.routes.js:82-85` | — |
 | Kurs kategoriyasi | ✓ | Bor — bir daraja ichma-ich `CourseCategory` | FULL | 100 | `courseCategory.model.js`, `course.model.js:21` | — |
 | Teglar | ✓ | Bor — `tags[]` + `$text` indeksda vaznlangan | FULL | 100 | `course.model.js:25,118-120` | — |
 | Muallif | ✓ | Bor — `authorIds[]` + AUTHOR roli | FULL | 100 | `course.model.js:30`, `role.model.js` | — |
@@ -68,9 +68,9 @@
 | Watermark | ? | Bor (ism + JSHSHIR) | OURS+ | 100 | `video/AttentionOverlay.vue`, player | — |
 | Video kapitel | ? | Yo'q | VERIFY | 0 | — | — |
 | Subtitr / caption | ✓ (Suite) | Yo'q | NONE | 0 | — | WebVTT + `<track>` |
-| Matn darsi (Page) | ✓ | **Yo'q** | NONE | 0 | — | `Lesson` + blok modeli |
+| Matn darsi (Page) | ✓ | Bor — 12 blok turi, blok editori, o'quvchi sahifasi, blok-asosli o'qish progressi | FULL | 100 | `lesson.model.js`, `LessonEditor.vue`, `LessonView.vue` | — |
 | Blok shablonlari | ✓ | Yo'q | NONE | 0 | — | `BlockTemplate` |
-| Flashcard / jadval / labeled graphics | ✓ | Yo'q | NONE | 0 | — | Blok turlari |
+| Flashcard / jadval / labeled graphics | ✓ | Jadval bloki bor; flashcard va labeled graphics yo'q | PARTIAL | 25 | `lesson.model.js` (`TABLE`) | Yangi blok turlari |
 | Text-to-speech | ✓ | Yo'q | NONE | 0 | — | Tashqi TTS |
 | Audio dars | ✓ | `Material` MULTIMEDIA | PARTIAL | 50 | `materialUpload.service.js:24` | Progress sahifa-asosli (noto'g'ri) |
 | PDF ko'rish | ✓ | pdf.js, sahifa-ba-sahifa | FULL | 100 | `MaterialViewer.vue:175-225` | — |
@@ -81,27 +81,27 @@
 | Yuklab olish (presigned) | ✓ | Bor, lekin **prod'da buzilgan** | PARTIAL | 25 | `materialAccess.service.js:52-67` | `S3_PUBLIC_ENDPOINT` |
 | Yuklab olishni taqiqlash | ✓ (file-level access) | Yo'q; `openStream` tayyor | PARTIAL | 50 | `materialAccess.service.js:74-84` | `allowDownload` bayrog'i |
 | Tashqi web havola (kontent turi) | ✓ | Yo'q | NONE | 0 | — | `ContentItem type=LINK` |
-| Embed (iframe) | ✓ | Yo'q | NONE | 0 | — | allowlist + sandbox |
+| Embed (iframe) | ✓ | Bor — host allowlist (YouTube/Vimeo/Google), URL normalizatsiyasi, `sandbox` | PARTIAL | 75 | `lessonEmbeds.js`, `LessonBlock.vue` | Allowlist Settings'dan sozlanmaydi |
 | Cheksiz fayl hosting | ✓ | S3/MinIO | FULL | 100 | `S3StorageProvider.js` | — |
 | Fayl turi magic-byte tekshiruvi | ? | Bor | OURS+ | 100 | `materialUpload.service.js` (`file-type`) | — |
-| **D04–D09 jami: 22 capability** | | | **FULL 7 · OURS+ 4 · PARTIAL 3 · NONE 7 · VERIFY 1** | **56** | | |
+| **D04–D09 jami: 22 capability** | | | **FULL 8 · OURS+ 4 · PARTIAL 5 · NONE 4 · VERIFY 1** | **65** | | |
 
 ## D10–D12 · INTERACTIVE CONTENT / COURSE BUILDER / AUTHORING
 
 | Capability | iSp | Bizda | Status | Sc | Evidence | Gap |
 |---|:--:|---|:--:|:--:|---|---|
 | Brauzerda kurs builder | ✓ | 4 qadamli sehrgar (kontentsiz) | PARTIAL | 25 | `CourseBuilderView.vue:22-27` | Kontent qadami |
-| Blok editori | ✓ | Yo'q | NONE | 0 | — | `Lesson.blocks[]` |
-| Drag-drop | ✓ | Yo'q | NONE | 0 | — | `SortableList` |
-| Autosave | ? | Yo'q | VERIFY | 0 | — | — |
+| Blok editori | ✓ | Bor — 12 blok turi, per-tur forma, nusxalash | PARTIAL | 75 | `LessonEditor.vue`, `utils/lessonBlocks.js` | iSpring'da blok turlari ko'proq |
+| Drag-drop | ✓ | Bor — `SortableList`, klaviatura uchun yuqori/past tugmalari ham | FULL | 100 | `SortableList.vue`, `LessonEditor.vue` | — |
+| Autosave | ? | Bor — oxirgi tahrirdan 1,2 s keyin, holat ko'rsatkichi bilan | FULL | 100 | `LessonEditor.vue` | — |
 | Preview (o'quvchi ko'zi bilan) | ✓ | Admin DRAFT ko'radi | PARTIAL | 50 | `course.service.js:38` | `?preview=learner` |
 | Brend rang va shrift kursda | ✓ | Yo'q | NONE | 0 | — | D77 ga bog'liq |
-| Sahifa ichida quiz | ✓ | Yo'q (Lesson yo'q) | NONE | 0 | — | — |
+| Sahifa ichida quiz | ✓ | Yo'q — dars testga havola qiladi, ichida tutmaydi | NONE | 0 | — | Blok sifatida `Assessment` |
 | PowerPoint import | ✓ | PPTX ko'rsatiladi, **darsga aylanmaydi** | PARTIAL | 50 | `MaterialViewer.vue:233` | Slayd → blok |
 | Ekran yozib olish | ? | Yo'q | VERIFY | 0 | — | — |
 | Branching scenario | ? | Yo'q | VERIFY | 0 | — | Suite mahsuloti |
 | Interaktiv timeline/tab/FAQ | ✓ | Yo'q | NONE | 0 | — | Blok turlari |
-| **D10–D12 jami: 11 capability** | | | **PARTIAL 3 · NONE 5 · VERIFY 3** | **11** | | |
+| **D10–D12 jami: 11 capability** | | | **FULL 2 · PARTIAL 4 · NONE 3 · VERIFY 2** | **36** | | |
 
 ## D13–D17 · AI
 

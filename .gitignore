@@ -5,6 +5,11 @@ node_modules/
 dist/
 build/
 *.tsbuildinfo
+# Any other build directory too. `dist/` alone did not cover a one-off
+# `vite build --outDir dist-e2e`, and a commit-all swept 22 MB of bundled
+# wasm into the history before anyone noticed.
+dist-*/
+
 
 # env
 .env

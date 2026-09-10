@@ -6,6 +6,7 @@ import { coursesApi } from '@/services/courses'
 import { videosApi } from '@/services/videos'
 import { assessmentsApi } from '@/services/assessments'
 import { materialsApi } from '@/services/materials'
+import { lessonsApi } from '@/services/lessons'
 // AI o'quv yordamchisi vaqtincha o'chirilgan — pastdagi shablonga qarang.
 // import AiChatPanel from '@/components/AiChatPanel.vue'
 import MaterialViewer from '@/components/MaterialViewer.vue'
@@ -37,6 +38,8 @@ const assessmentsByTopic = ref({})
 // Slides, documents and audio attached to the module. They open in a reader
 // inside the app rather than as a download.
 const materialsByTopic = ref({})
+// Written lessons (9.2). They read like a page rather than opening a file.
+const lessonsByTopic = ref({})
 const openMaterial = ref(null)
 const openTopics = ref(new Set())
 const progress = ref(null)
@@ -90,7 +93,8 @@ function topicItemCount(topicId) {
   return (
     (videosByTopic.value[topicId]?.length ?? 0) +
     (materialsByTopic.value[topicId]?.length ?? 0) +
-    (assessmentsByTopic.value[topicId]?.length ?? 0)
+    (assessmentsByTopic.value[topicId]?.length ?? 0) +
+    (lessonsByTopic.value[topicId]?.length ?? 0)
   )
 }
 
@@ -129,6 +133,17 @@ function assessmentProgress(assessment) {
   return progress.value?.assessments?.[assessment.id] ?? { completed: false }
 }
 
+function lessonProgress(lesson) {
+  return (
+    progress.value?.lessons?.[lesson.id] ?? {
+      completionPercent: 0,
+      viewedBlocks: 0,
+      totalBlocks: lesson.blockCount ?? 0,
+      completed: false,
+    }
+  )
+}
+
 // pdf.js weighs more than most of the documents it opens, so the download
 // starts while the pointer is still on the row rather than after the click.
 function onMaterialHover(material) {
@@ -156,17 +171,19 @@ async function load() {
   try {
     course.value = await coursesApi.getById(route.params.id)
     topics.value = await coursesApi.listTopics(route.params.id)
-    const [videoLists, materialLists, assessmentLists] = await Promise.all([
+    const [videoLists, materialLists, assessmentLists, lessonLists] = await Promise.all([
       Promise.all(topics.value.map((topic) => videosApi.listByTopic(topic.id))),
       // A module without materials is normal, so a failure here degrades to
       // "no materials shown" rather than breaking the whole curriculum — same
       // reasoning as the tests below.
       Promise.all(topics.value.map((topic) => materialsApi.listByTopic(topic.id).catch(() => []))),
       Promise.all(topics.value.map((topic) => assessmentsApi.listByTopic(topic.id).catch(() => []))),
+      Promise.all(topics.value.map((topic) => lessonsApi.listByTopic(topic.id).catch(() => []))),
     ])
     videosByTopic.value = Object.fromEntries(topics.value.map((topic, i) => [topic.id, videoLists[i]]))
     materialsByTopic.value = Object.fromEntries(topics.value.map((topic, i) => [topic.id, materialLists[i]]))
     assessmentsByTopic.value = Object.fromEntries(topics.value.map((topic, i) => [topic.id, assessmentLists[i]]))
+    lessonsByTopic.value = Object.fromEntries(topics.value.map((topic, i) => [topic.id, lessonLists[i]]))
     openTopics.value = new Set(topics.value.slice(0, 1).map((tp) => tp.id))
     await loadProgress()
   } catch (error) {
@@ -362,8 +379,41 @@ onMounted(load)
                   </span>
                 </button>
 
+                <!-- Written lessons (9.2) -->
+                <button
+                  v-for="lesson in lessonsByTopic[topic.id]"
+                  :key="lesson.id"
+                  type="button"
+                  class="flex w-full items-center gap-3 px-5 py-3 text-left transition-default hover:bg-surface-2"
+                  @click="router.push(`/lessons/${lesson.id}`)"
+                >
+                  <span
+                    class="flex h-8 w-8 shrink-0 items-center justify-center rounded"
+                    :class="lessonProgress(lesson).completed ? 'bg-success/10 text-success' : 'bg-primary/10 text-primary'"
+                  >
+                    <Icon :name="lessonProgress(lesson).completed ? 'check' : 'book-open'" size="14" />
+                  </span>
+                  <span class="min-w-0 flex-1">
+                    <span class="block truncate text-small font-medium text-ink">{{ lesson.title }}</span>
+                    <span class="block text-caption text-ink-faint">
+                      {{ t('content.blockCount', { count: lesson.blockCount }) }}
+                      <template v-if="lesson.estimatedMinutes">· {{ t('courses.minutes', { count: lesson.estimatedMinutes }) }}</template>
+                    </span>
+                  </span>
+                  <!-- Where the reader got to, in blocks — the same figure
+                       the lesson page shows, from the same payload. -->
+                  <span
+                    v-if="lessonProgress(lesson).viewedBlocks"
+                    class="shrink-0 text-caption tabular-nums text-ink-muted"
+                  >
+                    {{ lessonProgress(lesson).viewedBlocks }}/{{ lessonProgress(lesson).totalBlocks }} ·
+                    {{ lessonProgress(lesson).completionPercent }}%
+                  </span>
+                  <Icon v-else name="arrow-right" size="14" class="shrink-0 text-ink-muted" />
+                </button>
+
                 <p
-                  v-if="!videosByTopic[topic.id]?.length && !materialsByTopic[topic.id]?.length && !assessmentsByTopic[topic.id]?.length"
+                  v-if="!videosByTopic[topic.id]?.length && !materialsByTopic[topic.id]?.length && !assessmentsByTopic[topic.id]?.length && !lessonsByTopic[topic.id]?.length"
                   class="px-5 py-6 text-center text-small text-ink-faint"
                 >
                   {{ t('videos.empty') }}

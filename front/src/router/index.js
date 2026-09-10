@@ -36,6 +36,9 @@ export const router = createRouter({
         { path: 'courses', name: 'courses-list', component: () => import('@/views/CoursesView.vue'), meta: { titleKey: 'nav.courses' } },
         { path: 'courses/:id', name: 'course-detail', component: () => import('@/views/CourseDetailView.vue'), meta: { titleKey: 'courses.title' } },
         { path: 'videos/:id', name: 'video-detail', component: () => import('@/views/VideoPlayerView.vue'), meta: { titleKey: 'nav.courses' } },
+        // A written lesson reads like a page; the id is the lesson's, not the
+        // topic's, so a link to one survives the curriculum being reordered.
+        { path: 'lessons/:id', name: 'lesson-detail', component: () => import('@/views/LessonView.vue'), meta: { titleKey: 'nav.courses' } },
         {
           path: 'videos/:id/quiz',
           name: 'video-quiz',

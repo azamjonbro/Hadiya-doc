@@ -8,7 +8,7 @@ import { computeAccessFlags } from '../courses/courseAssignmentAccess.js'
 import { faceGateService } from '../face/faceGate.service.js'
 import { auditLogRepository } from '../../repositories/auditLog.repository.js'
 import { pointsService } from '../gamification/points.service.js'
-import { openTopic, visibleRows } from '../courses/contentItem.js'
+import { openTopic, visibleRows, nextOrder } from '../courses/contentItem.js'
 import { ApiError } from '../../utils/ApiError.js'
 import { courseCompletionService } from '../courses/courseCompletion.service.js'
 import { logger } from '../../config/logger.js'
@@ -303,7 +303,8 @@ export const assessmentService = {
       topicId,
       courseId: topic.courseId,
       title: payload.title,
-      order: payload.order ?? 0,
+      // Shared across all four content types (9.1) — see material.service.
+      order: payload.order ?? (await nextOrder(topicId)),
       createdBy: actor.id,
     })
 

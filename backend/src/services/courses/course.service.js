@@ -6,6 +6,8 @@ import { materialRepository } from '../../repositories/material.repository.js'
 import { materialProgressRepository } from '../../repositories/materialProgress.repository.js'
 import { assessmentRepository } from '../../repositories/assessment.repository.js'
 import { assessmentAttemptRepository } from '../../repositories/assessmentAttempt.repository.js'
+import { lessonRepository } from '../../repositories/lesson.repository.js'
+import { lessonProgressRepository } from '../../repositories/lessonProgress.repository.js'
 import { auditLogRepository } from '../../repositories/auditLog.repository.js'
 import { userRepository } from '../../repositories/user.repository.js'
 import { courseAssignmentRepository } from '../../repositories/courseAssignment.repository.js'
@@ -20,6 +22,7 @@ import { effectiveCacheKey as attentionPolicyCacheKey } from './attentionPolicy.
 import { notificationService } from '../notifications/notification.service.js'
 import { formatNotificationDate } from '../../utils/notificationFormat.js'
 import { collectCourseItems, summarize, courseCompletionService } from './courseCompletion.service.js'
+import { lessonCompletion } from './lessonBlocks.js'
 import { logger } from '../../config/logger.js'
 import { canManageCourses } from '../courses/coursePermissions.js'
 
@@ -75,11 +78,13 @@ async function computeCourseProgress(actor, id, targetUserId) {
   // fraction of its pages that were actually read: two slides of a hundred is
   // 2% of that item, not nothing and not all of it. Videos and tests stay
   // all-or-nothing, which is what completing them already meant.
-  const [materials, materialRows, assessments, attempts] = await Promise.all([
+  const [materials, materialRows, assessments, attempts, lessons, lessonRows] = await Promise.all([
     materialRepository.listByCourse(id),
     materialProgressRepository.listByUserAndCourse(targetUserId, id),
     assessmentRepository.listByCourse(id),
     assessmentAttemptRepository.listByUserAndCourse(targetUserId, id),
+    lessonRepository.listByCourse(id),
+    lessonProgressRepository.listByUserAndCourse(targetUserId, id),
   ])
 
   const visibleMaterials = canManageCourses(actor) ? materials : materials.filter((m) => m.status === 'PUBLISHED')
@@ -112,6 +117,17 @@ async function computeCourseProgress(actor, id, targetUserId) {
     assessmentProgress[assessmentId] = { completed: passedAssessmentIds.has(assessmentId) }
   }
 
+  // Lessons, on the same terms as the other three (9.1). The reader's place
+  // is a count of blocks rather than a percentage of scroll, so a row can
+  // say "3 of 8" instead of looking identical whether it was opened or not.
+  const visibleLessons = canManageCourses(actor) ? lessons : lessons.filter((l) => l.status === 'PUBLISHED')
+  const lessonRowById = new Map(lessonRows.map((row) => [row.lessonId.toString(), row]))
+  const lessonProgress = {}
+  for (const lesson of visibleLessons) {
+    const lessonId = lesson._id.toString()
+    lessonProgress[lessonId] = lessonCompletion(lesson, lessonRowById.get(lessonId))
+  }
+
   // The percentage comes from the completion service, not from a second
   // calculation here (3.1). Two implementations of "how far through is this
   // person" is how the progress endpoint and the assignment status came to
@@ -135,6 +151,7 @@ async function computeCourseProgress(actor, id, targetUserId) {
     videos: videoProgress,
     materials: materialProgress,
     assessments: assessmentProgress,
+    lessons: lessonProgress,
   }
 }
 

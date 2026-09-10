@@ -73,7 +73,9 @@
     "delete": "Delete",
     "refresh": "Refresh",
     "yes": "True",
-    "no": "False"
+    "no": "False",
+    "moveUp": "Move up",
+    "moveDown": "Move down"
   },
   "auth": {
     "login": {
@@ -1479,7 +1481,9 @@
     "statusFailed": "Could not change the status",
     "deleteFailed": "Could not delete it",
     "downloadFailed": "Could not get the download link",
-    "createFailed": "Could not create it"
+    "createFailed": "Could not create it",
+    "lesson": "Lesson",
+    "blockCount": "{count} blocks"
   },
   "videoReport": {
     "title": "Report",
@@ -2491,5 +2495,84 @@
   },
   "questionBanks": {
     "loadFailed": "Could not load the question bank"
+  },
+  "lesson": {
+    "blocks": "Blocks",
+    "block": {
+      "heading": "Heading",
+      "text": "Text",
+      "quote": "Quote",
+      "callout": "Callout",
+      "code": "Code",
+      "image": "Image",
+      "gallery": "Gallery",
+      "embed": "Embed",
+      "video": "Video",
+      "file": "File",
+      "table": "Table",
+      "divider": "Divider"
+    },
+    "callout": {
+      "info": "Info",
+      "warning": "Warning",
+      "success": "Success",
+      "danger": "Danger"
+    },
+    "headingLevel": "H{level}",
+    "titlePlaceholder": "Lesson title",
+    "descriptionPlaceholder": "Short description (optional)",
+    "minutesPlaceholder": "Reading time, min.",
+    "textPlaceholder": "Write the text…",
+    "quotePlaceholder": "Quote text…",
+    "authorPlaceholder": "Who said it (optional)",
+    "calloutPlaceholder": "What to draw attention to…",
+    "languagePlaceholder": "Language (js, sql…)",
+    "codePlaceholder": "Code…",
+    "altPlaceholder": "Image description (for screen readers)",
+    "captionPlaceholder": "Caption (optional)",
+    "embedPlaceholder": "YouTube, Vimeo or Google link",
+    "embedHint": "Only YouTube, Vimeo and Google Docs/Drive links can be embedded.",
+    "embedFrame": "Embedded frame",
+    "required": "Required to complete the course",
+    "addImage": "Add image",
+    "addRow": "Row",
+    "addColumn": "Column",
+    "removeRow": "Remove row",
+    "removeColumn": "Remove column",
+    "tableHeader": "First row is the header",
+    "noVideos": "This module has no video yet — upload one first.",
+    "noMaterials": "This module has no file yet — upload one first.",
+    "noBlocks": "No blocks yet. Add one below.",
+    "emptyPreview": "No finished blocks to show.",
+    "preview": "Preview",
+    "edit": "Edit",
+    "saving": "Saving…",
+    "savedAt": "Saved at {time}",
+    "saveFailed": "Could not save",
+    "statusFailed": "Could not change the status",
+    "loadFailed": "Could not load the lesson",
+    "pendingBlocks": "{count} block(s) unfinished — they are not saved",
+    "blockIncomplete": "unfinished",
+    "duplicateBlock": "Duplicate",
+    "untitled": "Untitled lesson",
+    "confirmDelete": "The lesson “{title}” will be deleted. Continue?",
+    "finish": "I have read this lesson",
+    "finished": "Lesson completed",
+    "finishFailed": "Could not complete it",
+    "readToEnd": "Read to the end of the lesson to finish it.",
+    "completed": "Completed",
+    "completedNote": "You have completed this lesson.",
+    "blockUnavailable": "This content is not available to you right now.",
+    "descriptionLabel": "Short description",
+    "minutesLabel": "Reading time (min.)"
+  },
+  "richText": {
+    "bold": "Bold",
+    "italic": "Italic",
+    "bulletList": "Bullet list",
+    "link": "Link",
+    "linkPrompt": "Link address (https://…)",
+    "linkInvalid": "Only http and https links are allowed.",
+    "clear": "Clear formatting"
   }
 }

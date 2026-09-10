@@ -10,6 +10,7 @@ import { videosRouter } from './videos.routes.js'
 import { videoAccessRouter } from './videoAccess.routes.js'
 import { videoStreamRouter } from './videoStream.routes.js'
 import { materialsRouter } from './materials.routes.js'
+import { lessonsRouter } from './lessons.routes.js'
 import { trashRouter } from './trash.routes.js'
 import { assessmentsRouter } from './assessments.routes.js'
 import { analyticsRouter } from './analytics.routes.js'
@@ -66,6 +67,8 @@ v1Router.use('/videos', videosRouter)
 v1Router.use('/video-access', videoAccessRouter)
 v1Router.use('/video-stream', videoStreamRouter)
 v1Router.use('/materials', materialsRouter)
+// Text lessons — the fourth kind of content a topic can hold (9.1).
+v1Router.use('/lessons', lessonsRouter)
 v1Router.use('/trash', trashRouter)
 v1Router.use('/assessments', assessmentsRouter)
 v1Router.use('/analytics', analyticsRouter)
