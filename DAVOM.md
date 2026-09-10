@@ -183,6 +183,10 @@ Server: `homeserver` ssh aliasi (Tailscale, `azamjonbro`). Cloudflare tunnel
 orqali ikkita host:
 
 - `qollanma.sds-max.uz` — API, socket, media (nginx → :4000, MinIO :9000)
+  - `…/api/docs` — generatsiya qilinadigan API hujjati (11.3), mashina
+    uchun `…/api/openapi.json`. **Ildizdagi `/openapi.json` prodda
+    ishlamaydi** — nginx faqat `/api/`, `/socket.io/` va media
+    prefikslarini proxy qiladi.
 - `spring.sds-max.uz` — SPA, nginx root `/var/www/spring/front`
 
 Backend **pm2** ostida: `qollanma` va `qollanma-worker`. Yonida begona saytlar
