@@ -1667,7 +1667,74 @@
 
 ## BLOK 9 — Kontent va authoring (6 hafta)
 
-- [ ] **9.1** **`ContentItem` polimorf bazasi** (bosqichma-bosqich, `Lesson` bilan boshlanadi)
+- [x] **9.1** **`ContentItem` polimorf bazasi** (bosqichma-bosqich, `Lesson` bilan boshlanadi)
+  · Bajarildi — baza yarmi oldingi sessiyada yozilgan edi
+  (`services/courses/contentItem.js`: umumiy ko'rinish darvozasi va
+  reorder), lekin **`nextOrder()` ning birorta chaqiruvchisi yo'q edi** va u
+  yozilgan to'rtinchi kontent turi mavjud emasdi. Endi:
+    1. **`Lesson`** — `models/lesson.model.js`, blok subschema'si bilan.
+    Blok turlari: `HEADING`, `TEXT` (boy HTML), `IMAGE`, `DIVIDER`.
+    O'n ikkitasi emas: API qabul qiladigan har bir blok turi validatsiya,
+    sanitatsiya va ko'rsatishni talab qiladi, sakkiztasini hech kim
+    ko'rsata olmaydigan holda yozib qo'yish — o'qilmaydigan kontentni
+    saqlash bo'lardi. Validator `discriminatedUnion`, ya'ni 9.2 da har bir
+    yangi tur bitta band, qayta yozish emas.
+    2. **Blok `_id` saqlanadi** va o'qish progressi shunga yoziladi — muallif
+    xatoni tuzatsa yoki bloklarni surib qo'ysa, hech kimning joyi
+    yo'qolmaydi. Tahrirda mijoz `id` ni qaytaradi (`lessonBlocks.js`).
+    3. **`TEXT` bloki KB allowlist'i bilan tozalanadi** (`kbSanitize.js` dan
+    import, nusxa emas): bir xil xavf — xodim yozgan HTML `v-html` bilan
+    ko'rsatiladi, ya'ni server qabul qilgan narsani har bir o'quvchining
+    brauzeri bajaradi. Ikkita allowlist bo'lsa, biri qattiqlashtirilgan kuni
+    ikkinchisi hozir xavfli deb topilgan narsani qabul qilishda davom etadi.
+    4. **`lessonProgress`** — ko'rilgan bloklar to'plami (materialProgress
+    naqshi). Foiz **saqlanmaydi, hisoblanadi** (`lessonCompletion()`):
+    bo'luvchi — darsning hozirgi blok ro'yxati, muallif esa uni
+    o'zgartiradi; saqlangan foiz blok qo'shilgan zahoti eskiradigan
+    ikkinchi javob bo'lardi (3.1 ning darsi).
+    5. **Tugatishga ulandi** — `collectCourseItems()` da dars hujjat kabi
+    hisoblanadi (o'qilgan bloklar ulushi). AT-01/AT-04: faqat darsdan
+    iborat kurs tugaydi; ikkinchi majburiy dars **chiqarilganda** kurs
+    qayta ochiladi, qoralama esa hech kimni ushlab turmaydi.
+    6. **`nextOrder()` ulandi** — dars, material, test va tus video yaratish
+    yo'llari endi mavzuning **umumiy** ketma-ketligi oxiriga tushadi.
+    Ilgari har turi 0 dan boshlanardi, shuning uchun uchta video va uchta
+    fayl bo'lgan mavzuda ikkita element 0 da, ikkitasi 1 da turardi.
+    7. **Kurs nusxalash darslarni ham oladi** (`courseDuplicate`), blok
+    id'lari yangidan yaratiladi — bo'lishilgan id'lar asl kursdagi o'qish
+    joyini nusxaga ham hisoblab yuborardi.
+  · **Yon topilma va tuzatish:** `reorderContent()` to'liq bo'lmagan
+  ro'yxatni jimgina qabul qilardi — HTTP sinovida oltitadan ikkitasini
+  yuborib ko'rdim, o'sha ikkitasi 0 dan raqamlandi va qolganlar joyida
+  qoldi, ya'ni funksiya tuzatish uchun yozilgan to'qnashuv qaytib keldi.
+  Endi `INCOMPLETE_ORDER` (400) — mijoz ro'yxatini yangilashi kerak.
+  Endpoint'ning UI chaqiruvchisi yo'q, shuning uchun buzilgan narsa yo'q.
+  · **Tekshirildi** — `backend/test/lesson.test.js` (23 test, jonli
+  MongoDB): sanitatsiya (onclick, `<script>`, `javascript:` URL, `data:`
+  URL), umumiy ketma-ketlik, to'liqsiz reorder, begona mavzudagi id,
+  qoralama 404 (403 emas), bo'sh darsni chiqarish taqiqi, progress (25 →
+  50 → 100), `LESSON_NOT_AT_END`, `UNKNOWN_BLOCK`, tahrirdan keyin joy
+  saqlanishi, tugatish va nusxalash. HTTP orqali ham (4100-portda alohida
+  server, foydalanuvchining 4000-portidagi jarayoniga tegmasdan):
+  401 tokensiz, 403 xodim PATCH qilganda, 404 qoralamaga, 400 noto'g'ri
+  blok turiga. Sinov ma'lumotlari o'chirildi.
+  · **Chetlanishlar:**
+    1. **Frontend deyarli tegilmagan.** `TopicContentPanel` da `LESSON`
+    qatori faqat **o'qish uchun** qo'shildi (ikoni, sarlavha, blok soni,
+    holat) — ilgari u yerda bo'sh satr chizilardi. Blok editori, dars
+    yaratish va chiqarish tugmalari, o'quvchi ko'rinishi — **9.2**.
+    Shuning uchun dars hozircha faqat API orqali yaratiladi.
+    2. **Chiqarilgan darsni o'quvchi hali o'qiy olmaydi** (ko'rinish 9.2
+    da). Dars standart holatda `DRAFT`, lekin muallif uni chiqarsa,
+    kurs foizida hisoblanadi va ochib bo'lmaydi. Bilib qabul qilingan
+    murosa: tugatish mantig'ini keyinroq ulash 3.1 ning "bitta javob"
+    qoidasini buzardi.
+    3. **Video va materialni o'chirishda kurs qayta baholanmaydi.** Dars
+    o'chirilganda baholanadi (o'chirish kursni kimlar uchundir tugallashi
+    mumkin). Bu ikkisidagi bo'shliq eski, bu yerda o'tib ketishda
+    tuzatilmadi.
+    4. Blok `IMAGE` URL'i faqat sxema bo'yicha tekshiriladi (http/https);
+    o'z saqlagichimizga bog'lash media kutubxonasi (**9.5**) bilan keladi.
 - [ ] **9.2** **`Lesson` + blok editor** — 12 blok turi, drag-drop, autosave
 - [ ] **9.3** **SCORM 1.2/2004 import** — `scormPackage`, `scormState`,
   iframe API adapter, helmet CSP `frame-src` sozlash

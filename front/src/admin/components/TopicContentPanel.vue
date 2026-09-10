@@ -384,6 +384,34 @@ onMounted(load)
             @removed="onAssessmentRemoved"
           />
         </template>
+
+        <!-- LESSON row (9.1). Read-only on purpose: the block editor, and
+             with it creating and publishing a lesson, is 9.2. Until then a
+             lesson can only arrive through the API, and this row exists so
+             that when one does, the curriculum shows it instead of drawing
+             an empty line. -->
+        <template v-else-if="item.contentType === 'LESSON'">
+          <div class="flex items-center justify-between gap-3">
+            <div class="flex min-w-0 items-center gap-2.5">
+              <span class="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-surface text-ink-faint">
+                <Icon name="book-open" size="15" />
+              </span>
+              <div class="min-w-0">
+                <p class="truncate text-small font-medium text-ink">{{ item.title }}</p>
+                <p class="truncate text-caption text-ink-faint">
+                  {{ t('content.lesson') }} · {{ t('content.blockCount', { count: item.blockCount }) }}
+                  <template v-if="item.estimatedMinutes">· {{ t('courses.minutes', { count: item.estimatedMinutes }) }}</template>
+                </p>
+              </div>
+            </div>
+            <div class="flex shrink-0 items-center gap-1.5">
+              <Badge :variant="item.status === 'PUBLISHED' ? 'success' : 'neutral'" size="sm">
+                {{ item.status === 'PUBLISHED' ? t('courses.status.published') : t('courses.status.draft') }}
+              </Badge>
+              <span v-if="canManage" class="text-caption text-ink-faint">{{ t('content.lessonEditorSoon') }}</span>
+            </div>
+          </div>
+        </template>
       </li>
     </ul>
     <p v-else-if="!loading" class="mt-2 text-small text-ink-faint">{{ t('materials.empty') }}</p>

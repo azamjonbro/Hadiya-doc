@@ -1479,7 +1479,10 @@
     "statusFailed": "Holatni o'zgartirib bo'lmadi",
     "deleteFailed": "O'chirib bo'lmadi",
     "downloadFailed": "Yuklab olish havolasini olib bo'lmadi",
-    "createFailed": "Yaratib bo'lmadi"
+    "createFailed": "Yaratib bo'lmadi",
+    "lesson": "Dars",
+    "blockCount": "{count} blok",
+    "lessonEditorSoon": "Blok editori tayyorlanmoqda"
   },
   "videoReport": {
     "title": "Hisobot",

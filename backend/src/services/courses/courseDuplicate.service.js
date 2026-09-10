@@ -3,6 +3,7 @@ import { Topic } from '../../models/topic.model.js'
 import { Video } from '../../models/video.model.js'
 import { Material } from '../../models/material.model.js'
 import { Assessment } from '../../models/assessment.model.js'
+import { Lesson } from '../../models/lesson.model.js'
 import { Quiz } from '../../models/quiz.model.js'
 import { AttentionPolicy } from '../../models/attentionPolicy.model.js'
 import { courseRepository } from '../../repositories/course.repository.js'
@@ -95,7 +96,7 @@ export const courseDuplicateService = {
       })
     )
 
-    const counts = { topics: 0, videos: 0, materials: 0, assessments: 0, quizzes: 0 }
+    const counts = { topics: 0, videos: 0, materials: 0, assessments: 0, lessons: 0, quizzes: 0 }
 
     // Old id -> new id, so children can be re-pointed as they are copied.
     const topicIdMap = new Map()
@@ -157,6 +158,26 @@ export const courseDuplicateService = {
         })
       )
       counts.assessments += 1
+    }
+
+    // Lessons copy like materials — a row per lesson, blocks and all (9.1).
+    // Block ids are regenerated rather than carried across: they are what
+    // reading progress points at, and two courses sharing block ids would
+    // let a reader's place in the original count towards the copy.
+    const lessons = await Lesson.find({ courseId }).sort({ order: 1 }).lean()
+    for (const lesson of lessons) {
+      const topicId = topicIdMap.get(String(lesson.topicId))
+      if (!topicId) continue
+      await Lesson.create(
+        copyOf(lesson, {
+          courseId: course._id,
+          topicId,
+          blocks: (lesson.blocks ?? []).map(({ _id, ...block }) => block),
+          createdBy: actor.id,
+          updatedBy: null,
+        })
+      )
+      counts.lessons += 1
     }
 
     const quizzes = await Quiz.find({ courseId }).lean()

@@ -4,6 +4,8 @@ import { materialRepository } from '../../repositories/material.repository.js'
 import { materialProgressRepository } from '../../repositories/materialProgress.repository.js'
 import { assessmentRepository } from '../../repositories/assessment.repository.js'
 import { assessmentAttemptRepository } from '../../repositories/assessmentAttempt.repository.js'
+import { lessonRepository } from '../../repositories/lesson.repository.js'
+import { lessonProgressRepository } from '../../repositories/lessonProgress.repository.js'
 import { courseAssignmentRepository } from '../../repositories/courseAssignment.repository.js'
 import { courseRepository } from '../../repositories/course.repository.js'
 import { notificationService } from '../notifications/notification.service.js'
@@ -11,6 +13,7 @@ import { logger } from '../../config/logger.js'
 import { queueCertificate } from '../../jobs/certificateQueue.js'
 import { pathEnrollmentService } from '../paths/pathEnrollment.service.js'
 import { queueOnboardingEvaluation } from '../../jobs/onboardingQueue.js'
+import { lessonCompletion } from './lessonBlocks.js'
 
 /**
  * One definition of "this course is finished", and one place that acts on it.
@@ -40,18 +43,22 @@ const DEFAULT_RULE = { minPercent: 100, requireAllRequired: true }
  * cannot be held back by a lesson nobody has released.
  */
 export async function collectCourseItems(courseId, userId, { publishedOnly = true } = {}) {
-  const [videos, videoRows, materials, materialRows, assessments, attempts] = await Promise.all([
-    videoRepository.listByCourse(courseId),
-    videoProgressRepository.listByUserAndCourse(userId, courseId),
-    materialRepository.listByCourse(courseId),
-    materialProgressRepository.listByUserAndCourse(userId, courseId),
-    assessmentRepository.listByCourse(courseId),
-    assessmentAttemptRepository.listByUserAndCourse(userId, courseId),
-  ])
+  const [videos, videoRows, materials, materialRows, assessments, attempts, lessons, lessonRows] =
+    await Promise.all([
+      videoRepository.listByCourse(courseId),
+      videoProgressRepository.listByUserAndCourse(userId, courseId),
+      materialRepository.listByCourse(courseId),
+      materialProgressRepository.listByUserAndCourse(userId, courseId),
+      assessmentRepository.listByCourse(courseId),
+      assessmentAttemptRepository.listByUserAndCourse(userId, courseId),
+      lessonRepository.listByCourse(courseId),
+      lessonProgressRepository.listByUserAndCourse(userId, courseId),
+    ])
 
   const visible = (rows) => (publishedOnly ? rows.filter((row) => row.status === 'PUBLISHED') : rows)
   const videoRowById = new Map(videoRows.map((row) => [row.videoId.toString(), row]))
   const materialRowById = new Map(materialRows.map((row) => [row.materialId.toString(), row]))
+  const lessonRowById = new Map(lessonRows.map((row) => [row.lessonId.toString(), row]))
   // A test is done when it has been *passed*. An attempt that failed is a
   // try, not a completion, and counting it would let a course reach 100%
   // with nothing learned.
@@ -92,6 +99,26 @@ export async function collectCourseItems(courseId, userId, { publishedOnly = tru
       // Materials carry no `required` flag yet, so every published one
       // counts. When they gain one (Blok 9) this is the line that changes.
       required: true,
+    })
+  }
+
+  for (const lesson of visible(lessons)) {
+    const row = lessonRowById.get(lesson._id.toString())
+    // Read like a document rather than watched like a video: a lesson
+    // contributes the fraction of its blocks actually seen, which is what
+    // makes a twelve-block procedure worth more than a one-line note only
+    // in how long it takes to finish, not in what it is worth.
+    const progress = lessonCompletion(lesson, row)
+    items.push({
+      kind: 'lesson',
+      id: lesson._id.toString(),
+      title: lesson.title,
+      share: progress.completionPercent / 100,
+      completed: progress.completed,
+      completionPercent: progress.completionPercent,
+      viewedBlocks: progress.viewedBlocks,
+      totalBlocks: progress.totalBlocks,
+      required: lesson.required !== false,
     })
   }
 

@@ -6,6 +6,7 @@ import { Topic } from '../models/topic.model.js'
 import { videoRepository } from '../repositories/video.repository.js'
 import { auditLogRepository } from '../repositories/auditLog.repository.js'
 import { enqueueVideoProcessing } from '../jobs/videoProcessingQueue.js'
+import { nextOrder } from '../services/courses/contentItem.js'
 
 const ALLOWED_EXTENSIONS = new Set(['mp4', 'mov', 'mkv', 'webm'])
 export const VIDEO_UPLOAD_PATH = '/api/v1/videos/upload'
@@ -89,7 +90,9 @@ export const tusServer = new Server({
       processingStatus: 'PENDING',
       status: 'DRAFT',
       required: metadata.required !== 'false',
-      order: Number(metadata.order ?? 0),
+      // Uploaded videos join the same sequence as everything else in the
+      // topic (9.1); an explicit order from the client still wins.
+      order: metadata.order === undefined ? await nextOrder(topic._id) : Number(metadata.order),
       createdBy: actor?.id ?? null,
     })
 

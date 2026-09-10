@@ -96,6 +96,13 @@ export async function nextOrder(topicId) {
   return max + 1
 }
 
+/** How many items the topic holds, across every collection. */
+export async function countContent(topicId) {
+  const models = Object.values(MODEL_BY_KIND).filter(Boolean)
+  const counts = await Promise.all(models.map((model) => model.countDocuments({ topicId })))
+  return counts.reduce((sum, count) => sum + count, 0)
+}
+
 /**
  * Rewrites the sequence of a topic's contents.
  *
@@ -109,6 +116,21 @@ export async function nextOrder(topicId) {
  * the reorder — the four collections have been numbering independently.
  */
 export async function reorderContent(topicId, items) {
+  // The list has to be the whole topic. A caller that sends four of six
+  // items numbers those four from zero and leaves the other two where they
+  // were, so the collisions this function exists to repair come straight
+  // back — which is exactly what happened the first time it was called with
+  // a stale list. A client whose list is out of date should reload it, and
+  // saying so is more use than a silently tangled curriculum.
+  const total = await countContent(topicId)
+  if (items.length !== total) {
+    throw ApiError.badRequest(
+      'Send the topic\'s whole content list in its new order',
+      'INCOMPLETE_ORDER',
+      { sent: items.length, expected: total }
+    )
+  }
+
   const byKind = new Map()
   items.forEach((item, index) => {
     const kind = kindOfContentType(item.contentType)

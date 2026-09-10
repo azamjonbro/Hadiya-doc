@@ -1479,7 +1479,10 @@
     "statusFailed": "Не удалось изменить статус",
     "deleteFailed": "Не удалось удалить",
     "downloadFailed": "Не удалось получить ссылку на скачивание",
-    "createFailed": "Не удалось создать"
+    "createFailed": "Не удалось создать",
+    "lesson": "Урок",
+    "blockCount": "{count} блок(ов)",
+    "lessonEditorSoon": "Блочный редактор готовится"
   },
   "videoReport": {
     "title": "Отчёт",

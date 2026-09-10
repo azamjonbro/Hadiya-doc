@@ -27,6 +27,7 @@ import { Video } from '../src/models/video.model.js'
 import { Material } from '../src/models/material.model.js'
 import { Assessment } from '../src/models/assessment.model.js'
 import { Quiz } from '../src/models/quiz.model.js'
+import { Lesson } from '../src/models/lesson.model.js'
 import { CourseAssignment } from '../src/models/courseAssignment.model.js'
 import { User } from '../src/models/user.model.js'
 import { Role } from '../src/models/role.model.js'
@@ -115,6 +116,17 @@ describe('course duplication (3.5)', () => {
       createdBy: admin._id,
     })
 
+    // A text lesson is the fourth kind of content a topic can hold (9.1),
+    // so "every kind" includes one.
+    await Lesson.create({
+      courseId: source._id,
+      topicId: sourceTopic._id,
+      title: 'Kirish darsi',
+      blocks: [{ type: 'TEXT', text: '<p>Matn</p>' }],
+      status: 'PUBLISHED',
+      createdBy: admin._id,
+    })
+
     await Quiz.create({
       courseId: source._id,
       videoId: sourceVideo._id,
@@ -145,6 +157,7 @@ describe('course duplication (3.5)', () => {
         Material.deleteMany({ courseId: id }),
         Assessment.deleteMany({ courseId: id }),
         Quiz.deleteMany({ courseId: id }),
+        Lesson.deleteMany({ courseId: id }),
         CourseAssignment.deleteMany({ courseId: id }),
       ])
     }
@@ -155,7 +168,7 @@ describe('course duplication (3.5)', () => {
   })
 
   test('copies every kind of content once', () => {
-    assert.deepEqual(counts, { topics: 1, videos: 1, materials: 1, assessments: 1, quizzes: 1 })
+    assert.deepEqual(counts, { topics: 1, videos: 1, materials: 1, assessments: 1, lessons: 1, quizzes: 1 })
   })
 
   test('the copy is a draft, whatever the original was', () => {

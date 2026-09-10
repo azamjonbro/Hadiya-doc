@@ -10,9 +10,11 @@ import { videoController } from '../../controllers/video.controller.js'
 import { materialController } from '../../controllers/material.controller.js'
 import { assessmentController } from '../../controllers/assessment.controller.js'
 import { topicContentController } from '../../controllers/topicContent.controller.js'
+import { lessonController } from '../../controllers/lesson.controller.js'
 import { updateTopicSchema, reorderContentSchema } from '../../validators/course.validator.js'
 import { createMaterialMetaSchema } from '../../validators/material.validator.js'
 import { createAssessmentSchema } from '../../validators/assessment.validator.js'
+import { createLessonSchema } from '../../validators/lesson.validator.js'
 import { env } from '../../config/env.js'
 import { ApiError } from '../../utils/ApiError.js'
 
@@ -76,6 +78,14 @@ topicsRouter.post(
   requirePermission(PERMISSIONS.VIDEO_MANAGE),
   validateBody(createAssessmentSchema),
   assessmentController.create
+)
+
+topicsRouter.get('/:id/lessons', requirePermission(PERMISSIONS.VIDEO_VIEW), lessonController.listByTopic)
+topicsRouter.post(
+  '/:id/lessons',
+  requirePermission(PERMISSIONS.COURSE_UPDATE),
+  validateBody(createLessonSchema),
+  lessonController.create
 )
 
 topicsRouter.patch(

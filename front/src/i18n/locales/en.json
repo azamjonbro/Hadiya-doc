@@ -1479,7 +1479,10 @@
     "statusFailed": "Could not change the status",
     "deleteFailed": "Could not delete it",
     "downloadFailed": "Could not get the download link",
-    "createFailed": "Could not create it"
+    "createFailed": "Could not create it",
+    "lesson": "Lesson",
+    "blockCount": "{count} blocks",
+    "lessonEditorSoon": "The block editor is on its way"
   },
   "videoReport": {
     "title": "Report",

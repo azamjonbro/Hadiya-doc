@@ -5,7 +5,7 @@ import { auditLogRepository } from '../../repositories/auditLog.repository.js'
 import { materialUploadService } from '../uploads/materialUpload.service.js'
 import { S3StorageProvider } from '../../storage/S3StorageProvider.js'
 import { env } from '../../config/env.js'
-import { openTopic, visibleRows } from '../courses/contentItem.js'
+import { openTopic, visibleRows, nextOrder } from '../courses/contentItem.js'
 import { ApiError } from '../../utils/ApiError.js'
 import { canManageCourses } from '../courses/coursePermissions.js'
 
@@ -60,7 +60,10 @@ export const materialService = {
       type: meta.type,
       title: meta.title,
       description: meta.description ?? '',
-      order: meta.order ?? 0,
+      // The end of the topic's one sequence, not the end of the materials.
+      // Every type used to start at 0, which is how a topic came to hold two
+      // items at position 0 and a curriculum in arbitrary order (9.1).
+      order: meta.order ?? (await nextOrder(topicId)),
       // Absent means the default (downloadable). Only an explicit false
       // restricts it — a missing checkbox must not lock a document.
       allowDownload: meta.allowDownload !== false,

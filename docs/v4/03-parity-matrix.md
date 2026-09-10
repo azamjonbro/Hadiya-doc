@@ -14,7 +14,7 @@
 |---|:--:|---|:--:|:--:|---|---|
 | Kurs yaratish/tahrirlash | ✓ | Bor | FULL | 100 | `course.service.js:281-322` | — |
 | Draft / Published / Archived | ✓ | Bor | FULL | 100 | `course.model.js:11` | — |
-| Kursni nusxalash | ✓ | Bor — chuqur nusxa (mavzu/video/material/test+savol), media havola qilinadi | FULL | 100 | `courseDuplicate.service.js`, `courses.routes.js:82-85` | — |
+| Kursni nusxalash | ✓ | Bor — chuqur nusxa (mavzu/video/material/dars/test+savol), media havola qilinadi | FULL | 100 | `courseDuplicate.service.js`, `courses.routes.js:82-85` | — |
 | Kurs kategoriyasi | ✓ | Bor — bir daraja ichma-ich `CourseCategory` | FULL | 100 | `courseCategory.model.js`, `course.model.js:21` | — |
 | Teglar | ✓ | Bor — `tags[]` + `$text` indeksda vaznlangan | FULL | 100 | `course.model.js:25,118-120` | — |
 | Muallif | ✓ | Bor — `authorIds[]` + AUTHOR roli | FULL | 100 | `course.model.js:30`, `role.model.js` | — |
@@ -68,7 +68,7 @@
 | Watermark | ? | Bor (ism + JSHSHIR) | OURS+ | 100 | `video/AttentionOverlay.vue`, player | — |
 | Video kapitel | ? | Yo'q | VERIFY | 0 | — | — |
 | Subtitr / caption | ✓ (Suite) | Yo'q | NONE | 0 | — | WebVTT + `<track>` |
-| Matn darsi (Page) | ✓ | **Yo'q** | NONE | 0 | — | `Lesson` + blok modeli |
+| Matn darsi (Page) | ✓ | Model va API bor (4 blok turi), editor va o'quvchi ko'rinishi yo'q | PARTIAL | 25 | `lesson.model.js`, `lesson.service.js`, `lessons.routes.js` | Blok editori + o'quvchi ko'rinishi (9.2) |
 | Blok shablonlari | ✓ | Yo'q | NONE | 0 | — | `BlockTemplate` |
 | Flashcard / jadval / labeled graphics | ✓ | Yo'q | NONE | 0 | — | Blok turlari |
 | Text-to-speech | ✓ | Yo'q | NONE | 0 | — | Tashqi TTS |
@@ -84,7 +84,7 @@
 | Embed (iframe) | ✓ | Yo'q | NONE | 0 | — | allowlist + sandbox |
 | Cheksiz fayl hosting | ✓ | S3/MinIO | FULL | 100 | `S3StorageProvider.js` | — |
 | Fayl turi magic-byte tekshiruvi | ? | Bor | OURS+ | 100 | `materialUpload.service.js` (`file-type`) | — |
-| **D04–D09 jami: 22 capability** | | | **FULL 7 · OURS+ 4 · PARTIAL 3 · NONE 7 · VERIFY 1** | **56** | | |
+| **D04–D09 jami: 22 capability** | | | **FULL 7 · OURS+ 4 · PARTIAL 4 · NONE 6 · VERIFY 1** | **57** | | |
 
 ## D10–D12 · INTERACTIVE CONTENT / COURSE BUILDER / AUTHORING
 
