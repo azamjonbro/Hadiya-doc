@@ -238,82 +238,87 @@ async function load() {
 onMounted(load)
 </script>
 
-<template>
-  <div class="mx-auto max-w-6xl px-6 py-8">
-    <button type="button" class="flex items-center gap-1.5 text-small font-medium text-ink-muted transition-default hover:text-ink" @click="router.push('/courses')">
-      <Icon name="chevron-left" size="16" />
-      {{ t('courses.title') }}
-    </button>
-
+  <div class="min-h-screen bg-bg pb-12">
     <template v-if="loading">
-      <Skeleton class="mt-5 h-44 w-full" />
-      <div class="mt-8 grid grid-cols-1 gap-6 lg:grid-cols-3">
-        <div class="space-y-3 lg:col-span-2">
-          <Skeleton v-for="i in 4" :key="i" class="h-14 w-full" />
+      <div class="mx-auto max-w-6xl px-6 py-8">
+        <Skeleton class="h-64 w-full rounded-xl" />
+        <div class="mt-8 grid grid-cols-1 gap-6 lg:grid-cols-3">
+          <div class="space-y-3 lg:col-span-2">
+            <Skeleton v-for="i in 4" :key="i" class="h-14 w-full" />
+          </div>
+          <Skeleton class="h-64 w-full" />
         </div>
-        <Skeleton class="h-64 w-full" />
       </div>
     </template>
 
-    <p v-if="errorMessage" class="mt-4 text-small text-danger">{{ errorMessage }}</p>
+    <div v-else-if="errorMessage" class="mx-auto max-w-6xl px-6 py-8">
+      <p class="text-small text-danger">{{ errorMessage }}</p>
+    </div>
 
     <template v-else-if="course">
-      <!-- Clean Flat Header -->
-      <div class="mt-4 flex flex-col md:flex-row items-start gap-8 bg-surface p-6 sm:p-8 rounded-md border border-border shadow-sm">
-        <div
-          class="flex h-48 w-full md:w-72 shrink-0 items-center justify-center bg-surface-2 text-ink-faint rounded"
-          :style="course.cover ? `background-image:url(${course.cover});background-size:cover;background-position:center` : ''"
-        >
-          <Icon v-if="!course.cover" name="book-open" size="48" />
-        </div>
+      <!-- Full Width Hero Banner -->
+      <div class="relative h-[320px] w-full bg-surface-2 flex items-end">
+        <img v-if="course.cover" :src="course.cover" class="absolute inset-0 w-full h-full object-cover" alt="" />
+        <div v-else class="absolute inset-0 bg-gradient-to-br from-primary/80 to-info/80"></div>
+        <div class="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent"></div>
         
-        <div class="flex-1 min-w-0 flex flex-col h-full">
-          <div>
-            <div class="flex items-center gap-2 mb-3">
-              <Badge variant="primary">{{ t('courses.title') }}</Badge>
-            </div>
-            <h1 class="text-h1 text-ink leading-tight">{{ course.title }}</h1>
-            <p v-if="course.description" class="mt-3 text-body text-ink-muted leading-relaxed">{{ course.description }}</p>
-            <div class="mt-5 flex items-center gap-6 text-small text-ink-muted">
-              <span class="flex items-center gap-1.5"><Icon name="layers" size="16" />{{ topics.length }} {{ t('courses.modules') }}</span>
-              <span class="flex items-center gap-1.5"><Icon name="video" size="16" />{{ totalVideos() }} {{ t('courses.videos') }}</span>
-            </div>
-            <p v-if="fromOffline" class="mt-3 flex items-center gap-1.5 text-caption text-warning">
-              <Icon name="alert-triangle" size="13" />
+        <div class="relative z-10 w-full mx-auto max-w-[1440px] px-6 lg:px-8 pb-8">
+          <button type="button" class="flex items-center gap-1.5 text-small font-medium text-white/70 transition-default hover:text-white mb-6" @click="router.push('/courses')">
+            <Icon name="chevron-left" size="16" />
+            {{ t('courses.title') }}
+          </button>
+          
+          <div class="flex items-center gap-2 mb-3">
+            <Badge variant="primary" class="bg-primary/20 text-white border-primary/30 backdrop-blur-sm">{{ t('courses.title') }}</Badge>
+            <span v-if="fromOffline" class="flex items-center gap-1 text-caption text-warning bg-warning/20 px-2 py-0.5 rounded backdrop-blur-sm">
+              <Icon name="alert-triangle" size="12" />
               {{ t('offline.readingSavedCourse') }}
-            </p>
-            <!-- 12.2 — taking the course offline is the learner's decision,
-                 so the control lives next to the course rather than in a
-                 settings page they would have to go looking for. -->
-            <div class="mt-4">
-              <OfflineCourseButton :course-id="String(route.params.id)" />
-            </div>
+            </span>
           </div>
           
-          <div class="mt-6 flex flex-col sm:flex-row items-start sm:items-center gap-6 border-t border-border pt-6">
-            <div class="flex-1 w-full max-w-sm">
-              <div class="flex items-center justify-between text-small font-medium text-ink mb-2">
-                <span>{{ t('dashboard.progress.title') }}</span>
-                <span>{{ progress?.completionPercent ?? 0 }}%</span>
+          <div class="flex flex-col lg:flex-row lg:items-end justify-between gap-6">
+            <div class="flex-1 max-w-3xl">
+              <h1 class="text-4xl font-bold text-white leading-tight drop-shadow-md">{{ course.title }}</h1>
+              <p v-if="course.description" class="mt-3 text-body text-white/80 line-clamp-2 drop-shadow">{{ course.description }}</p>
+              
+              <div class="mt-5 flex items-center gap-6 text-small text-white/70">
+                <span class="flex items-center gap-1.5"><Icon name="layers" size="16" />{{ topics.length }} {{ t('courses.modules') }}</span>
+                <span class="flex items-center gap-1.5"><Icon name="video" size="16" />{{ totalVideos() }} {{ t('courses.videos') }}</span>
               </div>
-              <ProgressBar :value="progress?.completionPercent ?? 0" size="md" />
-              <p class="mt-2 text-caption text-ink-faint">
-                {{ progress?.completionPercent ?? 0 }}% {{ t('videos.completed') }}
-                <span v-if="progress">({{ progress.completedItems }}/{{ progress.totalItems }})</span>
-              </p>
             </div>
-            <AppButton size="lg" icon="play" icon-position="left" class="shrink-0" :disabled="!continueVideo()" @click="onContinue">{{ t('courses.continue') }}</AppButton>
+            
+            <div class="flex items-center gap-3 shrink-0">
+              <OfflineCourseButton :course-id="String(route.params.id)" class="!bg-white/10 !text-white hover:!bg-white/20 !border-white/20 backdrop-blur-sm" />
+              <AppButton size="lg" icon="play" icon-position="left" variant="primary" :disabled="!continueVideo()" @click="onContinue" class="shadow-lg shadow-primary/30">
+                {{ t('courses.continue') }}
+              </AppButton>
+            </div>
           </div>
         </div>
       </div>
 
-      <div class="mt-8 border-b border-border">
-        <Tabs v-model="activeTab" :tabs="tabs" class="-mb-px" />
+      <!-- White Tabs Band -->
+      <div class="bg-surface border-b border-border shadow-sm">
+        <div class="mx-auto max-w-[1440px] px-6 lg:px-8 flex items-center justify-between">
+          <Tabs v-model="activeTab" :tabs="tabs" class="-mb-px" />
+          
+          <!-- Progress Mini Widget -->
+          <div v-if="progress" class="hidden md:flex items-center gap-4 py-3">
+            <div class="flex flex-col items-end">
+              <span class="text-caption font-semibold text-ink">{{ progress.completionPercent ?? 0 }}% {{ t('videos.completed') }}</span>
+              <span class="text-[11px] text-ink-faint">{{ progress.completedItems }}/{{ progress.totalItems }} items</span>
+            </div>
+            <div class="w-32">
+              <ProgressBar :value="progress.completionPercent ?? 0" size="sm" :variant="progress.completed ? 'success' : 'primary'" />
+            </div>
+          </div>
+        </div>
       </div>
 
-      <div class="mt-6">
-        <!-- Curriculum -->
-        <div v-if="activeTab === 'content'" class="max-w-4xl">
+      <!-- Content Area -->
+      <div class="mx-auto max-w-[1440px] px-6 lg:px-8 mt-8 grid grid-cols-1 lg:grid-cols-4 gap-8">
+        <!-- Left: Curriculum -->
+        <div class="lg:col-span-3">
           <div class="space-y-4">
             <AppCard v-for="topic in topics" :key="topic.id" padding="none" class="overflow-hidden border border-border shadow-sm">
               <button type="button" class="flex w-full items-center justify-between px-5 py-4 text-left transition-default hover:bg-surface-2" @click="toggleTopic(topic.id)">
@@ -507,12 +512,9 @@ onMounted(load)
           </div>
         </div>
 
-        <div v-else-if="activeTab === 'reviews'" class="max-w-4xl">
-          <ReviewsPanel :course-id="course.id" />
-        </div>
-
-        <div v-else-if="activeTab === 'qa'" class="max-w-4xl">
-          <QAPanel :course-id="course.id" />
+        <!-- Right Side: Sidebar Widgets (could be populated later) -->
+        <div class="hidden lg:block space-y-6">
+           <!-- Reserve space for sidebar widgets, e.g., Instructor info, Course materials overview, etc. -->
         </div>
       </div>
     </template>
