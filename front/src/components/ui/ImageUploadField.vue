@@ -58,24 +58,44 @@ function pickFromLibrary(asset) {
     <label v-if="label" class="mb-1.5 block text-small font-medium text-ink">{{ label }}</label>
 
     <div
-      class="relative flex cursor-pointer items-center justify-center overflow-hidden rounded-md border border-dashed border-border-strong bg-surface-2"
-      :class="[aspect, disabled ? 'cursor-not-allowed opacity-50' : 'hover:border-primary']"
-      @click="pick"
+      class="relative flex items-center justify-center overflow-hidden rounded-md border border-dashed border-border-strong bg-surface-2"
+      :class="[aspect, disabled ? 'opacity-50' : 'hover:border-primary']"
     >
-      <img v-if="modelValue" :src="modelValue" class="h-full w-full object-cover" />
+      <!-- The preview names itself, so it is announced as the picked image
+           rather than as a second, unnamed graphic. -->
+      <img v-if="modelValue" :src="modelValue" :alt="t('imageUpload.preview')" class="h-full w-full object-cover" />
       <div v-else class="flex flex-col items-center gap-1.5 py-6 text-ink-faint">
         <Icon name="upload" size="20" />
         <span class="text-caption">{{ t('imageUpload.choose') }}</span>
       </div>
 
-      <div v-if="uploading" class="absolute inset-0 flex items-center justify-center bg-surface/80">
+      <!-- The whole box is the control, and it is a real <button> covering
+           it rather than a <div role="button"> around everything (12.4).
+           The div version was reachable by keyboard but wrapped the clear
+           button and the file input, i.e. controls nested inside a control
+           — which is ambiguous to a screen reader and is what axe flags as
+           `nested-interactive`. As a sibling overlay it owns the click, the
+           Enter/Space handling and the focus ring for free, and the clear
+           button above it stays its own control. -->
+      <button
+        type="button"
+        class="absolute inset-0 z-10 h-full w-full cursor-pointer"
+        :class="disabled ? 'cursor-not-allowed' : ''"
+        :disabled="disabled || uploading"
+        :aria-label="label || t('imageUpload.choose')"
+        :aria-busy="uploading"
+        @click="pick"
+      />
+
+      <div v-if="uploading" class="absolute inset-0 z-20 flex items-center justify-center bg-surface/80">
         <Icon name="loader" size="20" class="animate-spin text-primary" />
       </div>
 
       <button
         v-if="modelValue && !disabled && !uploading"
         type="button"
-        class="absolute right-2 top-2 flex h-7 w-7 items-center justify-center rounded-full bg-surface text-ink-muted shadow-sm hover:text-danger"
+        class="absolute right-2 top-2 z-20 flex h-7 w-7 items-center justify-center rounded-full bg-surface text-ink-muted shadow-sm hover:text-danger"
+        :aria-label="t('imageUpload.clear')"
         @click.stop="clear"
       >
         <Icon name="close" size="14" />
@@ -95,7 +115,19 @@ function pickFromLibrary(asset) {
       {{ t('media.pickFromLibrary') }}
     </button>
 
-    <input ref="fileInput" type="file" accept="image/jpeg,image/png,image/webp,image/gif" class="hidden" :disabled="disabled" @change="onFileChange" />
+    <!-- Opened by the button above, never reached directly: hidden from
+         the accessibility tree and out of the tab order, or it is announced
+         as a form field with no label. -->
+    <input
+      ref="fileInput"
+      type="file"
+      accept="image/jpeg,image/png,image/webp,image/gif"
+      class="hidden"
+      tabindex="-1"
+      aria-hidden="true"
+      :disabled="disabled"
+      @change="onFileChange"
+    />
 
     <MediaPicker :open="picking" @close="picking = false" @pick="pickFromLibrary" />
   </div>

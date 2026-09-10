@@ -43,19 +43,25 @@ export default {
         success: {
           DEFAULT: 'rgb(var(--color-success) / <alpha-value>)',
           subtle: 'rgb(var(--color-success-subtle) / <alpha-value>)',
+          foreground: 'rgb(var(--color-success-foreground) / <alpha-value>)',
         },
         warning: {
           DEFAULT: 'rgb(var(--color-warning) / <alpha-value>)',
           subtle: 'rgb(var(--color-warning-subtle) / <alpha-value>)',
+          foreground: 'rgb(var(--color-warning-foreground) / <alpha-value>)',
         },
         danger: {
           DEFAULT: 'rgb(var(--color-danger) / <alpha-value>)',
           subtle: 'rgb(var(--color-danger-subtle) / <alpha-value>)',
+          foreground: 'rgb(var(--color-danger-foreground) / <alpha-value>)',
         },
         info: {
           DEFAULT: 'rgb(var(--color-info) / <alpha-value>)',
           subtle: 'rgb(var(--color-info-subtle) / <alpha-value>)',
+          foreground: 'rgb(var(--color-info-foreground) / <alpha-value>)',
         },
+        // Keyboard focus only (12.4) — see the :focus-visible rule in main.css.
+        focus: 'rgb(var(--color-focus) / <alpha-value>)',
       },
       borderRadius: {
         xs: '2px',

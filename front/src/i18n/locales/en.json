@@ -2965,5 +2965,26 @@
       "COURSE_TOO_LARGE": "This course is too large to save in one go."
     },
     "readingSavedCourse": "Showing the saved copy — only the lessons and documents that were saved offline."
+  },
+  "player": {
+    "captions": "Captions",
+    "captionsHint": "Turn captions on or off (C)",
+    "captionTrack": "Caption language",
+    "help": {
+      "title": "Keyboard shortcuts",
+      "playback": "Playback",
+      "soundAndView": "Sound and view",
+      "togglePlay": "Play / pause",
+      "back": "Back 10 seconds",
+      "forward": "Forward 10 seconds",
+      "jump": "Jump to that part of the video",
+      "edges": "Start / end",
+      "speed": "Slower / faster",
+      "volume": "Louder / quieter",
+      "mute": "Mute",
+      "captions": "Captions",
+      "fullscreen": "Fullscreen",
+      "thisPanel": "Show this list"
+    }
   }
 }

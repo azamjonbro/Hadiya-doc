@@ -126,7 +126,9 @@ function close() {
           class="flex h-9 w-9 items-center justify-center overflow-hidden rounded-md border text-caption font-medium"
           :class="enrollment.frames.value[i - 1] ? 'border-success bg-success-subtle' : 'border-border-strong text-ink-faint'"
         >
-          <img v-if="enrollment.frames.value[i - 1]" :src="enrollment.frames.value[i - 1].url" class="h-full w-full object-cover" />
+          <!-- Decorative: the line below counts the frames in words, and
+               a thumbnail of one's own face announced nine times is noise. -->
+          <img v-if="enrollment.frames.value[i - 1]" :src="enrollment.frames.value[i - 1].url" alt="" class="h-full w-full object-cover" />
           <span v-else>{{ i }}</span>
         </span>
       </div>

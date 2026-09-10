@@ -50,7 +50,14 @@ function pickLocale(code) {
       
       <div class="h-6 w-px bg-border hidden lg:block"></div>
       
-      <button type="button" class="hidden rounded-md p-2 text-ink-muted transition-default hover:bg-surface-2 lg:flex" @click="ui.toggleSidebar()">
+      <button
+        type="button"
+        class="hidden rounded-md p-2 text-ink-muted transition-default hover:bg-surface-2 lg:flex"
+        :aria-label="t('a11y.toggleSidebar')"
+        :aria-expanded="!ui.sidebarCollapsed"
+        aria-controls="main-nav"
+        @click="ui.toggleSidebar()"
+      >
         <Icon name="menu" size="18" />
       </button>
       <div class="min-w-0 hidden lg:block">
@@ -60,7 +67,14 @@ function pickLocale(code) {
 
     <div class="flex items-center gap-1.5">
       <div ref="localeRef" class="relative">
-        <button type="button" class="flex h-9 items-center gap-1 rounded-md px-2 text-small font-medium text-ink-muted transition-default hover:bg-surface-2" @click="localeOpen = !localeOpen">
+        <button
+          type="button"
+          class="flex h-9 items-center gap-1 rounded-md px-2 text-small font-medium text-ink-muted transition-default hover:bg-surface-2"
+          :aria-label="t('a11y.language')"
+          aria-haspopup="menu"
+          :aria-expanded="localeOpen"
+          @click="localeOpen = !localeOpen"
+        >
           <Icon name="globe" size="17" />
           <span class="hidden uppercase sm:inline">{{ locale }}</span>
         </button>
@@ -80,17 +94,33 @@ function pickLocale(code) {
         </Transition>
       </div>
 
-      <button type="button" class="flex h-9 w-9 items-center justify-center rounded-md text-ink-muted transition-default hover:bg-surface-2" @click="theme.toggle()">
+      <button
+        type="button"
+        class="flex h-9 w-9 items-center justify-center rounded-md text-ink-muted transition-default hover:bg-surface-2"
+        :aria-label="theme.theme === 'dark' ? t('a11y.themeLight') : t('a11y.themeDark')"
+        @click="theme.toggle()"
+      >
         <Icon :name="theme.theme === 'dark' ? 'sun' : 'moon'" size="17" />
       </button>
 
-      <router-link to="/bos/notifications" class="relative flex h-9 w-9 items-center justify-center rounded-md text-ink-muted transition-default hover:bg-surface-2">
+      <router-link
+        to="/bos/notifications"
+        class="relative flex h-9 w-9 items-center justify-center rounded-md text-ink-muted transition-default hover:bg-surface-2"
+        :aria-label="unreadCount > 0 ? t('a11y.notificationsUnread', { count: unreadCount }) : t('nav.notifications')"
+      >
         <Icon name="bell" size="17" />
-        <span v-if="unreadCount > 0" class="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-danger ring-2 ring-surface" />
+        <span v-if="unreadCount > 0" aria-hidden="true" class="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-danger ring-2 ring-surface" />
       </router-link>
 
       <div ref="profileRef" class="relative ml-1">
-        <button type="button" class="flex items-center gap-2.5 rounded px-2 py-1 transition-default hover:bg-surface-2" @click="profileOpen = !profileOpen">
+        <button
+          type="button"
+          class="flex items-center gap-2.5 rounded px-2 py-1 transition-default hover:bg-surface-2"
+          :aria-label="t('a11y.userMenu', { name: auth.user?.fullName ?? '' })"
+          aria-haspopup="menu"
+          :aria-expanded="profileOpen"
+          @click="profileOpen = !profileOpen"
+        >
           <Avatar :name="auth.user?.fullName ?? ''" size="sm" class="border border-border rounded" />
           <div class="hidden text-left lg:block max-w-[120px]">
             <p class="truncate text-[13px] font-semibold text-ink leading-tight">{{ auth.user?.fullName }}</p>

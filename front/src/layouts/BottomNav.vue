@@ -13,13 +13,17 @@ function isActive(path) {
 </script>
 
 <template>
-  <nav class="fixed inset-x-0 bottom-0 z-30 flex h-16 items-stretch border-t border-border bg-surface/95 backdrop-blur">
+  <nav
+    class="fixed inset-x-0 bottom-0 z-30 flex h-16 items-stretch border-t border-border bg-surface/95 backdrop-blur"
+    :aria-label="t('a11y.bottomNav')"
+  >
     <router-link
       v-for="item in bottomNav"
       :key="item.name"
       :to="item.path"
       class="flex flex-1 flex-col items-center justify-center gap-1 text-caption font-medium transition-default"
       :class="isActive(item.path) ? 'text-primary' : 'text-ink-faint'"
+      :aria-current="isActive(item.path) ? 'page' : undefined"
     >
       <Icon :name="item.icon" size="19" />
       {{ t(item.labelKey) }}
@@ -28,6 +32,7 @@ function isActive(path) {
       to="/settings"
       class="flex flex-1 flex-col items-center justify-center gap-1 text-caption font-medium transition-default"
       :class="isActive('/settings') ? 'text-primary' : 'text-ink-faint'"
+      :aria-current="isActive('/settings') ? 'page' : undefined"
     >
       <Icon name="user" size="19" />
       {{ t('nav.profile') }}

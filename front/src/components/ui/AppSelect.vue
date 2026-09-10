@@ -1,21 +1,37 @@
 <script setup>
+import { computed, useId } from 'vue'
 import Icon from './Icon.vue'
 
-defineProps({
+const props = defineProps({
   modelValue: { type: [String, Number], default: '' },
   label: { type: String, default: '' },
   options: { type: Array, default: () => [] }, // [{ value, label }]
   placeholder: { type: String, default: '' },
+  // Same reason as AppInput: most filter selects are label-less, and a
+  // <select> with no name at all is a "combobox" and nothing else to a
+  // screen reader (12.4).
+  ariaLabel: { type: String, default: '' },
 })
 
 defineEmits(['update:modelValue'])
+
+const selectId = useId()
+
+// A visible label wins; otherwise the explicit aria-label; otherwise the
+// placeholder, which on a filter select is exactly its name ("All roles").
+const accessibleName = computed(() => {
+  if (props.label) return undefined
+  return props.ariaLabel || props.placeholder || undefined
+})
 </script>
 
 <template>
   <div>
-    <label v-if="label" class="mb-1.5 block text-small font-medium text-ink">{{ label }}</label>
+    <label v-if="label" :for="selectId" class="mb-1.5 block text-small font-medium text-ink">{{ label }}</label>
     <div class="relative">
       <select
+        :id="selectId"
+        :aria-label="accessibleName"
         class="h-10.5 w-full appearance-none rounded-md border border-border-strong bg-surface pl-3.5 pr-9 text-body text-ink outline-none transition-default focus:border-primary focus:ring-2 focus:ring-primary/15"
         :value="modelValue"
         @change="$emit('update:modelValue', $event.target.value)"

@@ -1,7 +1,10 @@
 <script setup>
 import { computed, onBeforeUnmount, ref, watch } from 'vue'
+import { useI18n } from 'vue-i18n'
 import Icon from '@/components/ui/Icon.vue'
 import { formatDuration } from '@/utils/chatFormat'
+
+const { t } = useI18n()
 
 const props = defineProps({
   src: { type: String, required: true },
@@ -96,8 +99,12 @@ onBeforeUnmount(() => {
     <button
       type="button"
       class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full transition-default"
-      :class="tone === 'onPrimary' ? 'bg-white/20 text-white hover:bg-white/30' : 'bg-primary text-primary-foreground hover:opacity-90'"
-      :aria-label="playing ? 'Pause' : 'Play'"
+      :class="
+        tone === 'onPrimary'
+          ? 'bg-primary-foreground/20 text-primary-foreground hover:bg-primary-foreground/30'
+          : 'bg-primary text-primary-foreground hover:opacity-90'
+      "
+      :aria-label="playing ? t('common.pause') : t('common.play')"
       @click="toggle"
     >
       <Icon :name="playing ? 'pause' : 'play'" size="16" />
@@ -111,12 +118,15 @@ onBeforeUnmount(() => {
           class="w-[3px] shrink-0 rounded-full transition-[opacity] duration-150"
           :style="{ height: `${height}%` }"
           :class="[
-            tone === 'onPrimary' ? 'bg-white' : 'bg-primary',
+            tone === 'onPrimary' ? 'bg-primary-foreground' : 'bg-primary',
             (index / bars.length) * 100 <= progress ? 'opacity-100' : 'opacity-30',
           ]"
         />
       </div>
-      <p class="mt-0.5 text-caption tabular-nums" :class="tone === 'onPrimary' ? 'text-white/75' : 'text-ink-faint'">
+      <p
+        class="mt-0.5 text-caption tabular-nums"
+        :class="tone === 'onPrimary' ? 'text-primary-foreground/75' : 'text-ink-faint'"
+      >
         {{ remaining }}
       </p>
     </div>

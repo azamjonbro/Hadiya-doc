@@ -68,6 +68,7 @@ async function copy() {
         type="button"
         :disabled="disabled || !modelValue"
         :title="t('users.password.copy')"
+        :aria-label="t('users.password.copy')"
         class="flex h-10.5 w-10.5 shrink-0 items-center justify-center rounded-md border border-border-strong text-ink transition-default hover:bg-surface-hover disabled:opacity-40"
         @click="copy"
       >

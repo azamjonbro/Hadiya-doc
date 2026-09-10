@@ -1,5 +1,6 @@
 <script setup>
 import { computed } from 'vue'
+import { useI18n } from 'vue-i18n'
 import Icon from './Icon.vue'
 
 const props = defineProps({
@@ -8,6 +9,8 @@ const props = defineProps({
 })
 
 const emit = defineEmits(['update:page'])
+
+const { t } = useI18n()
 
 const pages = computed(() => {
   const total = props.totalPages
@@ -22,11 +25,15 @@ function go(p) {
 </script>
 
 <template>
-  <div class="flex items-center gap-1">
+  <!-- A named navigation landmark: a page can hold two of these (a table
+       and the list under it), and "navigation" twice tells a screen-reader
+       user nothing about which is which (12.4). -->
+  <nav class="flex items-center gap-1" :aria-label="t('a11y.pagination')">
     <button
       type="button"
       class="flex h-8 w-8 items-center justify-center rounded-md text-ink-muted transition-default hover:bg-surface-2 disabled:opacity-40"
       :disabled="page === 1"
+      :aria-label="t('a11y.previousPage')"
       @click="go(page - 1)"
     >
       <Icon name="chevron-left" size="16" />
@@ -37,6 +44,8 @@ function go(p) {
         type="button"
         class="flex h-8 min-w-8 items-center justify-center rounded-md px-2 text-small font-medium transition-default"
         :class="p === page ? 'bg-primary text-primary-foreground' : 'text-ink-muted hover:bg-surface-2'"
+        :aria-label="t('a11y.page', { page: p })"
+        :aria-current="p === page ? 'page' : undefined"
         @click="go(p)"
       >
         {{ p }}
@@ -46,9 +55,10 @@ function go(p) {
       type="button"
       class="flex h-8 w-8 items-center justify-center rounded-md text-ink-muted transition-default hover:bg-surface-2 disabled:opacity-40"
       :disabled="page === totalPages"
+      :aria-label="t('a11y.nextPage')"
       @click="go(page + 1)"
     >
       <Icon name="chevron-right" size="16" />
     </button>
-  </div>
+  </nav>
 </template>

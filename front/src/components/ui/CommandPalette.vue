@@ -7,10 +7,11 @@
  * (AT-24). Anything this page did to hide a result would be a second,
  * weaker answer to that question.
  */
-import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
+import { computed, nextTick, onMounted, onUnmounted, ref, useId, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { searchApi } from '@/services/search'
+import { useFocusTrap } from '@/composables/useFocusTrap'
 import Icon from './Icon.vue'
 
 const { t } = useI18n()
@@ -22,6 +23,16 @@ const items = ref([])
 const active = ref(0)
 const loading = ref(false)
 const input = ref(null)
+const panel = ref(null)
+
+// A combobox with a list of results, announced as one (12.4): the input
+// owns the list, and `aria-activedescendant` tells a screen reader which
+// row the arrow keys are on **without** moving focus off the input — which
+// is what lets somebody keep typing while walking the results.
+const baseId = useId()
+const listId = `${baseId}-results`
+const optionId = (row) => `${baseId}-option-${row.id}`
+const activeId = computed(() => (flat.value[active.value] ? optionId(flat.value[active.value]) : undefined))
 
 const typeMeta = {
   COURSE: { icon: 'book-open', labelKey: 'search.type.COURSE' },
@@ -106,6 +117,10 @@ function onKeydown(event) {
   }
 }
 
+// Tab stays inside the palette while it is open, and focus goes back to
+// whatever the person was on when it closes.
+useFocusTrap(panel, { isActive: () => open.value, onEscape: hide, initialFocus: () => input.value })
+
 onMounted(() => window.addEventListener('keydown', onKeydown))
 onUnmounted(() => {
   window.removeEventListener('keydown', onKeydown)
@@ -124,9 +139,16 @@ defineExpose({ show })
       leave-to-class="opacity-0"
     >
       <div v-if="open" class="fixed inset-0 z-[60] flex items-start justify-center px-4 pt-[12vh]">
-        <div class="absolute inset-0 bg-slate-950/50 backdrop-blur-[2px]" @click="hide" />
+        <div class="absolute inset-0 bg-slate-950/50 backdrop-blur-[2px]" aria-hidden="true" @click="hide" />
 
-        <div class="relative w-full max-w-xl overflow-hidden rounded-xl border border-border bg-surface shadow-2xl">
+        <div
+          ref="panel"
+          class="relative w-full max-w-xl overflow-hidden rounded-xl border border-border bg-surface shadow-2xl"
+          role="dialog"
+          aria-modal="true"
+          :aria-label="t('search.placeholder')"
+          tabindex="-1"
+        >
           <div class="flex items-center gap-3 border-b border-border px-4">
             <Icon name="search" size="18" class="shrink-0 text-ink-faint" />
             <input
@@ -135,25 +157,39 @@ defineExpose({ show })
               type="text"
               class="h-12 w-full bg-transparent text-body text-ink outline-none placeholder:text-ink-faint"
               :placeholder="t('search.placeholder')"
+              :aria-label="t('search.placeholder')"
+              role="combobox"
+              autocomplete="off"
+              aria-autocomplete="list"
+              :aria-expanded="items.length > 0"
+              :aria-controls="listId"
+              :aria-activedescendant="activeId"
             />
             <Icon v-if="loading" name="loader" size="16" class="shrink-0 animate-spin text-ink-faint" />
             <kbd class="shrink-0 rounded border border-border px-1.5 py-0.5 text-caption text-ink-faint">esc</kbd>
           </div>
 
           <div v-if="term.trim().length >= 2 && !items.length && !loading" class="px-4 py-8 text-center">
-            <p class="text-small text-ink-muted">{{ t('search.nothing') }}</p>
+            <!-- Announced when it appears: somebody who cannot see the box
+                 empty out otherwise waits for a result that is not coming. -->
+            <p class="text-small text-ink-muted" role="status">{{ t('search.nothing') }}</p>
           </div>
 
-          <div v-else-if="items.length" class="max-h-80 overflow-y-auto py-2">
+          <div v-else-if="items.length" :id="listId" role="listbox" class="max-h-80 overflow-y-auto py-2">
             <template v-for="[type, rows] in grouped" :key="type">
-              <p class="px-4 py-1.5 text-caption font-semibold uppercase tracking-widest text-ink-faint">
+              <p class="px-4 py-1.5 text-caption font-semibold uppercase tracking-widest text-ink-faint" role="presentation">
                 {{ t(typeMeta[type].labelKey) }}
               </p>
-              <button
+              <!-- An option, not a button: focus stays on the input (see
+                   `aria-activedescendant`), so these must not be in the tab
+                   order themselves. -->
+              <div
                 v-for="row in rows"
+                :id="optionId(row)"
                 :key="row.id"
-                type="button"
-                class="flex w-full items-center gap-3 px-4 py-2 text-left transition-default"
+                role="option"
+                :aria-selected="flat[active]?.id === row.id"
+                class="flex w-full cursor-pointer items-center gap-3 px-4 py-2 text-left transition-default"
                 :class="flat[active]?.id === row.id ? 'bg-primary-subtle' : 'hover:bg-surface-hover'"
                 @click="go(row)"
                 @mouseenter="active = flat.findIndex((entry) => entry.id === row.id)"
@@ -163,7 +199,7 @@ defineExpose({ show })
                   <span class="block truncate text-small text-ink">{{ row.title }}</span>
                   <span v-if="row.subtitle" class="block truncate text-caption text-ink-faint">{{ row.subtitle }}</span>
                 </span>
-              </button>
+              </div>
             </template>
           </div>
 

@@ -20,13 +20,15 @@
  * Parsers load on demand — a reader who only opens PDFs never downloads the
  * presentation code.
  */
-import { computed, nextTick, onBeforeUnmount, ref, watch } from 'vue'
+import { computed, nextTick, onBeforeUnmount, ref, useId, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { materialsApi } from '@/services/materials'
 import { offlineMaterialContent } from '@/offline/offlineContent'
+import { enqueue } from '@/offline/queue'
 import { apiErrorText } from '@/utils/apiError'
 import { loadPdfjs, PDF_ASSET_OPTIONS } from '@/utils/pdfjs'
 import { useFaceGate } from '@/composables/useFaceGate'
+import { useFocusTrap } from '@/composables/useFocusTrap'
 import AppButton from '@/components/ui/AppButton.vue'
 import FaceGateOverlay from '@/components/face/FaceGateOverlay.vue'
 import Icon from '@/components/ui/Icon.vue'
@@ -67,6 +69,14 @@ const sheets = ref([])
 const truncated = ref(false)
 
 const dialogEl = ref(null)
+// Names the dialog with the material's own title, so a screen reader
+// announces what was opened instead of "dialog" (12.4).
+const titleId = useId()
+
+// The viewer covers the whole window, so Tab has to stay inside it (12.4).
+// No `onEscape` here: this component handles Escape itself, because the
+// first Escape has to leave full screen rather than close the document.
+useFocusTrap(dialogEl, { isActive: () => Boolean(props.material) })
 const pageHost = ref(null)
 const pdfCanvas = ref(null)
 
@@ -138,7 +148,21 @@ async function reportPage(pageNumber) {
     completed.value = progress.completed
     // The course page redraws its bar from this rather than guessing.
     emit('progress', progress)
-  } catch {
+  } catch (error) {
+    /**
+     * Offline, "sent again later" means the next page turn on this
+     * device (12.3) — and closing the document loses it. The report goes
+     * into the queue instead; the server keeps the furthest page, so
+     * repeating it changes nothing.
+     */
+    if (!error?.response) {
+      const queued = await enqueue({
+        id: `material-page:${props.material.id}:${pageNumber}`,
+        url: `/materials/${props.material.id}/progress`,
+        body: { page: pageNumber, totalPages: pageCount.value },
+      })
+      if (queued) return
+    }
     // A page that failed to record can be sent again later.
     reportedPages.delete(pageNumber)
   }
@@ -525,7 +549,7 @@ onBeforeUnmount(() => {
 <template>
   <Teleport to="body">
     <div v-if="material" class="fixed inset-0 z-50 flex items-center justify-center">
-      <div class="absolute inset-0 bg-slate-950/70 backdrop-blur-[2px]" @click="emit('close')" />
+      <div class="absolute inset-0 bg-slate-950/70 backdrop-blur-[2px]" aria-hidden="true" @click="emit('close')" />
 
       <!-- Opens filling the window: a document read at 90% of a dialog is a
            document read through a letterbox. The button hands it the whole
@@ -535,10 +559,12 @@ onBeforeUnmount(() => {
         class="relative flex h-full w-full flex-col overflow-hidden bg-surface"
         role="dialog"
         aria-modal="true"
+        :aria-labelledby="titleId"
+        tabindex="-1"
       >
         <header class="flex items-center gap-3 border-b border-border px-4 py-2.5">
           <div class="min-w-0 flex-1">
-            <p class="truncate text-small font-semibold text-ink">{{ material.title }}</p>
+            <p :id="titleId" class="truncate text-small font-semibold text-ink">{{ material.title }}</p>
             <p class="truncate text-caption text-ink-faint">
               {{ material.originalFilename }}<span v-if="sizeLabel"> · {{ sizeLabel }}</span>
             </p>
@@ -707,7 +733,7 @@ onBeforeUnmount(() => {
           <button
             v-if="completed"
             type="button"
-            class="ml-2 flex items-center gap-1.5 rounded-md bg-success-subtle px-3 py-1.5 text-caption font-medium text-success transition-default hover:bg-success hover:text-white"
+            class="ml-2 flex items-center gap-1.5 rounded-md bg-success-subtle px-3 py-1.5 text-caption font-medium text-success transition-default hover:bg-success hover:text-success-foreground"
             @click="emit('close')"
           >
             <Icon name="check-circle" size="15" />

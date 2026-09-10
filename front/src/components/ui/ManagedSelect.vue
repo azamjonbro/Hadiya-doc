@@ -181,7 +181,7 @@ watch(open, (isOpen) => {
           >
             <span
               class="flex h-4 w-4 shrink-0 items-center justify-center rounded border"
-              :class="option.value === modelValue ? 'border-primary bg-primary text-white' : 'border-border-strong'"
+              :class="option.value === modelValue ? 'border-primary bg-primary text-primary-foreground' : 'border-border-strong'"
             >
               <Icon v-if="option.value === modelValue" name="check" size="11" />
             </span>

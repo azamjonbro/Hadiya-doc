@@ -2965,5 +2965,26 @@
       "COURSE_TOO_LARGE": "Bu kurs bir marta saqlash uchun juda katta."
     },
     "readingSavedCourse": "Saqlangan nusxa ko'rsatilyapti — faqat oflayn saqlangan darslar va hujjatlar."
+  },
+  "player": {
+    "captions": "Subtitr",
+    "captionsHint": "Subtitrni yoqish/o'chirish (C)",
+    "captionTrack": "Subtitr tili",
+    "help": {
+      "title": "Klaviatura yorliqlari",
+      "playback": "Ijro",
+      "soundAndView": "Ovoz va ko'rinish",
+      "togglePlay": "Ijro / to'xtatish",
+      "back": "10 sekund orqaga",
+      "forward": "10 sekund oldinga",
+      "jump": "Videoning shu qismiga o'tish",
+      "edges": "Boshiga / oxiriga",
+      "speed": "Tezlikni kamaytirish / oshirish",
+      "volume": "Ovozni balandlatish / pasaytirish",
+      "mute": "Ovozni o'chirish",
+      "captions": "Subtitr",
+      "fullscreen": "Butun ekran",
+      "thisPanel": "Shu ro'yxatni ko'rsatish"
+    }
   }
 }

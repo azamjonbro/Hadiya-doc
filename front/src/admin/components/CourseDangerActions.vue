@@ -97,7 +97,7 @@ async function onDelete() {
       <button
         v-if="canDelete"
         type="button"
-        class="rounded-md bg-surface/80 p-1.5 text-ink-muted backdrop-blur-md transition-default hover:bg-danger hover:text-white"
+        class="rounded-md bg-surface/80 p-1.5 text-ink-muted backdrop-blur-md transition-default hover:bg-danger hover:text-danger-foreground"
         :title="t('courses.delete')"
         :aria-label="t('courses.delete')"
         @click.stop="showDelete = true"

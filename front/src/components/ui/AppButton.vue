@@ -21,11 +21,11 @@ const props = defineProps({
 // complete literal string — Tailwind's scanner can't see classes built by
 // runtime string interpolation, so nothing here is assembled from parts.
 const variants = {
-  primary: 'bg-primary text-white font-medium hover:bg-primary-hover shadow-sm',
+  primary: 'bg-primary text-primary-foreground font-medium hover:bg-primary-hover shadow-sm',
   secondary: 'bg-surface text-ink font-medium border border-border-strong hover:bg-surface-2 shadow-sm',
   outline: 'bg-transparent text-primary font-medium border border-primary hover:bg-primary-subtle',
   ghost: 'bg-transparent text-ink-muted font-medium hover:bg-surface-2 hover:text-ink',
-  danger: 'bg-danger text-white font-medium hover:bg-red-700 shadow-sm',
+  danger: 'bg-danger text-danger-foreground font-medium hover:opacity-90 shadow-sm',
 }
 
 const sizes = {
@@ -36,11 +36,14 @@ const sizes = {
 
 const iconSizes = { sm: '14', md: '16', lg: '18' }
 
+// The focus ring comes from the global :focus-visible rule in main.css
+// (12.4) — the translucent primary ring that used to be declared here
+// measured under 3:1 against the page, and made buttons the one control
+// with a focus treatment of their own.
 const classes = computed(() => [
   'inline-flex items-center justify-center rounded-md transition-default select-none',
   'active:scale-[0.97]',
   'disabled:opacity-50 disabled:pointer-events-none disabled:active:scale-100',
-  'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2 focus-visible:ring-offset-bg',
   variants[props.variant],
   sizes[props.size],
   props.block ? 'w-full' : '',

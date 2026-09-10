@@ -13,7 +13,13 @@ import Icon from './Icon.vue'
  * were filling in.
  *
  * The element is a real <button>, so it is reachable by keyboard and
- * announces itself; the <input> stays hidden and is clicked through the ref.
+ * announces itself. The file input is **created on the spot** rather than
+ * living hidden inside that button: a focusable, unlabelled control nested
+ * inside a control is ambiguous to a screen reader (axe's
+ * `nested-interactive`), and hiding it with `aria-hidden` does not change
+ * that it is still focusable. A fresh input per click also drops the
+ * "clear the value so the same file fires change twice" workaround — there
+ * is no previous value to clear (12.4).
  */
 const props = defineProps({
   accept: { type: String, default: '' },
@@ -26,24 +32,22 @@ const props = defineProps({
 
 const emit = defineEmits(['select'])
 
-const inputRef = ref(null)
 const isDragOver = ref(false)
 
 function open() {
-  if (!props.disabled) inputRef.value?.click()
+  if (props.disabled) return
+  const input = document.createElement('input')
+  input.type = 'file'
+  if (props.accept) input.accept = props.accept
+  input.multiple = props.multiple
+  input.addEventListener('change', () => take(input.files), { once: true })
+  input.click()
 }
 
 function take(fileList) {
   const files = [...(fileList ?? [])]
   if (!files.length) return
   emit('select', props.multiple ? files : files[0])
-}
-
-function onInputChange(event) {
-  take(event.target.files)
-  // Cleared so picking the same file twice in a row still fires a change —
-  // which is what happens when someone re-picks after a failed upload.
-  event.target.value = ''
 }
 
 function onDrop(event) {
@@ -74,13 +78,5 @@ function onDrop(event) {
       <span v-if="hint" class="text-caption text-ink-faint">{{ hint }}</span>
     </slot>
 
-    <input
-      ref="inputRef"
-      type="file"
-      class="hidden"
-      :accept="accept"
-      :multiple="multiple"
-      @change="onInputChange"
-    />
   </button>
 </template>

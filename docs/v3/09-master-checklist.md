@@ -3260,8 +3260,81 @@
   element yuboradi va birinchi muvaffaqiyatsizlikda to'xtaydi — parallel
   yuborish tezroq bo'lardi, lekin tartibni buzardi (yuqoridagi
   "tugatish bloklardan oldin" holati).
-- [ ] **12.4** Accessibility — modal focus-trap, ARIA, `:focus-visible`,
+- [x] **12.4** Accessibility — modal focus-trap, ARIA, `:focus-visible`,
   `altText`, rang kontrastini o'lchash, `axe-core` CI
+  · **Palitra o'lchandi** (`utils/contrast.js` + `test/a11yContrast.test.js`,
+  WCAG 2.1 nisbatini to'g'ridan-to'g'ri `main.css` dan hisoblaydi —
+  palitraning JS nusxasi stylesheet buzilganda ham "o'tib" ketardi).
+  Uchtasi AA dan past chiqdi: `text-faint` sahifa fonida **2.6:1**,
+  brend ko'kidagi oq **3.98:1**, ogohlantirish sarig'i **3.19:1**. Yangi
+  qiymatlar shu testga qarab tanlandi. Qorong'i mavzuda semantik ranglar
+  och bo'lishi shart, shuning uchun to'ldirilgan tugma/nishonlar uchun
+  **`-foreground` tokenlari** qo'shildi (u yerda deyarli qora), va
+  `bg-danger text-white` kabi qattiq yozilgan juftlar almashtirildi.
+  · **Bitta fokus halqasi** — `:focus-visible`, `:where()` bilan nol
+  spetsifiklikda, alohida `--color-focus` tokenida (u **birlamchi tugma
+  ustida ham** ko'rinishi kerak, shuning uchun primary rangi emas).
+  AppButton'dagi o'z halqasi olib tashlandi: u sahifaga nisbatan 3:1 dan
+  past edi va har komponentga `outline-none` ko'chirilishining sababi ham
+  shu edi.
+  · **Skip link** — tab tartibidagi birinchi element, `#main` ga
+  **fokusni ko'chiradi** (oddiy anchor sahifani siljitadi, lekin fokusni
+  joyida qoldiradi — ya'ni keyingi Tab yana sidebar boshidan yuradi).
+  · **Focus trap** (`composables/useFocusTrap.js`) — Modal, Drawer,
+  CommandPalette va MaterialViewer uchun **bitta** yechim: ochilganda
+  fokus ichkariga, Tab/Shift+Tab ichida aylanadi, `focusin` orqali
+  qochgan fokus qaytariladi, yopilganda **ochgan tugmaga** qaytadi, ochiq
+  turganda sahifa skroll qilinmaydi (ichma-ich oynalar uchun sanoq bilan).
+  · **Kuzatilgan xatti-harakat:** `Modal` da **Escape umuman ishlamasdi** —
+  ConfirmDialog izohi "backdrop, X, Escape" deb yozib qo'ygan bo'lsa ham.
+  Endi ishlaydi va `stopPropagation` bilan **bitta Escape bitta qatlamni**
+  yopadi. `MaterialViewer` esa `onEscape` **bermaydi**: u yerda birinchi
+  Escape butun ekrandan chiqishi kerak, ya'ni klavish unga tegmasdan
+  yetib borishi shart.
+  · **Nomlar (ARIA):** dialoglar sarlavhasi bilan nomlandi
+  (`aria-labelledby`), navigatsiya landmarklari nomlandi (bitta sahifada
+  ikkita "navigation" — foydasiz), faol havolalar `aria-current="page"`,
+  Ctrl+K paneli **combobox** semantikasiga o'tdi (`aria-activedescendant`
+  bilan — fokus inputda qoladi, ya'ni odam natijalar bo'ylab yurib ham
+  yozishda davom etadi), Topbar'dagi ikonka-tugmalar (sidebar, mavzu, til,
+  profil) nom oldi, bildirishnoma soni **havolaning nomiga** kiritildi
+  (qizil nuqta ekran o'quvchisiga hech narsa demasdi).
+  · **Maydonlar:** xato va izoh endi maydonga `aria-describedby` bilan
+  bog'landi (ilgari ekranda turardi, lekin maydon bilan bog'liq emasdi),
+  xato `role="alert"`, `aria-invalid`; parolni ko'rsatish tugmasi
+  `tabindex="-1"` edi — ya'ni parolni tekshirish imkoni aynan
+  **xato yozishi ehtimoli yuqori** odamlardan yashiringan edi.
+  Yorliqsiz 43 ta maydon uchun **placeholder zaxira nom** sifatida
+  ishlatiladi (yaxshi yorliq emas, lekin "nomsiz maydon" dan yaxshiroq).
+  · **`axe-core` tekshiruvi topgan va shu yerda tuzatilgan nosozliklar:**
+  Pagination o'q tugmalari nomsiz edi; FileDropzone ichida `<input
+  type=file>` **tugma ichida tugma** bo'lib turardi (endi bosilganda
+  yaratiladi — "bir faylni ikki marta tanlash" hiylasi ham shu bilan
+  yo'qoldi); AppDatePicker'ning kalendar tugmasi nomsiz, tozalash tugmasi
+  esa `tabindex="-1"` — klaviatura bilan sanani tozalab bo'lmasdi;
+  ImageUploadField `@click` li `<div>` edi (faqat sichqoncha bilan) —
+  endi qutini qoplaydigan haqiqiy `<button>`, yashirin fayl inputi esa
+  tab tartibidan va accessibility daraxtidan chiqarildi.
+  · **`altText`:** dars/galereya bloklari va savol rasmlari uchun alt
+  allaqachon bor edi; alt'siz qolgan ikkita `<img>` tuzatildi — biri
+  yuklangan rasm ko'rinishi (nom oldi), ikkinchisi yuz kadrlari
+  (`alt=""` — bezak, chunki ostidagi qator kadr sonini so'z bilan aytadi).
+  · **Testlar** (`npm --prefix front test`, jami **155**): kontrast
+  (`a11yContrast`), `axe-core` **19 ta komponent holati** bo'yicha
+  (`a11yAxe` — vite haqiqiy `.vue` fayllarni yuklaydi, SSR HTML jsdom'ga
+  tushadi; `color-contrast` qoidasi **ataylab o'chiq**, chunki jsdom'da
+  stylesheet yo'q va u alohida test bilan qoplangan), va tuzoqning o'zi
+  (`a11yFocusTrap` — 8 holat: fokus kirishi, Tab aylanishi, qochgan
+  fokus, Escape'ning ikkala rejimi, fokusning qaytishi, skroll qulfi,
+  ochiq holda unmount).
+  · **Brauzerda (CDP) tekshirildi:** birinchi Tab — skip link ko'rinadi,
+  Enter — fokus `#main` da; Ctrl+K paneli fokusni ichida ushlaydi va
+  Escape'dan keyin fokus **aynan o'sha tugmaga** qaytadi; `/bos/users`
+  dagi haqiqiy modal sarlavhasi bilan nomlangan, fokus panelda, Escape
+  yopadi va `body` skrolli ochiladi; konsolda xato yo'q.
+  · **Chetlanish:** axe komponent darajasida ishlaydi, butun route'lar
+  bo'yicha emas — route uchun jonli sessiya kerak bo'lardi va test to'plami
+  backendga bog'lanib qolardi.
 - [x] **12.5** Video pleyer — klaviatura shortcut'lari, subtitr tugmasi
   · Bajarildi — pleyer brauzerning **native `controls`** ini ishlatadi,
   ya'ni klavishlar allaqachon bor edi, **lekin faqat video element fokusda

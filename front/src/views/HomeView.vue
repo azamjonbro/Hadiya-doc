@@ -238,7 +238,7 @@ onMounted(load)
                   <div v-for="tsk in tasks.slice(0, 5)" :key="tsk.id" class="flex items-center gap-3 px-4 py-3 hover:bg-surface-2 transition-default cursor-pointer" @click="router.push('/tasks')">
                     <span
                       class="flex h-5 w-5 shrink-0 items-center justify-center rounded border"
-                      :class="tsk.status === 'COMPLETED' ? 'border-success bg-success text-white' : 'border-border-strong'"
+                      :class="tsk.status === 'COMPLETED' ? 'border-success bg-success text-success-foreground' : 'border-border-strong'"
                     >
                       <Icon v-if="tsk.status === 'COMPLETED'" name="check" size="12" />
                     </span>

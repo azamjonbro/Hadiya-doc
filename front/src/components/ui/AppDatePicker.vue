@@ -464,7 +464,6 @@ const inputId = `datepicker-${Math.random().toString(36).slice(2, 9)}`
         v-if="modelValue && !disabled"
         type="button"
         class="absolute right-2.5 top-1/2 -translate-y-1/2 rounded p-1 text-ink-faint transition-default hover:text-ink"
-        tabindex="-1"
         :aria-label="t('common.clear')"
         @click.stop="clearValue"
       >
@@ -476,6 +475,8 @@ const inputId = `datepicker-${Math.random().toString(36).slice(2, 9)}`
         :disabled="disabled"
         class="absolute right-2.5 top-1/2 -translate-y-1/2 rounded p-1 text-ink-faint transition-default hover:text-ink disabled:opacity-50"
         tabindex="-1"
+        :aria-label="t('a11y.openCalendar')"
+        :aria-expanded="open"
         @click.stop="toggle"
       >
         <Icon name="chevron-down" size="15" />
