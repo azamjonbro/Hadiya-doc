@@ -55,23 +55,24 @@ Eng ko'p o'sgan domenlar: xavfsizlik/audit **44,2 → 59,6**, hisobot
 > shuning uchun raqam takrorlanadi. Vaznsiz ustun esa matritsadan
 > to'g'ridan-to'g'ri chiqadi va ikkala usulda ham bir xil.
 
-### Qayta hisob — 2026-09-10 (BLOK 1–9 ishidan keyin)
+### Qayta hisob — 2026-09-10 (BLOK 1–11 ishidan keyin)
 
 Matritsa **satrlar darajasida** BLOK 1–8 davomida yangilanib borgan, lekin
 sarlavhadagi umumiy raqam 2026-09-08 dan qimirlamagan — ya'ni yuqoridagi
-36,3 faqat BLOK 0 tugagan holatni aks ettiradi. Bugun 9.1 va 9.2 (matn
-darsi, blok editori) yozilgandan keyin raqam matritsaning **hozirgi
-satrlaridan** qayta hisoblandi:
+36,3 faqat BLOK 0 tugagan holatni aks ettiradi. Har band tugaganda raqam
+matritsaning **hozirgi satrlaridan** qayta
+hisoblanadi — oxirgi hisob 11.1 (API kalitlari + ommaviy REST API) dan
+keyin:
 
-| Metrika | 2026-09-08 (BLOK 0) | Hozir (BLOK 1–9) |
+| Metrika | 2026-09-08 (BLOK 0) | Hozir (BLOK 1–11) |
 |---|:--:|:--:|
-| Vaznsiz (337 capability) | 36,3 | **56,8** |
-| FULL | — | **118** |
+| Vaznsiz (337 capability) | 36,3 | **57,3** |
+| FULL | — | **119** |
 | OURS+ | — | **48** |
-| PARTIAL | — | **59** |
-| NONE | — | **91** |
+| PARTIAL | — | **60** |
+| NONE | — | **89** |
 | VERIFY | — | **21** |
-| **PARITY GAP** (vaznsiz) | ≈64% | **≈46%** |
+| **PARITY GAP** (vaznsiz) | ≈64% | **≈43%** |
 
 Sakrash yangi ishning o'zidan emas: BLOK 1–8 (yetkazish, ierarxiya,
 sertifikat, baholash, path, tadbir, qidiruv/KB/compliance, hisobot) allaqachon

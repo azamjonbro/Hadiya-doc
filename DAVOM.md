@@ -70,8 +70,10 @@ o'quvchi sahifasi, blok-asosli progress) va **SCORM 1.2/2004 import**
 CMI holati, suspend/resume, mastery). **Hozir BLOK 10 (AI):** **BLOK 10 to'liq tugadi** (10.1–10.6): generatsiya ishlari,
 hujjat o'qish, kurs konspekti, savollar, tarjima qatlami, token byudjeti +
 PII redaksiyasi va 10.6 ning poydevori (oylik token byudjeti,
-PII redaksiyasi). **Keyingi blok — BLOK 11 (Korxona): birinchi band 11.1 — `apiKey` modeli,
-`apiKeyAuth` middleware, per-key rate limit, `/api/public/v1`.**
+PII redaksiyasi). **Hozir BLOK 11 (Korxona):** 11.1 bajarildi — API kalitlar (argon2 hash,
+scope'lar, per-key Redis limiti, PII bayrog'i) va `/api/public/v1` (faqat
+o'qish, versiyalangan payload'lar). **Keyingi band — 11.2 (webhook'lar:
+HMAC + 5× retry).**
 
 **⚠️ AI hech qayerda haqiqiy API bilan sinalmagan:** `ANTHROPIC_API_KEY`
 na lokalda, na serverda sozlanmagan (`env` da bo'sh sukut). Kod stub bilan
@@ -103,7 +105,7 @@ satrlar BLOK 1–8 davomida yangilangan, jamlanma esa yangilanmagan.
 
 | Metrika | Qiymat |
 |---|:--:|
-| Vaznsiz (337 capability) | **56,8** |
+| Vaznsiz (337 capability) | **57,3** |
 | FULL / OURS+ | **118 / 48** |
 | PARTIAL / NONE / VERIFY | **59 / 91 / 21** |
 | **Gap** | **≈43%** |
@@ -111,7 +113,7 @@ satrlar BLOK 1–8 davomida yangilangan, jamlanma esa yangilanmagan.
 Vaznlangan raqam qayta hisoblanmaydi — vazn jadvali repozitoriyda yo'q
 (`docs/v4/01-executive-summary.md` dagi metodologiya eslatmasi).
 
-**Testlar:** `npm --prefix backend test` — 835 test, 2 tasi yiqiladi va
+**Testlar:** `npm --prefix backend test` — 848 test, 2 tasi yiqiladi va
 ikkisi ham **eskidan** yiqilib turadi (`faceVerification`: yuz aniqlanmagan
 rasm; `facePolicy`: hisobni bloklash). Darslarga aloqasi yo'q.
 
@@ -134,7 +136,7 @@ BLOK 7  Qidiruv, KB, compliance, gamification  ✅
 BLOK 8  Hisobot, analitika             ✅
 BLOK 9  Kontent va authoring           ← **BLOK 9 to'liq tugadi** (9.1–9.6); keyingisi 9.5
 BLOK 10 AI                             ✅
-BLOK 11 Korxona                        ← keyingisi
+BLOK 11 Korxona                        ← 11.1 bajarildi
 BLOK 12 Mobil va accessibility
 BLOK 13 Kengaytirilgan baholash
 BLOK 14 Regressiya himoyasi (doimiy)

@@ -2716,5 +2716,33 @@
     "settingsSaved": "Saved",
     "settingsSaveFailed": "Could not save",
     "settingsLoadFailed": "Could not load the settings"
+  },
+  "apiKeys": {
+    "title": "API keys",
+    "hint": "So another system can read from this platform. Read-only.",
+    "empty": "No keys yet.",
+    "loadFailed": "Could not load the keys",
+    "newTitle": "New key",
+    "namePlaceholder": "What it is for: HR sync, BI dashboard…",
+    "limitLabel": "Requests per minute",
+    "create": "Create a key",
+    "createFailed": "Could not create the key",
+    "includePii": "Include ID numbers and e-mail (a separate decision)",
+    "readOnlyNote": "A key cannot change anything — it only reads.",
+    "copyNow": "The key is shown only now — copy it.",
+    "copy": "Copy",
+    "copied": "Copied",
+    "copyFailed": "Could not copy it",
+    "stored": "I have stored it",
+    "revoke": "Revoke",
+    "revoked": "Revoked",
+    "revokeFailed": "Could not revoke it",
+    "confirmRevoke": "The key “{name}” will be revoked and whatever integration uses it will stop. Continue?",
+    "activeLabel": "active",
+    "revokedLabel": "revoked",
+    "withPii": "with ID numbers",
+    "perMinute": "{count} per minute",
+    "lastUsed": "last used {date}",
+    "neverUsed": "never used"
   }
 }
