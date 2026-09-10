@@ -1,8 +1,8 @@
 import { coursesApi } from '@/services/courses'
 import { lessonsApi } from '@/services/lessons'
 import { materialsApi } from '@/services/materials'
-import { STORES, idb, isOfflineStorageAvailable, requestPersistence, storageEstimate } from './db'
-import { fitsInStorage, planCourseDownload } from './offlinePlan'
+import { STORES, idb, isOfflineStorageAvailable, requestPersistence, storageEstimate } from './db.js'
+import { fitsInStorage, planCourseDownload } from './offlinePlan.js'
 
 /**
  * Taking a course offline, and reading it back (12.2).
