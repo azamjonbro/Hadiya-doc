@@ -78,7 +78,7 @@ onMounted(load)
 
     <div v-if="loading" class="mt-6 space-y-3">
       <Skeleton class="h-10 w-64" />
-      <Skeleton v-for="n in 4" :key="n" class="h-20 w-full rounded-xl" />
+      <Skeleton v-for="n in 4" :key="n" class="h-20 w-full rounded-md border border-border" />
     </div>
 
     <template v-else-if="path">
@@ -90,42 +90,42 @@ onMounted(load)
       </div>
       <p v-if="path.description" class="mt-3 text-small text-ink-muted">{{ path.description }}</p>
 
-      <AppCard v-if="path.enrollment" class="mt-6 p-5">
+      <AppCard v-if="path.enrollment" class="mt-6 p-6 border border-border shadow-sm">
         <div class="flex items-center justify-between gap-4">
           <div class="min-w-0">
-            <p class="text-small font-medium text-ink">
+            <p class="text-small font-semibold text-ink">
               {{ path.enrollment.status === 'COMPLETED' ? t('paths.completed') : t('paths.inProgress') }}
             </p>
-            <p class="mt-0.5 text-caption text-ink-faint">
+            <p class="mt-1 text-caption text-ink-muted">
               {{ t('paths.requiredDone', { done: path.completedRequired, total: path.totalRequired }) }}
             </p>
           </div>
           <AppButton v-if="nextStep" @click="open(nextStep)">{{ t('paths.continue') }}</AppButton>
         </div>
-        <ProgressBar class="mt-3" :value="path.completionPercent" :variant="path.complete ? 'success' : 'primary'" />
+        <ProgressBar class="mt-4" :value="path.completionPercent" :variant="path.complete ? 'success' : 'primary'" />
       </AppCard>
 
-      <AppCard v-else class="mt-6 flex items-center justify-between gap-4 p-5">
-        <p class="text-small text-ink-muted">{{ t('paths.notEnrolled') }}</p>
+      <AppCard v-else class="mt-6 flex items-center justify-between gap-4 p-6 border border-border shadow-sm">
+        <p class="text-small font-medium text-ink-muted">{{ t('paths.notEnrolled') }}</p>
         <AppButton :loading="joining" @click="join">{{ t('paths.join') }}</AppButton>
       </AppCard>
 
-      <div class="mt-6 space-y-2">
+      <div class="mt-8 space-y-3">
         <div
           v-for="(item, index) in path.items"
           :key="item.id"
-          class="flex items-center gap-4 rounded-xl border px-4 py-3.5 transition-default"
+          class="flex items-center gap-4 rounded-md border border-border px-5 py-4 transition-default"
           :class="[
-            item.locked || item.missing ? 'border-border bg-surface-2/50' : 'cursor-pointer border-border hover:bg-surface-hover',
+            item.locked || item.missing ? 'bg-surface-2/50 shadow-none' : 'cursor-pointer shadow-sm hover:bg-surface-hover',
           ]"
           @click="open(item)"
         >
           <span
-            class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-small font-semibold"
-            :class="item.completed ? 'bg-success-subtle text-success' : item.locked ? 'bg-surface-2 text-ink-faint' : 'bg-primary-subtle text-primary'"
+            class="flex h-9 w-9 shrink-0 items-center justify-center rounded text-small font-bold"
+            :class="item.completed ? 'bg-success/10 text-success' : item.locked ? 'bg-surface-2 text-ink-faint' : 'bg-primary text-primary'"
           >
-            <Icon v-if="item.completed" name="check" size="15" />
-            <Icon v-else-if="item.locked" name="lock" size="14" />
+            <Icon v-if="item.completed" name="check" size="16" />
+            <Icon v-else-if="item.locked" name="lock" size="16" />
             <span v-else>{{ index + 1 }}</span>
           </span>
 

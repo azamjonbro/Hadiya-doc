@@ -136,9 +136,9 @@ onMounted(() => {
 
     <div class="mt-6 space-y-6">
       <template v-if="activeTab === 'profile'">
-        <AppCard>
-          <h2 class="text-small font-semibold text-ink">{{ t('settings.sections.profile') }}</h2>
-          <div class="mt-3 flex items-center gap-3">
+        <AppCard class="border border-border shadow-sm p-6">
+          <h2 class="text-[11px] font-bold uppercase tracking-widest text-ink-faint">{{ t('settings.sections.profile') }}</h2>
+          <div class="mt-4 flex items-center gap-4">
             <Avatar :name="auth.user?.fullName" :src="auth.user?.avatar" size="lg" />
             <div>
               <p class="text-body font-medium text-ink">{{ auth.user?.fullName }}</p>
@@ -149,9 +149,9 @@ onMounted(() => {
       </template>
 
       <template v-else-if="activeTab === 'activity'">
-        <AppCard v-if="gamification">
-          <h2 class="text-small font-semibold text-ink">{{ t('settings.sections.activity') }}</h2>
-          <div class="mt-3 grid grid-cols-3 gap-3 text-center">
+        <AppCard v-if="gamification" class="border border-border shadow-sm p-6">
+          <h2 class="text-[11px] font-bold uppercase tracking-widest text-ink-faint">{{ t('settings.sections.activity') }}</h2>
+          <div class="mt-4 grid grid-cols-3 gap-4 text-center">
             <div class="rounded-md bg-surface-2 p-3">
               <p class="text-h3 text-ink">{{ gamification.totalPoints }}</p>
               <p class="text-caption text-ink-faint">{{ t('gamification.points') }}</p>
@@ -167,9 +167,9 @@ onMounted(() => {
           </div>
         </AppCard>
 
-        <AppCard v-if="gamification">
-          <h2 class="text-small font-semibold text-ink">{{ t('settings.sections.badges') }}</h2>
-          <div v-if="gamification.badges.length" class="mt-3 flex flex-wrap gap-2">
+        <AppCard v-if="gamification" class="border border-border shadow-sm p-6">
+          <h2 class="text-[11px] font-bold uppercase tracking-widest text-ink-faint">{{ t('settings.sections.badges') }}</h2>
+          <div v-if="gamification.badges.length" class="mt-4 flex flex-wrap gap-2">
             <span
               v-for="code in gamification.badges"
               :key="code"
@@ -184,9 +184,9 @@ onMounted(() => {
       </template>
 
       <template v-else-if="activeTab === 'notifications'">
-        <AppCard>
-          <h2 class="text-small font-semibold text-ink">{{ t('settings.notifications.title') }}</h2>
-          <p class="mt-1 text-small text-ink-muted">{{ t('settings.notifications.hint') }}</p>
+        <AppCard class="border border-border shadow-sm p-6">
+          <h2 class="text-[11px] font-bold uppercase tracking-widest text-ink-faint">{{ t('settings.notifications.title') }}</h2>
+          <p class="mt-1.5 text-small text-ink-muted">{{ t('settings.notifications.hint') }}</p>
 
           <Skeleton v-if="prefsLoading" class="mt-4 h-40 w-full" />
           <div v-else-if="prefsError" class="mt-4 flex items-center justify-between gap-3 rounded-md border border-border bg-surface-2 px-3 py-2">
@@ -237,9 +237,9 @@ onMounted(() => {
       </template>
 
       <template v-else-if="activeTab === 'preferences'">
-        <AppCard>
-          <h2 class="text-small font-semibold text-ink">{{ t('settings.sections.appearance') }}</h2>
-          <div class="mt-3 flex items-center justify-between">
+        <AppCard class="border border-border shadow-sm p-6">
+          <h2 class="text-[11px] font-bold uppercase tracking-widest text-ink-faint">{{ t('settings.sections.appearance') }}</h2>
+          <div class="mt-4 flex items-center justify-between">
             <span class="text-body text-ink">{{ t('settings.appearance.theme') }}</span>
             <div class="flex gap-1.5 rounded-md border border-border p-1">
               <button
@@ -262,9 +262,9 @@ onMounted(() => {
           </div>
         </AppCard>
 
-        <AppCard>
-          <h2 class="text-small font-semibold text-ink">{{ t('settings.sections.language') }}</h2>
-          <div class="mt-3">
+        <AppCard class="border border-border shadow-sm p-6">
+          <h2 class="text-[11px] font-bold uppercase tracking-widest text-ink-faint">{{ t('settings.sections.language') }}</h2>
+          <div class="mt-4">
             <AppSelect :model-value="locale" :options="languageOptions" @update:model-value="onLocaleChange" />
           </div>
         </AppCard>
