@@ -70,5 +70,13 @@ export const updateSettingsSchema = z
         lockoutMinutes: z.coerce.number().int().min(1).max(1440).optional(),
       })
       .optional(),
+    // AI generation (10.6). 0 is a real value — it means no ceiling — so
+    // the minimum is 0 rather than 1.
+    ai: z
+      .object({
+        monthlyTokenBudget: z.coerce.number().int().min(0).max(1_000_000_000).optional(),
+        generationEnabled: z.boolean().optional(),
+      })
+      .optional(),
   })
   .refine((data) => Object.keys(data).length > 0, { message: 'No settings to update' })

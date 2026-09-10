@@ -247,6 +247,12 @@ export const router = createRouter({
           meta: { titleKey: 'nav.notifications' },
         },
         {
+          path: 'ai',
+          name: 'admin-ai',
+          component: () => import('@/admin/views/AiCourseView.vue'),
+          meta: { titleKey: 'ai.title', permission: 'course:create' },
+        },
+        {
           path: 'media',
           name: 'admin-media',
           component: () => import('@/admin/views/MediaLibraryView.vue'),

@@ -28,8 +28,31 @@ const PLACES = [
   { model: () => News, field: 'cover', entity: 'News', label: 'title' },
   { model: () => LearningPath, field: 'cover', entity: 'LearningPath', label: 'title' },
   { model: () => User, field: 'avatar', entity: 'User', label: 'fullName' },
-  { model: () => Settings, field: 'logoUrl', entity: 'Settings', label: 'id' },
+  // Nested paths are written in full. Mongoose strips a path its schema
+  // does not know from the filter, so `logoUrl` (the field is really
+  // `branding.logoUrl`) turned `find({logoUrl: {$in: [...]}})` into
+  // `find({})` — every settings row matched every asset, silently. The
+  // guard below is what turns that class of typo into a startup error.
+  { model: () => Settings, field: 'branding.logoUrl', entity: 'Settings', label: '_id' },
+  { model: () => Settings, field: 'branding.faviconUrl', entity: 'Settings', label: '_id' },
+  { model: () => Settings, field: 'branding.loginBackgroundUrl', entity: 'Settings', label: '_id' },
 ]
+
+/**
+ * Every place has to name a path its model actually has.
+ *
+ * Mongoose drops an unknown path from a query rather than raising, so a
+ * typo here does not fail — it matches *everything*, which for a usage
+ * lookup means "this file is used by every settings row" and for the
+ * orphan sweep means the opposite of the truth. Checked once, at import,
+ * where a mistake is a boot error instead of a wrong answer months later.
+ */
+for (const place of PLACES) {
+  const schemaPath = place.model().schema.path(place.field)
+  if (!schemaPath) {
+    throw new Error(`mediaUsage: ${place.entity} has no path "${place.field}"`)
+  }
+}
 
 export const mediaUsageService = {
   /**

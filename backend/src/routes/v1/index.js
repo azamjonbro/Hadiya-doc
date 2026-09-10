@@ -49,6 +49,7 @@ import { searchRouter } from './search.routes.js'
 import { complianceRouter } from './compliance.routes.js'
 import { settingsRouter } from './settings.routes.js'
 import { mediaRouter } from './media.routes.js'
+import { aiGenerationRouter } from './aiGeneration.routes.js'
 
 export const v1Router = Router()
 
@@ -117,3 +118,6 @@ v1Router.use('/compliance', complianceRouter)
 v1Router.use('/settings', settingsRouter)
 // The media library and the orphan sweep (9.5).
 v1Router.use('/media', mediaRouter)
+// AI generation jobs (BLOK 10). `/ai-chat` above is the learner's
+// assistant; this is the authoring side.
+v1Router.use('/ai', aiGenerationRouter)

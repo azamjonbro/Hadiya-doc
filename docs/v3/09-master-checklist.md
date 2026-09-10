@@ -2111,9 +2111,73 @@
 
 ## BLOK 10 — AI (4 hafta)
 
-- [ ] **10.1** `models/aiGenerationJob.model.js`, `jobs/aiGenerationQueue.js`
-- [ ] **10.2** `services/ai/sourceExtract.service.js` (pdf/docx/pptx → matn, serverga)
-- [ ] **10.3** `aiCourse.service.js` — struktura + dars (natija har doim `DRAFT`)
+- [x] **10.1** `models/aiGenerationJob.model.js`, `jobs/aiGenerationQueue.js`
+  · Bajarildi — generatsiya **ish (job)**, so'rov emas: bir kurs konspekti
+  o'n soniyalab model vaqti, ya'ni har qanday proksi taymautidan uzun.
+  Muallif darhol id oladi va holatni kuzatadi (video yuklash va SCORM
+  importidagi bir xil shakl).
+  · Uch narsa shundan kelib chiqadi: xato **muallif o'qiydigan joyda**
+  saqlanadi ("faylda matn yo'q" foydali, 500 esa yo'q); har bir ishning
+  **token sarfi** yoziladi — bu 10.6 dagi byudjetni umuman mumkin qiladigan
+  narsa; va ish tugaganda **manba matni `params` dan o'chiriladi** (u bitta
+  prompt uchun kirish edi, har bir yuklangan qo'llanmaning nusxasini
+  saqlash — o'quvchisi yo'q saqlash xarajati).
+  · **Navbat bitta urinish bilan** (`attempts: 1`): har bir qayta urinish —
+  yana bir pullik model chaqiruvi, va bu yerdagi xatolar o'tkinchi emas
+  (matnsiz manba, parse bo'lmagan javob, rad javobi). Qayta urinish bir xil
+  xatoni ikki baravar narxda qaytarardi.
+  · **Ikki marta yetkazilgan ish ikki marta yozmaydi** — `PENDING` bo'lmagan
+  ish o'tkazib yuboriladi (test bilan qadalgan): aks holda bitta navbat
+  takrori bir xil kursni ikki marta yaratib, ikki marta pul sarflardi.
+- [x] **10.2** `services/ai/sourceExtract.service.js` (pdf/docx/pptx → matn, serverga)
+  · Bajarildi — uch format, uch kutubxona, bitta shartnoma
+  (`{ text, blocks, truncated }`): **PDF** `pdfjs` bilan (pleyer allaqachon
+  ishlatadigan dvigatel, ya'ni ilovada ko'rinadigan PDF bu yerda ham
+  o'qiladi), **DOCX** `mammoth` bilan, **PPTX** esa kutubxonasiz — pptx
+  `ppt/slides/slideN.xml` lardan iborat zip va matn `<a:t>` yugurishlari
+  ichida; `jszip` va XML parser allaqachon bor (SCORM ikkisini talab
+  qiladi), slaydlar tartibi esa aynan o'qish tartibi. **`slide10`
+  `slide2` dan keyin** kelishi test bilan qadalgan (leksik saralash tuzoqi).
+  · **Serverda, brauzerda emas:** model chaqiruvi shu yerda bo'ladi, ya'ni
+  matn baribir shu yerga kelishi kerak; parserni mijozga yuborish — matnni
+  qaytib olib, unga **ishonish** degani. Ikkinchisi: ilova bu formatlarni
+  brauzerda **ko'rish** uchun ham parse qiladi, lekin ko'rish maketni,
+  prompt esa o'qish tartibidagi prozani xohlaydi.
+  · **Matnsiz fayl rad etiladi** (`SOURCE_HAS_NO_TEXT`) — PDF uchun bu
+  deyarli har doim skan degani, va "bu skan, avval OCR kerak" — muallif
+  qila oladigan javob; yo'qdan yasalgan bo'sh konspekt esa emas.
+  · Chegara **400 000 belgi**: bu fayl haqida emas, **prompt** haqida —
+  1M kontekstda ko'rsatma va uzun tuzilgan javob uchun joy qoladi, undan
+  kattasidan yasalgan konspekt esa konspektning konspekti bo'ladi. Kesish
+  paragraf chegarasida (yarim gap modelga hujjatning oxiri bo'lib
+  ko'rinadi va u haqida ishonchli javob yozadi).
+- [x] **10.3** `aiCourse.service.js` — struktura + dars (natija har doim `DRAFT`)
+  · Bajarildi — hujjatdan yoki mavzudan kurs: `Course` + `Topic` lar +
+  `Lesson` lar, **hammasi `DRAFT`**, yuqoridan pastgacha (test bilan
+  qadalgan). Sababi oddiy: generatsiya qilingan kurs — kompaniyani hech
+  qachon ko'rmagan narsa yozgan **birinchi qoralama**; u tuzilmani
+  to'g'ri, tafsilotlarni esa xato oladi, va noto'g'ri chiqarilgan kursni
+  qaytarib olishga majbur bo'lgan muallif bu funksiyani boshqa
+  ishlatmaydi.
+  · **Javob JSON sxema bilan so'raladi** (`output_config.format`), prozadan
+  ajratib olinmaydi: "faqat JSON qaytar" deb yozib umid qilish — bitta
+  hujjat modelni oldin bir gap tushuntirishga undaganda yiqiladigan
+  generator.
+  · **Modelga ruxsat berilgan bloklar ataylab cheklangan**: `HEADING`,
+  `TEXT`, `CALLOUT`, `QUOTE`, `TABLE`, `CODE`, `DIVIDER`. U rasm yuklay
+  olmaydi va mavjud bo'lmagan videoga havola qila olmaydi — hech narsaga
+  ishora qiladigan blok qo'lda tuzatilishi kerak bo'lgan kontent.
+  · **Modelning HTML'i ham o'sha sanitizer'dan o'tadi** (`toStoredBlocks`)
+  — "Claude'dan kelgan" ishonch chegarasi emas. Testda `onclick` va
+  `<script>` olib tashlanadi, `<strong>` qoladi.
+  · Prompt modelga: manbada **yo'q faktni, raqamni, normani o'ylab
+  chiqarmaslik** (manba yupqa bo'lsa — kamroq dars), taqiq va xavfni
+  `CALLOUT`ning `DANGER`/`WARNING` variantida berish, va `[JSHSHIR]`
+  kabi o'rin egallovchilarni **qayta ishlab chiqmaslik**.
+  · **Streaming**: kurs + darslar o'n minglab token, ya'ni oqimsiz so'rov
+  SDK taymautiga urилardi (`aiRun.js` chegaradan yuqorisini oqim bilan
+  yuboradi). `max_tokens` ga urilgan javob esa `AI_TRUNCATED` — parse
+  bo'lgan bo'lsa ham, u kesilgan JSON.
 - [ ] **10.4** `aiQuiz.service.js` — yangi `Question` modeliga
 - [ ] **10.5** `aiTranslate.service.js` + `models/contentTranslation.model.js`
   (struktura va ID'lar saqlanadi)
