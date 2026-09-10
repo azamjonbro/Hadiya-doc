@@ -447,9 +447,9 @@
 | **Markaziy media kutubxona** | ✓ | Bor — `MediaAsset`, papkalar, qidiruv, "qayerda ishlatilgan", tanlagich | FULL | 100 | `mediaLibrary.service.js`, `MediaLibraryView.vue`, `MediaPicker.vue` | Faqat rasm; video/material o'z joyida |
 | Nested papkalar (media) | ✓ | Yorliq shaklida (`brand/2026`, 3 daraja) | PARTIAL | 50 | `mediaLibrary.service.js` (`normalizeFolder`) | Haqiqiy daraxt va ko'chirish yo'q |
 | Orphan fayl tozalash | ? | Yo'q — kodda tan olingan qarz | VERIFY | 0 | `course.service.js:378-381` | `mediaCleanupQueue` |
-| Rasm optimizatsiyasi | ? | Yo'q | VERIFY | 0 | — | `sharp` → webp |
+| Rasm optimizatsiyasi | ? | Bor — `sharp` → WebP, 2560px chegara, thumbnail, EXIF olib tashlanadi | FULL | 100 | `imageOptimize.js` | — |
 | Storage sarfi ko'rsatkichi | ? | Yo'q | VERIFY | 0 | — | — |
-| **D74–D79 jami: 26 capability** | | | **FULL 6 · OURS+ 11 · PARTIAL 3 · NONE 2 · VERIFY 4** | **71** | | |
+| **D74–D79 jami: 26 capability** | | | **FULL 7 · OURS+ 11 · PARTIAL 3 · NONE 2 · VERIFY 3** | **75** | | |
 
 ## D80–D95 · PERFORMANCE / A11Y / AUTOMATION / RECOMMENDATIONS / STANDARDS / SUITE / E-COM / ENTERPRISE
 

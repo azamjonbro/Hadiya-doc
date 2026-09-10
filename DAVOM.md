@@ -63,11 +63,12 @@ foydalanuvchi so'rovi bilan to'xtatilgan ("telegram bog'lama shartmas"),
 kodi `git stash` da. Uni "keyingi band" deb olma; holat paneli uni shunday
 ko'rsatadi, chunki u ro'yxatdagi birinchi `[ ]` bandni oladi.
 
-**Hozir BLOK 9 (Kontent va authoring):** 9.1–9.5 bajarildi —
+**Hozir BLOK 9 (Kontent va authoring):** **BLOK 9 to'liq tugadi** (9.1–9.6) —
 matn darsi to'liq oqim bilan (polimorf baza, 12 blok turi, blok editori,
 o'quvchi sahifasi, blok-asosli progress) va **SCORM 1.2/2004 import**
 (worker'da ochish, manifest parseri, launcher sahifadagi runtime API,
-CMI holati, suspend/resume, mastery). **Keyingi band — 9.6 (rasm optimizatsiyasi, `sharp` → webp).**
+CMI holati, suspend/resume, mastery). **Keyingi blok — BLOK 10 (AI): birinchi band 10.1 —
+`aiGenerationJob` modeli va `aiGenerationQueue`.**
 
 **Media tozalash haqida:** kechasi 04:40 da sweep ishlaydi, lekin standart
 holatda **faqat hisobot** yozadi (`MEDIA_CLEANUP_DELETE=false`). Prodda
@@ -93,15 +94,15 @@ satrlar BLOK 1–8 davomida yangilangan, jamlanma esa yangilanmagan.
 
 | Metrika | Qiymat |
 |---|:--:|
-| Vaznsiz (337 capability) | **54,9** |
-| FULL / OURS+ | **113 / 48** |
-| PARTIAL / NONE / VERIFY | **57 / 95 / 24** |
+| Vaznsiz (337 capability) | **55,2** |
+| FULL / OURS+ | **114 / 48** |
+| PARTIAL / NONE / VERIFY | **57 / 95 / 23** |
 | **Gap** | **≈45%** |
 
 Vaznlangan raqam qayta hisoblanmaydi — vazn jadvali repozitoriyda yo'q
 (`docs/v4/01-executive-summary.md` dagi metodologiya eslatmasi).
 
-**Testlar:** `npm --prefix backend test` — 799 test, 2 tasi yiqiladi va
+**Testlar:** `npm --prefix backend test` — 806 test, 2 tasi yiqiladi va
 ikkisi ham **eskidan** yiqilib turadi (`faceVerification`: yuz aniqlanmagan
 rasm; `facePolicy`: hisobni bloklash). Darslarga aloqasi yo'q.
 
@@ -122,8 +123,8 @@ BLOK 5  Learning path + onboarding     ✅
 BLOK 6  Live training, kalendar, topshiriq  ✅
 BLOK 7  Qidiruv, KB, compliance, gamification  ✅
 BLOK 8  Hisobot, analitika             ✅
-BLOK 9  Kontent va authoring           ← 9.1–9.5 bajarildi; keyingisi 9.5
-BLOK 10 AI
+BLOK 9  Kontent va authoring           ← **BLOK 9 to'liq tugadi** (9.1–9.6); keyingisi 9.5
+BLOK 10 AI                             ← keyingisi
 BLOK 11 Korxona
 BLOK 12 Mobil va accessibility
 BLOK 13 Kengaytirilgan baholash

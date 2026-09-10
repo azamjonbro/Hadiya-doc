@@ -2057,7 +2057,55 @@
     3. **Sweep prodda hali ishga tushirilmadi** — birinchi hisobotni
     `npm run media:orphans` bilan qo'lda ko'rish kerak: bu deployment
     sweep paydo bo'lishidan oldin ham to'plab kelgan.
-- [ ] **9.6** **Rasm optimizatsiyasi** — `sharp` → webp
+- [x] **9.6** **Rasm optimizatsiyasi** — `sharp` → webp
+  · Bajarildi — yuklangan har bir rasm **WebP ga qayta kodlanadi**
+  (`imageOptimize.js`), o'lchami 2560px bilan cheklanadi va yoniga
+  480px'lik **thumbnail** yasaladi.
+  · **Nima uchun muhim:** telefondan olingan surat — 2–4 MB JPEG, xuddi
+  shu rasm ko'rsatiladigan o'lchamda esa bir necha yuz kilobayt. Buni eng
+  ko'p sezadigan odam — **mobil internetda kurs katalogini ochayotgan
+  xodim**: hozirgacha har bir muqova to'liq kamera o'lchamida yuklanardi.
+  Sinovda 4000×3000 JPEG 88% kichrayди.
+  · **Uch qoida:**
+    1. **O'tkazib yuborish emas, qayta kodlash.** Qaytadigan baytlar —
+    bizning dekoder butun faylni o'qib chiqqandan keyin yasagan baytlar.
+    Shu bilan birga **EXIF ham olib tashlanadi**: ish joyining surati GPS
+    koordinatasi va qurilma nomini olib yuradi, kurs muqovasi esa buni
+    e'lon qilishi kerak emas. (`withExif` bilan yasalgan fikstura ustida
+    test bor.)
+    2. **O'lcham cheklanadi, lekin kattalashtirilmaydi**
+    (`withoutEnlargement`): 64px logotip 2560px ga cho'zilsa, xiralashgan
+    va qirq baravar katta fayl bo'lardi.
+    3. **Animatsiya saqlanadi.** Animatsion GIF faqat birinchi kadr bilan
+    o'girilsa — bu ishonarli hajmdagi **buzuq rasm**, ya'ni umuman
+    o'girmagandan yomonroq. Shuning uchun `animated: true`, va **thumbnail
+    esa ataylab statik** (kutubxona gridida qirqta animatsiya birga
+    o'ynashi kerak emas).
+  · **9.5 dagi bo'shliq yopildi:** `mediaAsset` endi `width`, `height`,
+  `thumbUrl` va **asl** hajm/mime'ni ham saqlaydi — "bu ilgari 4 MB JPEG
+  edi" degan raqamsiz konvertatsiya o'zini oqlayotganini ko'rish mumkin
+  emas. Kutubxona gridi va tanlagich thumbnail'ni ishlatadi, bo'lmasa
+  to'liq rasmga qaytadi (9.6 dan oldin yuklangan rasmlarda thumbnail yo'q;
+  butun bucket'ni qayta kodlash migratsiyaga arzimaydi).
+  · **Sweep bilan kelishuv:** thumbnail hech qayerda alohida havola
+  qilinmaydi, ya'ni egasiz ko'rinardi — endi uni **egasi bo'lgan qator**
+  himoya qiladi (`mediaCleanup` `thumbKey` ni ham hisobga oladi).
+  · **Tekshirildi.** `test/imageOptimize.test.js` — 7 test: kamera
+  o'lchamidagi JPEG → yarmidan kichik WebP va 2560px chegara, kichik
+  rasm kattalashmasligi, EXIF yo'qolishi, animatsion GIF kadrlari,
+  thumbnail (kichik, statik, majburiy emas), yuklash yo'li (ikkita obyekt,
+  `image/webp`, `mediaAsset` da o'lchamlar va asl hajm) va rasm bo'lmagan
+  faylning baribir rad etilishi.
+  · **Chetlanishlar:**
+    1. **Asl fayl saqlanmaydi** — faqat WebP qoladi. WebP 2026 da hamma
+    joyda qo'llab-quvvatlanadi, ikki nusxa saqlash esa bu bandning maqsadiga
+    qarshi. Kimga asl kerak bo'lsa — o'zining nusxasi bor.
+    2. **`sharp` — native modul.** Serverda `npm install` prebuilt binarni
+    oladi (linux arm64/x64), ya'ni deploy'da qo'shimcha qadam yo'q, lekin
+    boshqa arxitekturaga ko'chirilganda buni tekshirish kerak.
+    3. **Mavjud rasmlar qayta kodlanmagan** — faqat yangi yuklanganlar.
+    Kerak bo'lsa, `mediaAsset` bo'yicha aylanib chiqadigan migratsiya
+    yozish mumkin; hozircha foydasi migratsiya xarajatidan kam.
 
 ---
 

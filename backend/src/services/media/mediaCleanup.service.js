@@ -138,7 +138,15 @@ export async function findOrphans({ now = Date.now(), graceDays = GRACE_DAYS, st
     // A library asset that nothing uses is *not* an orphan: an author
     // uploaded it to use later, and deleting it would be the library
     // eating its own contents.
-    const libraryKeys = new Set((await MediaAsset.find({}, { key: 1 }).lean()).map((row) => row.key))
+    const assets = await MediaAsset.find({}, { key: 1, thumbKey: 1 }).lean()
+    const libraryKeys = new Set()
+    assets.forEach((row) => {
+      libraryKeys.add(row.key)
+      // A thumbnail is not referenced anywhere by itself (9.6) — the row
+      // that owns it is the reference, and sweeping it would leave the
+      // library showing full-size images for no reason.
+      if (row.thumbKey) libraryKeys.add(row.thumbKey)
+    })
     // The stored references are URLs; the tail after the bucket name is the
     // key, whatever host the URL was built with.
     const referencedKeys = new Set([...keys])
