@@ -341,7 +341,8 @@
     "minutes": "{count} min",
     "duplicate": "Duplicate",
     "duplicateTitle": "Duplicate this course?",
-    "duplicateMessage": "Everything in “{title}” — modules, videos, documents and tests — is copied into a new draft. Assignments and anyone’s progress are not."
+    "duplicateMessage": "Everything in “{title}” — modules, videos, documents and tests — is copied into a new draft. Assignments and anyone’s progress are not.",
+    "loadFailed": "Could not load the course list"
   },
   "videos": {
     "empty": "No videos uploaded yet",
@@ -691,7 +692,8 @@
     "createdForCount": "Task assigned to {count} employees",
     "batchDeleteTitle": "Delete task",
     "batchDeleteBody": "This task is assigned to {count} people. Deleting removes it from all of them.",
-    "confirmDelete": "Delete"
+    "confirmDelete": "Delete",
+    "updateFailed": "Could not change the task status"
   },
   "events": {
     "title": "Events",
@@ -773,7 +775,8 @@
       "ATTENDED": "Attended",
       "NO_SHOW": "Did not come",
       "CANCELLED": "Cancelled"
-    }
+    },
+    "loadFailed": "Could not load the event"
   },
   "eventTypes": {
     "MEETING": "Meeting",
@@ -793,7 +796,8 @@
       "tasks": "Tasks",
       "news": "News",
       "system": "System"
-    }
+    },
+    "markFailed": "Could not mark the notification"
   },
   "settings": {
     "title": "Settings",
@@ -1471,7 +1475,11 @@
     "file": "File",
     "presentation": "Presentation",
     "multimedia": "Multimedia",
-    "test": "Test"
+    "test": "Test",
+    "statusFailed": "Could not change the status",
+    "deleteFailed": "Could not delete it",
+    "downloadFailed": "Could not get the download link",
+    "createFailed": "Could not create it"
   },
   "videoReport": {
     "title": "Report",
@@ -2480,5 +2488,8 @@
     "dueBy": "Due {date}",
     "expiredOn": "Expired {date}",
     "neverDone": "Never done"
+  },
+  "questionBanks": {
+    "loadFailed": "Could not load the question bank"
   }
 }

@@ -18,12 +18,20 @@ const errorMessage = ref('')
 const loadingReport = ref(false)
 
 async function onSearch() {
-  if (!search.value) {
-    results.value = []
-    return
+  // Wrapped rather than left bare: an unhandled rejection here used to
+  // take the whole handler down silently. No toast — this runs on every
+  // keystroke or scroll, and a banner per failed attempt is worse than
+  // the empty list the reader already sees.
+  try {
+    if (!search.value) {
+      results.value = []
+      return
+    }
+    const { items } = await usersApi.list({ search: search.value, limit: 5 })
+    results.value = items
+  } catch {
+    /* nothing to show; the list simply does not grow */
   }
-  const { items } = await usersApi.list({ search: search.value, limit: 5 })
-  results.value = items
 }
 
 async function selectUser(user) {

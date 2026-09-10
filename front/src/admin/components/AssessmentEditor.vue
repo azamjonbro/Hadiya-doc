@@ -1,6 +1,7 @@
 <script setup>
 import { onMounted, reactive, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
+import { useToast } from '@/composables/useToast'
 import { useConfirm } from '@/composables/useConfirm'
 import { assessmentsApi } from '@/services/assessments'
 import AppButton from '@/components/ui/AppButton.vue'
@@ -12,6 +13,7 @@ const props = defineProps({ assessmentId: { type: String, required: true } })
 const emit = defineEmits(['updated', 'removed'])
 
 const { t } = useI18n()
+const toast = useToast()
 const confirm = useConfirm()
 
 const loading = ref(true)
@@ -110,11 +112,17 @@ async function save() {
 }
 
 async function togglePublish() {
-  const updated = await assessmentsApi.update(props.assessmentId, {
-    status: status.value === 'PUBLISHED' ? 'DRAFT' : 'PUBLISHED',
-  })
-  status.value = updated.status
-  emit('updated', updated)
+  try {
+    const updated = await assessmentsApi.update(props.assessmentId, {
+      status: status.value === 'PUBLISHED' ? 'DRAFT' : 'PUBLISHED',
+    })
+    status.value = updated.status
+    emit('updated', updated)
+  } catch (error) {
+    // Publishing is refused for a test with no questions, among other
+    // things — a reason worth reading rather than a button that shrugs.
+    toast.error(apiErrorText(error, t('content.statusFailed')))
+  }
 }
 
 async function removeAssessment() {

@@ -20,22 +20,12 @@ const props = defineProps({
 // neon edge (the thing that actually strains eyes). Every class below is a
 // complete literal string — Tailwind's scanner can't see classes built by
 // runtime string interpolation, so nothing here is assembled from parts.
-const glass = 'backdrop-blur-md backdrop-saturate-150'
-const primaryRing =
-  'shadow-[inset_0_1px_0_0_rgb(255_255_255/0.22),0_0_0_1px_rgb(var(--color-primary)/0.32),0_6px_20px_-6px_rgb(var(--color-primary)/0.46)]'
-const primaryRingHover =
-  'hover:shadow-[inset_0_1px_0_0_rgb(255_255_255/0.28),0_0_0_1px_rgb(var(--color-primary)/0.44),0_8px_26px_-6px_rgb(var(--color-primary)/0.62)]'
-const dangerRing =
-  'shadow-[inset_0_1px_0_0_rgb(255_255_255/0.22),0_0_0_1px_rgb(var(--color-danger)/0.32),0_6px_20px_-6px_rgb(var(--color-danger)/0.46)]'
-const dangerRingHover =
-  'hover:shadow-[inset_0_1px_0_0_rgb(255_255_255/0.28),0_0_0_1px_rgb(var(--color-danger)/0.44),0_8px_26px_-6px_rgb(var(--color-danger)/0.62)]'
-
 const variants = {
-  primary: `${glass} bg-primary/90 text-primary-foreground font-semibold border border-white/10 ${primaryRing} ${primaryRingHover} hover:bg-primary`,
-  secondary: `${glass} bg-surface-2/75 text-ink font-medium border border-border-strong/80 hover:bg-surface-hover/85 active:bg-surface-hover/85`,
-  outline: `${glass} bg-surface/45 text-ink font-medium border border-border-strong/80 hover:bg-surface-2/65 active:bg-surface-2/65`,
-  ghost: 'bg-transparent text-ink-muted font-medium hover:bg-surface-2/70 hover:text-ink active:bg-surface-2/70 backdrop-blur-md',
-  danger: `${glass} bg-danger/90 text-white font-semibold border border-white/10 ${dangerRing} ${dangerRingHover} hover:bg-danger`,
+  primary: 'bg-primary text-white font-medium hover:bg-primary-hover shadow-sm',
+  secondary: 'bg-surface text-ink font-medium border border-border-strong hover:bg-surface-2 shadow-sm',
+  outline: 'bg-transparent text-primary font-medium border border-primary hover:bg-primary-subtle',
+  ghost: 'bg-transparent text-ink-muted font-medium hover:bg-surface-2 hover:text-ink',
+  danger: 'bg-danger text-white font-medium hover:bg-red-700 shadow-sm',
 }
 
 const sizes = {

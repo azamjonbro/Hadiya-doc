@@ -43,11 +43,11 @@ const inputId = `input-${Math.random().toString(36).slice(2, 9)}`
         :required="required"
         :autocomplete="autocomplete"
         :disabled="disabled"
-        class="h-10.5 w-full rounded-md border bg-surface text-body text-ink outline-none transition-default placeholder:text-ink-faint disabled:opacity-50"
+        class="h-10 w-full rounded-md border bg-surface text-small text-ink outline-none transition-default placeholder:text-ink-faint disabled:opacity-50"
         :class="[
           icon ? 'pl-10' : 'pl-3.5',
           type === 'password' ? 'pr-10' : 'pr-3.5',
-          error ? 'border-danger focus:border-danger focus:ring-2 focus:ring-danger/15' : 'border-border-strong focus:border-primary focus:ring-2 focus:ring-primary/15',
+          error ? 'border-danger focus:border-danger focus:ring-1 focus:ring-danger' : 'border-border focus:border-primary focus:ring-1 focus:ring-primary',
         ]"
         @input="$emit('update:modelValue', $event.target.value)"
       />

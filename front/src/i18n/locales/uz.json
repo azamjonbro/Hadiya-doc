@@ -341,7 +341,8 @@
     "minutes": "{count} daq.",
     "duplicate": "Nusxalash",
     "duplicateTitle": "Kurs nusxalansinmi?",
-    "duplicateMessage": "«{title}» kursining butun mazmuni (mavzular, video, hujjat, testlar) yangi qoralama kursga ko‘chiriladi. Xodimlarning tayinlovi va progressi ko‘chirilmaydi."
+    "duplicateMessage": "«{title}» kursining butun mazmuni (mavzular, video, hujjat, testlar) yangi qoralama kursga ko‘chiriladi. Xodimlarning tayinlovi va progressi ko‘chirilmaydi.",
+    "loadFailed": "Kurslar ro'yxatini yuklab bo'lmadi"
   },
   "videos": {
     "empty": "Videolar hali yuklanmagan",
@@ -691,7 +692,8 @@
     "createdForCount": "Vazifa {count} ta xodimga biriktirildi",
     "batchDeleteTitle": "Vazifani o'chirish",
     "batchDeleteBody": "Bu vazifa {count} ta xodimga biriktirilgan. O'chirilsa, hammasidan olib tashlanadi.",
-    "confirmDelete": "O'chirish"
+    "confirmDelete": "O'chirish",
+    "updateFailed": "Vazifa holatini o'zgartirib bo'lmadi"
   },
   "events": {
     "title": "Tadbirlar",
@@ -773,7 +775,8 @@
       "ATTENDED": "Keldi",
       "NO_SHOW": "Kelmadi",
       "CANCELLED": "Bekor qildi"
-    }
+    },
+    "loadFailed": "Tadbirni yuklab bo'lmadi"
   },
   "eventTypes": {
     "MEETING": "Uchrashuv",
@@ -793,7 +796,8 @@
       "tasks": "Vazifalar",
       "news": "Yangiliklar",
       "system": "Tizim"
-    }
+    },
+    "markFailed": "Bildirishnomani belgilab bo'lmadi"
   },
   "settings": {
     "title": "Sozlamalar",
@@ -1471,7 +1475,11 @@
     "file": "Fayl",
     "presentation": "Prezentatsiya",
     "multimedia": "Multimediya",
-    "test": "Test"
+    "test": "Test",
+    "statusFailed": "Holatni o'zgartirib bo'lmadi",
+    "deleteFailed": "O'chirib bo'lmadi",
+    "downloadFailed": "Yuklab olish havolasini olib bo'lmadi",
+    "createFailed": "Yaratib bo'lmadi"
   },
   "videoReport": {
     "title": "Hisobot",
@@ -2480,5 +2488,8 @@
     "dueBy": "Muddat: {date}",
     "expiredOn": "{date} da muddati tugagan",
     "neverDone": "Hech qachon o‘tmagan"
+  },
+  "questionBanks": {
+    "loadFailed": "Savollar bankini yuklab bo'lmadi"
   }
 }
