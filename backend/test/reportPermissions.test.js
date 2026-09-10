@@ -5,10 +5,10 @@
 //   THEN  it sees the report — and still cannot download a copy of it
 //
 // It guarded nothing before this. The whole /reports router required
-// report:export, so the four seeded roles granted view without export
-// (ADMIN, AUTHOR, INSTRUCTOR, MENTOR) were locked out of every report route
-// while holding a permission that says otherwise — roles-as-data only works
-// if granting a permission changes what someone can do.
+// report:export, so the three seeded roles granted view without export
+// (AUTHOR, INSTRUCTOR, MENTOR) were locked out of every report route while
+// holding a permission that says otherwise — roles-as-data only works if
+// granting a permission changes what someone can do.
 //
 // The split is the point: reading a report on screen and taking a copy of it
 // away are different acts, and the second is the one that leaves the system
@@ -18,7 +18,7 @@ import { test, describe, before, after } from 'node:test'
 import assert from 'node:assert/strict'
 import mongoose from 'mongoose'
 import jwt from 'jsonwebtoken'
-import { ROLE_SCOPES, PERMISSIONS, ROLE_PERMISSIONS, ROLES } from '@lms/shared'
+import { ROLE_SCOPES, PERMISSIONS, DEFAULT_ROLE_PERMISSIONS, ROLES } from '@lms/shared'
 import { connectDatabase } from '../src/config/db.js'
 import { User } from '../src/models/user.model.js'
 import { Role } from '../src/models/role.model.js'
@@ -100,8 +100,8 @@ describe('report:view and report:export are different permissions (8.2)', () => 
   test('the seeded roles that need this actually hold view without export', () => {
     // If this ever stops being true the split below is untested in practice,
     // whatever the routes say.
-    for (const role of [ROLES.ADMIN, ROLES.AUTHOR, ROLES.INSTRUCTOR, ROLES.MENTOR]) {
-      const held = ROLE_PERMISSIONS[role] ?? []
+    for (const role of [ROLES.AUTHOR, ROLES.INSTRUCTOR, ROLES.MENTOR]) {
+      const held = DEFAULT_ROLE_PERMISSIONS[role] ?? []
       assert.ok(held.includes(PERMISSIONS.REPORT_VIEW), `${role} lost report:view`)
       assert.ok(!held.includes(PERMISSIONS.REPORT_EXPORT), `${role} gained report:export`)
     }

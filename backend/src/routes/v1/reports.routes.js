@@ -14,8 +14,8 @@ export const reportsRouter = Router()
  *
  * `report:view` is reading a report on screen; `report:export` is taking a
  * copy of it away. The whole router used to require export, which made
- * `report:view` a permission that guarded nothing — and since ADMIN, AUTHOR,
- * INSTRUCTOR and MENTOR are granted view without export, all four were
+ * `report:view` a permission that guarded nothing — and since AUTHOR,
+ * INSTRUCTOR and MENTOR are granted view without export, all three were
  * locked out of every report route while holding a permission that says
  * otherwise. Roles-as-data only works if granting a permission does
  * something.
