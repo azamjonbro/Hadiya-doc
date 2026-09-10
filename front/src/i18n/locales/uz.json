@@ -176,7 +176,13 @@
       "avgCompletionPercent": "O'rtacha bajarilish",
       "avgWatchTimeSeconds": "O'rtacha ko'rish vaqti",
       "newsEngagementPercent": "Yangiliklar bilan qiziqish",
-      "activeSessions": "Faol sessiyalar"
+      "activeSessions": "Faol sessiyalar",
+      "quizAttempts": "Test urinishlari",
+      "quizPassRatePercent": "Testdan o'tish",
+      "certificatesIssued": "Sertifikatlar",
+      "certificatesExpiringSoon": "Muddati tugayotgan",
+      "upcomingEvents": "Yaqin tadbirlar",
+      "pathEnrollmentsActive": "Faol yo'nalishlar"
     },
     "charts": {
       "courseCompletion": "Kurslar bajarilishi",
@@ -196,6 +202,12 @@
       "videos": "Hali video faolligi yo'q",
       "news": "Hali yangilik faolligi yo'q",
       "tasks": "Hali vazifalar yo'q"
+    },
+    "scope": {
+      "company": "Kompaniya",
+      "team": "Mening jamoam",
+      "blocked": "Bu dashboard butun kompaniyani qamraydi, siz esa o'z bo'limingiz bilan cheklangansiz. O'z jamoangiz ko'rsatkichlari alohida sahifada.",
+      "goToTeam": "Jamoa dashboardiga o'tish"
     }
   },
   "courses": {

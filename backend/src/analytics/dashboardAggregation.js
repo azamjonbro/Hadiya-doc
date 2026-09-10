@@ -7,6 +7,7 @@ import { News } from '../models/news.model.js'
 import { NewsView } from '../models/newsView.model.js'
 import { Task } from '../models/task.model.js'
 import { Session } from '../models/session.model.js'
+import { extraCards, extraCharts } from './dashboardExtra.js'
 
 const WATCH_TIME_TREND_DAYS = 14
 const TOP_N = 10
@@ -256,9 +257,22 @@ async function cards() {
 // concurrently. Called only by the scheduled job (see dashboardAggregationQueue.js),
 // never synchronously from a request handler (spec §38).
 export async function computeDashboard() {
-  const [cardsResult, courseStats, employeeStats, mostSkippedVideos, mostPausedVideos, watchTimeTrend, newsEngagement, taskCompletion] =
-    await Promise.all([
+  const [
+    cardsResult,
+    blockCards,
+    blockCharts,
+    courseStats,
+    employeeStats,
+    mostSkippedVideos,
+    mostPausedVideos,
+    watchTimeTrend,
+    newsEngagement,
+    taskCompletion,
+  ] = await Promise.all([
       cards(),
+      // Assessment, certificates, events, paths and compliance (8.5).
+      extraCards(),
+      extraCharts(),
       courseCompletionStats(),
       employeeEngagementStats(),
       videoStatChart('forwardSeekSeconds'),
@@ -269,8 +283,9 @@ export async function computeDashboard() {
     ])
 
   return {
-    cards: cardsResult,
+    cards: { ...cardsResult, ...blockCards },
     charts: {
+      ...blockCharts,
       courseCompletion: courseStats.courseCompletion,
       mostDifficultCourses: courseStats.mostDifficultCourses,
       employeeProgress: employeeStats.employeeProgress,

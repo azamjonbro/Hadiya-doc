@@ -176,7 +176,13 @@
       "avgCompletionPercent": "Средняя завершённость",
       "avgWatchTimeSeconds": "Среднее время просмотра",
       "newsEngagementPercent": "Вовлечённость в новости",
-      "activeSessions": "Активные сессии"
+      "activeSessions": "Активные сессии",
+      "quizAttempts": "Попыток тестов",
+      "quizPassRatePercent": "Сдача тестов",
+      "certificatesIssued": "Сертификаты",
+      "certificatesExpiringSoon": "Истекают скоро",
+      "upcomingEvents": "Ближайшие события",
+      "pathEnrollmentsActive": "Активные траектории"
     },
     "charts": {
       "courseCompletion": "Завершённость курсов",
@@ -196,6 +202,12 @@
       "videos": "Пока нет активности по видео",
       "news": "Пока нет активности по новостям",
       "tasks": "Пока нет задач"
+    },
+    "scope": {
+      "company": "Компания",
+      "team": "Моя команда",
+      "blocked": "Этот дашборд охватывает всю компанию, а вы ограничены своим отделом. Показатели вашей команды — на отдельной странице.",
+      "goToTeam": "Перейти к дашборду команды"
     }
   },
   "courses": {

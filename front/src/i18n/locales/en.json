@@ -176,7 +176,13 @@
       "avgCompletionPercent": "Average Completion",
       "avgWatchTimeSeconds": "Average Watch Time",
       "newsEngagementPercent": "News Engagement",
-      "activeSessions": "Active Sessions"
+      "activeSessions": "Active Sessions",
+      "quizAttempts": "Quiz attempts",
+      "quizPassRatePercent": "Quiz pass rate",
+      "certificatesIssued": "Certificates",
+      "certificatesExpiringSoon": "Expiring soon",
+      "upcomingEvents": "Upcoming events",
+      "pathEnrollmentsActive": "Active paths"
     },
     "charts": {
       "courseCompletion": "Course Completion",
@@ -196,6 +202,12 @@
       "videos": "No video activity yet",
       "news": "No news activity yet",
       "tasks": "No tasks yet"
+    },
+    "scope": {
+      "company": "Company",
+      "team": "My team",
+      "blocked": "This dashboard covers the whole company, and you are fenced to your own department. Your team’s figures are on their own page.",
+      "goToTeam": "Go to the team dashboard"
     }
   },
   "courses": {
