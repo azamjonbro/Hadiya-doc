@@ -21,6 +21,7 @@ import Skeleton from '@/components/ui/Skeleton.vue'
 import Icon from '@/components/ui/Icon.vue'
 import ProgressBar from '@/components/ui/ProgressBar.vue'
 import LessonBlock from '@/components/lesson/LessonBlock.vue'
+import { offlineLesson } from '@/offline/offlineContent'
 
 const { t } = useI18n()
 const route = useRoute()
@@ -31,6 +32,10 @@ const lesson = ref(null)
 const progress = ref(null)
 const loading = ref(true)
 const errorMessage = ref('')
+// Set when the lesson came out of the offline store rather than the API:
+// the reader is told, because their progress will not be recorded until
+// they are back online (12.3 queues it).
+const fromOffline = ref(false)
 const finishing = ref(false)
 
 const blockRefs = new Map()
@@ -126,7 +131,24 @@ async function load() {
     // Blocks already read in an earlier sitting are not reported again.
     seenIds.value = new Set(current.completed ? loaded.blocks.map((block) => block.id) : [])
   } catch (error) {
-    errorMessage.value = apiErrorText(error, t('lesson.loadFailed'))
+    /**
+     * The request failed — which offline is the normal case, not an
+     * exception (12.2). If this lesson was saved deliberately, read it
+     * from there and say so; otherwise report the failure as before.
+     *
+     * Progress is not read offline: the number would be whatever was true
+     * when the course was saved, and showing a stale percentage as current
+     * is worse than showing none.
+     */
+    const stored = await offlineLesson(route.params.id)
+    if (stored) {
+      lesson.value = stored
+      progress.value = null
+      fromOffline.value = true
+      seenIds.value = new Set()
+    } else {
+      errorMessage.value = apiErrorText(error, t('lesson.loadFailed'))
+    }
   } finally {
     loading.value = false
   }
@@ -191,6 +213,12 @@ onBeforeUnmount(() => {
           <Badge v-if="completed" variant="success" size="sm">{{ t('lesson.completed') }}</Badge>
         </div>
         <p v-if="lesson.description" class="mt-1.5 text-small text-ink-muted">{{ lesson.description }}</p>
+        <!-- 12.2 — read from the saved copy. Said plainly, because
+             progress is not being recorded from here. -->
+        <p v-if="fromOffline" class="mt-2 flex items-center gap-1.5 text-caption text-warning">
+          <Icon name="alert-triangle" size="13" />
+          {{ t('offline.readingSaved') }}
+        </p>
         <div class="mt-2 flex flex-wrap items-center gap-2 text-caption text-ink-faint">
           <span>{{ t('content.blockCount', { count: lesson.blockCount }) }}</span>
           <span v-if="lesson.estimatedMinutes">· {{ t('courses.minutes', { count: lesson.estimatedMinutes }) }}</span>

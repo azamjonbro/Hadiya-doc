@@ -54,6 +54,23 @@ function reportUnhandled(app) {
   window.addEventListener('unhandledrejection', (event) => {
     // A cancelled request is a typeahead being retyped, not a failure.
     if (event.reason?.code === 'ERR_CANCELED' || event.reason?.name === 'CanceledError') return
+    /**
+     * Offline, a failed request is the expected outcome (12.2), not news.
+     * The banner already says there is no connection, and a toast reading
+     * "network error" on top of a page that is deliberately being read
+     * from storage tells somebody their saved course is broken when it is
+     * not. Still logged, because a *request* nobody handled is still a
+     * gap worth finding.
+     */
+    const isNetworkFailure = !event.reason?.response && ['ERR_NETWORK', 'ECONNABORTED'].includes(event.reason?.code)
+    // `navigator.onLine` is a hint the browser sometimes gets wrong, so the
+    // app's own read-only offline session counts as well: in that mode the
+    // page is *known* to be rendering from storage.
+    const knownOffline = navigator.onLine === false || useAuthStore().offlineOnly
+    if (isNetworkFailure && knownOffline) {
+      console.warn('[offline] a request failed while offline', event.reason?.config?.url ?? '')
+      return
+    }
     console.error('[unhandled]', event.reason)
     toast.error(describe(event.reason))
   })
@@ -75,6 +92,9 @@ function bootstrap() {
   // nothing is decided before the answer arrives; the shell just gets to paint
   // and the chunk gets to download while it is in flight.
   authStore.ensureSession()
+  // 12.2 — leave the read-only offline session as soon as the connection
+  // is back, rather than on the next reload.
+  authStore.watchNetwork()
 
   app.use(router)
   app.use(i18n)

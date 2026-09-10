@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "test": "node --test test/lessonBlocks.test.js test/pwa.test.js",
+    "test": "node --test test/lessonBlocks.test.js test/pwa.test.js test/offlineContent.test.js",
     "preview": "vite preview",
     "assets:mediapipe": "node scripts/fetch-mediapipe-assets.mjs",
     "assets:pdfjs": "node scripts/copy-pdfjs-assets.mjs",

@@ -42,11 +42,14 @@ export const router = createRouter({
       children: [
         { path: '', name: 'dashboard', component: () => import('@/views/HomeView.vue'), meta: { titleKey: 'nav.dashboard' } },
         { path: 'courses', name: 'courses-list', component: () => import('@/views/CoursesView.vue'), meta: { titleKey: 'nav.courses' } },
-        { path: 'courses/:id', name: 'course-detail', component: () => import('@/views/CourseDetailView.vue'), meta: { titleKey: 'courses.title' } },
+        // `offline: true` — this page can be drawn from what the learner
+        // saved (12.2), so it stays reachable with no network. Only pages
+        // that can honestly render from IndexedDB carry it.
+        { path: 'courses/:id', name: 'course-detail', component: () => import('@/views/CourseDetailView.vue'), meta: { titleKey: 'courses.title', offline: true } },
         { path: 'videos/:id', name: 'video-detail', component: () => import('@/views/VideoPlayerView.vue'), meta: { titleKey: 'nav.courses' } },
         // A written lesson reads like a page; the id is the lesson's, not the
         // topic's, so a link to one survives the curriculum being reordered.
-        { path: 'lessons/:id', name: 'lesson-detail', component: () => import('@/views/LessonView.vue'), meta: { titleKey: 'nav.courses' } },
+        { path: 'lessons/:id', name: 'lesson-detail', component: () => import('@/views/LessonView.vue'), meta: { titleKey: 'nav.courses', offline: true } },
         // A SCORM package runs in an iframe served by the API (9.3); this
         // route is only the frame around it.
         { path: 'scorm/:id', name: 'scorm-detail', component: () => import('@/views/ScormView.vue'), meta: { titleKey: 'nav.courses' } },
@@ -305,6 +308,19 @@ router.beforeEach(async (to) => {
   }
 
   if (!auth.isAuthenticated) {
+    /**
+     * Offline, with content this person downloaded on purpose (12.2).
+     *
+     * There is no way to get an access token with no network, so without
+     * this a cold start offline bounces to the login form and a course
+     * somebody deliberately saved is unreachable — the whole feature.
+     * Only the routes that can actually be served from IndexedDB
+     * (`meta.offline`) open, everything else still asks for a login: a
+     * page that needs the API would otherwise render into a wall of failed
+     * requests.
+     */
+    if (auth.canReadOffline && to.meta.offline) return true
+
     // No `redirect` for a URL that matches nothing: carrying it would send the
     // user straight back to the 404 the moment they finished signing in.
     if (to.name === 'not-found') return { name: 'login' }

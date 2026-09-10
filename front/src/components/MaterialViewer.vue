@@ -23,6 +23,7 @@
 import { computed, nextTick, onBeforeUnmount, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { materialsApi } from '@/services/materials'
+import { offlineMaterialContent } from '@/offline/offlineContent'
 import { apiErrorText } from '@/utils/apiError'
 import { loadPdfjs, PDF_ASSET_OPTIONS } from '@/utils/pdfjs'
 import { useFaceGate } from '@/composables/useFaceGate'
@@ -57,6 +58,9 @@ const PAGE_FIT = 0.9
 
 const loading = ref(false)
 const errorMessage = ref('')
+// Set when the bytes came out of the offline store (12.2) — worth saying,
+// because reading progress cannot be recorded from there.
+const fromOffline = ref(false)
 const nativeUrl = ref('')
 const docHtml = ref('')
 const sheets = ref([])
@@ -371,6 +375,7 @@ function destroyViewers() {
 }
 
 function reset() {
+  fromOffline.value = false
   destroyViewers()
   nativeUrl.value = ''
   docHtml.value = ''
@@ -398,8 +403,16 @@ async function load() {
   loading.value = true
   try {
     if (kind.value === 'audio') {
-      const { url } = await materialsApi.getUrl(material.id, 'inline')
-      nativeUrl.value = url
+      try {
+        const { url } = await materialsApi.getUrl(material.id, 'inline')
+        nativeUrl.value = url
+      } catch (error) {
+        // A signed URL needs the API; the saved bytes do not.
+        const buffer = await offlineMaterialContent(material.id)
+        if (!buffer) throw error
+        nativeUrl.value = URL.createObjectURL(new Blob([buffer], { type: material.mimeType || 'audio/mpeg' }))
+        fromOffline.value = true
+      }
       return
     }
 
@@ -414,7 +427,21 @@ async function load() {
     // the larger of the two. Fetching them one after the other made opening a
     // 32 KB PDF wait for half a megabyte of parser first.
     const pdfjsReady = kind.value === 'pdf' ? loadPdfjs() : null
-    const buffer = await materialsApi.getContent(material.id)
+    /**
+     * The saved copy first when there is no network (12.2).
+     *
+     * Tried in this order rather than always preferring the store: online,
+     * the server's copy is the current one, and a document replaced by its
+     * author should not keep rendering from disk.
+     */
+    let buffer
+    try {
+      buffer = await materialsApi.getContent(material.id)
+    } catch (error) {
+      buffer = await offlineMaterialContent(material.id)
+      if (!buffer) throw error
+      fromOffline.value = true
+    }
     if (kind.value === 'docx') {
       await renderDocx(buffer)
       return
@@ -552,6 +579,13 @@ onBeforeUnmount(() => {
             @capture="faceGate.capture"
             @enrolled="faceGate.onEnrolled"
           />
+
+          <!-- 12.2 — rendered from the saved copy. Said plainly, because
+               reading progress cannot be recorded from here. -->
+          <p v-if="fromOffline" class="mb-2 flex items-center gap-1.5 text-caption text-warning">
+            <Icon name="alert-triangle" size="13" />
+            {{ t('offline.readingSaved') }}
+          </p>
 
           <div v-if="loading" class="flex h-full items-center justify-center gap-2 text-small text-ink-muted">
             <Icon name="loader" size="16" class="animate-spin" />

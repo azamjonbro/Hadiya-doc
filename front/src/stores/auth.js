@@ -26,6 +26,48 @@ const ADMIN_APP_PERMISSIONS = [
   'course:delete',
 ]
 
+/**
+ * The minimum needed to render the shell offline: who this is and what
+ * they are called. **Not permissions** — nothing is authorised from this,
+ * and the API is unreachable anyway; it exists so an offline app can draw
+ * a name instead of an empty header.
+ */
+const OFFLINE_PROFILE_KEY = 'lms-offline-profile'
+
+function rememberForOffline(user) {
+  try {
+    localStorage.setItem(
+      OFFLINE_PROFILE_KEY,
+      JSON.stringify({ id: user.id, fullName: user.fullName, role: user.role, scope: user.scope })
+    )
+  } catch {
+    // Storage refused (private window): offline reading is then unavailable,
+    // which is the state it was in before this feature.
+  }
+}
+
+function rememberedProfile() {
+  try {
+    const raw = localStorage.getItem(OFFLINE_PROFILE_KEY)
+    if (!raw) return null
+    const parsed = JSON.parse(raw)
+    // Permissions are deliberately empty: an offline session authorises
+    // nothing, and a stale permission list is exactly the wrong thing to
+    // restore from disk.
+    return { ...parsed, permissions: [] }
+  } catch {
+    return null
+  }
+}
+
+function forgetOffline() {
+  try {
+    localStorage.removeItem(OFFLINE_PROFILE_KEY)
+  } catch {
+    /* nothing to clear if storage was never writable */
+  }
+}
+
 // Module-level, not store state: it is a promise, not something any component
 // should be reading or that ought to end up in devtools' state tree.
 let restorePromise = null
@@ -35,10 +77,27 @@ export const useAuthStore = defineStore('auth', {
     accessToken: null,
     user: null,
     initializing: true,
+    /**
+     * A read-only session for offline reading (12.2).
+     *
+     * There is no way to obtain an access token with no network, so a cold
+     * start offline would otherwise bounce straight to the login form —
+     * making a course somebody deliberately downloaded unreachable, which
+     * is the whole feature. In this mode the app renders and reads from
+     * IndexedDB; **every API call still fails**, because there is no token
+     * and no network, and coming back online re-authenticates properly.
+     *
+     * It grants nothing new: the content is already on this device,
+     * readable in devtools by whoever holds it, and it was downloaded by
+     * this person on purpose.
+     */
+    offlineOnly: false,
   }),
 
   getters: {
     isAuthenticated: (state) => Boolean(state.accessToken && state.user),
+    // Signed in enough to render, but with no token: offline reading only.
+    canReadOffline: (state) => Boolean(state.offlineOnly && state.user),
     permissions: (state) => state.user?.permissions ?? [],
     canUseAdminApp: (state) =>
       ADMIN_APP_PERMISSIONS.some((permission) => (state.user?.permissions ?? []).includes(permission)),
@@ -60,14 +119,18 @@ export const useAuthStore = defineStore('auth', {
     setSession({ accessToken, user, csrfToken }) {
       this.accessToken = accessToken
       this.user = user
+      this.offlineOnly = false
       setCsrfToken(csrfToken)
+      rememberForOffline(user)
       useChatStore().init(accessToken, user.id)
     },
 
     clearSession() {
       this.accessToken = null
       this.user = null
+      this.offlineOnly = false
       clearCsrfToken()
+      forgetOffline()
       useChatStore().reset()
     },
 
@@ -146,6 +209,36 @@ export const useAuthStore = defineStore('auth', {
       return restorePromise
     },
 
+    /**
+     * Offline, with a profile remembered from the last real login: allow
+     * reading what is stored, marked as such.
+     */
+    resumeOffline() {
+      const remembered = rememberedProfile()
+      if (!remembered) return false
+      this.user = remembered
+      this.accessToken = null
+      this.offlineOnly = true
+      return true
+    },
+
+    /**
+     * When the network comes back, stop reading from storage and get a
+     * real session (12.2).
+     *
+     * Without this the app would stay in read-only mode until the next
+     * reload: every write would fail and the person would have no idea
+     * why, having watched the connection return.
+     */
+    watchNetwork() {
+      window.addEventListener('online', () => {
+        if (!this.offlineOnly) return
+        // A fresh attempt, not the cached one: `restoreSession` is
+        // memoised through `ensureSession`, and this is a different moment.
+        this.restoreSession().catch(() => {})
+      })
+    },
+
     // Silent session restore on app boot, using the httpOnly refresh cookie
     // from a previous login — lets a page reload keep the user signed in
     // without re-entering credentials.
@@ -153,7 +246,20 @@ export const useAuthStore = defineStore('auth', {
       try {
         const { data } = await http.post('/auth/refresh', null, { headers: csrfHeader() })
         this.setSession(data.data)
-      } catch {
+      } catch (error) {
+        /**
+         * A refresh that failed because there is **no network** is not a
+         * refused session (12.2): the cookie may be perfectly valid. So
+         * offline, fall back to the read-only mode instead of signing
+         * somebody out — clearing the session here would also delete the
+         * remembered profile, and they would come back online logged out
+         * for no reason.
+         */
+        const noNetwork = !error?.response && (navigator.onLine === false || error?.code === 'ERR_NETWORK')
+        if (noNetwork && this.resumeOffline()) {
+          this.initializing = false
+          return
+        }
         this.clearSession()
       } finally {
         this.initializing = false

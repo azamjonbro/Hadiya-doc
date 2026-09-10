@@ -2910,5 +2910,36 @@
     "reload": "Yangilash",
     "later": "Keyinroq",
     "offlineReady": "Ilova internetsiz ham ochiladi."
+  },
+  "offline": {
+    "save": "Oflayn saqlash",
+    "download": "Yuklab olish",
+    "saving": "Saqlanyapti ({done}/{total})",
+    "saved": "Kurs qurilmaga saqlandi",
+    "savedLabel": "Oflayn saqlangan ({size})",
+    "remove": "O'chirish",
+    "removeAll": "Hammasini o'chirish",
+    "removed": "Saqlangan nusxa o'chirildi",
+    "removedAll": "Barcha saqlangan kurslar o'chirildi",
+    "confirmRemove": "Bu kursning saqlangan nusxasi o'chiriladi. Davom etamizmi?",
+    "confirmRemoveNamed": "«{title}» ning saqlangan nusxasi o'chiriladi. Davom etamizmi?",
+    "confirmRemoveAll": "Qurilmadagi barcha saqlangan kurslar o'chiriladi. Davom etamizmi?",
+    "planSummary": "{items} element, taxminan {size}",
+    "planFailed": "Kurs tarkibini o'qib bo'lmadi",
+    "whatIsNotSaved": "Matn darslari va hujjatlar saqlanadi. Videolar, testlar va SCORM paketlari saqlanmaydi — ular internet talab qiladi.",
+    "skippedTooLarge": "«{title}» saqlanmaydi — juda katta ({size})",
+    "readingSaved": "Saqlangan nusxa o'qilyapti — internet qaytmaguncha progress yozilmaydi.",
+    "storageTitle": "Oflayn saqlangan kurslar",
+    "storageHint": "Internetsiz o'qish uchun qurilmada saqlangan kurslar. Qurilmangizdagi joyni egallaydi.",
+    "usage": "Bu sayt {used} band qilgan (ruxsat: {quota})",
+    "nothingSaved": "Hali hech narsa saqlanmagan.",
+    "savedItems": "{lessons} dars, {materials} hujjat",
+    "unsupported": "Bu brauzer oflayn saqlashni qo'llab-quvvatlamaydi (yoki sayt ma'lumotlari o'chirilgan).",
+    "errors": {
+      "SAVE_FAILED": "Saqlab bo'lmadi",
+      "NOT_ENOUGH_SPACE": "Qurilmada joy yetarli emas.",
+      "COURSE_TOO_LARGE": "Bu kurs bir marta saqlash uchun juda katta."
+    },
+    "readingSavedCourse": "Saqlangan nusxa ko'rsatilyapti — faqat oflayn saqlangan darslar va hujjatlar."
   }
 }

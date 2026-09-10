@@ -2910,5 +2910,36 @@
     "reload": "Reload",
     "later": "Later",
     "offlineReady": "The app now opens without a network."
+  },
+  "offline": {
+    "save": "Save offline",
+    "download": "Download",
+    "saving": "Saving ({done}/{total})",
+    "saved": "The course is on this device",
+    "savedLabel": "Saved offline ({size})",
+    "remove": "Remove",
+    "removeAll": "Remove all",
+    "removed": "The saved copy was removed",
+    "removedAll": "Every saved course was removed",
+    "confirmRemove": "The saved copy of this course will be removed. Continue?",
+    "confirmRemoveNamed": "The saved copy of «{title}» will be removed. Continue?",
+    "confirmRemoveAll": "Every course saved on this device will be removed. Continue?",
+    "planSummary": "{items} items, about {size}",
+    "planFailed": "Could not read what the course contains",
+    "whatIsNotSaved": "Text lessons and documents are saved. Videos, tests and SCORM packages are not — they need a network.",
+    "skippedTooLarge": "«{title}» is not saved — too large ({size})",
+    "readingSaved": "Reading the saved copy — progress is not recorded until you are back online.",
+    "storageTitle": "Courses saved offline",
+    "storageHint": "Courses kept on this device for reading without a network. They take up space.",
+    "usage": "This site is using {used} (allowed: {quota})",
+    "nothingSaved": "Nothing saved yet.",
+    "savedItems": "{lessons} lessons, {materials} documents",
+    "unsupported": "This browser cannot save offline (or site data is switched off).",
+    "errors": {
+      "SAVE_FAILED": "Could not save",
+      "NOT_ENOUGH_SPACE": "Not enough room on this device.",
+      "COURSE_TOO_LARGE": "This course is too large to save in one go."
+    },
+    "readingSavedCourse": "Showing the saved copy — only the lessons and documents that were saved offline."
   }
 }

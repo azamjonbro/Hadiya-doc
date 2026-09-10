@@ -19,6 +19,7 @@ import Skeleton from '@/components/ui/Skeleton.vue'
 import AppButton from '@/components/ui/AppButton.vue'
 import TwoFactorCard from '@/components/security/TwoFactorCard.vue'
 import SessionsCard from '@/components/security/SessionsCard.vue'
+import OfflineStorageCard from '@/components/offline/OfflineStorageCard.vue'
 
 const { t, locale } = useI18n()
 const auth = useAuthStore()
@@ -247,6 +248,9 @@ onMounted(() => {
         <div class="space-y-4">
           <TwoFactorCard />
           <SessionsCard />
+          <!-- 12.2 — what this device is holding, and the button that
+               clears it. -->
+          <OfflineStorageCard />
         </div>
       </template>
 

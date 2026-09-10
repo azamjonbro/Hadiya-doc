@@ -23,6 +23,8 @@ import Icon from '@/components/ui/Icon.vue'
 import Tabs from '@/components/ui/Tabs.vue'
 import { apiErrorText } from '@/utils/apiError'
 import { loadPdfjs } from '@/utils/pdfjs'
+import OfflineCourseButton from '@/components/offline/OfflineCourseButton.vue'
+import { savedCourse } from '@/offline/offlineContent'
 
 const { t, locale } = useI18n()
 const route = useRoute()
@@ -30,6 +32,8 @@ const router = useRouter()
 
 const loading = ref(true)
 const errorMessage = ref('')
+// Drawn from the saved copy rather than the API (12.2).
+const fromOffline = ref(false)
 const course = ref(null)
 const topics = ref([])
 const videosByTopic = ref({})
@@ -201,7 +205,31 @@ async function load() {
     openTopics.value = new Set(topics.value.slice(0, 1).map((tp) => tp.id))
     await loadProgress()
   } catch (error) {
-    errorMessage.value = apiErrorText(error)
+    // Offline (12.2): if this course was saved deliberately, draw it from
+    // there. Only what was saved appears — no videos, no tests — because
+    // showing rows that cannot be opened is worse than a shorter list.
+    const stored = await savedCourse(route.params.id)
+    if (stored) {
+      fromOffline.value = true
+      course.value = { id: stored.courseId, title: stored.title, description: '' }
+      topics.value = stored.topics ?? []
+      const byTopic = (items) =>
+        Object.fromEntries(
+          (stored.topics ?? []).map((topic) => [topic.id, items.filter((item) => item.topicId === topic.id)])
+        )
+      lessonsByTopic.value = byTopic(stored.lessons ?? [])
+      materialsByTopic.value = byTopic(stored.materials ?? [])
+      videosByTopic.value = {}
+      assessmentsByTopic.value = {}
+      scormByTopic.value = {}
+      openTopics.value = new Set((stored.topics ?? []).slice(0, 1).map((topic) => topic.id))
+      // Progress lives on the server; a number from when the course was
+      // saved is not the reader's progress now, and showing it as current
+      // would be a lie in the direction that matters.
+      progress.value = null
+    } else {
+      errorMessage.value = apiErrorText(error)
+    }
   } finally {
     loading.value = false
   }
@@ -249,6 +277,16 @@ onMounted(load)
             <div class="mt-5 flex items-center gap-6 text-small text-ink-muted">
               <span class="flex items-center gap-1.5"><Icon name="layers" size="16" />{{ topics.length }} {{ t('courses.modules') }}</span>
               <span class="flex items-center gap-1.5"><Icon name="video" size="16" />{{ totalVideos() }} {{ t('courses.videos') }}</span>
+            </div>
+            <p v-if="fromOffline" class="mt-3 flex items-center gap-1.5 text-caption text-warning">
+              <Icon name="alert-triangle" size="13" />
+              {{ t('offline.readingSavedCourse') }}
+            </p>
+            <!-- 12.2 — taking the course offline is the learner's decision,
+                 so the control lives next to the course rather than in a
+                 settings page they would have to go looking for. -->
+            <div class="mt-4">
+              <OfflineCourseButton :course-id="String(route.params.id)" />
             </div>
           </div>
           
