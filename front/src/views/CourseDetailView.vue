@@ -199,65 +199,87 @@ onMounted(load)
     <p v-if="errorMessage" class="mt-4 text-small text-danger">{{ errorMessage }}</p>
 
     <template v-else-if="course">
-      <!-- Hero -->
-      <div
-        class="media-dark relative mt-5 overflow-hidden rounded-xl"
-        :style="course.cover ? `background-image:url(${course.cover});background-size:cover;background-position:center` : ''"
-      >
-        <div class="bg-gradient-to-t from-black/70 via-black/30 to-transparent px-7 py-10">
-          <div class="flex items-center gap-2">
-            <Badge variant="primary" dot>{{ t('courses.title') }}</Badge>
+      <!-- Clean Flat Header -->
+      <div class="mt-4 flex flex-col md:flex-row items-start gap-8 bg-surface p-6 sm:p-8 rounded-md border border-border shadow-sm">
+        <div
+          class="flex h-48 w-full md:w-72 shrink-0 items-center justify-center bg-surface-2 text-ink-faint rounded"
+          :style="course.cover ? `background-image:url(${course.cover});background-size:cover;background-position:center` : ''"
+        >
+          <Icon v-if="!course.cover" name="book-open" size="48" />
+        </div>
+        
+        <div class="flex-1 min-w-0 flex flex-col h-full">
+          <div>
+            <div class="flex items-center gap-2 mb-3">
+              <Badge variant="primary">{{ t('courses.title') }}</Badge>
+            </div>
+            <h1 class="text-h1 text-ink leading-tight">{{ course.title }}</h1>
+            <p v-if="course.description" class="mt-3 text-body text-ink-muted leading-relaxed">{{ course.description }}</p>
+            <div class="mt-5 flex items-center gap-6 text-small text-ink-muted">
+              <span class="flex items-center gap-1.5"><Icon name="layers" size="16" />{{ topics.length }} {{ t('courses.modules') }}</span>
+              <span class="flex items-center gap-1.5"><Icon name="video" size="16" />{{ totalVideos() }} {{ t('courses.videos') }}</span>
+            </div>
           </div>
-          <h1 class="mt-2.5 max-w-2xl text-display text-white">{{ course.title }}</h1>
-          <p v-if="course.description" class="mt-3 max-w-2xl text-body text-white/70">{{ course.description }}</p>
-          <div class="mt-5 flex flex-wrap items-center gap-x-6 gap-y-2 text-small text-white/80">
-            <span class="flex items-center gap-1.5"><Icon name="layers" size="15" />{{ topics.length }} {{ t('courses.modules') }}</span>
-            <span class="flex items-center gap-1.5"><Icon name="video" size="15" />{{ totalVideos() }} {{ t('courses.videos') }}</span>
+          
+          <div class="mt-6 flex flex-col sm:flex-row items-start sm:items-center gap-6 border-t border-border pt-6">
+            <div class="flex-1 w-full max-w-sm">
+              <div class="flex items-center justify-between text-small font-medium text-ink mb-2">
+                <span>{{ t('dashboard.progress.title') }}</span>
+                <span>{{ progress?.completionPercent ?? 0 }}%</span>
+              </div>
+              <ProgressBar :value="progress?.completionPercent ?? 0" size="md" />
+              <p class="mt-2 text-caption text-ink-faint">
+                {{ progress?.completionPercent ?? 0 }}% {{ t('videos.completed') }}
+                <span v-if="progress">({{ progress.completedItems }}/{{ progress.totalItems }})</span>
+              </p>
+            </div>
+            <AppButton size="lg" icon="play" icon-position="left" class="shrink-0" :disabled="!continueVideo()" @click="onContinue">{{ t('courses.continue') }}</AppButton>
           </div>
         </div>
       </div>
 
-      <Tabs v-model="activeTab" :tabs="tabs" class="mt-8" />
+      <div class="mt-8 border-b border-border">
+        <Tabs v-model="activeTab" :tabs="tabs" class="-mb-px" />
+      </div>
 
-      <div class="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-3">
+      <div class="mt-6">
         <!-- Curriculum -->
-        <div v-if="activeTab === 'content'" class="lg:col-span-2">
-          <h2 class="mb-3 text-h3 text-ink">{{ t('courses.curriculum') }}</h2>
-          <div class="space-y-3">
-            <AppCard v-for="topic in topics" :key="topic.id" padding="none" class="overflow-hidden">
-              <button type="button" class="flex w-full items-center justify-between px-4 py-3.5 text-left transition-default hover:bg-surface-2" @click="toggleTopic(topic.id)">
+        <div v-if="activeTab === 'content'" class="max-w-4xl">
+          <div class="space-y-4">
+            <AppCard v-for="topic in topics" :key="topic.id" padding="none" class="overflow-hidden border border-border shadow-sm">
+              <button type="button" class="flex w-full items-center justify-between px-5 py-4 text-left transition-default hover:bg-surface-2" @click="toggleTopic(topic.id)">
                 <div>
-                  <p class="text-caption font-semibold uppercase tracking-widest text-ink-faint">{{ t('courses.topics.title') }} {{ topic.order }}</p>
-                  <p class="mt-0.5 text-small font-semibold text-ink">{{ topic.title }}</p>
+                  <p class="text-[11px] font-bold uppercase tracking-widest text-ink-faint">{{ t('courses.topics.title') }} {{ topic.order }}</p>
+                  <p class="mt-1 text-small font-semibold text-ink">{{ topic.title }}</p>
                 </div>
                 <div class="flex items-center gap-3">
-                  <span class="text-caption text-ink-faint">{{ topicItemCount(topic.id) }}</span>
-                  <Icon :name="openTopics.has(topic.id) ? 'chevron-up' : 'chevron-down'" size="16" class="text-ink-faint" />
+                  <span class="text-caption font-medium text-ink-faint">{{ topicItemCount(topic.id) }} items</span>
+                  <Icon :name="openTopics.has(topic.id) ? 'chevron-up' : 'chevron-down'" size="16" class="text-ink-muted" />
                 </div>
               </button>
-              <div v-if="openTopics.has(topic.id)" class="divide-y divide-border border-t border-border">
+              <div v-if="openTopics.has(topic.id)" class="divide-y divide-border border-t border-border bg-surface">
                 <template v-for="video in videosByTopic[topic.id]" :key="video.id">
                   <button
                     type="button"
-                    class="flex w-full items-center gap-3 px-4 py-3 text-left transition-default hover:bg-surface-2 disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:bg-transparent"
+                    class="flex w-full items-center gap-3 px-5 py-3 text-left transition-default hover:bg-surface-2 disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:bg-transparent"
                     :disabled="!isVideoOpen(video)"
                     :title="videoProgress(video).locked ? t('videos.lockedHint') : ''"
                     @click="router.push(`/videos/${video.id}`)"
                   >
                     <span
-                      class="flex h-7 w-7 shrink-0 items-center justify-center rounded-full"
-                      :class="videoProgress(video).completed ? 'bg-success-subtle text-success' : 'bg-surface-2 text-ink-muted'"
+                      class="flex h-8 w-8 shrink-0 items-center justify-center rounded"
+                      :class="videoProgress(video).completed ? 'bg-success/10 text-success' : 'bg-surface-2 text-ink-muted'"
                     >
-                      <Icon :name="videoIcon(video)" size="13" />
+                      <Icon :name="videoIcon(video)" size="14" />
                     </span>
-                    <span class="min-w-0 flex-1 truncate text-small text-ink">{{ video.title }}</span>
+                    <span class="min-w-0 flex-1 truncate text-small font-medium text-ink">{{ video.title }}</span>
                     <span
                       v-if="!videoProgress(video).completed && videoProgress(video).completionPercent > 0"
-                      class="shrink-0 text-caption font-medium text-primary"
+                      class="shrink-0 text-caption font-semibold text-primary"
                     >
                       {{ videoProgress(video).completionPercent }}%
                     </span>
-                    <span v-if="video.duration" class="shrink-0 text-caption text-ink-faint">{{ formatDuration(video.duration) }}</span>
+                    <span v-if="video.duration" class="shrink-0 text-caption text-ink-muted">{{ formatDuration(video.duration) }}</span>
                   </button>
 
                   <!-- The lesson's own quiz, on its own page, opened only
@@ -265,17 +287,17 @@ onMounted(load)
                   <button
                     v-if="video.hasQuiz"
                     type="button"
-                    class="flex w-full items-center gap-3 py-2.5 pl-12 pr-4 text-left transition-default hover:bg-surface-2 disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:bg-transparent"
+                    class="flex w-full items-center gap-3 py-3 pl-14 pr-5 text-left transition-default hover:bg-surface-2 disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:bg-transparent"
                     :disabled="!videoProgress(video).completed"
                     :title="videoProgress(video).completed ? '' : t('quiz.watchFirstHint')"
                     @click="router.push(`/videos/${video.id}/quiz`)"
                   >
                     <Icon
                       :name="videoProgress(video).completed ? 'file-text' : 'lock'"
-                      size="13"
-                      class="shrink-0 text-ink-faint"
+                      size="14"
+                      class="shrink-0 text-ink-muted"
                     />
-                    <span class="min-w-0 flex-1 truncate text-caption text-ink-muted">{{ t('quiz.title') }}</span>
+                    <span class="min-w-0 flex-1 truncate text-small font-medium text-ink-muted">{{ t('quiz.title') }}</span>
                   </button>
                 </template>
 
@@ -284,33 +306,33 @@ onMounted(load)
                   v-for="material in materialsByTopic[topic.id]"
                   :key="material.id"
                   type="button"
-                  class="flex w-full items-center gap-3 px-4 py-3 text-left transition-default hover:bg-surface-2"
+                  class="flex w-full items-center gap-3 px-5 py-3 text-left transition-default hover:bg-surface-2"
                   @click="openMaterial = material"
                   @mouseenter="onMaterialHover(material)"
                 >
                   <span
-                    class="flex h-7 w-7 shrink-0 items-center justify-center rounded-full"
-                    :class="materialProgress(material).completed ? 'bg-success-subtle text-success' : 'bg-surface-2 text-ink-muted'"
+                    class="flex h-8 w-8 shrink-0 items-center justify-center rounded"
+                    :class="materialProgress(material).completed ? 'bg-success/10 text-success' : 'bg-surface-2 text-ink-muted'"
                   >
-                    <Icon :name="materialIcon(material)" size="13" />
+                    <Icon :name="materialIcon(material)" size="14" />
                   </span>
-                  <span class="min-w-0 flex-1 truncate text-small text-ink">{{ material.title }}</span>
+                  <span class="min-w-0 flex-1 truncate text-small font-medium text-ink">{{ material.title }}</span>
 
                   <!-- Read all of it, part of it, or none: the row says which. -->
                   <Icon
                     v-if="materialProgress(material).completed"
                     name="check-circle"
-                    size="15"
+                    size="16"
                     class="shrink-0 text-success"
                   />
                   <span
                     v-else-if="materialProgress(material).totalPages"
-                    class="shrink-0 text-caption tabular-nums text-ink-faint"
+                    class="shrink-0 text-caption tabular-nums text-ink-muted"
                   >
                     {{ materialProgress(material).viewedPages }}/{{ materialProgress(material).totalPages }} ·
                     {{ materialProgress(material).completionPercent }}%
                   </span>
-                  <Icon v-else name="eye" size="13" class="shrink-0 text-ink-faint" />
+                  <Icon v-else name="eye" size="14" class="shrink-0 text-ink-muted" />
                 </button>
 
                 <!-- The module's closing test, listed after its videos -->
@@ -318,31 +340,31 @@ onMounted(load)
                   v-for="assessment in assessmentsByTopic[topic.id]"
                   :key="assessment.id"
                   type="button"
-                  class="flex w-full items-center gap-3 px-4 py-3 text-left transition-default hover:bg-surface-2"
+                  class="flex w-full items-center gap-3 px-5 py-3 text-left transition-default hover:bg-surface-2"
                   @click="router.push(`/assessments/${assessment.id}`)"
                 >
                   <span
-                    class="flex h-7 w-7 shrink-0 items-center justify-center rounded-full"
-                    :class="assessmentProgress(assessment).completed ? 'bg-success-subtle text-success' : 'bg-primary-subtle text-primary'"
+                    class="flex h-8 w-8 shrink-0 items-center justify-center rounded"
+                    :class="assessmentProgress(assessment).completed ? 'bg-success/10 text-success' : 'bg-primary/10 text-primary'"
                   >
-                    <Icon name="check-square" size="13" />
+                    <Icon name="check-square" size="14" />
                   </span>
                   <span class="min-w-0 flex-1 truncate text-small font-medium text-ink">{{ assessment.title }}</span>
                   <span
                     v-if="assessmentProgress(assessment).completed"
-                    class="flex shrink-0 items-center gap-1 text-caption font-medium text-success"
+                    class="flex shrink-0 items-center gap-1.5 text-caption font-semibold text-success"
                   >
                     <Icon name="check-circle" size="14" />
                     {{ t('assessment.passed') }}
                   </span>
-                  <span v-else class="shrink-0 text-caption text-ink-faint">
+                  <span v-else class="shrink-0 text-caption text-ink-muted">
                     {{ t('assessment.questionCount', { count: assessment.questionCount ?? assessment.questions?.length ?? 0 }) }}
                   </span>
                 </button>
 
                 <p
                   v-if="!videosByTopic[topic.id]?.length && !materialsByTopic[topic.id]?.length && !assessmentsByTopic[topic.id]?.length"
-                  class="px-4 py-4 text-center text-small text-ink-faint"
+                  class="px-5 py-6 text-center text-small text-ink-faint"
                 >
                   {{ t('videos.empty') }}
                 </p>
@@ -353,30 +375,12 @@ onMounted(load)
           </div>
         </div>
 
-        <div v-else-if="activeTab === 'reviews'" class="lg:col-span-2">
+        <div v-else-if="activeTab === 'reviews'" class="max-w-4xl">
           <ReviewsPanel :course-id="course.id" />
         </div>
 
-        <div v-else-if="activeTab === 'qa'" class="lg:col-span-2">
+        <div v-else-if="activeTab === 'qa'" class="max-w-4xl">
           <QAPanel :course-id="course.id" />
-        </div>
-
-        <!-- Sidebar -->
-        <div class="space-y-5">
-          <AppCard>
-            <p class="text-small font-semibold text-ink">{{ t('dashboard.progress.title') }}</p>
-            <ProgressBar class="mt-3" :value="progress?.completionPercent ?? 0" />
-            <p class="mt-2 text-caption text-ink-faint">
-              {{ progress?.completionPercent ?? 0 }}% {{ t('videos.completed') }}
-              <span v-if="progress">({{ progress.completedItems }}/{{ progress.totalItems }})</span>
-            </p>
-            <AppButton block class="mt-4" :disabled="!continueVideo()" @click="onContinue">{{ t('courses.continue') }}</AppButton>
-          </AppCard>
-
-          <!-- AI o'quv yordamchisi vaqtincha yashirilgan — komponent, servis va
-               tarjimalari joyida turibdi, keyinroq rivojlantirilgandan so'ng
-               shu qatorni qayta ochish kifoya.
-          <AiChatPanel :course-id="course.id" /> -->
         </div>
       </div>
     </template>
