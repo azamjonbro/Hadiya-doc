@@ -1488,7 +1488,33 @@
     sanoq). Hech biri haqiqiy emas edi. `--test-concurrency=2` bilan
     to'plam barqaror (677 test, ~90 soniya); sabab va HTTP testlarining
     talablari `backend/TESTING.md` da yozildi.
-- [ ] **8.2** **Hisobotni ekranda ko'rish** — `ReportsView` da jadval + grafik (FL-29)
+- [x] **8.2** **Hisobotni ekranda ko'rish** — `ReportsView` da jadval + grafik (FL-29)
+  · Bajarildi — `GET /reports/:type/preview` JSON qaytaradi (fayl emas), va
+  `ReportsView` da har bir hisobotning yonida «Ko'rish» tugmasi: modal ichida
+  `DataTable` (0.10) + `Chart` (0.10), sonli ustunni tanlash mumkin.
+  · **To'rtinchi chegara.** Preview `PREVIEW_MAX_ROWS = 100` bilan cheklangan
+  — eksportning 5 000 va 100 000 idan boshqa sabab bilan: bu qatorlar
+  brauzerdagi jadvalga tushadi, 5 000 qator esa javob bermaydigan tab
+  degani. Chegara mijozdan **olinmaydi** (`omit({format:true})` sxemasi
+  `maxRows` ni qabul qilmaydi) — aks holda mijoz o'z chegarasini ko'tarib,
+  preview'ni cheksiz o'qishga aylantirardi. Farq jimgina qolmaydi: ekran
+  ham xuddi fayl kabi «100 / 114» deb aytadi.
+  · **Yonida topilgan xato:** `report:view` ruxsati beshta rolga berilgan
+  edi, lekin **hech qayerda tekshirilmasdi** — butun `/reports` router'i
+  `report:export` talab qilardi. Ya'ni **AUTHOR, INSTRUCTOR va MENTOR**
+  (view bor, export yo'q) hisobot marshrutlarining birontasiga ham kira
+  olmasdi, garchi ruxsatlari «ko'rishi mumkin» deb tursa ham. Endi:
+  katalog va preview — `report:view` **yoki** `report:export`; eksport va
+  navbat — faqat `report:export`. Buning uchun `requireAnyPermission()`
+  qo'shildi (`requirePermission(a, b)` ni o'quvchi «ikkalasi ham kerak»
+  deb o'qishi mumkin edi).
+  · Ekranda ko'rish ham audit qilinadi (`REPORT_VIEWED`) — eksportni audit
+  qilishga arzigan narsa fayl emas, xodim ma'lumotining chiqishi edi, u
+  esa ikkala yo'lda ham chiqadi.
+  · Sinov: `test/reportPermissions.test.js` (8 test, HTTP orqali) —
+  ko'ruvchi ko'radi, yuklab ololmaydi, navbatga qo'ya olmaydi; eksport
+  huquqi borga ikkalasi ham ochiq; tokensiz 401; audit yozuvi bor.
+  `reportExport.test.js` ga preview chegarasi va scope fence'i qo'shildi.
 - [x] **8.3** **Async eksport** — `models/exportJob.model.js`, `jobs/exportQueue.js`,
   `MAX_ROWS` kesilganini ochiq ko'rsatish
   · Qabul: **AT-22**
