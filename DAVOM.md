@@ -63,24 +63,23 @@ foydalanuvchi so'rovi bilan to'xtatilgan ("telegram bog'lama shartmas"),
 kodi `git stash` da. Uni "keyingi band" deb olma; holat paneli uni shunday
 ko'rsatadi, chunki u ro'yxatdagi birinchi `[ ]` bandni oladi.
 
-**Hozir BLOK 9 (Kontent va authoring):** **BLOK 9 to'liq tugadi** (9.1–9.6) —
-matn darsi to'liq oqim bilan (polimorf baza, 12 blok turi, blok editori,
-o'quvchi sahifasi, blok-asosli progress) va **SCORM 1.2/2004 import**
-(worker'da ochish, manifest parseri, launcher sahifadagi runtime API,
-CMI holati, suspend/resume, mastery). **Hozir BLOK 10 (AI):** **BLOK 10 to'liq tugadi** (10.1–10.6): generatsiya ishlari,
-hujjat o'qish, kurs konspekti, savollar, tarjima qatlami, token byudjeti +
-PII redaksiyasi va 10.6 ning poydevori (oylik token byudjeti,
-PII redaksiyasi). **Hozir BLOK 11 (Korxona):** 11.1 (API kalitlar + `/api/public/v1`) va
-11.2 (webhook'lar: 6 voqea, HMAC `t=…,v1=…`, 5× eksponensial retry,
-yetkazish jurnali + qayta yuborish, SSRF darvozalari), 11.3 (OpenAPI —
-`GET /api/openapi.json` + `/api/docs`, **router'lardan generatsiya**:
-middleware'lar o'zlarini teglaydi, hujjat qo'lda yuritilmaydi) va 11.4
-(OIDC SSO — code+PKCE, JWKS imzo tekshiruvi, JIT provisioning,
-claim → rol/bo'lim mapping; sirlar env'da, mapping Settings'da)
-bajarildi, va 11.5 (`Idempotency-Key` — javobi yo'qolgan so'rovning
-qayta yuborilishi ikkinchi yozuv yaratmasligi; `SET NX`, 24 soat,
-5 yozuv endpointida). **Keyingi band — 11.6 (TOTP 2FA va foydalanuvchi
-sessiyalari sahifasi) — BLOK 11 ning oxirgi bandi.**
+**BLOK 9 (Kontent va authoring) tugadi** (9.1–9.6) — matn darsi to'liq
+oqim bilan (polimorf baza, 12 blok turi, blok editori, o'quvchi sahifasi,
+blok-asosli progress), **SCORM 1.2/2004 import** (worker'da ochish,
+manifest parseri, launcher sahifadagi runtime API, CMI holati,
+suspend/resume, mastery), subtitrlar, media kutubxonasi va rasm
+optimizatsiyasi.
+
+**BLOK 10 (AI) tugadi** (10.1–10.6): generatsiya ishlari, hujjat o'qish,
+kurs konspekti, savollar, tarjima qatlami, oylik token byudjeti va PII
+redaksiyasi.
+
+**BLOK 11 (Korxona) tugadi** — 11.1 API kalitlar + `/api/public/v1`,
+11.2 webhook'lar (HMAC + 5× retry + SSRF darvozalari), 11.3 OpenAPI
+(router'lardan generatsiya, `/api/docs`), 11.4 OIDC SSO (code+PKCE, JIT
+provisioning, claim → rol/bo'lim), 11.5 `Idempotency-Key`, 11.6 TOTP 2FA
+(RFC 6238, shifrlangan sir, zaxira kodlar) + qurilmalar/sessiyalar
+sahifasi. **Keyingi blok — BLOK 12 (PWA, oflayn, a11y).**
 
 **⚠️ AI hech qayerda haqiqiy API bilan sinalmagan:** `ANTHROPIC_API_KEY`
 na lokalda, na serverda sozlanmagan (`env` da bo'sh sukut). Kod stub bilan
@@ -112,15 +111,22 @@ satrlar BLOK 1–8 davomida yangilangan, jamlanma esa yangilanmagan.
 
 | Metrika | Qiymat |
 |---|:--:|
-| Vaznsiz (336 capability) | **59,3** |
+| Vaznsiz (336 capability) | **59,6** |
 | FULL / OURS+ | **118 / 48** |
 | PARTIAL / NONE / VERIFY | **59 / 91 / 21** |
-| **Gap** | **≈41%** |
+| **Gap** | **≈40%** |
 
 Vaznlangan raqam qayta hisoblanmaydi — vazn jadvali repozitoriyda yo'q
 (`docs/v4/01-executive-summary.md` dagi metodologiya eslatmasi).
 
-**Testlar:** `npm --prefix backend test` — 929 test, 927 o'tadi, 2 tasi yiqiladi va
+**Yangi env o'zgaruvchilari (11.4, 11.6):** `OIDC_ISSUER`,
+`OIDC_CLIENT_ID`, `OIDC_CLIENT_SECRET`, `OIDC_REDIRECT_URI` (bo'sh bo'lsa
+SSO 503 qaytaradi va kirish sahifasida tugma yo'q) va
+**`TWOFA_SECRET_KEY`** (64 hex belgi; bo'sh bo'lsa 2FA yoqib bo'lmaydi —
+sir xavfsiz saqlanmasligi kerak emas). Ikkisi ham prodda **ataylab
+sozlanmagan**: yoqish — administrator qarori.
+
+**Testlar:** `npm --prefix backend test` — 951 test, 949 o'tadi, 2 tasi yiqiladi va
 ikkisi ham **eskidan** yiqilib turadi (`faceVerification`: yuz aniqlanmagan
 rasm; `facePolicy`: hisobni bloklash). Darslarga aloqasi yo'q.
 
@@ -152,7 +158,7 @@ BLOK 7  Qidiruv, KB, compliance, gamification  ✅
 BLOK 8  Hisobot, analitika             ✅
 BLOK 9  Kontent va authoring           ← **BLOK 9 to'liq tugadi** (9.1–9.6); keyingisi 9.5
 BLOK 10 AI                             ✅
-BLOK 11 Korxona                        ← 11.1–11.5 bajarildi
+BLOK 11 Korxona                        ← tugadi
 BLOK 12 Mobil va accessibility
 BLOK 13 Kengaytirilgan baholash
 BLOK 14 Regressiya himoyasi (doimiy)

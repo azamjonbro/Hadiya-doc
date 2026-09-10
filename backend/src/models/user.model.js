@@ -47,6 +47,43 @@ const userSchema = new Schema(
      * who signs in with a password, hence the partial unique index below —
      * a plain one would let the second such account collide with the first.
      */
+    /**
+     * TOTP two-factor authentication (11.6).
+     *
+     * The secret is stored **encrypted** (`utils/secretBox.js`), not
+     * hashed: verifying a code means recomputing it. The encryption key
+     * lives in the environment, so a database dump alone carries no
+     * working second factor.
+     *
+     * `lastCounter` is what stops a replay. A six-digit code stays valid
+     * for at least thirty seconds, so without recording the step that was
+     * accepted, one code observed over somebody's shoulder can be used
+     * again for the rest of its window.
+     *
+     * `recoveryCodes` are argon2 hashes, like passwords, and single-use:
+     * a lost phone must not be an account lost with it, and a recovery
+     * code that survives its use is a permanent bypass of the second
+     * factor.
+     */
+    twoFactor: {
+      type: new Schema(
+        {
+          enabled: { type: Boolean, default: false },
+          secret: { type: String, default: '' },
+          // Set while enrolling and confirmed by the first correct code:
+          // enabling on the secret alone would lock out anybody whose app
+          // never actually scanned it.
+          pendingSecret: { type: String, default: '' },
+          confirmedAt: { type: Date, default: null },
+          lastCounter: { type: Number, default: 0 },
+          recoveryCodes: { type: [String], default: [] },
+          recoveryCodesIssuedAt: { type: Date, default: null },
+        },
+        { _id: false }
+      ),
+      default: () => ({}),
+    },
+
     ssoSubject: { type: String, default: undefined, trim: true },
     // Which provider vouched for them, so a deployment that changes
     // identity providers can tell whose link is stale.

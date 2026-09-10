@@ -215,6 +215,19 @@ const envSchema = z.object({
   // reason.
   OIDC_REDIRECT_URI: z.string().optional().default(''),
 
+  /**
+   * The key that encrypts stored TOTP secrets (11.6).
+   *
+   * A TOTP secret cannot be hashed — verifying a code means recomputing
+   * it — so it is encrypted with this instead, and this lives outside the
+   * database on purpose: a Mongo dump alone then contains no working
+   * second factor. 64 hex characters are used as raw key material,
+   * anything else is stretched with scrypt. Empty means enrolment is
+   * refused with a clear 503 rather than silently storing secrets in the
+   * clear.
+   */
+  TWOFA_SECRET_KEY: z.string().optional().default(''),
+
   // Outbound email. Empty SMTP_HOST = mail is not configured: every send is
   // recorded as SKIPPED and nothing else changes, so a laptop and a day-one
   // install both work. It is not an error state.

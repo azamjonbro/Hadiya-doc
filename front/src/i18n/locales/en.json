@@ -121,6 +121,14 @@
         "SSO_ROLE_UNKNOWN": "The SSO mapping names a role that does not exist.",
         "SSO_FAILED": "The sign-in did not complete. Contact an administrator."
       }
+    },
+    "twoFactor": {
+      "title": "Second step",
+      "subtitle": "Enter the 6-digit code from your authenticator app.",
+      "code": "Code",
+      "recoveryHint": "No phone with you — enter one of your recovery codes.",
+      "submit": "Continue",
+      "back": "Back"
     }
   },
   "forbidden": {
@@ -829,7 +837,8 @@
       "profile": "Profile",
       "activity": "Activity",
       "notifications": "Notifications",
-      "preferences": "Preferences"
+      "preferences": "Preferences",
+      "security": "Security"
     },
     "sections": {
       "profile": "Profile",
@@ -2847,5 +2856,52 @@
     "ruleEquals": "Value",
     "ruleRole": "Role",
     "addRule": "Add a rule"
+  },
+  "security": {
+    "title": "Two-factor sign-in",
+    "hint": "A code from an app on your phone, on top of the password. A stolen password alone no longer gets in.",
+    "on": "on",
+    "off": "off",
+    "loadFailed": "Could not load the status",
+    "setupFailed": "Could not start the setup",
+    "unavailable": "TWOFA_SECRET_KEY is not configured on the server — a server administrator sets it. Until then a secret cannot be stored safely, so this cannot be turned on.",
+    "requiredByPolicy": "Company policy requires two-factor sign-in.",
+    "turnOn": "Turn on",
+    "turnOff": "Turn off",
+    "scanTitle": "Scan the QR code with an authenticator app",
+    "manualEntry": "Or enter the secret by hand (shown only now):",
+    "codeLabel": "Code from the app",
+    "codeNeeded": "Turning it off, or reissuing codes, needs a code from the app or a recovery code — not the password, since the password is what this protects the account from.",
+    "confirm": "Confirm",
+    "enabled": "Two-factor sign-in is on",
+    "disabled": "Two-factor sign-in is off",
+    "codeRejected": "That code is not right",
+    "confirmDisable": "Two-factor sign-in will be turned off and the recovery codes voided. Continue?",
+    "confirmRegenerate": "New recovery codes will be issued and the old ones will stop working. Continue?",
+    "newRecoveryCodes": "New recovery codes",
+    "recoveryTitle": "The recovery codes are shown only now",
+    "recoveryHint": "These sign you in if you lose the phone. Each works once — print them or keep them in a password manager.",
+    "recoveryLeft": "recovery codes left: {count}",
+    "enabledSince": "on since {date}",
+    "copy": "Copy",
+    "copied": "Copied",
+    "copyFailed": "Could not copy",
+    "stored": "Stored them"
+  },
+  "sessions": {
+    "title": "Where you are signed in",
+    "hint": "Any row can be ended. If you see a device you do not recognise, end it and change your password.",
+    "empty": "No active sessions.",
+    "loadFailed": "Could not load the sessions",
+    "thisDevice": "this device",
+    "lastSeen": "last active {date}",
+    "end": "End",
+    "endOthers": "Sign out everywhere else",
+    "ended": "Session ended",
+    "endedOthers": "{count} sessions ended",
+    "endFailed": "Could not end it",
+    "confirmEnd": "The «{device}» session will be ended. Continue?",
+    "confirmEndCurrent": "This is the device you are using. Ending it signs you out here. Continue?",
+    "confirmEndOthers": "Every session except this device will be ended. Continue?"
   }
 }

@@ -19,6 +19,7 @@ import { logger } from '../../config/logger.js'
 import { notificationService } from '../notifications/notification.service.js'
 import { isMailConfigured } from '../notifications/mail.service.js'
 import { formatNotificationDateTime } from '../../utils/notificationFormat.js'
+import { twoFactorService } from './twoFactor.service.js'
 
 // One hour (AT-14). Long enough to survive a mail queue retrying and a
 // person reading it later in the day; short enough that a link left in an
@@ -199,6 +200,15 @@ export const authService = {
       ip: meta.ip,
       userAgent: meta.userAgent,
     })
+
+    /**
+     * The second factor stands between a correct password and a session
+     * (11.6), the same way the face check does — and *before* it, because
+     * a code from an app is cheaper to produce than a camera frame and
+     * failing the cheap check first is less work for everybody.
+     */
+    const twoFactorChallenge = await twoFactorService.challengeIfRequired(user)
+    if (twoFactorChallenge) return twoFactorChallenge
 
     return establishSession(user, meta)
   },

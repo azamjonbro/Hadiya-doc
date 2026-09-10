@@ -30,6 +30,42 @@ const errorMessage = ref('')
 const pendingVerificationToken = ref('')
 
 /**
+ * The second factor (11.6).
+ *
+ * Same page, same card as the face challenge, and for the same reason:
+ * there is nothing to bookmark or navigate to in the middle of a login.
+ */
+const pendingTwoFactorToken = ref('')
+const twoFactorCode = ref('')
+const twoFactorSubmitting = ref(false)
+
+async function submitTwoFactor() {
+  if (twoFactorSubmitting.value) return
+  twoFactorSubmitting.value = true
+  errorMessage.value = ''
+  try {
+    const result = await auth.completeTwoFactor(pendingTwoFactorToken.value, twoFactorCode.value.trim())
+    if (result.requiresFaceVerification) {
+      pendingTwoFactorToken.value = ''
+      pendingVerificationToken.value = result.verificationToken
+      faceState.value = 'idle'
+      return
+    }
+    goHome()
+  } catch (error) {
+    errorMessage.value = loginErrorMessage(error)
+    // The challenge is spent after too many wrong codes, and the API says
+    // so — sending them back to the password step is the honest response.
+    if (error?.response?.data?.code === 'TWOFA_TOO_MANY_ATTEMPTS' || error?.response?.data?.code === 'TWOFA_CHALLENGE_UNKNOWN') {
+      pendingTwoFactorToken.value = ''
+      twoFactorCode.value = ''
+    }
+  } finally {
+    twoFactorSubmitting.value = false
+  }
+}
+
+/**
  * Single sign-on (11.4).
  *
  * The button is drawn only when the API says SSO is both configured and
@@ -123,6 +159,11 @@ async function onSubmit() {
   errorMessage.value = ''
   try {
     const result = await auth.login(identifier.value, password.value)
+    if (result.requiresTwoFactor) {
+      pendingTwoFactorToken.value = result.twoFactorToken
+      twoFactorCode.value = ''
+      return
+    }
     if (result.requiresFaceVerification) {
       pendingVerificationToken.value = result.verificationToken
       faceState.value = 'idle'
@@ -191,7 +232,41 @@ const highlights = [
           <span class="text-body font-semibold text-ink">{{ t('app.name') }}</span>
         </div>
 
-        <template v-if="!pendingVerificationToken">
+        <!-- Password accepted, a code from the authenticator app still
+             stands between this login and a session. -->
+        <template v-if="pendingTwoFactorToken">
+          <h1 class="text-h1 text-ink">{{ t('auth.twoFactor.title') }}</h1>
+          <p class="mt-2 text-small text-ink-muted">{{ t('auth.twoFactor.subtitle') }}</p>
+
+          <form class="mt-8 space-y-4" @submit.prevent="submitTwoFactor">
+            <AppInput
+              v-model="twoFactorCode"
+              :label="t('auth.twoFactor.code')"
+              icon="lock"
+              inputmode="text"
+              autocomplete="one-time-code"
+              autofocus
+              required
+            />
+            <p class="text-caption text-ink-faint">{{ t('auth.twoFactor.recoveryHint') }}</p>
+
+            <Transition enter-active-class="transition-default" enter-from-class="opacity-0 -translate-y-1">
+              <div v-if="errorMessage" class="flex items-start gap-2 rounded-md border border-danger/20 bg-danger-subtle px-3 py-2.5 text-small text-danger">
+                <Icon name="alert-circle" size="16" class="mt-0.5 shrink-0" />
+                {{ errorMessage }}
+              </div>
+            </Transition>
+
+            <AppButton type="submit" block size="lg" :loading="twoFactorSubmitting">
+              {{ t('auth.twoFactor.submit') }}
+            </AppButton>
+            <AppButton variant="ghost" block @click="pendingTwoFactorToken = ''">
+              {{ t('auth.twoFactor.back') }}
+            </AppButton>
+          </form>
+        </template>
+
+        <template v-else-if="!pendingVerificationToken">
           <h1 class="text-h1 text-ink">{{ t('auth.login.title') }}</h1>
           <p class="mt-2 text-small text-ink-muted">{{ t('auth.login.subtitle') }}</p>
 

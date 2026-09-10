@@ -21,6 +21,19 @@ export const authController = {
       return
     }
 
+    // The password was right and a second factor still stands between this
+    // request and a session (11.6). Same shape as the face challenge: no
+    // tokens exist yet, only the short-lived challenge the client
+    // exchanges via POST /auth/2fa/verify.
+    if (result.requiresTwoFactor) {
+      sendSuccess(
+        res,
+        { requiresTwoFactor: true, twoFactorToken: result.twoFactorToken },
+        'Two-factor code required'
+      )
+      return
+    }
+
     const { accessToken, refreshToken, user } = result
     const csrfToken = setAuthCookies(res, { refreshToken })
     sendSuccess(res, { accessToken, user, csrfToken }, 'Logged in')

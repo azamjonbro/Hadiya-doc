@@ -15,6 +15,9 @@ import {
 } from '../../validators/auth.validator.js'
 import { faceRouter } from './face.routes.js'
 import { ssoController } from '../../controllers/sso.controller.js'
+import { sessionController, twoFactorController } from '../../controllers/twoFactor.controller.js'
+import { authenticate } from '../../middlewares/auth.middleware.js'
+import { twoFactorCodeSchema, twoFactorVerifySchema } from '../../validators/twoFactor.validator.js'
 import { validateQuery } from '../../middlewares/validate.middleware.js'
 import { ssoCallbackSchema, ssoExchangeSchema, ssoStartSchema } from '../../validators/sso.validator.js'
 
@@ -66,3 +69,42 @@ authRouter.post(
   validateBody(ssoExchangeSchema),
   ssoController.exchange
 )
+
+/**
+ * Two-factor authentication (11.6).
+ *
+ * `/2fa/verify` is the only one that is **not** authenticated: it is the
+ * second half of a login, and there is no session yet — the challenge
+ * token from `/login` is what identifies the attempt. It carries the login
+ * limiter for the same reason `/login` does.
+ */
+authRouter.post(
+  '/2fa/verify',
+  loginRateLimiter,
+  validateBody(twoFactorVerifySchema),
+  twoFactorController.verify
+)
+
+// Everything below manages the caller's own account, so it needs a session.
+authRouter.get('/2fa/status', authenticate, twoFactorController.status)
+authRouter.post('/2fa/setup', authenticate, twoFactorController.setup)
+authRouter.post('/2fa/enable', authenticate, validateBody(twoFactorCodeSchema), twoFactorController.enable)
+authRouter.post('/2fa/disable', authenticate, validateBody(twoFactorCodeSchema), twoFactorController.disable)
+authRouter.post(
+  '/2fa/recovery-codes',
+  authenticate,
+  validateBody(twoFactorCodeSchema),
+  twoFactorController.regenerate
+)
+
+/**
+ * "Where am I signed in?" (11.6).
+ *
+ * The sessions were always there — a refresh token is a row — but nothing
+ * showed them to the person they belong to, so the only answer to a "new
+ * device" notification was changing the password, which ends every session
+ * including the one reading the mail.
+ */
+authRouter.get('/sessions', authenticate, sessionController.list)
+authRouter.delete('/sessions/others', authenticate, sessionController.revokeOthers)
+authRouter.delete('/sessions/:id', authenticate, sessionController.revoke)

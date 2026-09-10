@@ -82,7 +82,24 @@ export const useAuthStore = defineStore('auth', {
       if (data.data.requiresFaceVerification) {
         return { requiresFaceVerification: true, verificationToken: data.data.verificationToken }
       }
+      // A second factor stands between a correct password and a session
+      // (11.6) — the same shape as the face challenge, so this store stays
+      // the only place that decides what "logged in" means.
+      if (data.data.requiresTwoFactor) {
+        return { requiresTwoFactor: true, twoFactorToken: data.data.twoFactorToken }
+      }
       this.setSession(data.data)
+      return { requiresFaceVerification: false }
+    },
+
+    /** Finishes a login that stopped at the second factor (11.6). */
+    async completeTwoFactor(token, code) {
+      const { securityApi } = await import('@/services/security')
+      const session = await securityApi.verifyLogin(token, code)
+      if (session.requiresFaceVerification) {
+        return { requiresFaceVerification: true, verificationToken: session.verificationToken }
+      }
+      this.setSession(session)
       return { requiresFaceVerification: false }
     },
 

@@ -17,6 +17,8 @@ import Icon from '@/components/ui/Icon.vue'
 import Tabs from '@/components/ui/Tabs.vue'
 import Skeleton from '@/components/ui/Skeleton.vue'
 import AppButton from '@/components/ui/AppButton.vue'
+import TwoFactorCard from '@/components/security/TwoFactorCard.vue'
+import SessionsCard from '@/components/security/SessionsCard.vue'
 
 const { t, locale } = useI18n()
 const auth = useAuthStore()
@@ -29,6 +31,11 @@ const tabs = computed(() => [
   { value: 'activity', label: t('settings.tabs.activity') },
   { value: 'notifications', label: t('settings.tabs.notifications') },
   { value: 'preferences', label: t('settings.tabs.preferences') },
+  // 11.6 — the second factor and the list of devices this account is
+  // signed in on. Its own tab rather than a row inside preferences: these
+  // are decisions, not settings somebody flips while looking for the
+  // theme switch.
+  { value: 'security', label: t('settings.tabs.security') },
 ])
 
 const languageOptions = computed(() => availableLocales.map((code) => ({ value: code, label: t(`locales.${code}`) })))
@@ -234,6 +241,13 @@ onMounted(() => {
             </table>
           </div>
         </AppCard>
+      </template>
+
+      <template v-else-if="activeTab === 'security'">
+        <div class="space-y-4">
+          <TwoFactorCard />
+          <SessionsCard />
+        </div>
       </template>
 
       <template v-else-if="activeTab === 'preferences'">

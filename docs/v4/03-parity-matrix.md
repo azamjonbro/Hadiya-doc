@@ -424,10 +424,10 @@
 | Capability | iSp | Bizda | Status | Sc | Evidence | Gap |
 |---|:--:|---|:--:|:--:|---|---|
 | Parol hashlash | ? | argon2id | OURS+ | 100 | `utils/hash.js` | — |
-| Sessiya + refresh rotation + reuse detection | ? | Bor | OURS+ | 100 | `session.model.js` (`replacedBy`) | — |
+| Sessiya + refresh rotation + reuse detection | ? | Bor, va **egasiga ko'rinadi** — qurilmalar ro'yxati + tugatish | OURS+ | 100 | `session.service.js`, `SessionsCard.vue` | — |
 | CSRF | ? | Double-submit | OURS+ | 100 | `csrf.middleware.js` | — |
 | Brute-force / lockout / CAPTCHA | ? | Bor | OURS+ | 100 | `auth.service.js`, `captcha.service.js` | — |
-| **2FA / TOTP** | ? | Yo'q (face verification bor) | VERIFY | 0 | — | — |
+| **2FA / TOTP** | ? | Bor — RFC 6238, shifrlangan sir, replay himoyasi, 10 zaxira kod | FULL | 100 | `utils/totp.js`, `twoFactor.service.js` | — |
 | **Face verification** | — | Bor, 3 harakatda gate | OURS+ | 100 | `faceGate.service.js`, `FACE_GATE_ACTIONS` | — |
 | **Proctoring (begona yuz)** | — | Bor | OURS+ | 100 | `proctorSnapshot.service.js` | — |
 | **Kamera diqqat monitoringi** | — | Bor, 8 maydonli siyosat | OURS+ | 100 | `attentionPolicy.model.js` | — |
@@ -449,7 +449,7 @@
 | Orphan fayl tozalash | ? | Yo'q — kodda tan olingan qarz | VERIFY | 0 | `course.service.js:378-381` | `mediaCleanupQueue` |
 | Rasm optimizatsiyasi | ? | Bor — `sharp` → WebP, 2560px chegara, thumbnail, EXIF olib tashlanadi | FULL | 100 | `imageOptimize.js` | — |
 | Storage sarfi ko'rsatkichi | ? | Yo'q | VERIFY | 0 | — | — |
-| **D74–D79 jami: 26 capability** | | | **FULL 7 · OURS+ 11 · PARTIAL 3 · NONE 2 · VERIFY 3** | **75** | | |
+| **D74–D79 jami: 26 capability** | | | **FULL 8 · OURS+ 11 · PARTIAL 3 · NONE 2 · VERIFY 2** | **79** | | |
 
 ## D80–D95 · PERFORMANCE / A11Y / AUTOMATION / RECOMMENDATIONS / STANDARDS / SUITE / E-COM / ENTERPRISE
 

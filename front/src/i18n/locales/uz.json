@@ -121,6 +121,14 @@
         "SSO_ROLE_UNKNOWN": "SSO sozlamalarida mavjud bo'lmagan rol ko'rsatilgan.",
         "SSO_FAILED": "Kirish amalga oshmadi. Administratorga murojaat qiling."
       }
+    },
+    "twoFactor": {
+      "title": "Ikkinchi qadam",
+      "subtitle": "Autentifikator ilovasidagi 6 xonali kodni kiriting.",
+      "code": "Kod",
+      "recoveryHint": "Telefon yo'q bo'lsa — zaxira kodlardan birini kiriting.",
+      "submit": "Davom etish",
+      "back": "Orqaga"
     }
   },
   "forbidden": {
@@ -829,7 +837,8 @@
       "profile": "Profil",
       "activity": "Faollik",
       "notifications": "Bildirishnomalar",
-      "preferences": "Ko'rinish"
+      "preferences": "Ko'rinish",
+      "security": "Xavfsizlik"
     },
     "sections": {
       "profile": "Profil",
@@ -2847,5 +2856,52 @@
     "ruleEquals": "Qiymat",
     "ruleRole": "Rol",
     "addRule": "Qoida qo'shish"
+  },
+  "security": {
+    "title": "Ikki faktorli kirish",
+    "hint": "Parol ustiga telefondagi ilova ko'rsatadigan kod. Parol o'g'irlansa ham hisobga kirilmaydi.",
+    "on": "yoniq",
+    "off": "o'chiq",
+    "loadFailed": "Holatni yuklab bo'lmadi",
+    "setupFailed": "Sozlashni boshlab bo'lmadi",
+    "unavailable": "Server tomonda TWOFA_SECRET_KEY sozlanmagan — bu server administratorining ishi. Sozlanmaguncha sir xavfsiz saqlanmaydi, shuning uchun yoqib bo'lmaydi.",
+    "requiredByPolicy": "Kompaniya sozlamasi bo'yicha ikki faktorli kirish talab qilinadi.",
+    "turnOn": "Yoqish",
+    "turnOff": "O'chirish",
+    "scanTitle": "QR kodni autentifikator ilovasi bilan skanerlang",
+    "manualEntry": "Yoki sirni qo'lda kiritish (faqat hozir ko'rinadi):",
+    "codeLabel": "Ilovadagi kod",
+    "codeNeeded": "O'chirish va kodlarni yangilash uchun ilovadagi kod yoki zaxira kod kerak — parol emas, chunki ikki faktor aynan paroldan himoya qiladi.",
+    "confirm": "Tasdiqlash",
+    "enabled": "Ikki faktorli kirish yoqildi",
+    "disabled": "Ikki faktorli kirish o'chirildi",
+    "codeRejected": "Kod to'g'ri kelmadi",
+    "confirmDisable": "Ikki faktorli kirish o'chiriladi va zaxira kodlar bekor bo'ladi. Davom etamizmi?",
+    "confirmRegenerate": "Yangi zaxira kodlar beriladi, eskilari ishlamaydi. Davom etamizmi?",
+    "newRecoveryCodes": "Yangi zaxira kodlar",
+    "recoveryTitle": "Zaxira kodlar faqat hozir ko'rinadi",
+    "recoveryHint": "Telefon yo'qolsa shu kodlar bilan kirasiz. Har biri bir marta ishlaydi — chop etib qo'ying yoki parol menejeriga saqlang.",
+    "recoveryLeft": "qolgan zaxira kodlar: {count}",
+    "enabledSince": "yoqilgan: {date}",
+    "copy": "Nusxa olish",
+    "copied": "Nusxa olindi",
+    "copyFailed": "Nusxa olib bo'lmadi",
+    "stored": "Saqlab oldim"
+  },
+  "sessions": {
+    "title": "Qaysi qurilmalarda kirilgan",
+    "hint": "Har bir qatordan chiqib ketishingiz mumkin. Notanish qurilma ko'rsangiz — uni tugatib, parolni almashtiring.",
+    "empty": "Faol sessiya yo'q.",
+    "loadFailed": "Sessiyalarni yuklab bo'lmadi",
+    "thisDevice": "shu qurilma",
+    "lastSeen": "oxirgi faollik: {date}",
+    "end": "Tugatish",
+    "endOthers": "Boshqa hamma qurilmalardan chiqish",
+    "ended": "Sessiya tugatildi",
+    "endedOthers": "{count} sessiya tugatildi",
+    "endFailed": "Tugatib bo'lmadi",
+    "confirmEnd": "«{device}» sessiyasi tugatiladi. Davom etamizmi?",
+    "confirmEndCurrent": "Bu — hozirgi qurilma. Tugatilsa, shu yerdan chiqib ketasiz. Davom etamizmi?",
+    "confirmEndOthers": "Shu qurilmadan tashqari hamma sessiyalar tugatiladi. Davom etamizmi?"
   }
 }

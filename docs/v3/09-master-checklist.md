@@ -2867,7 +2867,115 @@
   Redis bu deploymentda ishonchli (BullMQ, sessiya, rate limit hammasi
   unda), va idempotentlik yozuvi — bir kundan keyin ahamiyatsiz bo'lib
   qoladigan operatsion holat, doimiy ma'lumot emas.
-- [ ] **11.6** TOTP 2FA, foydalanuvchi sessiyalari sahifasi
+- [x] **11.6** TOTP 2FA, foydalanuvchi sessiyalari sahifasi
+  · Bajarildi — **TOTP, SMS emas**: telefon raqamiga yuborilgan kod
+  operatorning SIM'ni qayta berishga tayyorligicha kuchli, har kirishda
+  pul turadi va aloqasi yo'q binoda ishlamaydi — bu platforma
+  ishlatiladigan joylarning bir qismini shundoq tasvirlaydi.
+  · **Kutubxona olinmadi** (`utils/totp.js`, `node:crypto`): algoritm
+  o'ttiz qator, muhim narsalar esa o'rovchi yashiradigan narsalar —
+  oyna kattaligi, kod ikki marta ishlatilishi mumkinmi, taqqoslash
+  timing-safe'mi. **RFC 6238 test vektorlari bilan tekshirilgan**
+  (287082 / 081804 / 050471 / 005924 / 279037) — bu bo'lmasa qolgan
+  hammasi o'z arifmetikamizni o'ziga solishtirish bo'lardi.
+  · SHA-1 / 6 raqam / 30 sekund — bu tanlov emas, autentifikator
+  ilovalari implementatsiya qiladigan narsa. "Kuchliroq" konfiguratsiya
+  Google Authenticator yasay olmaydigan kodlarni berardi, ya'ni yagona
+  ahamiyatli xususiyatni yo'qotardi. Oyna **±1 qadam**: nol bo'lsa
+  soati ikki sekund farq qiladigan telefon rad etilardi, uch bo'lsa
+  taxmin qilish maydoni uch barobar kengayardi.
+  · **Sir shifrlangan holda saqlanadi** (`utils/secretBox.js`,
+  AES-256-GCM), hash qilinmaydi — kodni tekshirish uni **qayta
+  hisoblash**ni talab qiladi. Kalit env'da (`TWOFA_SECRET_KEY`), ya'ni
+  faqat Mongo dump'ida **ishlaydigan ikkinchi faktor yo'q** — "at rest"
+  degani asosan shu. Kalit bo'lmasa **ishlashdan bosh tortadi** (aniq
+  503), jimgina ochiq matnga tushmaydi: jimgina fallback — aynan
+  deployment ikkinchi faktorlarni ochiq saqlab, hech kim bilmay
+  qoladigan yo'l. Har `seal` tasodifiy IV bilan: bir xil sir bir xil
+  shifrmatn bermasligi kerak, aks holda baza kim bilan kim sirni
+  bo'lishganini aytardi. GCM tag'i buzilishni ko'rsatadi (test bilan).
+  · **Sir darhol yoqilmaydi:** `pendingSecret` sifatida saqlanadi va
+  faqat **birinchi to'g'ri kod** ilovada haqiqatan borligini isbotlagach
+  haqiqiy sirga aylanadi. Sir bo'yicha darhol yoqish — skaneri jimgina
+  ishlamagan odamni hisobidan qulflab qo'yish.
+  · **Kod ikki marta ishlatilmaydi** (`lastCounter`): olti xonali kod
+  kamida o'ttiz sekund haqiqiy, ya'ni qabul qilingan qadam yozilmasa,
+  yelka ustidan ko'rilgan bitta kod oynasi tugaguncha qayta ishlatilardi.
+  Kuzatilgan natija: ro'yxatdan o'tishni tasdiqlagan kod ham **sarflangan**
+  — ya'ni darhol chiqib qayta kirmoqchi bo'lgan odam 30 sekundgacha
+  kutadi. Bu ataylab: alternativa — kuzatilgan kodning qayta
+  ishlatilishi.
+  · **Zaxira kodlar** — 10 dona, `A1B2-C3D4` shaklida (qog'ozdan o'qish
+  uchun guruhlangan), **argon2 hash** bilan saqlanadi (bular parol —
+  har biri o'zi kirishga yetadi) va **bir martalik**: telefon
+  yo'qolgani hisob yo'qolgani bo'lmasligi kerak, ishlatilgandan keyin
+  ham qoladigan kod esa ikkinchi faktorning **doimiy chetlab o'tilishi**
+  bo'lardi. Bir marta ko'rsatiladi (API kaliti bilan bir xil shartnoma),
+  ishlatilgani auditga alohida yoziladi (`TWOFA_RECOVERY_USED`) —
+  odatda telefon yo'qolganini, ba'zan boshqa odamning qo'lida
+  bo'lganini bildiradi.
+  · **O'chirish uchun parol yetmaydi** — kod yoki zaxira kod kerak:
+  parolga ega odam aynan ikkinchi faktor himoya qilayotgan odam.
+  · **Kirish oqimi yuz tekshiruvi bilan bir xil shaklda**: to'g'ri parol
+  **challenge** qaytaradi, sessiya emas, va ikkinchi faktor uni
+  almashtiradi. Klientda "ma'lumot to'g'ri, lekin hali kirmadingiz"
+  uchun **bitta** tarmoq bo'ladi, ikkita emas. Challenge Redis'da (90
+  sekund — parol + ilovani ochish + kodni o'qish), **bir martalik**, va
+  **5 urinishdan** keyin kuyadi. Urinishlar **challenge'da** sanaladi,
+  hisobda emas: hisobda sanash JSHSHIR'ni biladigan har kimga
+  egasini qulflash imkonini berardi (test bilan).
+  · Har ikki yo'l ham `establishSession` da tugaydi — parol, SSO va 2FA
+  bir xil sessiya mexanikasiga, shu jumladan yuz siyosatiga boradi.
+  · **Sessiyalar sahifasi:** sessiyalar allaqachon bor edi (refresh
+  token — bu yozuv), lekin **egasiga ko'rsatilmagan** — "yangi
+  qurilmadan kirildi" bildirishnomasiga yagona javob parolni
+  almashtirish bo'lgan, u esa xatni o'qiyotgan sessiyani ham
+  tugatadi. Endi: qurilma nomi (`Chrome · Windows` — ataylab qo'pol
+  taxmin, chunki savol faqat "bu noutbukmi yoki telefonmi"), IP,
+  oxirgi faollik, **"shu qurilma"** belgisi, bitta qatorni tugatish va
+  **"boshqa hamma qurilmalardan chiqish"**. Bekor qilingan va muddati
+  o'tgan qatorlar ko'rsatilmaydi — bu **ish qiladigan** ro'yxat.
+  · Bir sessiyani tugatish javobi `wasCurrent` qaytaradi: hozirgi
+  sessiya tugatilsa ilova chiqib ketishi kerak, va buni 200 dan bilib
+  bo'lmaydi. Boshqa odamning sessiya id'si **404** ("topilmadi") —
+  filtr `userId` bilan, keyingi tekshiruv bilan emas, ya'ni javob hech
+  narsani oshkor qilmaydi.
+  · **HTTP tekshiruvida topilgan xato (tuzatildi):** refresh cookie
+  yuborilmagan chaqiruvda **hech bir sessiya "hozirgi" deb
+  belgilanmagan**, va "boshqalarini tugatish" o'zini ham tugatgan. Endi
+  bunday holat **rad etiladi** (`SESSION_CURRENT_UNKNOWN`): tugma
+  "shu sessiyani saqlaymiz" deb va'da beradi, qaysi biri "shu"
+  ekanini bilmasak — taxmin qilish odamni **hisobini himoya qilayotgan
+  qurilmasidan** chiqarib yuborardi.
+  · **Kuzatilgan xatti-harakat (tuzatildi):** servis 2FA challenge'ini
+  qaytarardi, lekin `authController.login` uni **hisobga olmagan** —
+  javob `{csrfToken}` bo'lib, foydalanuvchi kirgan ham, kirmagan ham
+  emas holatda qolgan. HTTP tekshiruvi topdi (unit testlar servisni
+  chaqirgani uchun ko'rmagan).
+  · **Tekshirildi** — 21 test (to'plam 951 test, 949 o'tadi — faqat
+  eskidan yiqilgan ikkita yuz testi; RFC vektorlari, shifrlash, qayta
+  ishlatishning oldini olish, zaxira kodlar, challenge chegaralari,
+  sessiyalar) + **HTTP orqali**: sozlash → QR + sir, xato kod
+  yoqmaydi, ilovaning kodi yoqadi va 10 zaxira kod qaytaradi, bazada
+  **shifrmatn va argon2 hash'lar**, kirish ikkinchi qadamda to'xtaydi,
+  ishlatilgan kod **rad etiladi**, zaxira kod **bir marta** ishlaydi,
+  parol bilan o'chirib bo'lmaydi, zaxira kod bilan bo'ladi; sessiyalar
+  ro'yxati cookie bilan "shu qurilma"ni to'g'ri belgiladi, boshqalarini
+  tugatish **faqat boshqalarini** tugatdi, cookie'siz esa rad etildi
+  + **brauzerda (CDP)**: parol → ikkinchi qadam sahifada qoldi, xato
+  kod xato ko'rsatdi, haqiqiy kod kiritdi (`csrf_token` saqlandi),
+  «Xavfsizlik» yorlig'ida ikkala karta ham ko'rindi ("yoniq", "shu
+  qurilma"). Sinov ma'lumotlari (hisob, 9 sessiya, audit,
+  bildirishnomalar) tozalandi.
+  · **Chetlanish:** SSO orqali kirish 2FA so'ramaydi — ikkinchi faktorni
+  identifikatsiya provayderi o'zi so'ragan bo'ladi, va uning ustiga
+  yana bittasini qo'yish MFA'ni ikki marta bajarish bo'lardi.
+  · **Chetlanish:** `security.requireTwoFactor` sozlamasi ekranda
+  **ko'rsatiladi** ("kompaniya talab qiladi"), lekin kirishni majburan
+  to'xtatmaydi: hech qachon yoqmagan odamlarni bir kunda hisobidan
+  chiqarib qo'yish — majburlashning eng yomon usuli. Majburlash
+  (kirgandan keyin sozlashga yo'naltirish) BLOK 12 dagi onboarding
+  oqimi bilan birga qilinadi.
 
 ---
 
