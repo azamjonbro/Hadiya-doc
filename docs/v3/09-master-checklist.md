@@ -2625,6 +2625,15 @@
   Express `path: '/'` deb ko'rsatadi, va uni prefiks deb qabul qilish
   `//openapi.json` yasagan edi — hech qaysi mijoz chaqira olmaydigan
   path. Test bu holatni qadab qo'ydi.
+  · **Prodda topilgan xato (deploydan keyin darhol):** hujjat domen
+  ildizida (`/openapi.json`) 404 qaytardi, chunki bu deploymentda nginx
+  faqat `/api/`, `/socket.io/` va media prefikslarini proxy qiladi.
+  Laptopda mukammal ishlaydigan, prodda esa **integrator topadigan**
+  xato. Endi kanonik manzil — **`/api/openapi.json`**, ildizdagisi hamma
+  narsani proxy qiladigan deploymentlar uchun qoladi (bitta `router.get`
+  ikki path bilan; buning uchun inventarga massiv-path'ni ochish kerak
+  bo'ldi, aks holda path `/api/openapi.json,/openapi.json` bo'lib
+  qolardi — va OpenAPI validatori bunga e'tiroz ham bildirmaydi).
 - [ ] **11.4** OIDC SSO — `services/integrations/oidcClient.js`, JIT provisioning,
   claim → rol/bo'lim mapping
 - [ ] **11.5** `middlewares/idempotency.middleware.js` (`Idempotency-Key`)

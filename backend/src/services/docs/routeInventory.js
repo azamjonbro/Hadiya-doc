@@ -89,19 +89,26 @@ function walk(layers, prefix, inherited, out) {
       const methods = Object.keys(layer.route.methods).filter((method) => method !== '_all')
       const handlers = layer.route.stack.map((entry) => entry.handle)
       const own = collectMeta(handlers)
+      // `router.get(['/a', '/b'], handler)` is a single layer holding two
+      // paths, and the array must not be stringified into `/a,/b` — a path
+      // no client can call, and one an OpenAPI validator accepts without
+      // complaint because it is a legal (if useless) template.
+      const paths = Array.isArray(layer.route.path) ? layer.route.path : [layer.route.path]
       for (const method of methods) {
-        out.push({
-          method: method.toUpperCase(),
-          path: joinPath(prefix, layer.route.path),
-          security: [...new Set([...pending.security, ...own.security])],
-          permissions: [...new Set([...pending.permissions, ...own.permissions])],
-          permissionMode: own.permissions.length ? own.permissionMode : pending.permissionMode,
-          roles: [...new Set([...pending.roles, ...own.roles])],
-          body: own.body ?? null,
-          query: own.query ?? null,
-          params: own.params ?? null,
-          response: own.response ?? null,
-        })
+        for (const routePath of paths) {
+          out.push({
+            method: method.toUpperCase(),
+            path: joinPath(prefix, routePath),
+            security: [...new Set([...pending.security, ...own.security])],
+            permissions: [...new Set([...pending.permissions, ...own.permissions])],
+            permissionMode: own.permissions.length ? own.permissionMode : pending.permissionMode,
+            roles: [...new Set([...pending.roles, ...own.roles])],
+            body: own.body ?? null,
+            query: own.query ?? null,
+            params: own.params ?? null,
+            response: own.response ?? null,
+          })
+        }
       }
       continue
     }

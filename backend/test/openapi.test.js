@@ -63,6 +63,9 @@ describe('11.3 · the OpenAPI document', () => {
       // `app.use(docsRouter)` reports its path as '/', and treating that as
       // a prefix produced `//openapi.json` — a path no client can call.
       assert.ok(doc.paths['/openapi.json'], Object.keys(doc.paths).filter((p) => p.includes('openapi')).join())
+      // The canonical path lives under /api/, because that is the only
+      // prefix nginx proxies here — the root one 404s in production.
+      assert.ok(doc.paths['/api/openapi.json'])
       assert.equal(Object.keys(doc.paths).some((path) => path.includes('//')), false)
     })
 
@@ -177,7 +180,7 @@ describe('11.3 · the OpenAPI document', () => {
     test('the routes that do not answer with the envelope say so', () => {
       // The document itself, and the page — a promised wrapper that never
       // arrives is worse than no promise.
-      const spec = doc.paths['/openapi.json'].get.responses['200']
+      const spec = doc.paths['/api/openapi.json'].get.responses['200']
       assert.equal(spec.content['application/json'].schema.$ref, undefined)
       assert.ok(doc.paths['/api/docs'].get.responses['200'].content['text/html'])
     })

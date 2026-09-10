@@ -10,7 +10,7 @@
  * whose useful content is a filterable list of 370 lines.
  *
  * So: two same-origin files, no inline script, no dependency. The page
- * fetches `/openapi.json` — the same document an integrator's codegen
+ * fetches `/api/openapi.json` — the same document an integrator's codegen
  * reads, which also means the page cannot show something the machine
  * document does not say.
  */
@@ -76,7 +76,7 @@ export const DOCS_HTML = `<!doctype html>
   <h1>Qo'llanma API</h1>
   <p class="lead">
     Generated from the running routers, so it describes what this deployment actually serves.
-    The machine-readable document is at <a href="/openapi.json">/openapi.json</a>.
+    The machine-readable document is at <a href="/api/openapi.json">/api/openapi.json</a>.
   </p>
 </header>
 <main>
@@ -205,7 +205,7 @@ export const DOCS_SCRIPT = `(function () {
       .join('')
   }
 
-  fetch('/openapi.json')
+  fetch('/api/openapi.json')
     .then(function (response) { return response.json() })
     .then(function (json) {
       doc = json
@@ -216,7 +216,7 @@ export const DOCS_SCRIPT = `(function () {
     })
     .catch(function () {
       document.getElementById('out').innerHTML =
-        '<p class="empty">Could not load /openapi.json.</p>'
+        '<p class="empty">Could not load /api/openapi.json.</p>'
     })
 })()
 `

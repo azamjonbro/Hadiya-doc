@@ -29,8 +29,17 @@ function raw(contentType, description, handler) {
   return handler
 }
 
+/**
+ * Served at **both** paths, and `/api/openapi.json` is the canonical one.
+ *
+ * nginx in front of this deployment proxies `/api/`, `/socket.io/` and the
+ * media prefixes — nothing else. A document at the domain root therefore
+ * 404s in production while working perfectly on a laptop, which is the
+ * shape of bug that gets discovered by an integrator rather than by us.
+ * The root path stays for deployments that proxy everything.
+ */
 docsRouter.get(
-  '/openapi.json',
+  ['/api/openapi.json', '/openapi.json'],
   raw('application/json', 'The OpenAPI 3.1 document for this deployment', (req, res) => {
   // `req.app` rather than a module-level import of the app: importing it
   // here would be a cycle (app mounts this router), and the app instance
