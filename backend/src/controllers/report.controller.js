@@ -6,6 +6,9 @@ import { asyncHandler } from '../utils/asyncHandler.js'
 import { sendSuccess } from '../utils/apiResponse.js'
 import { exportJobService } from '../services/reports/exportJob.service.js'
 import { queueExport } from '../jobs/exportQueue.js'
+import { scheduledReportService } from '../services/reports/scheduledReport.service.js'
+import { ScheduledReport } from '../models/scheduledReport.model.js'
+import { ApiError } from '../utils/ApiError.js'
 
 function filenameFor(type, format) {
   return `${type}-${new Date().toISOString().slice(0, 10)}.${format}`
@@ -148,6 +151,40 @@ export const reportController = {
     await queueExport(job._id)
 
     sendSuccess(res, { id: String(job._id), status: job.status }, 'Export queued', 202)
+  }),
+
+  // ---- scheduled reports (8.4) -----------------------------------------
+
+  listSchedules: asyncHandler(async (req, res) => {
+    sendSuccess(res, await scheduledReportService.list(req.user))
+  }),
+
+  createSchedule: asyncHandler(async (req, res) => {
+    sendSuccess(res, await scheduledReportService.create(req.user, req.body), 'Schedule created', 201)
+  }),
+
+  updateSchedule: asyncHandler(async (req, res) => {
+    sendSuccess(res, await scheduledReportService.update(req.user, req.params.id, req.body))
+  }),
+
+  deleteSchedule: asyncHandler(async (req, res) => {
+    sendSuccess(res, await scheduledReportService.remove(req.user, req.params.id), 'Schedule deleted')
+  }),
+
+  /**
+   * Builds one now, without waiting for its slot.
+   *
+   * The point is being able to see what a schedule produces before trusting
+   * it to run at 07:00 on a Monday — a filter that turns out to select
+   * nothing is worth discovering while somebody is looking.
+   */
+  runScheduleNow: asyncHandler(async (req, res) => {
+    const schedule = await ScheduledReport.findById(req.params.id)
+    if (!schedule) throw ApiError.notFound('Schedule not found')
+    if (String(schedule.createdBy) !== String(req.user.id)) throw ApiError.forbidden('Not your schedule')
+
+    const job = await scheduledReportService.runOnce(schedule)
+    sendSuccess(res, { jobId: String(job._id), status: job.status }, 'Export queued', 202)
   }),
 
   exportJobs: asyncHandler(async (req, res) => {

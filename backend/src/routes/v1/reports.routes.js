@@ -5,7 +5,13 @@ import { requirePermission, requireAnyPermission } from '../../middlewares/rbac.
 import { validateQuery } from '../../middlewares/validate.middleware.js'
 import { scopeToManagedUsers } from '../../middlewares/scopeToManagedUsers.middleware.js'
 import { reportController } from '../../controllers/report.controller.js'
-import { reportExportQuerySchema, reportPreviewQuerySchema } from '../../validators/report.validator.js'
+import { validateBody } from '../../middlewares/validate.middleware.js'
+import {
+  reportExportQuerySchema,
+  reportPreviewQuerySchema,
+  scheduledReportBodySchema,
+  scheduledReportPatchSchema,
+} from '../../validators/report.validator.js'
 
 export const reportsRouter = Router()
 
@@ -29,9 +35,19 @@ reportsRouter.use(authenticate, scopeToManagedUsers)
 
 const canView = requireAnyPermission(PERMISSIONS.REPORT_VIEW, PERMISSIONS.REPORT_EXPORT)
 const canExport = requirePermission(PERMISSIONS.REPORT_EXPORT)
+// A third permission that guarded nothing until 8.4 gave it a route.
+const canSchedule = requirePermission(PERMISSIONS.REPORT_SCHEDULE)
 
 // The catalogue is needed to view or to export, so either permission opens it.
 reportsRouter.get('/', canView, reportController.listTypes)
+
+// Scheduled reports (8.4). Declared before '/:type/...' so 'schedules' is
+// never read as a report type.
+reportsRouter.get('/schedules', canSchedule, reportController.listSchedules)
+reportsRouter.post('/schedules', canSchedule, validateBody(scheduledReportBodySchema), reportController.createSchedule)
+reportsRouter.patch('/schedules/:id', canSchedule, validateBody(scheduledReportPatchSchema), reportController.updateSchedule)
+reportsRouter.delete('/schedules/:id', canSchedule, reportController.deleteSchedule)
+reportsRouter.post('/schedules/:id/run', canSchedule, reportController.runScheduleNow)
 
 // The caller's own export jobs. Declared before '/:type/...' so
 // 'export-jobs' is never read as a report type.
