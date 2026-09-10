@@ -1579,7 +1579,49 @@
     8.1 dagi o'n yettita hisobot mavjud, sinalgan va **hech qayerdan
     ochib bo'lmaydigan** holatda turgan ekan. Ro'yxat endi API'dan
     keladi, o'n yettita nom uch tilga tarjima qilindi.
-- [ ] **8.4** **Rejalashtirilgan hisobotlar** — `scheduledReport.model.js`, cron job
+- [x] **8.4** **Rejalashtirilgan hisobotlar** — `scheduledReport.model.js`, cron job
+  · Bajarildi — `ScheduledReport` modeli, soatlik sweep (`scheduledReportQueue`),
+  `/reports/schedules` CRUD + «hozir ishga tushirish», va `ReportsView` dagi
+  panel. `report:schedule` ruxsati ham shu bilan birinchi marta ish boshladi.
+  · **Rejalashtirilayotgan narsa — eksport, yetkazish emas.** Sweep 8.3 dagi
+  aynan o'sha `ExportJob` ni quradi, oluvchilar esa «tayyor» xabarini oladi.
+  Fayl pochtaga **ilova qilinmaydi** va doimiy URL sifatida berilmaydi:
+  xodimlar ro'yxati eksporti — aynan login ortida qolishi kerak bo'lgan fayl,
+  va pochtada yashaydigan imzolangan havola — yuborilgan sababidan uzoq
+  yashaydigan havola.
+  · **Eng nozik joyi — «keyingi safar qachon».** Uni hech kim kuzatmaydi,
+  ya'ni xato «hisobot jimgina kelmay qo'ydi» yoki «har soatda kelaveradi»
+  ko'rinishida chiqadi. Shuning uchun:
+    - Vaqt **mahalliy** (`APP_TIMEZONE`), UTC emas — 07:00 da kelishi kerak
+    hisobot 03:00 da kelsa, uni hech kim ertalab o'qimaydi.
+    `utils/timezone.js` ga `zonedTimeToUtc` qo'shildi: ikki bosqichli, ya'ni
+    DST almashadigan kunlarda ham to'g'ri (New York bilan tekshirildi).
+    - Keyingi vaqt **kun-kun oldinga yurib** topiladi, oy arifmetikasi bilan
+    emas — «31-fevral» ham, soat siljiydigan kun ham o'sha arifmetikada
+    yashiringan bo'lardi.
+    - Javob **qat'iy kelajakda**: hozirgi lahzani qaytarsa, sweep o'sha
+    rejani har o'tishda qayta qurardi.
+    - `dayOfMonth` **28 da to'xtaydi**. «31-kun» yilning besh oyida yo'q, va
+    uni qabul qilishning har bir usuli — kutilmagan natija: tashlab ketilsa
+    hisobot fevralni jimgina o'tkazib yuboradi, qisqartirilsa «31» aslida
+    «28» degani bo'lib qoladi. Rad etish — kun tanlayotgan odam buni
+    **tanlash paytida** biladigan yagona variant.
+  · Sinov: `test/scheduledReports.test.js` (18 test) — kunlik/haftalik/oylik
+  hisob, fevral, «qat'iy kelajak», soat mahalliyligi; HTTP orqali ruxsat,
+  31-kunning rad etilishi, o'zganing rejasiga tegib bo'lmasligi; sweep
+  muddati kelganini quradi, kelmaganiga tegmaydi, o'chirilganini o'tkazib
+  yuboradi va **bitta buzuq reja qolganlarini to'xtatmaydi**.
+  · Yo'lda topilgan ikki teshik yopildi:
+    1. Sweep faqat navbatga qo'yardi, ya'ni o'chirilgan hisobot turiga
+    ishora qiluvchi eski reja worker ichida yiqilardi va **reja buni bilmasdi**
+    — abadiy «muvaffaqiyatli» deb turardi. Endi tur sweep paytida ham
+    tekshiriladi, va worker'dagi yiqilish `scheduleId` orqali rejaga
+    qaytib yoziladi.
+    2. Oluvchi «tayyor» xabarini olardi-yu, faylni ocholmasdi — `get()`
+    faqat so'ragan odamni qo'yardi. Endi reja oluvchilari ham ochadi
+    (marshrut baribir `report:export` talab qiladi), va **havola berilgan
+    lahza auditga yoziladi** — aks holda async yo'l xodimlar ro'yxatini
+    audit jurnalida ko'rinmasdan olib ketish usuli edi.
 - [ ] **8.5** **Dashboard kengaytmasi** — test, sertifikat, tadbir, path,
   compliance metrikalari; `scope` almashtirgichi
 

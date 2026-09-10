@@ -127,6 +127,16 @@ export const exportJobService = {
       job.error = errorMessage(error, 'The export could not be built')
       job.finishedAt = new Date()
       await job.save()
+
+      // A scheduled build reports back to its timetable, or the schedule row
+      // goes on claiming its last run was fine (8.4).
+      if (job.scheduleId) {
+        const { scheduledReportService } = await import('./scheduledReport.service.js')
+        await scheduledReportService
+          .recordJobFailure(job.scheduleId, job.error)
+          .catch((inner) => logger.warn('Could not mark the schedule failed', { error: errorMessage(inner) }))
+      }
+
       throw error
     }
   },

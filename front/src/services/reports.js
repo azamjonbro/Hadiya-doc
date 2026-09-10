@@ -89,4 +89,24 @@ export const reportsApi = {
   exportJobs() {
     return http.get('/reports/export-jobs').then((r) => r.data.data.items)
   },
+
+  // ---- scheduled reports (8.4) -------------------------------------------
+
+  schedules() {
+    return http.get('/reports/schedules').then((r) => r.data.data.items)
+  },
+  createSchedule(payload) {
+    return http.post('/reports/schedules', payload).then((r) => r.data.data)
+  },
+  updateSchedule(id, patch) {
+    return http.patch(`/reports/schedules/${id}`, patch).then((r) => r.data.data)
+  },
+  deleteSchedule(id) {
+    return http.delete(`/reports/schedules/${id}`).then((r) => r.data.data)
+  },
+  // Builds one now instead of waiting for its slot — a filter that turns out
+  // to select nothing is worth discovering while somebody is looking.
+  runSchedule(id) {
+    return http.post(`/reports/schedules/${id}/run`).then((r) => r.data.data)
+  },
 }

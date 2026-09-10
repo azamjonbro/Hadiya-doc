@@ -1233,6 +1233,51 @@
       "capped": "Ekranda {shown} qator ko'rsatildi, jami {total} ta. To'liq ma'lumot uchun yuklab oling.",
       "all": "Hammasi ko'rsatildi: {total} qator.",
       "chart": "Eng yuqori {count} ta"
+    },
+    "schedules": {
+      "title": "Rejalashtirilgan hisobotlar",
+      "hint": "Hisobot o'zi tayyorlanadi va tayyor bo'lganda xabar keladi. Fayl saytda qoladi — havola pochtaga yuborilmaydi.",
+      "add": "Reja qo'shish",
+      "empty": "Hozircha reja yo'q",
+      "name": "Nomi",
+      "type": "Hisobot turi",
+      "format": "Format",
+      "cadenceLabel": "Takrorlanishi",
+      "hour": "Soat",
+      "dayOfWeek": "Hafta kuni",
+      "dayOfMonth": "Oy kuni",
+      "recipients": "Kimga xabar berilsin",
+      "recipientsHint": "Ixtiyoriy. Faylni ochish uchun ularda ham eksport huquqi bo'lishi kerak.",
+      "filtersNote": "Yuqoridagi filtrlar shu reja bilan birga saqlanadi.",
+      "save": "Saqlash",
+      "created": "Reja saqlandi",
+      "saveFailed": "Rejani saqlab bo'lmadi",
+      "nameAndTypeRequired": "Nom va hisobot turi kerak",
+      "runNow": "Hozir",
+      "active": "Yoqilgan",
+      "paused": "To'xtatilgan",
+      "nextRun": "Keyingi: {at}",
+      "lastRun": "oxirgi: {at}",
+      "confirmDelete": "«{name}» rejasi o'chirilsinmi?",
+      "cadence": {
+        "DAILY": "Har kuni",
+        "WEEKLY": "Har hafta",
+        "MONTHLY": "Har oy"
+      },
+      "weekday": {
+        "0": "Yakshanba",
+        "1": "Dushanba",
+        "2": "Seshanba",
+        "3": "Chorshanba",
+        "4": "Payshanba",
+        "5": "Juma",
+        "6": "Shanba"
+      },
+      "summary": {
+        "daily": "har kuni {at}",
+        "weekly": "har {day}, {at}",
+        "monthly": "har oyning {day}-kuni, {at}"
+      }
     }
   },
   "audit": {

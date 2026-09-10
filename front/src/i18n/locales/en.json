@@ -1233,6 +1233,51 @@
       "capped": "Showing {shown} rows of {total}. Download the file for all of it.",
       "all": "Showing all {total} rows.",
       "chart": "Top {count}"
+    },
+    "schedules": {
+      "title": "Scheduled reports",
+      "hint": "The report builds itself and you are told when it is ready. The file stays in the platform — no link is emailed.",
+      "add": "Add a schedule",
+      "empty": "No schedules yet",
+      "name": "Name",
+      "type": "Report type",
+      "format": "Format",
+      "cadenceLabel": "How often",
+      "hour": "Hour",
+      "dayOfWeek": "Day of the week",
+      "dayOfMonth": "Day of the month",
+      "recipients": "Who to tell",
+      "recipientsHint": "Optional. They need export rights of their own to open the file.",
+      "filtersNote": "The filters above are saved with this schedule.",
+      "save": "Save",
+      "created": "Schedule saved",
+      "saveFailed": "Could not save the schedule",
+      "nameAndTypeRequired": "A name and a report type are required",
+      "runNow": "Run now",
+      "active": "On",
+      "paused": "Paused",
+      "nextRun": "Next: {at}",
+      "lastRun": "last: {at}",
+      "confirmDelete": "Delete the schedule \"{name}\"?",
+      "cadence": {
+        "DAILY": "Daily",
+        "WEEKLY": "Weekly",
+        "MONTHLY": "Monthly"
+      },
+      "weekday": {
+        "0": "Sunday",
+        "1": "Monday",
+        "2": "Tuesday",
+        "3": "Wednesday",
+        "4": "Thursday",
+        "5": "Friday",
+        "6": "Saturday"
+      },
+      "summary": {
+        "daily": "every day at {at}",
+        "weekly": "every {day} at {at}",
+        "monthly": "on day {day} at {at}"
+      }
     }
   },
   "audit": {
