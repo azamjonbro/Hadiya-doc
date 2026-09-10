@@ -153,11 +153,41 @@
   Ismi bo'yicha qidiruvga o'tkazildi va yoniga fence hali ham ushlab
   turishini tekshiradigan ikkinchi test qo'shildi.
 
-- [ ] **0.10** `[P]` **Frontend poydevor komponentlari**
+- [x] **0.10** `[P]` **Frontend poydevor komponentlari**
   · `ui/DataTable.vue`, `ui/FilterBar.vue`, `ui/FileDropzone.vue`,
   `ui/SortableList.vue`, `ui/Chart.vue`, `ui/UserPicker.vue`
   · Qabul: mavjud `UsersListView` va `TasksListView` shularga ko'chiriladi va
   qisqaradi (ish haqiqatan qayta ishlatilayotganini isbotlaydi)
+  · Bajarildi. Har bir komponent **allaqachon bir necha joyda takrorlangan
+  markup**dan olindi, "keyin kerak bo'lar" degan taxmindan emas:
+
+  | Komponent | Nechta joyda takrorlangan edi | Hozir kim ishlatadi |
+  |---|---|---|
+  | `DataTable` | jadval qobig'i 6 ta ekranda so'zma-so'z | UsersList, AuditLog |
+  | `FilterBar` | filtr qatori 4 ta ekranda | UsersList, AuditLog, Reports |
+  | `UserPicker` | xodim qidiruvi 6 ta faylda | Tasks, AuditLog, Reports |
+  | `FileDropzone` | 3 ta ekran fayl oladi, faqat 1 tasi drop'ni qabul qilardi | Material, Video |
+  | `SortableList` | Tasks o'z drag holatini yozgan, PathBuilder'da drag umuman yo'q edi | Tasks, PathBuilder |
+  | `Chart` | bitta chart bor edi va u faqat bitta shaklni chizardi | HomeView (chiziq + ustun) |
+
+  · Uchtasi nusxalarning hech birida bo'lmagan narsani qiladi:
+    - `UserPicker` so'rovni debounce qiladi va **kechikib kelgan javobni
+    tashlaydi** — ro'yxatning eski natijaga qaytib "sakrashi" shundan edi.
+    - `SortableList` dragenter/dragleave ni sanaydi, shuning uchun kursor
+    kartalar ustidan o'tganda drop belgisi o'chib-yonmaydi; yonida
+    yuqori/past tugmalari saqlangan — sudrash qulaylik, yagona yo'l emas.
+    - `FileDropzone` — material formasi va import ustasida fayl tashlash
+    brauzerni yarim to'ldirilgan formadan olib ketardi.
+  · **Qator soni halol hisobi:** iste'molchilar −201 qator, komponentlar
+  +782 (o'chirilgan `TrendChart` hisobga olingan). Ya'ni birinchi bosqichda
+  kod **ko'paydi** — yutuq keyingi ekranda, u endi bularning hech birini
+  yozmaydi. PathBuilder (+6) va HomeView (+15) esa qisqarmadi, chunki
+  **yangi imkoniyat oldi**: sudrab tartiblash va formatlanadigan diagramma.
+  · Yonida bitta o'qish xatosi tuzatildi: dashboard'dagi «xodimlar taqsimoti»
+  0-25/25-50/50-75/75-100 shkalasidagi to'rtta bucket, lekin reyting ro'yxati
+  sifatida chizilardi — reyting qiymat bo'yicha saralaydi, ya'ni bir xil
+  raqamlar har kuni boshqa tartibda chiqib, taqsimotning shakli
+  o'qilmasdi. Endi ustunli diagramma.
 
 ---
 
