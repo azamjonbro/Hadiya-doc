@@ -1987,8 +1987,76 @@
     3. **`und` tili o'zgartirilmaydi** — konteyner tilni aytmagan bo'lsa,
     shundayligicha saqlanadi va muallif keyin nomini o'zgartiradi. O'zbekni
     "ruscha" deb belgilab qo'yish "noma'lum" dan yomonroq.
-- [ ] **9.5** **Media kutubxona** — `mediaAsset`, papkalar, "qayerda ishlatilgan",
+- [x] **9.5** **Media kutubxona** — `mediaAsset`, papkalar, "qayerda ishlatilgan",
   `jobs/mediaCleanupQueue.js` (orphan — `course.service.js:378` dagi qarz)
+  · Bajarildi — ikki qism: **kutubxona** (muallif uchun) va **egasiz
+  fayllarni tozalash** (server uchun).
+  · **Kutubxona.** Ilgari har bir rasm **har ishlatilgan joyi uchun qayta
+  yuklanardi**, chunki saqlagichdagi faylni topib olishning yo'li yo'q edi;
+  "bu rasm hali ishlatilyaptimi?" degan savolga javob ham yo'q edi, shuning
+  uchun hech narsa o'chirilmasdi va bucket faqat o'sardi. Endi
+  `mediaAsset` — rasm yuklanganda ro'yxatga olinadi (`imageUpload.service`),
+  papka (oddiy yorliq: `brand/2026`), nom, hajm. `ImageUploadField` ga
+  "kutubxonadan tanlash" qo'shildi, admin panelida `/bos/media` sahifasi.
+  · **"Qayerda ishlatilgan" — hisoblab emas, so'rab.** Muqobil variant har
+  bir yozuvchi (kurs, yangilik, blok editori, sertifikat dizayneri, avatar)
+  yangilaydigan hisoblagich edi; bunday hisoblagichlar **jimgina**
+  adashadi, va "2 joyda" deb turgan holda javob nol bo'lishi — o'chirish
+  tugmasini xavfli qiladigan narsa. So'rov sekinroq va to'g'ri. Ikki
+  shaklda qidiriladi: ko'p maydon **URL** saqlaydi, sertifikat shabloni esa
+  **kalit** (u fonni serverda chizadi va brauzer URL'iga muhtoj emas).
+  · **O'chirish qo'riqchisi:** ishlatilayotgan fayl `MEDIA_IN_USE` (400) va
+  qayerda ishlatilgani bilan qaytariladi; UI nechta joyni aytib, keyin
+  `force` bilan o'chiradi va bu audit jurnaliga yoziladi. Aks holda kurs
+  muqovasi ostidan rasm olib qo'yiladi va **o'chirgan odam buni hech qachon
+  bilmaydi** — buni boshqa kimdir topadi.
+  · **Egasiz fayllar (qarz yopildi).** `course.service.js` dagi izoh
+  to'g'ri edi: "bu faqat bazadagi qatorlarni o'chiradi… har bir video uchun
+  butun kalit prefiksini aylanib chiqish kerak va bu yarim tugagan holda
+  qoldirilmasligi kerak". Shuning uchun bu **alohida, qayta ishga
+  tushirilishi mumkin** pass: `mediaCleanup.service.js` beshta bucketni
+  o'z qoidasi bilan tekshiradi — maydонda saqlangan kalit (originals,
+  materials, SCORM arxivi), qator id'si bilan nomlangan prefiks
+  (renditionlar, SCORM paketlari), yoki o'n ikki joyga yozilgan URL
+  (rasmlar).
+  · **Ikki qoida buni xavfsiz qiladi:**
+    1. **Grace davri** (`MEDIA_ORPHAN_GRACE_DAYS`, standart 7 kun).
+    Yuklash **avval obyektni, keyin qatorni** yozadi — grace bo'lmasa,
+    yuklash bilan poyga qilgan sweep bir zumdan keyin paydo bo'ladigan
+    qatorning faylini o'chiradi. Bu yerdagi yagona "joy bo'shatish emas,
+    ishni yo'qotish" turidagi nosozlik.
+    2. **Standart holatda faqat hisobot.** Har bir chaqiruvchi o'chirishni
+    **aniq so'rashi** kerak (`?apply=true`, `--apply`,
+    `MEDIA_CLEANUP_DELETE`). Kechasi ishlaydigan job standart holatda
+    hisobot yozadi — buzg'unchi jadval ishi kimningdir qarori bo'lishi
+    kerak, standart emas (`BACKUP_ENABLED` bilan bir xil shakl).
+  · Yana ikkita ehtiyot: **kutubxonadagi ishlatilmayotgan asset egasiz
+  emas** (muallif keyinroq ishlatish uchun yuklagan — sweep o'z
+  kutubxonasini yeb qo'ymasin), va **tanish bo'lmagan kalit shakli
+  tegilmaydi** (sweep tushunganini o'chiradi, tushuntira olmaganini emas).
+  Bucket ro'yxatlanmasa — o'sha bo'lim uchun xato yoziladi, butun sweep
+  yiqilmaydi.
+  · **Ishga tushirish:** kechasi 04:40 (backup 03:20 da, ikkisi bir xil
+  baytlar uchun poyga qilmasin), `POST /media/cleanup` (faqat SUPERADMIN,
+  rol bo'yicha — bu platformada hech kim so'ramagan baytlarni o'chiradigan
+  yagona chaqiruv) va `npm run media:orphans [-- --apply]`.
+  · **Tekshirildi.** `test/mediaLibrary.test.js` — 10 test: papka
+  normalizatsiyasi (`../../etc` → `etc`), bir kalitga ikki qator
+  bo'lmasligi, papka/qidiruv filtri, kurs muqovasi + dars bloki +
+  sertifikat foni bo'yicha usage, `MEDIA_IN_USE` va `force`, o'chib ketgan
+  videoning renditionlari, **yangi obyektga tegmaslik**, ishlatilmayotgan
+  kutubxona asseti, SCORM prefiksi va arxivi, "hisobot o'chirmaydi".
+  HTTP orqali: ro'yxat, papkalar, hisobot (beshta bo'lim), tokensiz 401,
+  va rasm yuklanganda kutubxonada paydo bo'lishi.
+  · **Chetlanishlar:**
+    1. **Faqat rasmlar kutubxonada.** Video, material va SCORM o'z
+    joylarida boshqariladi (ular kontent, kutubxona esa qayta ishlatiladigan
+    aktivlar uchun). Sweep esa **beshtasini ham** tekshiradi.
+    2. **Rasm o'lchamlari (`width`/`height`) yozilmaydi** — buning uchun
+    rasmni ochib o'qish kerak, bu esa **9.6** (`sharp`) bilan keladi.
+    3. **Sweep prodda hali ishga tushirilmadi** — birinchi hisobotni
+    `npm run media:orphans` bilan qo'lda ko'rish kerak: bu deployment
+    sweep paydo bo'lishidan oldin ham to'plab kelgan.
 - [ ] **9.6** **Rasm optimizatsiyasi** — `sharp` → webp
 
 ---

@@ -246,6 +246,12 @@ export const router = createRouter({
           component: () => import('@/admin/views/NotificationsView.vue'),
           meta: { titleKey: 'nav.notifications' },
         },
+        {
+          path: 'media',
+          name: 'admin-media',
+          component: () => import('@/admin/views/MediaLibraryView.vue'),
+          meta: { titleKey: 'media.title', permission: 'course:update' },
+        },
         { path: 'settings', name: 'admin-settings', component: () => import('@/admin/views/SettingsView.vue'), meta: { titleKey: 'nav.settings' } },
       ],
     },

@@ -7,6 +7,8 @@ import { VIDEO_PROCESSING_QUEUE } from './jobs/videoProcessingQueue.js'
 import { processVideo } from './video/processVideo.js'
 import { SCORM_QUEUE } from './jobs/scormQueue.js'
 import { extractScormPackage } from './services/scorm/extractScorm.js'
+import { MEDIA_CLEANUP_QUEUE, scheduleMediaCleanup } from './jobs/mediaCleanupQueue.js'
+import { sweepOrphans } from './services/media/mediaCleanup.service.js'
 import { REMINDER_QUEUE, scheduleReminderChecks } from './jobs/reminderQueue.js'
 import { runDeadlineChecks } from './jobs/reminderJob.js'
 import {
@@ -73,6 +75,30 @@ async function main() {
       videoId: job?.data?.videoId,
       error: err.message,
     })
+  })
+
+  // The orphan sweep (9.5). One at a time and never in parallel with
+  // itself: it walks five buckets and two of them are the largest in the
+  // deployment.
+  const mediaWorker = new Worker(
+    MEDIA_CLEANUP_QUEUE,
+    async (job) => {
+      if (job.name === 'sweep') {
+        return sweepOrphans({ apply: Boolean(job.data?.apply) })
+      }
+      return null
+    },
+    { connection: redisConnection, concurrency: 1 }
+  )
+
+  mediaWorker.on('failed', (job, err) => {
+    logger.error('Media cleanup sweep failed', { jobId: job?.id, error: err.message })
+  })
+
+  await scheduleMediaCleanup()
+  logger.info('Media cleanup scheduled', {
+    deletes: env.MEDIA_CLEANUP_DELETE,
+    graceDays: env.MEDIA_ORPHAN_GRACE_DAYS,
   })
 
   scormWorker.on('completed', (job) => {
@@ -326,6 +352,7 @@ async function main() {
     await Promise.all([
       videoWorker.close(),
       scormWorker.close(),
+      mediaWorker.close(),
       enrollmentRuleWorker.close(),
       onboardingWorker.close(),
       complianceWorker.close(),

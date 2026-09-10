@@ -116,6 +116,17 @@ const envSchema = z.object({
   // course have" an unanswerable question. Defaulted so an existing
   // deployment does not fail boot before its env file is touched.
   S3_BUCKET_SCORM: z.string().min(1).default('lms-scorm'),
+  // How long an object has to be untouched before the orphan sweep will
+  // consider deleting it (9.5). Uploads write the object first and the
+  // referencing row second, so a sweep with no grace period would delete a
+  // file whose row lands a moment later — the one failure that loses work
+  // instead of reclaiming space. A week, because a course being built over
+  // a weekend is normal.
+  MEDIA_ORPHAN_GRACE_DAYS: z.coerce.number().int().min(1).default(7),
+  // The nightly sweep reports by default and deletes only when this is on.
+  // Same shape as BACKUP_ENABLED, and for the same reason: a destructive
+  // scheduled job should be a decision somebody made, not a default.
+  MEDIA_CLEANUP_DELETE: z.coerce.boolean().default(false),
   // Bigger than a material: a Storyline or iSpring export with narration
   // routinely passes 100 MB. Extraction happens in the worker, not in the
   // request, so the ceiling is worker memory rather than request latency.

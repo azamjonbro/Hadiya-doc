@@ -3,6 +3,7 @@ import { fileTypeFromBuffer } from 'file-type'
 import { S3StorageProvider } from '../../storage/S3StorageProvider.js'
 import { env } from '../../config/env.js'
 import { ApiError } from '../../utils/ApiError.js'
+import { mediaLibraryService } from '../media/mediaLibrary.service.js'
 
 const imagesStorage = new S3StorageProvider(env.S3_BUCKET_IMAGES)
 
@@ -49,6 +50,21 @@ export const imageUploadService = {
     const key = `${actor.id}/${crypto.randomUUID()}.${ext}`
     await imagesStorage.putObject(key, file.buffer, detected.mime)
 
-    return { url: publicUrlFor(key), key }
+    const url = publicUrlFor(key)
+    // Recorded in the library (9.5) so the next author who needs this image
+    // can pick it instead of uploading it again, and so the orphan sweep
+    // can tell "uploaded for later" from "left behind". Best-effort by
+    // design: the bytes are stored and the caller is about to reference
+    // them, so a registry hiccup must not fail the upload.
+    await mediaLibraryService.register(actor, {
+      key,
+      url,
+      name: String(file.originalname ?? '').replace(/[/\\]/g, '').slice(0, 200),
+      mimeType: detected.mime,
+      size: file.size ?? file.buffer.length,
+      folder: '',
+    })
+
+    return { url, key }
   },
 }

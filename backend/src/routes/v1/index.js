@@ -48,6 +48,7 @@ import { kbRouter } from './kb.routes.js'
 import { searchRouter } from './search.routes.js'
 import { complianceRouter } from './compliance.routes.js'
 import { settingsRouter } from './settings.routes.js'
+import { mediaRouter } from './media.routes.js'
 
 export const v1Router = Router()
 
@@ -114,3 +115,5 @@ v1Router.use('/kb', kbRouter)
 v1Router.use('/search', searchRouter)
 v1Router.use('/compliance', complianceRouter)
 v1Router.use('/settings', settingsRouter)
+// The media library and the orphan sweep (9.5).
+v1Router.use('/media', mediaRouter)

@@ -444,12 +444,12 @@
 | Tizim sozlamalari (DB'da) | ✓ | 2 siyosat modeli bor, umumiysi yo'q | PARTIAL | 50 | `attentionPolicy.model.js`, `facePolicy.model.js` | `Settings` singleton |
 | Logo / favicon / rang | ✓ | Yo'q (Tailwind token tizimi bor) | NONE | 0 | — | `branding{}` |
 | White-label | ✓ | Yo'q | NONE | 0 | — | — |
-| **Markaziy media kutubxona** | ✓ | Yo'q | NONE | 0 | — | `MediaAsset` |
-| Nested papkalar (media) | ✓ | Yo'q | NONE | 0 | — | — |
+| **Markaziy media kutubxona** | ✓ | Bor — `MediaAsset`, papkalar, qidiruv, "qayerda ishlatilgan", tanlagich | FULL | 100 | `mediaLibrary.service.js`, `MediaLibraryView.vue`, `MediaPicker.vue` | Faqat rasm; video/material o'z joyida |
+| Nested papkalar (media) | ✓ | Yorliq shaklida (`brand/2026`, 3 daraja) | PARTIAL | 50 | `mediaLibrary.service.js` (`normalizeFolder`) | Haqiqiy daraxt va ko'chirish yo'q |
 | Orphan fayl tozalash | ? | Yo'q — kodda tan olingan qarz | VERIFY | 0 | `course.service.js:378-381` | `mediaCleanupQueue` |
 | Rasm optimizatsiyasi | ? | Yo'q | VERIFY | 0 | — | `sharp` → webp |
 | Storage sarfi ko'rsatkichi | ? | Yo'q | VERIFY | 0 | — | — |
-| **D74–D79 jami: 26 capability** | | | **FULL 5 · OURS+ 11 · PARTIAL 2 · NONE 4 · VERIFY 4** | **65** | | |
+| **D74–D79 jami: 26 capability** | | | **FULL 6 · OURS+ 11 · PARTIAL 3 · NONE 2 · VERIFY 4** | **71** | | |
 
 ## D80–D95 · PERFORMANCE / A11Y / AUTOMATION / RECOMMENDATIONS / STANDARDS / SUITE / E-COM / ENTERPRISE
 
