@@ -164,6 +164,30 @@ export function buildOpenApiDocument(app, { version = '1.0.0', apiUrl = '' } = {
     const request = {}
     if (route.query) request.query = route.query
     if (route.body) request.body = { content: { 'application/json': { schema: route.body } } }
+    /**
+     * `Idempotency-Key` on the endpoints that honour it (11.5).
+     *
+     * Declared as a header parameter rather than mentioned in prose: a
+     * client generator then produces a function that can actually pass
+     * one, which is the difference between a documented feature and a
+     * usable one.
+     */
+    const headers = route.idempotency
+      ? [
+          {
+            name: 'Idempotency-Key',
+            in: 'header',
+            required: Boolean(route.idempotency.required),
+            schema: { type: 'string', maxLength: 200 },
+            description:
+              'Retry-safe: a repeat of this request with the same key returns the first ' +
+              "response instead of acting twice (`Idempotent-Replay: true`). Reusing a key with a " +
+              'different body is a 409 `IDEMPOTENCY_KEY_REUSED`; retrying while the first request ' +
+              'is still running is a 409 `IDEMPOTENCY_IN_PROGRESS`. Kept for 24 hours.',
+          },
+        ]
+      : []
+
     const params = pathParams(route.path)
     if (params.length) {
       // Path parameters are ids the router has already matched as strings.
@@ -183,6 +207,7 @@ export function buildOpenApiDocument(app, { version = '1.0.0', apiUrl = '' } = {
       tags: [tagOf(route.path)],
       security,
       ...(Object.keys(request).length ? { request } : {}),
+      ...(headers.length ? { parameters: headers } : {}),
       responses: {
         200: route.response
           ? {

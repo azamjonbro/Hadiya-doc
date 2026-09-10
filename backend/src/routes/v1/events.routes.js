@@ -11,6 +11,7 @@ import {
   markAttendanceSchema,
   cancelRegistrationSchema,
 } from '../../validators/event.validator.js'
+import { idempotent } from '../../middlewares/idempotency.middleware.js'
 
 export const eventsRouter = Router()
 
@@ -30,7 +31,7 @@ eventsRouter.delete('/:id', requirePermission(PERMISSIONS.EVENT_CREATE), eventCo
 
 // Taking a seat is the learner's own act — event:read is enough, and the
 // service decides whether there is one or a place in the queue (AT-31).
-eventsRouter.post('/:id/register', eventController.register)
+eventsRouter.post('/:id/register', idempotent(), eventController.register)
 eventsRouter.post(
   '/:id/cancel-registration',
   validateBody(cancelRegistrationSchema),

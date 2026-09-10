@@ -2785,7 +2785,88 @@
   (RP-initiated logout). Bizdagi chiqish o'z sessiyamizni tugatadi;
   IdP'dan chiqish — brauzerdagi boshqa ilovalarga ham ta'sir qiladigan
   qaror, va uni SSO bilan birga jimgina yoqib qo'yish to'g'ri emas.
-- [ ] **11.5** `middlewares/idempotency.middleware.js` (`Idempotency-Key`)
+- [x] **11.5** `middlewares/idempotency.middleware.js` (`Idempotency-Key`)
+  · Bajarildi — bu **beparvo klient uchun emas**. Holat oddiy: so'rov
+  serverda **muvaffaqiyatli bajarildi**, javobi esa yetib kelmadi —
+  telefon aloqani noto'g'ri paytda yo'qotdi, proxy timeout berdi, noutbuk
+  submit paytida yopildi. Klient buni "umuman yetmagan so'rov"dan
+  **ajrata olmaydi**, shuning uchun qayta yuboradi — va bu himoya
+  bo'lmasa, qayta yuborish ikkinchi uy ishi topshirig'ini, ikkinchi
+  tadbir ro'yxatini, ikkinchi tayinlashni yaratadi. BLOK 12 (oflayn)
+  buni chekka holatdan **odatiy yo'l**ga aylantiradi: qayta ulangach
+  bo'shatilgan navbat — javobi ko'rilmagan so'rovlar navbati.
+  · **Route bo'yicha opt-in, global emas.** O'qishda kalitning ma'nosi
+  yo'q, konstruksiya bo'yicha allaqachon idempotent endpointda (dars
+  progressi) esa u faqat Redis'ga borish va o'sha yerda ma'nosi yo'q
+  409 sinfini qo'shardi. Aniq belgilash yana bitta narsani beradi:
+  generatsiya qilinadigan OpenAPI hujjati **qaysi endpointlar** bu
+  sarlavhani qabul qilishini aytadi (11.3) — middleware'ning o'zidan
+  o'qib, ya'ni xato bo'lishi mumkin emas.
+  · **`SET NX` — butun mexanizm.** Birinchi kelgan so'rov kalitni
+  egallaydi, qolganlari egallanganini topadi. Check-then-set bo'lsa,
+  ikkita parallel qayta yuborish **ikkisi ham** tekshiruvdan o'tardi
+  (test: 250 ms sekin handler bilan aynan shu holat — biri 201, ikkinchisi
+  409, handler **bir marta** ishlaydi).
+  · **Uch xil javob, uch xil holat:** tugagan bo'lsa — saqlangan status va
+  tana qaytariladi (`Idempotent-Replay: true`, ya'ni UI xohlasa
+  "yaratildi" bilan "allaqachon yaratilgan"ni ajratishi mumkin); hali
+  ketayotgan bo'lsa — **409 `IDEMPOTENCY_IN_PROGRESS` + `Retry-After: 1`**
+  (kutib turish so'rovni ushlab qolardi, ya'ni birinchisi qancha davom
+  etsa, shuncha ulanish band); **tana boshqa** bo'lsa — 409
+  `IDEMPOTENCY_KEY_REUSED`, chunki jimgina birinchi javobni qaytarish
+  ikkinchi so'rov muallifiga **uning payload'i qabul qilindi** deb
+  aytardi, holbuki u umuman ishlamagan.
+  · **Fingerprint barqaror JSON'dan** (kalitlar saralanadi): `JSON.stringify`
+  kiritish tartibini saqlaydi, ya'ni bir xil maydonlarni boshqa tartibda
+  yuborgan ikki klient "kalit qayta ishlatilgan" javobini olardi — bir
+  xil so'rovga juda chalkash javob.
+  · **Kalitning ko'lami: aktor + metod + route + path parametrlari +
+  kalit.** Aktor — kalit klient o'zi tanlagan **oddiy satr**, ya'ni aktor
+  bo'lmasa bir odamning kaliti boshqasining javobini unga qaytarardi
+  (test bilan qadalgan). Route va parametrlar — bir xil kalit boshqa
+  endpointda yoki boshqa yozuvda **boshqa amal**, va saqlangan tanani
+  qaytarish hech kim so'ramagan savolga javob berardi
+  (`/courses/:id/assignments` ikki kurs uchun — ikki amal). API kaliti
+  bilan kelgan chaqiruvchi o'z prefiksi bilan, anonim esa IP bilan
+  (kuchsizroq, lekin alternativa — har kim boshqasining kalitini taxmin
+  qilishi mumkin bo'lgan umumiy nomlar makoni).
+  · **5xx saqlanmaydi va da'vo bo'shatiladi**: o'tkinchi xatoni bir
+  kunlik javobga aylantirish — bu middleware mavjud bo'lgan holatning
+  aynan o'zini buzardi (test: 500 dan keyingi qayta yuborish **haqiqatan
+  ishlaydi**). **4xx esa saqlanadi**: u deterministik, va uni qaytarish
+  buzilgan klientning endpointni urib turishini to'xtatadi.
+  · **Muddatlar:** tugagan javob 24 soat (oflayn navbat ertalab
+  bo'shatilishi uchun to'g'ri kattalik tartibi), "ketayotgan" belgisi esa
+  **60 sekund** — jarayon so'rov o'rtasida o'lsa, qolgan narsa faqat
+  shu belgi bo'ladi, va uzoq muddat klientning qayta urinishini
+  (himoya qilinishi kerak bo'lgan narsani) muddat tugaguncha bloklardi.
+  · **Redis yo'q bo'lsa — ochiq yiqiladi** (loglar bilan): alternativa —
+  platforma mukammal bajara oladigan yozuvlarni rad etish, ya'ni kamdan
+  kam uchraydigan dublikat uchun **aniq uzilish** to'lash.
+  · Javob `res.json` ni o'rash bilan ushlanadi: bu API'dagi **har bir
+  javob** (`sendSuccess`/`sendError`) shu yerdan o'tadi, ya'ni ushlash
+  uchun bitta joy bor — tanani taxmin qiladigan listener emas.
+  · **Qo'llanilgan endpointlar** (dublikat haqiqatan yozuv yaratadigan
+  joylar): uy ishini topshirish, tadbirga yozilish, kursga o'zi yozilish,
+  kurs tayinlash, **chat xabari** (oflayn navbatdan yuborilgan xabar —
+  bitta xabar, ikkita emas). Front tomonda kalit **odam bosgan payt**
+  yaratiladi va qayta urinishda **o'sha kalit** ishlatiladi
+  (`services/idempotency.js`) — har HTTP urinishida yangi kalit
+  yaratish butun ma'noni yo'q qilardi.
+  · **Tekshirildi** — 13 test (haqiqiy express + haqiqiy Redis: do'kon
+  bu yerda **mexanizmning o'zi**, fake do'kon hech narsani sinamagan
+  bo'lardi) + **HTTP orqali haqiqiy endpointlarda**: kalit bilan
+  tayinlash → qayta yuborish **o'sha 201 va o'sha tana**
+  (`idempotent-replay: true`), kalitsiz esa ikkinchi urinish
+  `ASSIGNMENT_ALREADY_EXISTS` (409) oldi, boshqa tana bilan
+  `IDEMPOTENCY_KEY_REUSED`, va bazada **bitta** tayinlash; chatda bitta
+  kalit bilan ikki marta yuborilgan xabar — **bitta** xabar, kalitsiz
+  ikki marta — **ikkita**. Sinov ma'lumotlari (kurs, odam, suhbat,
+  xabarlar, audit, Redis kalitlari) tozalandi.
+  · **Chetlanish:** javob 24 soat **Redis'da** saqlanadi, Mongo'da emas.
+  Redis bu deploymentda ishonchli (BullMQ, sessiya, rate limit hammasi
+  unda), va idempotentlik yozuvi — bir kundan keyin ahamiyatsiz bo'lib
+  qoladigan operatsion holat, doimiy ma'lumot emas.
 - [ ] **11.6** TOTP 2FA, foydalanuvchi sessiyalari sahifasi
 
 ---

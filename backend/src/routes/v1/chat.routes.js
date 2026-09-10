@@ -18,6 +18,7 @@ import {
   renameChatGroupSchema,
   sendChatMessageSchema,
 } from '../../validators/chat.validator.js'
+import { idempotent } from '../../middlewares/idempotency.middleware.js'
 
 export const chatRouter = Router()
 
@@ -34,9 +35,13 @@ chatRouter.post('/conversations', validateBody(openDirectSchema), chatController
 chatRouter.get('/conversations/:id', chatController.getConversation)
 chatRouter.get('/conversations/:id/details', chatController.getConversationDetails)
 chatRouter.get('/conversations/:id/messages', validateQuery(chatMessagesQuerySchema), chatController.getMessages)
+// 11.5 — a message queued offline and sent on reconnect is the same
+// message, not two. The client reuses the key it generated when the person
+// pressed send.
 chatRouter.post(
   '/conversations/:id/messages',
   chatSendRateLimiter,
+  idempotent(),
   validateBody(sendChatMessageSchema),
   chatController.sendMessage
 )

@@ -406,7 +406,7 @@
 | API kalitlari + scope | ✓ (implicit) | Bor — argon2 hash, scope'lar, per-key limit, PII bayrog'i | FULL | 100 | `apiKey.service.js`, `apiKeyAuth.middleware.js` | — |
 | Rate limiting | ? | **11 alohida limiter** | OURS+ | 100 | `middlewares/*RateLimit*` | — |
 | OpenAPI hujjati | ? | Router'lardan generatsiya — `GET /openapi.json` (3.1, 370 operatsiya) + `/api/docs` | FULL | 100 | `services/docs/openapi.service.js` | Javob sxemalari yo'q |
-| Idempotency | ? | Yo'q | VERIFY | 0 | — | `Idempotency-Key` |
+| Idempotency | ? | Bor — `Idempotency-Key`, 5 yozuv endpointida, Redis, 24 soat | FULL | 100 | `idempotency.middleware.js` | Route bo'yicha opt-in |
 | **Webhooks** | ? | Bor — 6 voqea, HMAC (`t=…,v1=…`), 5× retry, yetkazish jurnali + replay, SSRF darvozalari | FULL | 100 | `webhook.service.js`, `webhookQueue.js` | — |
 | **SSO (JWT)** | ✓ | OIDC bor; imzolangan JWT SSO alohida yozilmadi | PARTIAL | 60 | `oidcAuth.service.js` | Ataylab — OIDC qoplaydi |
 | OIDC / Entra ID | ✓ | Bor — code+PKCE, JWKS imzo tekshiruvi, nonce, discovery | FULL | 100 | `oidcClient.js`, `auth/sso/*` | — |
@@ -417,7 +417,7 @@
 | Albato / Zapier tipidagi | ✓ | Webhook + ommaviy API bilan ulanadi, tayyor konnektor yo'q | PARTIAL | 50 | `webhook.service.js` | Konnektor katalogi |
 | Storage provider abstraksiyasi | ? | Bor (Local + S3) | OURS+ | 100 | `storage/S3StorageProvider.js` | — |
 | Domain alias | ✓ | Nginx darajasida qo'lda | PARTIAL | 50 | — | — |
-| **D70–D73 jami: 15 capability (+2 N/A)** | | | **FULL 6 · OURS+ 2 · PARTIAL 4 · NONE 2 · VERIFY 1 · N/A 2** | **70** | | |
+| **D70–D73 jami: 15 capability (+2 N/A)** | | | **FULL 7 · OURS+ 2 · PARTIAL 4 · NONE 2 · N/A 2** | **76** | | |
 
 ## D74–D79 · SECURITY / AUDIT / ADMIN / BRANDING / MEDIA / FILES
 

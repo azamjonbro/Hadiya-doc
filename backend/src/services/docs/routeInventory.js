@@ -51,6 +51,7 @@ function collectMeta(handlers) {
     query: null,
     params: null,
     response: null,
+    idempotency: null,
   }
   for (const handler of handlers) {
     const tag = handler?.openapi
@@ -69,6 +70,10 @@ function collectMeta(handlers) {
     // The handful of routes that answer with something other than the
     // envelope (the spec itself, the docs page) say so on the handler.
     if (tag.kind === 'response') meta.response = tag
+    // Which endpoints honour `Idempotency-Key` (11.5) — read off the
+    // middleware that implements it, so the document cannot claim it on a
+    // route that does not.
+    if (tag.kind === 'idempotency') meta.idempotency = tag
   }
   return meta
 }
@@ -107,6 +112,7 @@ function walk(layers, prefix, inherited, out) {
             query: own.query ?? null,
             params: own.params ?? null,
             response: own.response ?? null,
+            idempotency: own.idempotency ?? null,
           })
         }
       }

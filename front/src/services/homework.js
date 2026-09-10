@@ -1,4 +1,5 @@
 import { http } from './http'
+import { idempotencyHeaders } from './idempotency'
 
 /**
  * Homework. Named `homework` rather than `assignments` because
@@ -26,8 +27,13 @@ export const homeworkApi = {
   saveDraft(id, payload) {
     return http.post(`/homework/${id}/draft`, payload).then((r) => r.data.data)
   },
-  submit(id, payload) {
-    return http.post(`/homework/${id}/submit`, payload).then((r) => r.data.data)
+  // The key belongs to the press of the submit button, not to the HTTP
+  // attempt (11.5): a submission that landed with a lost response must
+  // not be filed twice by the retry.
+  submit(id, { idempotencyKey, ...payload }) {
+    return http
+      .post(`/homework/${id}/submit`, payload, idempotencyHeaders(idempotencyKey))
+      .then((r) => r.data.data)
   },
 
   // The reviewer's side.

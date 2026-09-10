@@ -26,6 +26,7 @@ import {
   createAnswerSchema,
   listQuestionsQuerySchema,
 } from '../../validators/courseQuestion.validator.js'
+import { idempotent } from '../../middlewares/idempotency.middleware.js'
 
 export const coursesRouter = Router()
 
@@ -137,7 +138,12 @@ coursesRouter.post(
   courseController.createTopic
 )
 
-coursesRouter.post('/:id/enroll', requirePermission(PERMISSIONS.COURSE_READ), courseAssignmentController.enrollSelf)
+coursesRouter.post(
+  '/:id/enroll',
+  requirePermission(PERMISSIONS.COURSE_READ),
+  idempotent(),
+  courseAssignmentController.enrollSelf
+)
 
 coursesRouter.get(
   '/:id/assignments',
@@ -147,6 +153,7 @@ coursesRouter.get(
 coursesRouter.post(
   '/:id/assignments',
   requirePermission(PERMISSIONS.COURSE_ASSIGN),
+  idempotent(),
   validateBody(createAssignmentSchema),
   courseAssignmentController.assign
 )

@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia'
 import { chatApi } from '@/services/chat'
 import { connectSocket, disconnectSocket, emitSocket, onSocket } from '@/services/socket'
+import { newIdempotencyKey } from '@/services/idempotency'
 
 // How long a "typing…" indicator survives without a refresh — the peer's
 // stop event can be lost (tab closed mid-word), so the indicator has to
@@ -208,9 +209,13 @@ export const useChatStore = defineStore('chat', {
       }
     },
 
-    async send({ body = '', kind = 'TEXT', attachment = null } = {}) {
+    async send({ body = '', kind = 'TEXT', attachment = null, idempotencyKey = null } = {}) {
       if (!this.selectedId) return null
-      const message = await chatApi.sendMessage(this.selectedId, { body, kind, attachment })
+      // One key per press of send: a caller that retries passes the same
+      // one back, and the server answers with the message it already
+      // created rather than creating a second (11.5).
+      const key = idempotencyKey ?? newIdempotencyKey()
+      const message = await chatApi.sendMessage(this.selectedId, { body, kind, attachment, idempotencyKey: key })
       // The socket echo may arrive first or second; upsert makes the order
       // irrelevant instead of racing to append twice.
       this.upsertMessage(message)

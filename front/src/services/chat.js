@@ -1,4 +1,5 @@
 import { http } from './http'
+import { idempotencyHeaders } from './idempotency'
 
 export const chatApi = {
   listConversations() {
@@ -27,8 +28,13 @@ export const chatApi = {
     return http.get(`/chat/conversations/${conversationId}/messages`, { params }).then((r) => r.data.data)
   },
 
-  sendMessage(conversationId, payload) {
-    return http.post(`/chat/conversations/${conversationId}/messages`, payload).then((r) => r.data.data)
+  // `idempotencyKey` is generated when the person pressed send and reused
+  // by every retry of that same message (11.5) — so a send that succeeded
+  // with a lost response does not become two messages.
+  sendMessage(conversationId, { idempotencyKey, ...payload }) {
+    return http
+      .post(`/chat/conversations/${conversationId}/messages`, payload, idempotencyHeaders(idempotencyKey))
+      .then((r) => r.data.data)
   },
 
   markRead(conversationId) {

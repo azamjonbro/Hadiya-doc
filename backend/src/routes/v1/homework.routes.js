@@ -13,6 +13,7 @@ import {
   listAssignmentsQuerySchema,
   gradingQueueQuerySchema,
 } from '../../validators/assignment.validator.js'
+import { idempotent } from '../../middlewares/idempotency.middleware.js'
 
 /**
  * Homework.
@@ -76,4 +77,11 @@ homeworkRouter.delete('/:id', requirePermission(PERMISSIONS.COURSE_UPDATE), assi
 // your own work is not an administrative act.
 homeworkRouter.get('/:id/mine', assignmentController.mine)
 homeworkRouter.post('/:id/draft', validateBody(submitWorkSchema), assignmentController.saveDraft)
-homeworkRouter.post('/:id/submit', validateBody(submitWorkSchema), assignmentController.submit)
+// 11.5 — the case the header exists for: a phone that lost signal after
+// the submission landed retries, and without this the work is filed twice.
+homeworkRouter.post(
+  '/:id/submit',
+  idempotent(),
+  validateBody(submitWorkSchema),
+  assignmentController.submit
+)

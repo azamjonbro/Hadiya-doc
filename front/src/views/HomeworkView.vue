@@ -19,6 +19,7 @@ import AppInput from '@/components/ui/AppInput.vue'
 import Badge from '@/components/ui/Badge.vue'
 import Skeleton from '@/components/ui/Skeleton.vue'
 import Icon from '@/components/ui/Icon.vue'
+import { newIdempotencyKey } from '@/services/idempotency'
 
 const { t, locale } = useI18n()
 const route = useRoute()
@@ -30,6 +31,9 @@ const state = ref(null)
 const loading = ref(true)
 const saving = ref(false)
 const text = ref('')
+// Held for the life of this page so a retry of the same submission
+// carries the same key (11.5).
+const submissionKey = ref('')
 const linkInput = ref('')
 const links = ref([])
 
@@ -84,7 +88,14 @@ async function submit() {
   if (!ok) return
   saving.value = true
   try {
-    await homeworkApi.submit(route.params.id, { text: text.value, links: links.value })
+    // Generated once for this submission and reused if the request is
+    // retried — see services/idempotency.js.
+    submissionKey.value = submissionKey.value || newIdempotencyKey()
+    await homeworkApi.submit(route.params.id, {
+      text: text.value,
+      links: links.value,
+      idempotencyKey: submissionKey.value,
+    })
     toast.success(t('homework.submitted'))
     await load()
   } catch (error) {
