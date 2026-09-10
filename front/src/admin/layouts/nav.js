@@ -20,6 +20,24 @@ export const managementNav = [
   { name: 'reports', path: '/bos/reports', icon: 'bar-chart', labelKey: 'nav.reports', permission: 'report:export' },
   { name: 'chat', path: '/bos/chat', icon: 'message-square', labelKey: 'nav.chat', permission: 'chat:support' },
   { name: 'compliance', path: '/bos/compliance', icon: 'shield', labelKey: 'compliance.title', permission: 'course:assign' },
+  // BLOK 13 — what a person can do, as opposed to what they were assigned.
+  { name: 'competencies', path: '/bos/competencies', icon: 'star', labelKey: 'competency.title', permission: 'competency:manage' },
+  {
+    name: 'competency-matrix',
+    path: '/bos/competencies/matrix',
+    icon: 'grid',
+    labelKey: 'competency.matrix',
+    permission: 'competency:assess',
+  },
+  { name: 'review360', path: '/bos/review360', icon: 'refresh', labelKey: 'review360.title', permission: 'review360:manage' },
+  { name: 'ojt', path: '/bos/ojt', icon: 'briefcase', labelKey: 'ojt.adminTitle', permission: 'ojt:manage' },
+  {
+    name: 'development-plans',
+    path: '/bos/development-plans',
+    icon: 'trending-up',
+    labelKey: 'devplan.adminTitle',
+    permission: 'devplan:manage',
+  },
   { name: 'grading', path: '/bos/grading', icon: 'check-check', labelKey: 'grading.title', permission: 'quiz:grade' },
   { name: 'events', path: '/bos/events', icon: 'calendar', labelKey: 'events.adminTitle', permission: 'event:create' },
   {

@@ -111,6 +111,13 @@ export const PERMISSIONS = Object.freeze({
   // checks it.
   KB_PUBLISH: 'kb:publish',
 
+  // A competency catalogue is a statement about what the company expects of
+  // a job, and a level is a statement about a person. Different decisions,
+  // different keys: HR writes the catalogue, a manager records where their
+  // own people stand against it.
+  COMPETENCY_MANAGE: 'competency:manage',
+  COMPETENCY_ASSESS: 'competency:assess',
+
   REVIEW360_MANAGE: 'review360:manage',
   REVIEW360_RESPOND: 'review360:respond',
   REVIEW360_RESULTS_VIEW: 'review360:results:view',
@@ -195,6 +202,7 @@ const MANAGER_PERMISSIONS = [
   PERMISSIONS.OJT_MANAGE,
   PERMISSIONS.OJT_OBSERVE,
   PERMISSIONS.DEVPLAN_MANAGE,
+  PERMISSIONS.COMPETENCY_ASSESS,
   PERMISSIONS.REPORT_VIEW,
   PERMISSIONS.COMPLIANCE_VIEW,
   PERMISSIONS.REVIEW360_RESULTS_VIEW,
@@ -234,6 +242,8 @@ const ADMIN_PERMISSIONS = [
   PERMISSIONS.ONBOARDING_VIEW_TEAM,
   PERMISSIONS.KB_WRITE,
   PERMISSIONS.KB_PUBLISH,
+  PERMISSIONS.COMPETENCY_MANAGE,
+  PERMISSIONS.COMPETENCY_ASSESS,
   PERMISSIONS.REVIEW360_MANAGE,
   PERMISSIONS.REVIEW360_RESULTS_VIEW,
   PERMISSIONS.OJT_MANAGE,
@@ -303,6 +313,7 @@ const MENTOR_PERMISSIONS = [
   PERMISSIONS.ONBOARDING_VIEW_TEAM,
   PERMISSIONS.OJT_OBSERVE,
   PERMISSIONS.DEVPLAN_MANAGE,
+  PERMISSIONS.COMPETENCY_ASSESS,
   PERMISSIONS.REPORT_VIEW,
 ]
 

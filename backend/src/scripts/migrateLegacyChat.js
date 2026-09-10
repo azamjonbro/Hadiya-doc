@@ -14,7 +14,8 @@
  * `--drop-orphans` flag makes that explicit.
  *
  * Run with:
- *   npm --prefix backend run migrate:chat            # report + convert
+ *   npm --prefix backend run migrate:chat -- --dry-run   # report only
+ *   npm --prefix backend run migrate:chat                # report + convert
  *   npm --prefix backend run migrate:chat -- --drop-orphans
  */
 import mongoose from 'mongoose'
@@ -24,6 +25,11 @@ import { Conversation, participantsKeyFor } from '../models/conversation.model.j
 import { ChatMessage } from '../models/chatMessage.model.js'
 
 const dropOrphans = process.argv.includes('--drop-orphans')
+// Same flag, same spelling, same meaning as every other migration script:
+// report what would change and write nothing (14.5). It covers the index
+// drop too — dropping an index is a write, and a dry run that quietly
+// rebuilt the collection's indexes would be lying about "nothing written".
+const dryRun = process.argv.includes('--dry-run')
 
 // The old schema's `employeeId` unique index survives a schema change —
 // Mongoose creates indexes but never drops the ones it no longer declares.
@@ -35,6 +41,10 @@ async function dropStaleIndexes() {
   const indexes = await Conversation.collection.indexes()
   for (const index of indexes) {
     if (index.name === 'employeeId_1') {
+      if (dryRun) {
+        logger.info('[dry-run] would drop stale index conversations.employeeId_1')
+        continue
+      }
       await Conversation.collection.dropIndex(index.name)
       logger.info('Dropped stale index conversations.employeeId_1')
     }
@@ -85,15 +95,18 @@ async function main() {
     // messages into it rather than violating the unique index.
     const existing = await Conversation.findOne({ participantsKey })
     if (existing && String(existing._id) !== String(conversation._id)) {
+      converted += 1
+      if (dryRun) continue
       await ChatMessage.updateMany(
         { conversationId: conversation._id },
         { $set: { conversationId: existing._id } }
       )
       await Conversation.deleteOne({ _id: conversation._id })
-      converted += 1
       continue
     }
 
+    converted += 1
+    if (dryRun) continue
     await Conversation.updateOne(
       { _id: conversation._id },
       {
@@ -110,13 +123,14 @@ async function main() {
         $unset: { employeeId: '', employeeLastReadAt: '', staffLastReadAt: '' },
       }
     )
-    converted += 1
   }
 
-  logger.info(`Converted ${converted} conversation(s)`)
+  logger.info(`${dryRun ? '[dry-run] would convert' : 'Converted'} ${converted} conversation(s)`)
 
   if (orphans.length) {
-    if (dropOrphans) {
+    if (dropOrphans && dryRun) {
+      logger.info(`[dry-run] would drop ${orphans.length} conversation(s) with no staff counterpart`)
+    } else if (dropOrphans) {
       await ChatMessage.deleteMany({ conversationId: { $in: orphans } })
       await Conversation.deleteMany({ _id: { $in: orphans } })
       logger.info(`Dropped ${orphans.length} conversation(s) with no staff counterpart`)
@@ -129,6 +143,8 @@ async function main() {
       )
     }
   }
+
+  if (dryRun) logger.info('--dry-run: nothing written')
 }
 
 main()

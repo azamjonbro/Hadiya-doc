@@ -1,0 +1,326 @@
+{
+  "uz": {
+    "competency": {
+      "title": "Kompetensiyalar",
+      "subtitle": "Xodim nimani bilishi va qila olishi kerak — kurs emas, malaka",
+      "mine": "Mening kompetensiyalarim",
+      "mineSubtitle": "Lavozimingiz nimani talab qiladi va siz qayerdasiz",
+      "matrix": "Kompetensiya matritsasi",
+      "matrixSubtitle": "Odamlar va malakalar kesishmasi — qayerda bo'shliq bor",
+
+      "new": "Yangi kompetensiya",
+      "edit": "Tahrirlash",
+      "code": "Kod",
+      "codeHint": "O'zgarmas belgi — nomini keyin o'zgartirsangiz ham havolalar buzilmaydi",
+      "name": "Nomi",
+      "description": "Tavsif",
+      "category": "Toifa",
+      "categoryHint": "Masalan: Texnik, Boshqaruv, Xavfsizlik",
+      "allCategories": "Barcha toifalar",
+      "validityDays": "Amal qilish muddati (kun)",
+      "validityHint": "0 — muddatsiz. Guvohnoma eskiradi, «rus tilini biladi» esa yo'q.",
+      "neverExpires": "Muddatsiz",
+      "order": "Tartib",
+
+      "levels": "Daraja shkalasi",
+      "levelsHint": "Darajalar 1 dan boshlanib ketma-ket bo'lishi shart — bo'shliq hisobi shu songa asoslanadi",
+      "levelLabel": "Daraja nomi",
+      "addLevel": "Daraja qo'shish",
+      "level": "Daraja",
+      "notAssessed": "Baholanmagan",
+
+      "requirements": "Talablar",
+      "requirementsHint": "Kim uchun majburiy va qaysi darajada",
+      "addRequirement": "Talab qo'shish",
+      "requirementValue": "Qiymat",
+      "requiredLevel": "Talab qilinadigan daraja",
+      "noRequirements": "Talab belgilanmagan",
+      "scope": {
+        "POSITION": "Lavozim",
+        "DEPARTMENT": "Bo'lim",
+        "BRANCH": "Filial"
+      },
+
+      "status": {
+        "ACTIVE": "Faol",
+        "ARCHIVED": "Arxivda"
+      },
+      "cell": {
+        "MET": "Bajarilgan",
+        "GAP": "Yetishmaydi",
+        "MISSING": "Baholanmagan",
+        "EXPIRED": "Muddati o'tgan",
+        "ASSESSED": "Baholangan",
+        "UNASSESSED": "—"
+      },
+
+      "assess": "Baholash",
+      "assessTitle": "Darajani belgilash",
+      "assessFor": "{name} — {competency}",
+      "source": "Manba",
+      "sourceLabel": {
+        "SELF": "O'z-o'zini baholash",
+        "MANAGER": "Rahbar",
+        "REVIEW360": "360° baho",
+        "OJT": "Ish o'rnida kuzatuv",
+        "ASSESSMENT": "Test",
+        "CERTIFICATE": "Guvohnoma",
+        "IMPORT": "Import"
+      },
+      "note": "Izoh",
+      "saved": "Daraja yozildi",
+
+      "person": "Xodim",
+      "required": "Talab",
+      "current": "Hozirgi",
+      "gap": "Bo'shliq",
+      "fit": "Moslik",
+      "fitOf": "{met} / {required} talab bajarilgan",
+      "searchPlaceholder": "Ism bo'yicha qidirish",
+      "searchCatalog": "Nomi yoki kodi bo'yicha",
+      "filterDepartment": "Bo'lim",
+      "filterPosition": "Lavozim",
+      "filterBranch": "Filial",
+      "showGapsOnly": "Faqat bo'shliqlar",
+
+      "assessedOn": "Baholangan: {date}",
+      "expiresOn": "Amal qiladi: {date}",
+      "expiredOn": "Muddati tugagan: {date}",
+      "previousLevel": "Oldingi daraja: {level}",
+      "developmentCourses": "Tavsiya etilgan kurslar: {count}",
+      "meetsAll": "Lavozimingiz talab qilgan hamma narsa bajarilgan",
+      "gapsCount": "{count} ta kompetensiyada bo'shliq bor",
+      "noRequirementsForYou": "Lavozimingiz uchun hali talab belgilanmagan",
+
+      "empty": "Kompetensiya yo'q",
+      "emptyHint": "Birinchi kompetensiyani qo'shing — shkalani va kim uchun majburiyligini belgilang",
+      "noPeople": "Xodim topilmadi",
+      "noPeopleHint": "Filtrni kengaytiring",
+      "noneYet": "Hali hech narsa baholanmagan",
+
+      "loadError": "Ma'lumotni yuklab bo'lmadi",
+      "saveError": "Saqlab bo'lmadi",
+      "deleteTitle": "Kompetensiya o'chirilsinmi?",
+      "deleteMessage": "Buni qaytarib bo'lmaydi. Kimdir baholangan bo'lsa, o'chirish o'rniga arxivlang.",
+      "deleted": "O'chirildi",
+      "levelsRequired": "Kamida bitta daraja kerak",
+      "codeAndNameRequired": "Kod va nom to'ldirilishi shart"
+    }
+  },
+  "ru": {
+    "competency": {
+      "title": "Компетенции",
+      "subtitle": "Что сотрудник должен уметь — это не курс, а квалификация",
+      "mine": "Мои компетенции",
+      "mineSubtitle": "Что требует ваша должность и где вы сейчас",
+      "matrix": "Матрица компетенций",
+      "matrixSubtitle": "Люди и навыки в одной таблице — где именно пробел",
+
+      "new": "Новая компетенция",
+      "edit": "Редактировать",
+      "code": "Код",
+      "codeHint": "Неизменный идентификатор — переименование не сломает ссылки",
+      "name": "Название",
+      "description": "Описание",
+      "category": "Категория",
+      "categoryHint": "Например: Технические, Управление, Безопасность",
+      "allCategories": "Все категории",
+      "validityDays": "Срок действия (дней)",
+      "validityHint": "0 — бессрочно. Удостоверение истекает, «владеет русским» — нет.",
+      "neverExpires": "Бессрочно",
+      "order": "Порядок",
+
+      "levels": "Шкала уровней",
+      "levelsHint": "Уровни должны идти подряд начиная с 1 — на этом числе построен расчёт пробела",
+      "levelLabel": "Название уровня",
+      "addLevel": "Добавить уровень",
+      "level": "Уровень",
+      "notAssessed": "Не оценивался",
+
+      "requirements": "Требования",
+      "requirementsHint": "Для кого обязательна и на каком уровне",
+      "addRequirement": "Добавить требование",
+      "requirementValue": "Значение",
+      "requiredLevel": "Требуемый уровень",
+      "noRequirements": "Требования не заданы",
+      "scope": {
+        "POSITION": "Должность",
+        "DEPARTMENT": "Отдел",
+        "BRANCH": "Филиал"
+      },
+
+      "status": {
+        "ACTIVE": "Активна",
+        "ARCHIVED": "В архиве"
+      },
+      "cell": {
+        "MET": "Соответствует",
+        "GAP": "Не хватает",
+        "MISSING": "Не оценивался",
+        "EXPIRED": "Истёк",
+        "ASSESSED": "Оценён",
+        "UNASSESSED": "—"
+      },
+
+      "assess": "Оценить",
+      "assessTitle": "Зафиксировать уровень",
+      "assessFor": "{name} — {competency}",
+      "source": "Источник",
+      "sourceLabel": {
+        "SELF": "Самооценка",
+        "MANAGER": "Руководитель",
+        "REVIEW360": "Оценка 360°",
+        "OJT": "Наблюдение на рабочем месте",
+        "ASSESSMENT": "Тест",
+        "CERTIFICATE": "Удостоверение",
+        "IMPORT": "Импорт"
+      },
+      "note": "Комментарий",
+      "saved": "Уровень записан",
+
+      "person": "Сотрудник",
+      "required": "Требуется",
+      "current": "Сейчас",
+      "gap": "Пробел",
+      "fit": "Соответствие",
+      "fitOf": "{met} из {required} требований выполнено",
+      "searchPlaceholder": "Поиск по имени",
+      "searchCatalog": "По названию или коду",
+      "filterDepartment": "Отдел",
+      "filterPosition": "Должность",
+      "filterBranch": "Филиал",
+      "showGapsOnly": "Только пробелы",
+
+      "assessedOn": "Оценено: {date}",
+      "expiresOn": "Действует до: {date}",
+      "expiredOn": "Истёк: {date}",
+      "previousLevel": "Прежний уровень: {level}",
+      "developmentCourses": "Рекомендованные курсы: {count}",
+      "meetsAll": "Всё, что требует ваша должность, выполнено",
+      "gapsCount": "Пробелы по {count} компетенциям",
+      "noRequirementsForYou": "Для вашей должности требования пока не заданы",
+
+      "empty": "Компетенций нет",
+      "emptyHint": "Добавьте первую — задайте шкалу и для кого она обязательна",
+      "noPeople": "Сотрудники не найдены",
+      "noPeopleHint": "Расширьте фильтр",
+      "noneYet": "Пока ничего не оценивалось",
+
+      "loadError": "Не удалось загрузить данные",
+      "saveError": "Не удалось сохранить",
+      "deleteTitle": "Удалить компетенцию?",
+      "deleteMessage": "Действие необратимо. Если кто-то уже оценён — архивируйте вместо удаления.",
+      "deleted": "Удалено",
+      "levelsRequired": "Нужен хотя бы один уровень",
+      "codeAndNameRequired": "Код и название обязательны"
+    }
+  },
+  "en": {
+    "competency": {
+      "title": "Competencies",
+      "subtitle": "What a person can do — a qualification, not a course",
+      "mine": "My competencies",
+      "mineSubtitle": "What your position requires and where you stand",
+      "matrix": "Competency matrix",
+      "matrixSubtitle": "People against skills — where the gap actually is",
+
+      "new": "New competency",
+      "edit": "Edit",
+      "code": "Code",
+      "codeHint": "A stable identifier — renaming later will not break references",
+      "name": "Name",
+      "description": "Description",
+      "category": "Category",
+      "categoryHint": "For example: Technical, Leadership, Safety",
+      "allCategories": "All categories",
+      "validityDays": "Valid for (days)",
+      "validityHint": "0 means it never expires. A first-aid certificate does; \"speaks Russian\" does not.",
+      "neverExpires": "Never expires",
+      "order": "Order",
+
+      "levels": "Level scale",
+      "levelsHint": "Levels must be consecutive starting at 1 — the gap arithmetic is built on that number",
+      "levelLabel": "Level name",
+      "addLevel": "Add level",
+      "level": "Level",
+      "notAssessed": "Not assessed",
+
+      "requirements": "Requirements",
+      "requirementsHint": "Who must hold it, and at what level",
+      "addRequirement": "Add requirement",
+      "requirementValue": "Value",
+      "requiredLevel": "Required level",
+      "noRequirements": "No requirements set",
+      "scope": {
+        "POSITION": "Position",
+        "DEPARTMENT": "Department",
+        "BRANCH": "Branch"
+      },
+
+      "status": {
+        "ACTIVE": "Active",
+        "ARCHIVED": "Archived"
+      },
+      "cell": {
+        "MET": "Met",
+        "GAP": "Gap",
+        "MISSING": "Not assessed",
+        "EXPIRED": "Expired",
+        "ASSESSED": "Assessed",
+        "UNASSESSED": "—"
+      },
+
+      "assess": "Assess",
+      "assessTitle": "Record a level",
+      "assessFor": "{name} — {competency}",
+      "source": "Source",
+      "sourceLabel": {
+        "SELF": "Self-assessment",
+        "MANAGER": "Manager",
+        "REVIEW360": "360° review",
+        "OJT": "On-the-job observation",
+        "ASSESSMENT": "Test",
+        "CERTIFICATE": "Certificate",
+        "IMPORT": "Import"
+      },
+      "note": "Note",
+      "saved": "Level recorded",
+
+      "person": "Person",
+      "required": "Required",
+      "current": "Current",
+      "gap": "Gap",
+      "fit": "Fit",
+      "fitOf": "{met} of {required} requirements met",
+      "searchPlaceholder": "Search by name",
+      "searchCatalog": "By name or code",
+      "filterDepartment": "Department",
+      "filterPosition": "Position",
+      "filterBranch": "Branch",
+      "showGapsOnly": "Gaps only",
+
+      "assessedOn": "Assessed {date}",
+      "expiresOn": "Valid until {date}",
+      "expiredOn": "Expired {date}",
+      "previousLevel": "Previously level {level}",
+      "developmentCourses": "Suggested courses: {count}",
+      "meetsAll": "Everything your position requires is met",
+      "gapsCount": "{count} competencies short",
+      "noRequirementsForYou": "Nothing has been required of your position yet",
+
+      "empty": "No competencies",
+      "emptyHint": "Add the first one — set its scale and who has to hold it",
+      "noPeople": "No people found",
+      "noPeopleHint": "Widen the filter",
+      "noneYet": "Nothing assessed yet",
+
+      "loadError": "Could not load",
+      "saveError": "Could not save",
+      "deleteTitle": "Delete this competency?",
+      "deleteMessage": "This cannot be undone. If anybody has been assessed on it, archive it instead.",
+      "deleted": "Deleted",
+      "levelsRequired": "At least one level is needed",
+      "codeAndNameRequired": "Code and name are required"
+    }
+  }
+}

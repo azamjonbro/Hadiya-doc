@@ -52,6 +52,10 @@ import { mediaRouter } from './media.routes.js'
 import { aiGenerationRouter } from './aiGeneration.routes.js'
 import { apiKeysRouter } from './apiKeys.routes.js'
 import { webhooksRouter } from './webhooks.routes.js'
+import { competenciesRouter } from './competencies.routes.js'
+import { review360Router } from './review360.routes.js'
+import { ojtRouter } from './ojt.routes.js'
+import { developmentPlansRouter } from './developmentPlans.routes.js'
 
 export const v1Router = Router()
 
@@ -126,3 +130,12 @@ v1Router.use('/ai', aiGenerationRouter)
 // Managing the keys that open /api/public/v1 (11.1).
 v1Router.use('/api-keys', apiKeysRouter)
 v1Router.use('/webhooks', webhooksRouter)
+
+// BLOK 13 — kengaytirilgan baholash. Kurs "nimani o'tdi" ni aytadi, bu
+// to'rttasi esa "nimani qila oladi" ni: kompetensiya katalogi va daraja
+// (13.1), 360° sikl (13.2), ish o'rnidagi kuzatuv (13.3) va shundan
+// o'sadigan rivojlanish rejasi (13.4).
+v1Router.use('/competencies', competenciesRouter)
+v1Router.use('/review360', review360Router)
+v1Router.use('/ojt', ojtRouter)
+v1Router.use('/development-plans', developmentPlansRouter)

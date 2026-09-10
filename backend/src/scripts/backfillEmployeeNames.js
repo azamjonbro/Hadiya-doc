@@ -13,6 +13,7 @@
  * else in the app reads it, and this migration is not the place to change how
  * anyone's name is displayed.
  *
+ *   npm --prefix backend run migrate:names -- --dry-run
  *   npm --prefix backend run migrate:names
  */
 import mongoose from 'mongoose'
@@ -20,6 +21,10 @@ import { splitFullName } from '@lms/shared'
 import { connectDatabase } from '../config/db.js'
 import { logger } from '../config/logger.js'
 import { User } from '../models/user.model.js'
+
+// Same flag, same spelling, same meaning as every other migration script:
+// report what would change and write nothing (14.5).
+const dryRun = process.argv.includes('--dry-run')
 
 async function main() {
   await connectDatabase()
@@ -36,11 +41,15 @@ async function main() {
   for (const user of pending) {
     const { firstName, lastName } = splitFullName(user.fullName)
     if (!firstName && !lastName) continue
-    await User.updateOne({ _id: user._id }, { $set: { firstName, lastName } })
     updated += 1
+    if (dryRun) continue
+    await User.updateOne({ _id: user._id }, { $set: { firstName, lastName } })
   }
 
-  logger.info('Employee name backfill complete', { examined: pending.length, updated })
+  logger.info(
+    dryRun ? 'Employee name backfill (--dry-run): nothing written' : 'Employee name backfill complete',
+    { examined: pending.length, updated }
+  )
 }
 
 main()

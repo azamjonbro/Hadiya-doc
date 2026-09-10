@@ -1,6 +1,5 @@
 <script setup>
 import { useI18n } from 'vue-i18n'
-import Sidebar from './Sidebar.vue'
 import Topbar from './Topbar.vue'
 import BottomNav from './BottomNav.vue'
 
@@ -30,7 +29,6 @@ function skipToContent() {
     <a class="skip-link" href="#main" @click.prevent="skipToContent">{{ t('a11y.skipToContent') }}</a>
     <Topbar class="sticky top-0 z-30 w-full" />
     <div class="flex flex-1 min-h-0">
-      <Sidebar class="sticky top-16 hidden h-[calc(100vh-4rem)] lg:flex z-20" />
       <!-- `tabindex="-1"` so the skip link can put focus here: a
            landmark is not focusable on its own. -->
       <main

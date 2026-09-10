@@ -74,6 +74,15 @@ export const router = createRouter({
         { path: 'notifications', name: 'notifications', component: () => import('@/views/NotificationsView.vue'), meta: { titleKey: 'nav.notifications' } },
         { path: 'homework/:id', name: 'homework-detail', component: () => import('@/views/HomeworkView.vue'), meta: { titleKey: 'nav.courses' } },
         { path: 'calendar', name: 'calendar', component: () => import('@/views/CalendarView.vue'), meta: { titleKey: 'nav.calendar' } },
+        // BLOK 13 — what a person can do, not only what they took.
+        { path: 'competencies', name: 'my-competencies', component: () => import('@/views/MyCompetenciesView.vue'), meta: { titleKey: 'competency.mine' } },
+        { path: 'reviews', name: 'my-reviews', component: () => import('@/views/MyReviewsView.vue'), meta: { titleKey: 'review360.mine', permission: 'review360:respond' } },
+        { path: 'reviews/:assignmentId', name: 'review360-respond', component: () => import('@/views/Review360RespondView.vue'), meta: { titleKey: 'review360.respond', permission: 'review360:respond' } },
+        // The observer's form is used standing on the shop floor with a
+        // phone, so it is a learner-side page, not an admin one.
+        { path: 'ojt', name: 'ojt-sessions', component: () => import('@/views/OjtSessionsView.vue'), meta: { titleKey: 'ojt.title', permission: 'ojt:observe' } },
+        { path: 'ojt/:sessionId', name: 'ojt-session', component: () => import('@/views/OjtObservationView.vue'), meta: { titleKey: 'ojt.observation', permission: 'ojt:observe' } },
+        { path: 'development-plan', name: 'my-development-plan', component: () => import('@/views/MyDevelopmentPlanView.vue'), meta: { titleKey: 'devplan.mine', permission: 'devplan:read:own' } },
         {
           path: 'events/:id',
           name: 'event-detail',
@@ -184,6 +193,42 @@ export const router = createRouter({
           name: 'admin-roles',
           component: () => import('@/admin/views/RolesPermissionsView.vue'),
           meta: { permission: 'role:manage', titleKey: 'roles.title' },
+        },
+        {
+          path: 'competencies',
+          name: 'admin-competencies',
+          component: () => import('@/admin/views/CompetenciesView.vue'),
+          meta: { permission: 'competency:manage', titleKey: 'competency.title' },
+        },
+        {
+          path: 'competencies/matrix',
+          name: 'admin-competency-matrix',
+          component: () => import('@/admin/views/CompetencyMatrixView.vue'),
+          meta: { permission: 'competency:assess', titleKey: 'competency.matrix' },
+        },
+        {
+          path: 'review360',
+          name: 'admin-review360',
+          component: () => import('@/admin/views/Review360CyclesView.vue'),
+          meta: { permission: 'review360:manage', titleKey: 'review360.title' },
+        },
+        {
+          path: 'review360/:id',
+          name: 'admin-review360-cycle',
+          component: () => import('@/admin/views/Review360CycleView.vue'),
+          meta: { permission: 'review360:results:view', titleKey: 'review360.cycle' },
+        },
+        {
+          path: 'ojt',
+          name: 'admin-ojt',
+          component: () => import('@/admin/views/OjtChecklistsView.vue'),
+          meta: { permission: 'ojt:manage', titleKey: 'ojt.adminTitle' },
+        },
+        {
+          path: 'development-plans',
+          name: 'admin-development-plans',
+          component: () => import('@/admin/views/DevelopmentPlansView.vue'),
+          meta: { permission: 'devplan:manage', titleKey: 'devplan.adminTitle' },
         },
         {
           path: 'compliance',

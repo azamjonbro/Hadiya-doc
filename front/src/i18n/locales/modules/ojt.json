@@ -1,0 +1,23 @@
+{
+  "uz": {
+    "ojt": {
+      "title": "Ish o’rnida o’qitish",
+      "adminTitle": "OJT checklistlari",
+      "observation": "Kuzatuv"
+    }
+  },
+  "ru": {
+    "ojt": {
+      "title": "Обучение на рабочем месте",
+      "adminTitle": "OJT чек-листы",
+      "observation": "Наблюдение"
+    }
+  },
+  "en": {
+    "ojt": {
+      "title": "On-the-job training",
+      "adminTitle": "OJT checklists",
+      "observation": "Observation"
+    }
+  }
+}

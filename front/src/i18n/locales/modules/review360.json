@@ -1,0 +1,26 @@
+{
+  "uz": {
+    "review360": {
+      "title": "360° baholash",
+      "mine": "Menga kelgan so’rovnomalar",
+      "respond": "Baholash",
+      "cycle": "Sikl"
+    }
+  },
+  "ru": {
+    "review360": {
+      "title": "360° оценка",
+      "mine": "Мои анкеты",
+      "respond": "Оценка",
+      "cycle": "Цикл"
+    }
+  },
+  "en": {
+    "review360": {
+      "title": "360° review",
+      "mine": "My questionnaires",
+      "respond": "Respond",
+      "cycle": "Cycle"
+    }
+  }
+}
