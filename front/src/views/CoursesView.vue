@@ -111,13 +111,14 @@ onMounted(load)
 </script>
 
 <template>
-  <div class="mx-auto max-w-7xl px-6 py-8">
-    <div class="flex flex-wrap items-center justify-between gap-4">
-      <div>
-        <h1 class="text-h1 text-ink">{{ t('courses.myLearning') }}</h1>
-      </div>
-      <div class="w-full max-w-xs">
-        <AppInput v-model="search" icon="search" :placeholder="t('courses.searchPlaceholder')" />
+  <div class="mx-auto w-full max-w-[1440px] px-6 lg:px-8 py-8">
+    <div class="flex items-center justify-between border-b border-border pb-4">
+      <h2 class="text-h2 text-ink">{{ t('courses.myLearning') }}</h2>
+      <div class="flex items-center gap-4 text-small">
+        <label class="flex items-center gap-2 cursor-pointer text-ink-muted hover:text-ink transition-default">
+          <input v-model="showCompleted" type="checkbox" class="h-4 w-4 rounded border-border-strong text-primary focus:ring-primary/30" />
+          {{ t('courses.showCompleted') }}
+        </label>
       </div>
     </div>
 
@@ -171,7 +172,9 @@ onMounted(load)
 
       <!-- Discover more -->
       <section v-if="discoverCatalog.length" class="mt-12">
-        <h2 class="mb-4 text-h3 text-ink">{{ t('courses.catalog') }}</h2>
+        <div class="flex items-center justify-between border-b border-border pb-4">
+          <h2 class="text-h2 text-ink">{{ t('courses.catalog') }}</h2>
+        </div>
         <div class="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
           <AppCard
             v-for="course in discoverCatalog"
