@@ -237,6 +237,23 @@ describe('9.5 · media library and orphan sweep', () => {
     })
   })
 
+  test('a usage place that names a field its model does not have is a boot error', async () => {
+    // The bug this replaces: mongoose drops an unknown path from a filter
+    // instead of raising, so `find({logoUrl: ...})` on a model whose field
+    // is really `branding.logoUrl` became `find({})` — every settings row
+    // matched every asset. The guard in mediaUsage.service.js turns that
+    // typo into an error at import; this checks the mechanism it relies on.
+    const { Settings: SettingsModel } = await import('../src/models/settings.model.js')
+    assert.equal(SettingsModel.schema.path('logoUrl'), undefined)
+    assert.ok(SettingsModel.schema.path('branding.logoUrl'), 'the real path must resolve')
+
+    // And the silent-match behaviour itself, so the reason is documented
+    // where somebody will read it.
+    const matchedEverything = await SettingsModel.find({ logoUrl: { $in: ['nothing-like-this'] } }).lean()
+    const everySettingsRow = await SettingsModel.countDocuments({})
+    assert.equal(matchedEverything.length, everySettingsRow)
+  })
+
   describe('the orphan sweep', () => {
     test('renditions of a video that no longer exists are orphans', async () => {
       const goneId = new mongoose.Types.ObjectId().toString()

@@ -105,6 +105,28 @@ const securitySchema = new Schema(
   { _id: false }
 )
 
+/**
+ * What the AI features are allowed to spend (10.6).
+ *
+ * A monthly token ceiling rather than a request limit: generation calls
+ * differ by two orders of magnitude (a quiz from one lesson against a
+ * course outline from a 200-page manual), so counting requests would
+ * either block the cheap ones or let a handful of expensive ones run the
+ * bill up. 0 means no limit — which is the default, because a limit
+ * somebody did not choose is a feature that stops working in the second
+ * month for no visible reason.
+ */
+const aiSchema = new Schema(
+  {
+    monthlyTokenBudget: { type: Number, min: 0, default: 0 },
+    // Whether authors may start generation jobs at all. Separate from the
+    // budget: a company can want AI off entirely without setting a ceiling
+    // of zero and reading "budget exceeded" as the reason.
+    generationEnabled: { type: Boolean, default: true },
+  },
+  { _id: false }
+)
+
 const settingsSchema = new Schema(
   {
     // A fixed id is what makes this a singleton: there is no way to create
@@ -117,6 +139,7 @@ const settingsSchema = new Schema(
     grading: { type: gradingSchema, default: () => ({}) },
     locale: { type: localeSchema, default: () => ({}) },
     security: { type: securitySchema, default: () => ({}) },
+    ai: { type: aiSchema, default: () => ({}) },
     updatedBy: { type: Schema.Types.ObjectId, ref: 'User', default: null },
   },
   { timestamps: true, _id: false }
@@ -130,6 +153,7 @@ export const SETTINGS_SECTIONS = [
   'grading',
   'locale',
   'security',
+  'ai',
 ]
 
 export const Settings = model('Settings', settingsSchema)

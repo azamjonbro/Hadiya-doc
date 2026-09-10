@@ -9,6 +9,8 @@ import { SCORM_QUEUE } from './jobs/scormQueue.js'
 import { extractScormPackage } from './services/scorm/extractScorm.js'
 import { MEDIA_CLEANUP_QUEUE, scheduleMediaCleanup } from './jobs/mediaCleanupQueue.js'
 import { sweepOrphans } from './services/media/mediaCleanup.service.js'
+import { AI_GENERATION_QUEUE } from './jobs/aiGenerationQueue.js'
+import { aiGenerationService } from './services/ai/aiGeneration.service.js'
 import { REMINDER_QUEUE, scheduleReminderChecks } from './jobs/reminderQueue.js'
 import { runDeadlineChecks } from './jobs/reminderJob.js'
 import {
@@ -90,6 +92,26 @@ async function main() {
     },
     { connection: redisConnection, concurrency: 1 }
   )
+
+  // AI generation (10.1). Concurrency 2: these are long model calls, so
+  // more would mostly queue behind the API's own rate limit while holding
+  // memory for the source text of each.
+  const aiWorker = new Worker(
+    AI_GENERATION_QUEUE,
+    async (job) => {
+      if (job.name === 'generate') {
+        return aiGenerationService.run(job.data.jobId)
+      }
+      return null
+    },
+    { connection: redisConnection, concurrency: 2 }
+  )
+
+  aiWorker.on('failed', (job, err) => {
+    // The row carries the reason for the author; this is for the operator
+    // reading logs when several fail at once.
+    logger.error('AI generation worker failed', { jobId: job?.data?.jobId, error: err.message })
+  })
 
   mediaWorker.on('failed', (job, err) => {
     logger.error('Media cleanup sweep failed', { jobId: job?.id, error: err.message })
@@ -353,6 +375,7 @@ async function main() {
       videoWorker.close(),
       scormWorker.close(),
       mediaWorker.close(),
+      aiWorker.close(),
       enrollmentRuleWorker.close(),
       onboardingWorker.close(),
       complianceWorker.close(),
