@@ -108,8 +108,8 @@ onMounted(load)
     <ErrorState v-else-if="!quiz" :title="errorMessage || t('quiz.notFound')" @retry="load" />
 
     <template v-else>
-      <div class="flex items-start gap-3">
-        <span class="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-primary-subtle text-primary">
+      <div class="flex items-start gap-3 bg-surface p-6 rounded-md border border-border shadow-sm">
+        <span class="flex h-11 w-11 shrink-0 items-center justify-center rounded bg-primary/10 text-primary">
           <Icon name="file-text" size="20" />
         </span>
         <div class="min-w-0">
@@ -127,16 +127,16 @@ onMounted(load)
       <!-- Result -->
       <AppCard
         v-if="result"
-        class="mt-6 border"
-        :class="result.passed ? 'border-success bg-success-subtle' : 'border-danger bg-danger-subtle'"
+        class="mt-6 border shadow-sm"
+        :class="result.passed ? 'border-success bg-success/5' : 'border-danger bg-danger/5'"
       >
         <div class="flex items-center gap-2">
           <Icon
             :name="result.passed ? 'check-circle' : 'alert-circle'"
-            size="22"
+            size="24"
             :class="result.passed ? 'text-success' : 'text-danger'"
           />
-          <p class="text-h3" :class="result.passed ? 'text-success' : 'text-danger'">
+          <p class="text-h2" :class="result.passed ? 'text-success' : 'text-danger'">
             {{ result.passed ? t('quiz.passed') : t('quiz.failed') }}
           </p>
         </div>
@@ -157,7 +157,7 @@ onMounted(load)
       </AppCard>
 
       <!-- Questions -->
-      <AppCard v-else class="mt-6">
+      <AppCard v-else class="mt-6 border border-border shadow-sm">
         <div class="space-y-6">
           <div v-for="(question, qIndex) in quiz.questions" :key="question.id">
             <p class="text-small font-medium text-ink">{{ qIndex + 1 }}. {{ question.text }}</p>
@@ -165,10 +165,10 @@ onMounted(load)
               <label
                 v-for="(option, oIndex) in question.options"
                 :key="option.id"
-                class="flex cursor-pointer items-start gap-2.5 rounded-md border px-3 py-2.5 text-small transition-default"
+                class="flex cursor-pointer items-start gap-2.5 rounded-md border px-4 py-3 text-small transition-default"
                 :class="
                   selected[question.id] === oIndex
-                    ? 'border-primary bg-primary-subtle text-ink'
+                    ? 'border-primary bg-primary/5 text-ink'
                     : 'border-border text-ink-muted hover:bg-surface-2'
                 "
               >

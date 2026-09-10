@@ -123,7 +123,7 @@ onMounted(load)
       <h1 class="mt-2 text-h1 text-ink">{{ event.title }}</h1>
       <p v-if="event.description" class="mt-2 text-small text-ink-muted">{{ event.description }}</p>
 
-      <AppCard class="mt-6 space-y-3 p-5">
+      <AppCard class="mt-6 space-y-3 p-5 border border-border shadow-sm">
         <div class="flex items-center gap-2 text-small text-ink">
           <Icon name="clock" size="15" class="shrink-0 text-ink-faint" />
           {{ formatWhen(event.startAt) }} — {{ new Date(event.endAt).toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' }) }}
@@ -156,7 +156,7 @@ onMounted(load)
         </div>
       </AppCard>
 
-      <AppCard v-if="event.requiresRegistration && !isCancelled && !isPast" class="mt-4 p-5">
+      <AppCard v-if="event.requiresRegistration && !isCancelled && !isPast" class="mt-4 p-5 border border-border shadow-sm">
         <template v-if="isQueued">
           <p class="text-small font-medium text-ink">{{ t('events.youAreQueued', { position: registration.waitlistPosition }) }}</p>
           <p class="mt-1 text-caption text-ink-muted">{{ t('events.queueHint') }}</p>
