@@ -3068,12 +3068,21 @@
   jurnalimizda esa **hech narsa yo'q**. Endi fayl nomi
   **`manifest.json`** (`manifestFilename`): `.json` ni har qanday
   statik server allaqachon biladi.
-  (2) Cloudflare `.js` ni o'z standarti bilan **4 soat** keshlaydi
-  (`max-age=14400`, o'lchandi), ya'ni brauzerning `/sw.js` uchun
-  yangilanish tekshiruvi chekkadan javob oladi va yangi versiya shuncha
-  kechikishi mumkin. To'g'ri yechim — nginx'da `location = /sw.js` uchun
-  `Cache-Control: no-cache` (foydalanuvchining sudo'si kerak, DAVOM.md ga
-  yozildi).
+  (2) nginx'da `/assets/` uchun `immutable 1y` va `/index.html` uchun
+  `no-cache` bor, **`/sw.js` uchun hech narsa yo'q** — shuning uchun
+  Cloudflare unga o'z standartini qo'yadi (`max-age=14400`, o'lchandi).
+  Bu shunchaki "yangilanish kechikadi" emas: chekka **eski `sw.js`** ni
+  beradi, u esa yangi deployda `rsync --delete` bilan **o'chirilgan
+  asset**ni precache qilishga urinadi va
+  `bad-precaching-response … 404` bilan **o'rnatilmaydi** — brauzerda
+  aynan shu ko'rildi (`SW VERSION redundant`), ya'ni 4 soat davomida
+  oflayn qo'llab-quvvatlash **umuman yo'q**. Ikki javob: (a) deploy
+  endi `--delete` **bilan emas** — eski hash'langan asset'lar joyida
+  qolsa, chekkadagi eski worker ham muvaffaqiyatli o'rnatiladi
+  (DAVOM.md va xotiraga yozildi, oyda bir marta yosh bo'yicha tozalash);
+  (b) to'g'ri tuzatish — nginx'da `location = /sw.js` uchun
+  `no-cache` + Cloudflare keshini bir marta tozalash, ikkisi ham
+  foydalanuvchining sudo'sini talab qiladi.
   · **Kuzatilgan xatti-harakat (brauzer probe topdi):** avval o'sha
   chekka keshini chetlab o'tish uchun worker URL'iga build shtampi
   qo'yilgan edi (`/sw.js?v=<build>`). Natija: yangilanish olingandan

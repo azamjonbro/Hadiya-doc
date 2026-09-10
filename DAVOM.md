@@ -89,19 +89,32 @@ berilishi mumkin). Yangilanish **so'rab** olinadi, avtomatik emas —
 vaqti chegaralangan test o'rtasida ilovani almashtirish yo'qolgan
 urinish. **Keyingi band — 12.2 (oflayn kontent: IndexedDB).**
 
-**Foydalanuvchidan bitta nginx qatori kerak (12.1):** Cloudflare `.js` ni
-4 soat keshlaydi, shu sababli yangi versiya ochiq turgan brauzerlarga
-shuncha kechikib boradi. Tuzatish (sudo kerak):
+**Foydalanuvchidan nginx bloki kerak (12.1) — bu shunchaki qulaylik
+emas.** nginx'da `/assets/` uchun `immutable 1y` va `/index.html` uchun
+`no-cache` bor, lekin **`/sw.js` uchun hech narsa yo'q** — natijada
+Cloudflare unga o'z standartini (`max-age=14400`) qo'yadi. Oqibati
+prodda o'lchandi: chekka **eski `sw.js`** ni beradi, u esa yangi
+deployda **o'chirilgan asset**ni precache qilishga urinadi va
+`bad-precaching-response … 404` bilan **o'rnatilmaydi** — ya'ni 4 soat
+davomida oflayn qo'llab-quvvatlash umuman yo'q.
+
+Tuzatish (sudo kerak, `spring.sds-max.uz` server bloki ichiga):
 
 ```nginx
-# spring.sds-max.uz server bloki ichida
 location = /sw.js {
-  add_header Cache-Control "no-cache, must-revalidate";
-  try_files $uri =404;
+    add_header Cache-Control "no-cache, must-revalidate";
+}
+location = /manifest.json {
+    add_header Cache-Control "no-cache";
 }
 ```
 
-Kechikish xato emas, kutish — ilova ishlashdan to'xtamaydi.
+Cloudflare'dagi keshni bir marta tozalash ham kerak (yoki 4 soat kutish).
+
+**Deploy o'zgardi:** SPA endi `rsync --delete` **bilan emas** ko'chiriladi
+(quyida) — eski hash'langan asset'lar joyida qolsa, chekkada qolgan eski
+`sw.js` ham muvaffaqiyatli o'rnatiladi va oflayn ishlashni yo'qotmaydi.
+Eski fayllar oyda bir marta yoshi bo'yicha tozalanadi.
 
 **⚠️ AI hech qayerda haqiqiy API bilan sinalmagan:** `ANTHROPIC_API_KEY`
 na lokalda, na serverda sozlanmagan (`env` da bo'sh sukut). Kod stub bilan
@@ -245,7 +258,17 @@ edi. **Bu eskirgan:** `/var/www/spring/front` `azamjonbro:azamjonbro`
 egaligida (`drwxrwxr-x`), ya'ni sudo umuman kerak emas:
 
 ```bash
-ssh homeserver 'rsync -a --delete ~/qollanma/front/dist/ /var/www/spring/front/'
+# --delete YO'Q: eski hash'langan asset'lar qolishi kerak (12.1) — chekkada
+# qolgan eski sw.js aks holda o'chirilgan faylni precache qilib
+# o'rnatilmaydi va oflayn ishlash yo'qoladi.
+ssh homeserver 'rsync -a ~/qollanma/front/dist/ /var/www/spring/front/'
+```
+
+Vaqti-vaqti bilan (oyda bir marta yetadi) eski asset'larni yoshi bo'yicha
+tozalash:
+
+```bash
+ssh homeserver 'find /var/www/spring/front/assets -type f -mtime +30 -delete'
 ```
 
 Chiqqanini **sahifani yangilab emas**, bundle nomini solishtirib tekshir:
