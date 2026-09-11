@@ -85,10 +85,20 @@ sahifasi.
 matritsasi, 360° (baholovchilar `managerId` dan, N≥3 muhr), OJT
 (muzlatilgan checklist, hukmlar 12.3 oflayn navbatida) va rivojlanish
 rejasi (progress hosila, CPE `PointsLedger` da). **Ochiq bandlar
-faqat 1.8 (to'xtatilgan), INF-2 (media hosti — nginx bloki tayyor, sudo +
-Cloudflare hostname kerak) va INF-4 (SMTP hisobi — `check:mail` tayyor,
-hisob kerak).** INF-1 va INF-3 2026-09-11 da o'lchab belgilandi. BLOK 14
-doimiy.
+faqat 1.8 (to'xtatilgan) va INF-4 (SMTP hisobi — `check:mail` tayyor,
+hisob kerak).** INF-1…INF-3 2026-09-11 da yopildi. BLOK 14 doimiy.
+
+**Media endi alohida hostda (INF-2, 2026-09-11):** `media.sds-max.uz` —
+nginx bloki `nginx/media.sds-max.uz.conf`, serverdagi `.env` da
+`S3_SIGNING_ENDPOINT` / `S3_PUBLIC_URL` shu hostga qaragan. Eski
+`/media/` va `/lms-*/` API hostida qoladi (bazadagi absolyut URL'lar).
+**Tuzoq:** serverning resolveri uy routeri — yangi subdomen uchun A
+yozuvini bir muddat `NXDOMAIN` deb keshlaydi (AAAA keladi, lekin IPv6
+marshruti yo'q) → `check:signing` serverdan yiqiladi, tashqaridan esa
+ishlaydi. Yangi subdomen ochganda tekshiruvni tashqaridan qiling yoki
+kutib turing. `/sw.js` `no-cache` qoidasi ham qo'llandi; Cloudflare
+zona sozlamasi *Browser Cache TTL* hali "4 hours" — dashboard'da
+"Respect Existing Headers" ga o'tkazish kerak.
 
 **UI qayta dizayn (2026-09-11, `676be84`):** xodim sahifalarida to'liq
 kenglikdagi hero banner, admin panelda `text-[28px] font-bold`

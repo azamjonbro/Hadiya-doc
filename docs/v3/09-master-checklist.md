@@ -3497,17 +3497,22 @@
   Server hali ham umumiy: pm2 da 7 ta begona ilova (`dacha`, `hadiya`,
   `hadiya-api`, `harajat`, `hrbot`, `oil`, `swiss-backend`), Mongo ham
   umumiy — [Tuzoqlar §5–6](../../DAVOM.md) o'z kuchida.
-- [ ] **INF-2** Media uchun ochiq host (`media.sds-max.uz`) — 0.5 bilan bog'liq
-  · **Maqsadning o'zi bajarilgan:** 0.5 dan beri presigned havolalar
-  `qollanma.sds-max.uz` (API hosti) ustidan ishlaydi, `check:signing`
-  prod'da 200 qaytaradi. Alohida host esa **tayyorlangan, qo'llanmagan** —
-  `nginx/media.sds-max.uz.conf` (faqat `lms-images` ochiq, `lms-materials`
-  / `lms-chat` presigned, qolgani 404). Qo'llash uchun **sudo va Cloudflare
-  dashboard** kerak, Claude'da ikkalasi yo'q:
-  1. Cloudflare Zero Trust → tunnel → Public hostname: `media.sds-max.uz` → `http://localhost:80`
-  2. `sudo cp ~/qollanma/nginx/media.sds-max.uz.conf /etc/nginx/sites-available/media.sds-max.uz && sudo ln -s /etc/nginx/sites-available/media.sds-max.uz /etc/nginx/sites-enabled/ && sudo nginx -t && sudo systemctl reload nginx`
-  3. `backend/.env`: `S3_SIGNING_ENDPOINT=https://media.sds-max.uz`, `S3_PUBLIC_URL=https://media.sds-max.uz/lms-images`; `pm2 reload qollanma`, `pm2 reload qollanma-worker`
-  4. `npm --prefix backend run check:signing` — ikkala bucket 200 bo'lsa belgilang.
+- [x] **INF-2** Media uchun ochiq host (`media.sds-max.uz`) — 0.5 bilan bog'liq
+  · Bajarildi 2026-09-11: tunnel hostname (foydalanuvchi, dashboard) +
+  `nginx/media.sds-max.uz.conf` (foydalanuvchi, sudo) + serverdagi
+  `backend/.env` → `S3_SIGNING_ENDPOINT=https://media.sds-max.uz`,
+  `S3_PUBLIC_URL=https://media.sds-max.uz/lms-images`, ikkala pm2 reload.
+  Host faqat `lms-images` (ochiq, 30 kun kesh) va `lms-materials` /
+  `lms-chat` (presigned, keshsiz) ni beradi, root va qolgan bucket'lar
+  404. **Tekshirildi tashqaridan:** ochiq rasm Cloudflare orqali
+  `200 image/png`, `lms-materials` dagi haqiqiy obyektga serverda
+  imzolangan havola tashqaridan **200, 25 654 bayt**, root 404.
+  · **Chetlanish:** `npm run check:signing` serverning o'zidan
+  **yiqiladi** — uy routeri (`192.168.0.1`, systemd-resolved'ning
+  yagona upstream'i) yangi nomga A yozuvini `NXDOMAIN` deb keshlab
+  turibdi, AAAA esa keladi, serverda IPv6 marshruti yo'q →
+  `ENETUNREACH`. Bu serverning o'ziga xos holat, foydalanuvchilarga
+  ta'sir qilmaydi; router keshi tugagach skript o'tadi (qayta yugurting).
   Eski `/media/` va `/lms-*/` location'lar API hostida qoladi — bazadagi
   rasm URL'lari absolyut. Cloudflare Free bitta javobni **100 MB** gacha
   o'tkazadi — undan katta material yuklab olish har ikki hostda ham
@@ -3524,9 +3529,16 @@
   ya'ni tasodifan ham keshlanmaydi. Kerak bo'lsa yo'l: nginx
   `auth_request` (backend tokenni tekshiradi) + `proxy_cache` — origin'da
   kesh, edge'da emas. Hozirgi yuk (bitta quti, ichki foydalanuvchilar)
-  buni talab qilmaydi. **Qolgan bitta narsa sudo kutmoqda:** `/sw.js` va
-  `/manifest.json` uchun `no-cache` (12.1) — `nginx/spring.sds-max.uz.conf`
-  tayyor, `sudo cp … && sudo nginx -t && sudo systemctl reload nginx`.
+  buni talab qilmaydi. `/sw.js` va `/manifest.json` uchun `no-cache`
+  (12.1) 2026-09-11 da qo'llandi (`nginx/spring.sds-max.uz.conf`): edge
+  endi worker'ni har so'rovda origin bilan tekshiradi
+  (`cf-cache-status: REVALIDATED`) — eskirgan worker muammosi yopildi.
+  **Qolgan bitta narsa (dashboard):** zona sozlamasi *Browser Cache TTL =
+  4 hours* origin'ning `no-cache` ini `.js` uchun `max-age=14400` ga qayta
+  yozadi (`.json`/`.html` ga tegmaydi — ular standart kesh ro'yxatida
+  yo'q). Caching → Configuration → Browser Cache TTL → **Respect Existing
+  Headers** qilinmaguncha brauzer worker yangilanishini 4 soatgacha
+  kechiktirishi mumkin.
 - [ ] **INF-4** SMTP provayder hisobi — BLOK 1 uchun shart
   · **Hisob yo'q** — serverda `SMTP_HOST` bo'sh, har bir xat `SKIPPED`
   deb yoziladi (parol tiklash, eslatmalar, sertifikat xati **yetib
