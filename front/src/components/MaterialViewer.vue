@@ -19,6 +19,11 @@
  *     one scroll. Audio and anything else keep the browser's own handling.
  * Parsers load on demand — a reader who only opens PDFs never downloads the
  * presentation code.
+ *
+ * Paged formats wear the slide-player shell (portal §15): a 36px dark bar,
+ * a white card with the slide in it, a 44px control row — slides list,
+ * play, speed on the left; "1 / 20", previous, next on the right — and the
+ * slides popover with a thumbnail and the first line of each page.
  */
 import { computed, nextTick, onBeforeUnmount, ref, useId, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
@@ -56,7 +61,7 @@ const SPEEDS = [0.5, 1, 1.5, 2]
 // lands exactly on the boundary still produces a scrollbar over a rounding
 // error, and a scrollbar on a page that is meant to fit is worse than a
 // margin. Raise it towards 1 for edge-to-edge pages.
-const PAGE_FIT = 0.9
+const PAGE_FIT = 0.98
 
 const loading = ref(false)
 const errorMessage = ref('')
@@ -87,6 +92,14 @@ const completed = ref(false)
 const finishing = ref(false)
 const speed = ref(1)
 const isFullscreen = ref(false)
+
+// The slides popover (§15). Thumbnails and first lines are built lazily
+// the first time it opens — twenty small renders that nobody asked for
+// would delay the first page for everyone who never opens the list.
+const slidesOpen = ref(false)
+const slideQuery = ref('')
+const slides = ref([]) // [{ n, title, thumb }]
+let slidesBuilt = false
 
 let pptxPreviewer = null
 let pdfDoc = null
@@ -217,11 +230,12 @@ async function loadPdf(pdfjs, buffer) {
  * moment the bar appeared.
  */
 function pageBox() {
-  const scroller = pageHost.value?.parentElement
-  const padding = 32 // p-4 on the host, both sides
+  // The host is the slide area itself now — a 16:9 box whose size is set
+  // by the card, so its own client box is the honest measurement.
+  const host = pageHost.value
   return {
-    width: Math.max(320, (scroller?.clientWidth ?? 900) - padding),
-    height: Math.max(240, (scroller?.clientHeight ?? 600) - padding),
+    width: Math.max(320, host?.clientWidth ?? 900),
+    height: Math.max(180, host?.clientHeight ?? 506),
   }
 }
 
@@ -280,6 +294,76 @@ function drawPptxSlide(pageNumber) {
   if (!pptxPreviewer) return
   pptxPreviewer.removeCurrentSlide?.()
   pptxPreviewer.renderSingleSlide(pageNumber - 1)
+}
+
+// ---------------------------------------------------------------------------
+// Slides list (§15)
+// ---------------------------------------------------------------------------
+const THUMB_WIDTH = 152 // 76px at 2×
+
+// The first line of text on a page stands in for its title; a page with no
+// text (a full-bleed image) gets "---", which is also what iSpring shows.
+async function pdfFirstLine(pdfPage) {
+  try {
+    const content = await pdfPage.getTextContent()
+    // Up to the first line break — the heading, not the whole slide.
+    const line = []
+    for (const item of content.items) {
+      if (item.str?.trim()) line.push(item.str)
+      if (item.hasEOL && line.length) break
+    }
+    const text = line.join(' ').replace(/\s+/g, ' ').trim()
+    return text ? text.slice(0, 60) : '---'
+  } catch {
+    return '---'
+  }
+}
+
+async function pdfThumbnail(pdfPage) {
+  const unscaled = pdfPage.getViewport({ scale: 1 })
+  const viewport = pdfPage.getViewport({ scale: THUMB_WIDTH / unscaled.width })
+  const canvas = document.createElement('canvas')
+  canvas.width = Math.floor(viewport.width)
+  canvas.height = Math.floor(viewport.height)
+  await pdfPage.render({ canvasContext: canvas.getContext('2d'), viewport }).promise
+  return canvas.toDataURL('image/jpeg', 0.7)
+}
+
+async function buildSlides() {
+  if (slidesBuilt || !pagesKnown.value) return
+  slidesBuilt = true
+  const count = pageCount.value
+  slides.value = Array.from({ length: count }, (_, i) => ({ n: i + 1, title: '---', thumb: '' }))
+  if (kind.value !== 'pdf' || !pdfDoc) return
+  // One page at a time, and the list fills in as it goes; the popover is
+  // already open and usable on the numbers alone.
+  const doc = pdfDoc
+  for (let n = 1; n <= count; n += 1) {
+    if (pdfDoc !== doc) return // the material changed under us
+    try {
+      const pdfPage = await doc.getPage(n)
+      const [title, thumb] = await Promise.all([pdfFirstLine(pdfPage), pdfThumbnail(pdfPage)])
+      slides.value[n - 1] = { n, title, thumb }
+    } catch {
+      // A page that will not render keeps its number.
+    }
+  }
+}
+
+const visibleSlides = computed(() => {
+  const q = slideQuery.value.trim().toLowerCase()
+  if (!q) return slides.value
+  return slides.value.filter((slide) => String(slide.n) === q || slide.title.toLowerCase().includes(q))
+})
+
+function toggleSlides() {
+  slidesOpen.value = !slidesOpen.value
+  if (slidesOpen.value) buildSlides()
+}
+
+function pickSlide(n) {
+  slidesOpen.value = false
+  showPage(n)
 }
 
 async function showPage(pageNumber) {
@@ -368,7 +452,8 @@ function onResize() {
 
 function onKeydown(event) {
   if (event.key === 'Escape') {
-    if (!document.fullscreenElement) emit('close')
+    if (slidesOpen.value) slidesOpen.value = false
+    else if (!document.fullscreenElement) emit('close')
     return
   }
   if (!pagesKnown.value) return
@@ -412,6 +497,10 @@ function reset() {
   finishing.value = false
   speed.value = 1
   reportedPages = new Set()
+  slidesOpen.value = false
+  slideQuery.value = ''
+  slides.value = []
+  slidesBuilt = false
 }
 
 // The same identity check the video player runs, in front of the reader: a
@@ -548,208 +637,252 @@ onBeforeUnmount(() => {
 
 <template>
   <Teleport to="body">
-    <div v-if="material" class="fixed inset-0 z-50 flex items-center justify-center">
-      <div class="absolute inset-0 bg-slate-950/70 backdrop-blur-[2px]" aria-hidden="true" @click="emit('close')" />
-
-      <!-- Opens filling the window: a document read at 90% of a dialog is a
-           document read through a letterbox. The button hands it the whole
-           screen, browser chrome included. -->
-      <div
-        ref="dialogEl"
-        class="relative flex h-full w-full flex-col overflow-hidden bg-surface"
-        role="dialog"
-        aria-modal="true"
-        :aria-labelledby="titleId"
-        tabindex="-1"
-      >
-        <header class="flex items-center gap-3 border-b border-border px-4 py-2.5">
-          <div class="min-w-0 flex-1">
-            <p :id="titleId" class="truncate text-small font-semibold text-ink">{{ material.title }}</p>
-            <p class="truncate text-caption text-ink-faint">
-              {{ material.originalFilename }}<span v-if="sizeLabel"> · {{ sizeLabel }}</span>
-            </p>
-          </div>
-
-          <AppButton v-if="canDownload" variant="outline" size="sm" icon="download" @click="onDownload">
-            {{ t('materials.download') }}
-          </AppButton>
+    <!-- The player shell (§15): full screen, grey ground, dark 36px bar. -->
+    <div
+      v-if="material"
+      ref="dialogEl"
+      class="fixed inset-0 z-[90] flex flex-col bg-[#D9D9D9]"
+      role="dialog"
+      aria-modal="true"
+      :aria-labelledby="titleId"
+      tabindex="-1"
+    >
+      <div class="flex h-9 shrink-0 items-center justify-between bg-[#2B2B2B] px-3 text-white">
+        <p :id="titleId" class="truncate text-[13px] font-semibold">{{ material.title }}</p>
+        <div class="flex items-center gap-1">
+          <button
+            v-if="canDownload"
+            type="button"
+            class="flex h-7 items-center gap-1.5 rounded px-2 text-[12px] text-white/80 hover:bg-white/10 hover:text-white"
+            @click="onDownload"
+          >
+            <Icon name="download" size="14" />{{ t('materials.download') }}<span v-if="sizeLabel" class="text-white/50"> · {{ sizeLabel }}</span>
+          </button>
           <button
             type="button"
-            class="rounded-md p-1.5 text-ink-faint transition-default hover:bg-surface-2 hover:text-ink"
+            class="flex h-7 w-7 items-center justify-center rounded hover:bg-white/10"
             :aria-label="isFullscreen ? t('materials.exitFullscreen') : t('materials.fullscreen')"
             :title="isFullscreen ? t('materials.exitFullscreen') : t('materials.fullscreen')"
             @click="toggleFullscreen"
           >
-            <Icon :name="isFullscreen ? 'minimize' : 'maximize'" size="18" />
+            <Icon :name="isFullscreen ? 'minimize' : 'maximize'" size="15" />
           </button>
-          <button
-            type="button"
-            class="rounded-md p-1.5 text-ink-faint transition-default hover:bg-surface-2 hover:text-ink"
-            :aria-label="t('common.cancel')"
-            @click="emit('close')"
-          >
-            <Icon name="close" size="18" />
+          <button type="button" class="flex h-7 w-7 items-center justify-center rounded hover:bg-white/10" :aria-label="t('common.cancel')" @click="emit('close')">
+            <Icon name="close" size="16" />
           </button>
-        </header>
+        </div>
+      </div>
 
-        <div class="relative min-h-0 flex-1 overflow-auto bg-surface-2">
-          <!-- Covers the reading area only: the header keeps its close button,
-               so the check is never a screen with no way out of it. -->
-          <FaceGateOverlay
-            v-if="faceGate.active.value"
-            v-model:show-enrollment="faceGate.showEnrollment.value"
-            :state="faceGate.state.value"
-            :action="faceGate.action.value"
-            :error-message="faceGate.errorMessage.value"
-            :stream="faceGate.cameraStream.value"
-            @capture="faceGate.capture"
-            @enrolled="faceGate.onEnrolled"
-          />
+      <!-- Covers the whole reading area; the bar above keeps its ×, so the
+           check is never a screen with no way out of it. -->
+      <FaceGateOverlay
+        v-if="faceGate.active.value"
+        v-model:show-enrollment="faceGate.showEnrollment.value"
+        full-page
+        :state="faceGate.state.value"
+        :action="faceGate.action.value"
+        :error-message="faceGate.errorMessage.value"
+        :stream="faceGate.cameraStream.value"
+        @capture="faceGate.capture"
+        @enrolled="faceGate.onEnrolled"
+      />
 
-          <!-- 12.2 — rendered from the saved copy. Said plainly, because
-               reading progress cannot be recorded from here. -->
-          <p v-if="fromOffline" class="mb-2 flex items-center gap-1.5 text-caption text-warning">
-            <Icon name="alert-triangle" size="13" />
-            {{ t('offline.readingSaved') }}
-          </p>
+      <div class="flex min-h-0 flex-1 items-center justify-center overflow-auto p-4">
+        <!-- 12.2 — rendered from the saved copy. Said plainly, because
+             reading progress cannot be recorded from here. -->
+        <p v-if="fromOffline" class="absolute left-4 top-12 flex items-center gap-1.5 text-caption text-warning">
+          <Icon name="alert-triangle" size="13" />
+          {{ t('offline.readingSaved') }}
+        </p>
 
-          <div v-if="loading" class="flex h-full items-center justify-center gap-2 text-small text-ink-muted">
-            <Icon name="loader" size="16" class="animate-spin" />
-            {{ t('materials.loading') }}
-          </div>
-
-          <div v-else-if="errorMessage" class="flex h-full flex-col items-center justify-center gap-3 px-6 text-center">
-            <Icon name="alert-triangle" size="22" class="text-warning" />
-            <p class="text-small text-ink-muted">{{ errorMessage }}</p>
-            <AppButton v-if="canDownload" size="sm" icon="download" @click="onDownload">{{ t('materials.download') }}</AppButton>
-          </div>
-
-          <div v-else-if="kind === 'audio'" class="flex h-full flex-col items-center justify-center gap-4 px-6">
-            <span class="flex h-14 w-14 items-center justify-center rounded-full bg-primary-subtle text-primary">
-              <Icon name="mic" size="22" />
-            </span>
-            <audio :src="nativeUrl" controls class="w-full max-w-md" />
-          </div>
-
-          <!-- eslint-disable-next-line vue/no-v-html -->
-          <div
-            v-else-if="kind === 'docx'"
-            class="material-doc mx-auto max-w-3xl bg-surface p-8 text-body text-ink"
-            v-html="docHtml"
-          />
-
-          <div v-else-if="kind === 'xlsx'" class="space-y-6 p-5">
-            <div v-for="sheet in sheets" :key="sheet.name">
-              <p class="mb-2 text-caption font-semibold uppercase tracking-widest text-ink-faint">{{ sheet.name }}</p>
-              <div class="overflow-x-auto rounded-lg border border-border bg-surface">
-                <table class="w-full border-collapse text-caption">
-                  <tbody>
-                    <tr v-for="(row, rowIndex) in sheet.rows" :key="rowIndex" class="border-b border-border last:border-0">
-                      <td
-                        v-for="(cell, cellIndex) in row"
-                        :key="cellIndex"
-                        class="max-w-xs truncate border-r border-border px-2.5 py-1.5 last:border-0"
-                        :class="rowIndex === 0 ? 'bg-surface-2 font-semibold text-ink' : 'text-ink-muted'"
-                        :title="cell"
-                      >
-                        {{ cell }}
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-            </div>
-            <p v-if="truncated" class="text-caption text-ink-faint">
-              {{ t('materials.truncated', { rows: MAX_PREVIEW_ROWS }) }}
-            </p>
-          </div>
-
-          <div
-            v-else-if="kind === 'pdf' || kind === 'pptx'"
-            ref="pageHost"
-            class="flex h-full items-center justify-center p-4"
-          >
-            <canvas v-if="kind === 'pdf'" ref="pdfCanvas" class="max-h-full max-w-full rounded shadow-md" />
-          </div>
-
-          <div v-else class="flex h-full flex-col items-center justify-center gap-3 px-6 text-center">
-            <Icon name="file-text" size="22" class="text-ink-faint" />
-            <p class="text-small text-ink-muted">{{ t('materials.unsupported') }}</p>
-            <AppButton v-if="canDownload" size="sm" icon="download" @click="onDownload">{{ t('materials.download') }}</AppButton>
-          </div>
+        <div v-if="loading" class="flex w-full max-w-[984px] items-center justify-center gap-2 rounded bg-white py-24 text-small text-slate-500">
+          <Icon name="loader" size="16" class="animate-spin" />
+          {{ t('materials.loading') }}
         </div>
 
-        <!-- The player bar. Only for formats that have pages: a spreadsheet
-             has nothing to advance to. -->
-        <footer v-if="paged" class="flex items-center justify-center gap-2 border-t border-border px-4 py-2.5">
-          <button
-            type="button"
-            :disabled="!canGoBack"
-            class="rounded-md p-2 text-ink-muted transition-default hover:bg-surface-2 hover:text-ink disabled:cursor-not-allowed disabled:opacity-40"
-            :title="t('materials.prevPage')"
-            @click="goPrev"
-          >
-            <Icon name="chevron-left" size="18" />
-          </button>
+        <div v-else-if="errorMessage" class="flex w-full max-w-[720px] flex-col items-center justify-center gap-3 rounded bg-white px-6 py-16 text-center">
+          <Icon name="alert-triangle" size="22" class="text-warning" />
+          <p class="text-small text-slate-600">{{ errorMessage }}</p>
+          <AppButton v-if="canDownload" size="sm" icon="download" @click="onDownload">{{ t('materials.download') }}</AppButton>
+        </div>
 
-          <button
-            type="button"
-            :disabled="!pagesKnown"
-            class="rounded-md bg-primary p-2 text-primary-foreground transition-default hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40"
-            :title="playing ? t('materials.pause') : t('materials.play')"
-            @click="toggleAutoplay"
-          >
-            <Icon :name="playing ? 'pause' : 'play'" size="18" />
-          </button>
+        <div v-else-if="kind === 'audio'" class="flex w-full max-w-[720px] flex-col items-center justify-center gap-4 rounded bg-white px-6 py-16">
+          <span class="flex h-14 w-14 items-center justify-center rounded-full bg-primary-subtle text-primary">
+            <Icon name="mic" size="22" />
+          </span>
+          <audio :src="nativeUrl" controls class="w-full max-w-md" />
+        </div>
 
-          <button
-            type="button"
-            :disabled="!canGoForward"
-            class="rounded-md p-2 text-ink-muted transition-default hover:bg-surface-2 hover:text-ink disabled:cursor-not-allowed disabled:opacity-40"
-            :title="t('materials.nextPage')"
-            @click="goNext"
-          >
-            <Icon name="chevron-right" size="18" />
-          </button>
+        <!-- eslint-disable-next-line vue/no-v-html -->
+        <div
+          v-else-if="kind === 'docx'"
+          class="material-doc max-h-full w-full max-w-3xl self-stretch overflow-auto rounded bg-white p-8 text-body text-slate-900"
+          v-html="docHtml"
+        />
 
-          <p class="mx-2 min-w-20 text-center text-small tabular-nums text-ink">
-            <template v-if="pagesKnown">{{ page }} / {{ pageCount }}</template>
-            <span v-else class="text-ink-faint">— / —</span>
+        <div v-else-if="kind === 'xlsx'" class="max-h-full w-full max-w-[984px] space-y-6 self-stretch overflow-auto rounded bg-white p-5">
+          <div v-for="sheet in sheets" :key="sheet.name">
+            <p class="mb-2 text-caption font-semibold uppercase tracking-widest text-slate-400">{{ sheet.name }}</p>
+            <div class="overflow-x-auto rounded-lg border border-slate-200">
+              <table class="w-full border-collapse text-caption">
+                <tbody>
+                  <tr v-for="(row, rowIndex) in sheet.rows" :key="rowIndex" class="border-b border-slate-200 last:border-0">
+                    <td
+                      v-for="(cell, cellIndex) in row"
+                      :key="cellIndex"
+                      class="max-w-xs truncate border-r border-slate-200 px-2.5 py-1.5 last:border-0"
+                      :class="rowIndex === 0 ? 'bg-slate-50 font-semibold text-slate-900' : 'text-slate-600'"
+                      :title="cell"
+                    >
+                      {{ cell }}
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+          <p v-if="truncated" class="text-caption text-slate-400">
+            {{ t('materials.truncated', { rows: MAX_PREVIEW_ROWS }) }}
           </p>
+        </div>
 
-          <button
-            type="button"
-            class="rounded-md border border-border-strong px-2.5 py-1.5 text-caption font-medium text-ink-muted transition-default hover:bg-surface-2 hover:text-ink"
-            :title="t('materials.speed')"
-            @click="cycleSpeed"
+        <!-- The card: slide area 16:9, then the 44px control row. Its width
+             is the window's, capped at the reference's 984px. -->
+        <div v-else-if="paged" class="relative w-full max-w-[984px] rounded bg-white p-3 shadow-sm">
+          <div
+            ref="pageHost"
+            class="relative flex aspect-video w-full items-center justify-center overflow-hidden bg-white"
           >
-            {{ speed }}×
-          </button>
+            <canvas v-if="kind === 'pdf'" ref="pdfCanvas" class="max-h-full max-w-full" />
+          </div>
 
-          <!-- Appears once the last page has been reached. Afterwards it says
-               so and closes the reader: there is nothing left to do in here,
-               and hunting for the × in the corner is a poor ending to a
-               document you just finished. -->
-          <button
-            v-if="completed"
-            type="button"
-            class="ml-2 flex items-center gap-1.5 rounded-md bg-success-subtle px-3 py-1.5 text-caption font-medium text-success transition-default hover:bg-success hover:text-success-foreground"
-            @click="emit('close')"
+          <div class="mt-3 flex h-10 items-center justify-between">
+            <div class="flex items-center gap-2">
+              <button
+                type="button"
+                :disabled="!pagesKnown"
+                class="flex h-10 w-10 items-center justify-center rounded-md border-2 border-transparent bg-primary text-primary-foreground transition-default hover:opacity-90 disabled:opacity-40"
+                :class="slidesOpen ? 'ring-2 ring-primary/40' : ''"
+                :aria-expanded="slidesOpen"
+                :title="t('materials.slides')"
+                @click="toggleSlides"
+              >
+                <Icon name="list" size="20" />
+              </button>
+              <button
+                type="button"
+                :disabled="!pagesKnown"
+                class="flex h-10 w-10 items-center justify-center rounded-md bg-primary text-primary-foreground transition-default hover:opacity-90 disabled:opacity-40"
+                :title="playing ? t('materials.pause') : t('materials.play')"
+                @click="toggleAutoplay"
+              >
+                <Icon :name="playing ? 'pause' : 'play'" size="20" />
+              </button>
+              <button
+                type="button"
+                class="flex h-10 min-w-10 items-center justify-center rounded-md border border-slate-300 px-2 text-[13px] font-medium text-slate-700 transition-default hover:bg-slate-50"
+                :title="t('materials.speed')"
+                @click="cycleSpeed"
+              >
+                {{ speed }}×
+              </button>
+            </div>
+
+            <div class="flex items-center gap-2">
+              <!-- Offered at the end: "every page was displayed" and "I have
+                   finished" are not the same thing. Afterwards it closes the
+                   reader — there is nothing left to do in here. -->
+              <button
+                v-if="completed"
+                type="button"
+                class="mr-2 flex h-9 items-center gap-1.5 rounded-md bg-success-subtle px-3 text-[13px] font-medium text-success transition-default hover:bg-success hover:text-success-foreground"
+                @click="emit('close')"
+              >
+                <Icon name="check-circle" size="15" />
+                {{ t('materials.doneClose') }}
+              </button>
+              <AppButton v-else-if="pagesKnown && page === pageCount" class="mr-2" size="sm" icon="check" :loading="finishing" @click="markFinished">
+                {{ t('materials.markDone') }}
+              </AppButton>
+
+              <p class="mr-2 text-[13px] tabular-nums text-slate-500">
+                <template v-if="pagesKnown">{{ t('materials.pageOf', { page, total: pageCount }) }}</template>
+                <span v-else>— / —</span>
+              </p>
+              <button
+                type="button"
+                :disabled="!canGoBack"
+                class="flex h-10 w-10 items-center justify-center rounded-md border border-slate-300 text-slate-700 transition-default hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
+                :title="t('materials.prevPage')"
+                @click="goPrev"
+              >
+                <Icon name="chevron-left" size="18" />
+              </button>
+              <button
+                type="button"
+                :disabled="!canGoForward"
+                class="flex h-10 w-10 items-center justify-center rounded-md bg-primary text-primary-foreground transition-default hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40"
+                :title="t('materials.nextPage')"
+                @click="goNext"
+              >
+                <Icon name="chevron-right" size="18" />
+              </button>
+            </div>
+          </div>
+
+          <!-- Slides popover: over the slide's bottom-left corner, 280px,
+               the list scrolls. -->
+          <Transition
+            enter-active-class="transition-default"
+            enter-from-class="opacity-0 translate-y-1"
+            leave-active-class="transition-default"
+            leave-to-class="opacity-0 translate-y-1"
           >
-            <Icon name="check-circle" size="15" />
-            {{ t('materials.doneClose') }}
-          </button>
-          <AppButton
-            v-else-if="page === pageCount"
-            class="ml-2"
-            size="sm"
-            icon="check"
-            :loading="finishing"
-            @click="markFinished"
-          >
-            {{ t('materials.markDone') }}
-          </AppButton>
-        </footer>
+            <div
+              v-if="slidesOpen"
+              class="absolute bottom-[64px] left-3 z-10 flex max-h-[calc(100%-80px)] w-[280px] flex-col overflow-hidden rounded-lg bg-white text-slate-900 shadow-xl"
+              @keydown.escape.stop="slidesOpen = false"
+            >
+              <div class="flex h-14 shrink-0 items-center justify-between px-5">
+                <p class="text-[16px] font-semibold">{{ t('materials.slides') }}</p>
+                <label class="relative flex items-center">
+                  <Icon name="search" size="18" class="pointer-events-none absolute left-2 text-slate-500" />
+                  <input
+                    v-model="slideQuery"
+                    type="search"
+                    class="h-8 w-[130px] rounded-md border border-slate-200 bg-slate-50 pl-8 pr-2 text-[12px] outline-none placeholder:text-slate-400 focus:border-primary"
+                    :placeholder="t('common.search')"
+                    :aria-label="t('common.search')"
+                  />
+                </label>
+              </div>
+              <ul class="min-h-0 flex-1 overflow-y-auto bg-slate-50/60">
+                <li v-for="slide in visibleSlides" :key="slide.n">
+                  <button
+                    type="button"
+                    class="flex h-[76px] w-full items-center gap-3 px-5 text-left transition-default hover:bg-slate-100"
+                    :class="slide.n === page ? 'bg-slate-200' : ''"
+                    :aria-current="slide.n === page ? 'true' : undefined"
+                    @click="pickSlide(slide.n)"
+                  >
+                    <span class="flex h-[43px] w-[76px] shrink-0 items-center justify-center overflow-hidden rounded-sm border border-slate-200 bg-white shadow-sm">
+                      <img v-if="slide.thumb" :src="slide.thumb" alt="" class="max-h-full max-w-full" />
+                      <span v-else class="text-[11px] font-semibold text-slate-400">{{ slide.n }}</span>
+                    </span>
+                    <span class="truncate text-[13px] text-slate-700">{{ slide.n }}. {{ slide.title }}</span>
+                  </button>
+                </li>
+                <li v-if="!visibleSlides.length" class="px-5 py-6 text-center text-[12px] text-slate-400">{{ t('materials.noSlides') }}</li>
+              </ul>
+            </div>
+          </Transition>
+        </div>
+
+        <div v-else class="flex w-full max-w-[720px] flex-col items-center justify-center gap-3 rounded bg-white px-6 py-16 text-center">
+          <Icon name="file-text" size="22" class="text-slate-400" />
+          <p class="text-small text-slate-600">{{ t('materials.unsupported') }}</p>
+          <AppButton v-if="canDownload" size="sm" icon="download" @click="onDownload">{{ t('materials.download') }}</AppButton>
+        </div>
       </div>
     </div>
   </Teleport>

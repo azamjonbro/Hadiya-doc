@@ -309,8 +309,13 @@ Xuddi shu qobiq (36px panel + 720×460 karta): slayd rasmi, pastki panel
 44px: chapda [≡ slaydlar] [▶] yashil kvadrat 32px + [tezlik] oq; o'ngda
 "1 / 20" + [‹] oq [›] yashil. ≡ — chapdan popover 300px: "Slaydlar" +
 qidiruv, ro'yxat: thumbnail 80×45 + "1. ---", faol — kulrang.
-**Bizda slayd kontent turi yo'q** (matn darsi va SCORM bor) — keyingi
-bosqich, alohida qaror.
+**Bajarildi (2026-09-11):** alohida kontent turi kerak bo'lmadi —
+PRESENTATION/PDF materiallar o'quvchisi (`MaterialViewer.vue`) allaqachon
+sahifa, avtoplay va tezlikni bilardi; unga shu qobiq kiydirildi: 36px
+`#2B2B2B` panel, `#D9D9D9` fon, oq karta (max 984px, 16:9 slayd + 44px
+boshqaruv qatori: ≡ ▶ tezlik chapda, "1 / 20" ‹ › o'ngda) va slaydlar
+popoveri (280px, qidiruv, PDF uchun sahifa thumbnail'i + birinchi qator;
+pptx uchun raqam). Video/audio/docx/xlsx o'sha panel ostida oq kartada.
 
 ## Bajarish tartibi
 

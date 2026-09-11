@@ -460,7 +460,10 @@
     "done": "Finished",
     "doneClose": "Finished — close",
     "downloadAllowed": "Download allowed",
-    "downloadBlocked": "Download blocked"
+    "downloadBlocked": "Download blocked",
+    "slides": "Slides",
+    "noSlides": "No slide matches",
+    "pageOf": "{page} of {total}"
   },
   "quiz": {
     "title": "Quiz",

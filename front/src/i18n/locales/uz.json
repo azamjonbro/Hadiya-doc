@@ -460,7 +460,10 @@
     "done": "Tugallandi",
     "doneClose": "Tugadi — yopish",
     "downloadAllowed": "Yuklab olish ochiq",
-    "downloadBlocked": "Yuklab olish yopiq"
+    "downloadBlocked": "Yuklab olish yopiq",
+    "slides": "Slaydlar",
+    "noSlides": "Slayd topilmadi",
+    "pageOf": "{page} / {total}"
   },
   "quiz": {
     "title": "Test",
