@@ -67,8 +67,13 @@ const menu = [
 <template>
   <Drawer :model-value="props.modelValue" width="max-w-[560px]" plain @update:model-value="emit('update:modelValue', $event)">
     <div class="relative">
-      <!-- Cover: a calm photo-like gradient; the real cover is a later profile setting -->
-      <div class="h-[150px] w-full bg-gradient-to-br from-emerald-700 via-teal-600 to-sky-700" aria-hidden="true" />
+      <!-- Cover: the same shipped photo as the profile page (/hero/profile.jpg),
+           the gradient under it for a deployment without the file -->
+      <div
+        class="h-[150px] w-full bg-cover bg-center bg-gradient-to-br from-emerald-700 via-teal-600 to-sky-700"
+        style="background-image: url('/hero/profile.jpg')"
+        aria-hidden="true"
+      />
       <button
         type="button"
         class="absolute right-4 top-4 flex h-8 w-8 items-center justify-center rounded-full bg-black/30 text-white transition-default hover:bg-black/45"

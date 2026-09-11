@@ -297,12 +297,12 @@ onBeforeUnmount(() => {
     </div>
 
     <div class="flex flex-1 items-center justify-center overflow-auto p-4">
-      <div v-if="loading" class="w-full max-w-[720px] space-y-3 rounded bg-surface p-6">
+      <div v-if="loading" class="w-full max-w-[984px] space-y-3 rounded bg-surface p-6">
         <Skeleton class="h-6 w-64" />
         <Skeleton class="h-64 w-full rounded" />
       </div>
 
-      <div v-else-if="!briefing" class="w-full max-w-[720px] rounded bg-surface p-6">
+      <div v-else-if="!briefing" class="w-full max-w-[984px] rounded bg-surface p-6">
         <ErrorState :title="errorMessage || t('assessment.notFound')" @retry="loadBriefing" />
       </div>
 
@@ -320,8 +320,8 @@ onBeforeUnmount(() => {
         </div>
       </div>
 
-      <!-- The card, 720×460 -->
-      <div v-else class="flex min-h-[460px] w-full max-w-[720px] flex-col rounded bg-surface p-2 shadow-sm">
+      <!-- The card: 984 wide, 560+ tall (rasm 41 — the notes said 720×460) -->
+      <div v-else class="flex min-h-[560px] w-full max-w-[984px] flex-col rounded bg-surface p-3 shadow-sm">
         <div class="flex flex-1 flex-col border border-border">
           <!-- ============ BRIEFING ============ -->
           <template v-if="phase === 'briefing'">

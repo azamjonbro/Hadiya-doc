@@ -11,7 +11,8 @@ import SearchField from '@/components/portal/SearchField.vue'
 import { apiErrorText } from '@/utils/apiError'
 
 /**
- * News (reference §3): no hero, a 700px column. A slider of the latest
+ * News (reference §3): no hero, a 960px column (rasm 04 measures 960, not
+ * the 700 the notes say). A slider of the latest
  * covered articles on top, then the list — first item on a white card,
  * the rest separated by rules — each with a one-line excerpt and the
  * reader count the feed now carries.
@@ -107,11 +108,11 @@ onBeforeUnmount(stopTimer)
 
 <template>
   <div class="min-h-screen bg-surface-2 pb-16">
-    <div class="mx-auto w-full max-w-[700px] px-4 pt-6">
+    <div class="mx-auto w-full max-w-[960px] px-4 pt-6">
       <p v-if="errorMessage" class="mb-4 text-small text-danger">{{ errorMessage }}</p>
 
       <template v-if="loading">
-        <Skeleton class="h-[220px] w-full rounded-xl" />
+        <Skeleton class="h-[300px] w-full rounded-xl" />
         <Skeleton class="mt-8 h-8 w-40" />
         <Skeleton v-for="i in 4" :key="i" class="mt-4 h-24 w-full rounded-xl" />
       </template>
@@ -120,7 +121,7 @@ onBeforeUnmount(stopTimer)
         <!-- Slider -->
         <div
           v-if="slides.length"
-          class="relative h-[220px] w-full cursor-pointer overflow-hidden rounded-xl bg-slate-800 shadow-sm"
+          class="relative h-[300px] w-full cursor-pointer overflow-hidden rounded-xl bg-slate-800 shadow-sm"
           @mouseenter="stopTimer"
           @mouseleave="startTimer"
           @click="open(slides[slide])"
@@ -153,7 +154,7 @@ onBeforeUnmount(stopTimer)
         <!-- Title row -->
         <div class="mt-8 flex flex-wrap items-center justify-between gap-3">
           <h1 class="text-[28px] font-semibold text-ink">{{ t('news.title') }}</h1>
-          <SearchField v-model="search" width="w-[220px]" />
+          <SearchField v-model="search" width="w-[300px]" />
         </div>
 
         <!-- List -->
