@@ -460,7 +460,10 @@
     "done": "Завершено",
     "doneClose": "Завершено — закрыть",
     "downloadAllowed": "Скачивание разрешено",
-    "downloadBlocked": "Скачивание запрещено"
+    "downloadBlocked": "Скачивание запрещено",
+    "slides": "Слайды",
+    "noSlides": "Слайд не найден",
+    "pageOf": "{page} из {total}"
   },
   "quiz": {
     "title": "Тест",

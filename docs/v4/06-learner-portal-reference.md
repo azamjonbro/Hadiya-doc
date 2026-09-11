@@ -309,8 +309,33 @@ Xuddi shu qobiq (36px panel + 720×460 karta): slayd rasmi, pastki panel
 44px: chapda [≡ slaydlar] [▶] yashil kvadrat 32px + [tezlik] oq; o'ngda
 "1 / 20" + [‹] oq [›] yashil. ≡ — chapdan popover 300px: "Slaydlar" +
 qidiruv, ro'yxat: thumbnail 80×45 + "1. ---", faol — kulrang.
-**Bizda slayd kontent turi yo'q** (matn darsi va SCORM bor) — keyingi
-bosqich, alohida qaror.
+**Bajarildi (2026-09-11):** alohida kontent turi kerak bo'lmadi —
+PRESENTATION/PDF materiallar o'quvchisi (`MaterialViewer.vue`) allaqachon
+sahifa, avtoplay va tezlikni bilardi; unga shu qobiq kiydirildi: 36px
+`#2B2B2B` panel, `#D9D9D9` fon, oq karta (max 984px, 16:9 slayd + 44px
+boshqaruv qatori: ≡ ▶ tezlik chapda, "1 / 20" ‹ › o'ngda) va slaydlar
+popoveri (280px, qidiruv, PDF uchun sahifa thumbnail'i + birinchi qator;
+pptx uchun raqam). Video/audio/docx/xlsx o'sha panel ostida oq kartada.
+
+## Rasm bilan solishtirish (2026-09-11)
+
+Sahifalar 1916px kenglikda, yorug' mavzuda, rasmlar bilan yonma-yon
+ko'rildi. Hujjatdagi ba'zi o'lchamlar rasmdan farq qilar ekan — rasm
+haqiqat, quyidagilar shunga keltirildi:
+
+| Joy | Hujjat | Rasm | Kod |
+|---|---|---|---|
+| Yangiliklar ustuni / slider | 700 / 220px | 960 / 300px (rasm 04) | 960 / 300 |
+| Profil muqova / ichki | 1024×120 / 880 | 1400×160 / 1200 (rasm 27) | 1400×160 / to'liq |
+| Kurs sahifasi hero | 220px | 335px, progress chizig'i hero ichida (rasm 37) | 335, chiziq ichida |
+| Kurs tarkibi | — | bitta ustun, yon karta yo'q (rasm 37) | bitta ustun |
+| Test / slayd kartasi | 720×460 | 984 keng (rasm 41, 44) | 984 |
+| Hero fotolari | Unsplash hotlink olib tashlangan | foto bor | `public/hero/*.jpg` (courses, catalog, profile) ilova bilan keladi |
+
+Bilib turib qolgan farqlar: kurs sahifasida "Davom ettirish" tugmasi
+(rasmda yo'q, foydali); xodimlar jadvalida filtr chiplari yo'q (rasm 22);
+profil muqovasi hamma uchun bir xil foto (muqova yuklash yo'q);
+orgstruktura bo'limlar hisobi, odamlar daraxti emas.
 
 ## Bajarish tartibi
 

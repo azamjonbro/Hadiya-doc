@@ -201,7 +201,17 @@ export const assessmentService = {
     if (!assessment) throw ApiError.notFound('Assessment not found')
     const canManage = canManageCourses(actor)
     if (assessment.status !== 'PUBLISHED' && !canManage) throw ApiError.notFound('Assessment not found')
-    if (canManage) return toPublicAssessment(assessment, { includeAnswers: true })
+    // The manager's shape carries the briefing figures too: the player page
+    // opened as a preview drew empty tiles for the time limit and the
+    // question count otherwise.
+    if (canManage) {
+      return {
+        ...toPublicAssessment(assessment, { includeAnswers: true }),
+        questionCount: assessment.questions?.length ?? 0,
+        timeLimitMinutes: ASSESSMENT_TIME_LIMIT_MINUTES,
+        focusLossLimit: ASSESSMENT_FOCUS_LOSS_LIMIT,
+      }
+    }
 
     const session = await assessmentSessionRepository.findActive(actor.id, id)
     const live = session && session.expiresAt > new Date() ? session : null

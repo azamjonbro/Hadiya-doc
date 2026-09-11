@@ -128,15 +128,21 @@ onMounted(load)
 
 <template>
   <div class="min-h-screen bg-surface pb-16">
-    <div class="mx-auto w-full max-w-[1024px]">
-      <!-- Cover -->
-      <div class="h-[120px] w-full bg-gradient-to-r from-primary via-emerald-700 to-slate-700"></div>
+    <!-- Rasm 27: the cover is 1400 wide and 160 tall, the content 1200 —
+         wider than the notes' 1024/120, and the screenshot is the truth. -->
+    <div class="mx-auto w-full max-w-[1400px]">
+      <!-- Cover: a photo shipped with the app (/hero/profile.jpg); the
+           gradient stays under it for a deployment without the file -->
+      <div
+        class="h-[160px] w-full bg-cover bg-center bg-gradient-to-r from-primary via-emerald-700 to-slate-700"
+        style="background-image: url('/hero/profile.jpg')"
+      ></div>
 
-      <div class="px-4 sm:px-[72px]">
+      <div class="px-4 sm:px-[100px]">
         <!-- Avatar over the cover edge, name beside it, figures on the right -->
         <div class="flex flex-wrap items-end justify-between gap-6">
           <div class="flex items-end gap-4">
-            <div class="-mt-[45px] rounded-full bg-surface p-1">
+            <div class="-mt-[60px] rounded-full bg-surface p-1">
               <Avatar :name="auth.user?.fullName ?? ''" :src="auth.user?.avatar" size="2xl" />
             </div>
             <div class="pb-1">
@@ -144,18 +150,18 @@ onMounted(load)
               <p class="text-[13px] text-ink-muted">{{ auth.user?.position || auth.user?.department || auth.user?.role }}</p>
             </div>
           </div>
-          <dl class="flex items-center divide-x divide-border pb-1 text-center">
-            <div class="px-6">
-              <dd class="text-[28px] font-semibold leading-none text-ink">{{ summary?.totalPoints ?? 0 }}</dd>
-              <dt class="mt-1 text-[12px] text-ink-muted">{{ t('gamification.points') }}</dt>
+          <dl class="flex items-start gap-12 pb-1">
+            <div class="w-[100px]">
+              <dd class="text-[28px] font-medium leading-none text-ink">{{ summary?.totalPoints ?? 0 }}</dd>
+              <dt class="mt-2 text-[12px] leading-snug text-ink-muted">{{ t('portal.profile.points') }}</dt>
             </div>
-            <div class="px-6">
-              <dd class="text-[28px] font-semibold leading-none text-ink">{{ earnedBadges.length }}</dd>
-              <dt class="mt-1 text-[12px] text-ink-muted">{{ t('portal.profile.tabs.badges') }}</dt>
+            <div class="w-[100px]">
+              <dd class="text-[28px] font-medium leading-none text-ink">{{ earnedBadges.length }}</dd>
+              <dt class="mt-2 text-[12px] leading-snug text-ink-muted">{{ t('portal.profile.badges') }}</dt>
             </div>
-            <div class="px-6">
-              <dd class="text-[28px] font-semibold leading-none text-ink">{{ certificates?.length ?? 0 }}</dd>
-              <dt class="mt-1 text-[12px] text-ink-muted">{{ t('portal.profile.tabs.certificates') }}</dt>
+            <div class="w-[100px]">
+              <dd class="text-[28px] font-medium leading-none text-ink">{{ certificates?.length ?? 0 }}</dd>
+              <dt class="mt-2 text-[12px] leading-snug text-ink-muted">{{ t('portal.profile.certificates') }}</dt>
             </div>
           </dl>
         </div>
@@ -164,7 +170,7 @@ onMounted(load)
           <PillTabs v-model="activeTab" :tabs="tabs" class="pb-2" />
         </div>
 
-        <div class="mt-6 max-w-[880px]">
+        <div class="mt-6">
           <template v-if="loading">
             <Skeleton class="h-8 w-48" />
             <Skeleton class="mt-4 h-40 w-full rounded-lg" />
@@ -173,17 +179,17 @@ onMounted(load)
           <!-- ===== Summary ===== -->
           <template v-else-if="activeTab === 'summary'">
             <section>
-              <div class="flex items-center justify-between">
-                <h2 class="text-[16px] font-semibold text-ink">{{ t('portal.profile.rankTitle') }}</h2>
-                <button type="button" class="text-[12px] text-primary hover:underline" @click="activeTab = 'rating'">
+              <div class="flex items-center justify-between border-b border-border pb-3">
+                <h2 class="text-[18px] font-semibold text-ink">{{ t('portal.profile.rankTitle') }}</h2>
+                <button type="button" class="text-[13px] text-ink-muted hover:text-ink" @click="activeTab = 'rating'">
                   {{ t('portal.profile.fullRating') }} →
                 </button>
               </div>
-              <ul v-if="neighbours.length" class="mt-3 divide-y divide-border rounded-lg border border-border">
+              <ul v-if="neighbours.length" class="divide-y divide-border">
                 <li
                   v-for="row in neighbours"
                   :key="row.userId"
-                  class="flex items-center gap-3 px-4 py-2.5"
+                  class="flex h-16 items-center gap-3 px-6"
                   :class="row.userId === myId ? 'bg-primary/5' : ''"
                 >
                   <span
@@ -191,29 +197,29 @@ onMounted(load)
                     :class="MEDAL[row.rank] ?? 'text-ink-muted'"
                   >{{ MEDAL[row.rank] ? row.rank : `${row.rank}.` }}</span>
                   <Avatar :name="row.fullName" :src="row.avatar" size="xs" />
-                  <span class="min-w-0 flex-1 truncate text-[13px] text-ink">{{ row.fullName }}</span>
-                  <span class="flex items-center gap-1 text-[13px] text-ink"><Icon name="star" size="14" class="text-primary" />{{ row.totalPoints }}</span>
-                  <span class="flex items-center gap-1 text-[13px] text-ink"><Icon name="award" size="14" class="text-primary" />{{ row.badgeCount ?? 0 }}</span>
+                  <span class="min-w-0 flex-1 truncate text-[14px] text-ink">{{ row.fullName }}</span>
+                  <span class="flex w-24 items-center gap-2 text-[14px] text-ink"><Icon name="star" size="16" class="text-primary" />{{ row.totalPoints }}</span>
+                  <span class="flex w-24 items-center gap-2 text-[14px] text-ink"><Icon name="award" size="16" class="text-primary" />{{ row.badgeCount ?? 0 }}</span>
                 </li>
               </ul>
-              <p v-else class="mt-3 text-[13px] text-ink-muted">{{ t('gamification.empty') }}</p>
+              <p v-else class="py-10 text-center text-[14px] text-ink-muted">{{ t('gamification.empty') }}</p>
             </section>
 
-            <section class="mt-8">
-              <h2 class="text-[16px] font-semibold text-ink">{{ t('portal.profile.myBadges') }}</h2>
+            <section class="mt-10">
+              <h2 class="border-b border-border pb-3 text-[18px] font-semibold text-ink">{{ t('portal.profile.myBadges') }}</h2>
               <div v-if="earnedBadges.length" class="mt-3 flex flex-wrap gap-3">
                 <div v-for="badge in earnedBadges" :key="badge.code" class="flex items-center gap-2 rounded-lg border border-border px-3 py-2">
                   <span class="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 text-primary"><Icon :name="badge.icon" size="16" /></span>
                   <span class="text-[13px] font-medium text-ink">{{ badgeName(badge) }}</span>
                 </div>
               </div>
-              <p v-else class="mt-3 text-[13px] text-ink-muted">{{ t('gamification.noBadgesYet') }}</p>
+              <p v-else class="py-10 text-center text-[14px] text-ink-muted">{{ t('gamification.noBadgesYet') }}</p>
             </section>
 
-            <section class="mt-8">
-              <div class="flex items-center justify-between">
-                <h2 class="text-[16px] font-semibold text-ink">{{ t('portal.profile.myCertificates') }}</h2>
-                <button v-if="certificates?.length > 2" type="button" class="text-[12px] text-primary hover:underline" @click="activeTab = 'certificates'">
+            <section class="mt-10">
+              <div class="flex items-center justify-between border-b border-border pb-3">
+                <h2 class="text-[18px] font-semibold text-ink">{{ t('portal.profile.myCertificates') }}</h2>
+                <button v-if="certificates?.length > 2" type="button" class="text-[13px] text-ink-muted hover:text-ink" @click="activeTab = 'certificates'">
                   {{ t('portal.profile.seeAll') }} →
                 </button>
               </div>
@@ -226,7 +232,7 @@ onMounted(load)
                   </div>
                 </div>
               </div>
-              <p v-else class="mt-3 text-[13px] text-ink-muted">{{ t('certificates.emptyTitle') }}</p>
+              <p v-else class="py-10 text-center text-[14px] text-ink-muted">{{ t('certificates.emptyTitle') }}</p>
             </section>
           </template>
 

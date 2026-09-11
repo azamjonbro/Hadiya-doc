@@ -306,15 +306,15 @@ onMounted(load)
     </div>
 
     <template v-else-if="course">
-      <!-- Hero 220px (reference §13): photo under a dark wash, back link,
-           the kind of thing, the title, status in the corner, a thin
-           progress line along the bottom. -->
-      <div class="relative h-[220px] w-full overflow-hidden bg-slate-800">
+      <!-- Hero (reference §13, rasm 37 measures 335px): photo under a dark
+           wash, back link, the kind of thing, the title, status in the
+           corner, a thin progress line along the bottom. -->
+      <div class="relative h-[335px] w-full overflow-hidden bg-slate-800">
         <img v-if="course.cover" :src="course.cover" class="absolute inset-0 h-full w-full object-cover" alt="" />
         <div v-else class="absolute inset-0 bg-gradient-to-br from-primary to-slate-700"></div>
         <div class="absolute inset-0" :class="course.cover ? 'bg-black/55' : 'bg-black/25'"></div>
 
-        <div class="relative z-10 mx-auto flex h-full w-full max-w-[1340px] flex-col px-4 pb-6 pt-4">
+        <div class="relative z-10 mx-auto flex h-full w-full max-w-[1340px] flex-col px-4 pb-10 pt-4">
           <div class="flex items-center justify-between gap-3">
             <button type="button" class="flex items-center gap-1 text-[12px] text-white/80 transition-default hover:text-white" @click="router.push('/courses')">
               <Icon name="chevron-left" size="14" />
@@ -348,11 +348,12 @@ onMounted(load)
               <h1 class="text-[30px] font-semibold leading-tight text-white">{{ course.title }}</h1>
               <span v-if="statusLabel" class="text-[13px] font-medium text-white/90">{{ statusLabel }}</span>
             </div>
+            <!-- The progress line sits inside the hero at the content's
+                 width (rasm 37), 40px above its edge -->
+            <div v-if="progress" class="mt-5 h-[3px] w-full rounded bg-white/30" aria-hidden="true">
+              <div class="h-full rounded bg-white transition-all" :style="{ width: `${progress.completionPercent ?? 0}%` }"></div>
+            </div>
           </div>
-        </div>
-
-        <div v-if="progress" class="absolute inset-x-0 bottom-0 h-1 bg-white/30" aria-hidden="true">
-          <div class="h-full bg-white transition-all" :style="{ width: `${progress.completionPercent ?? 0}%` }"></div>
         </div>
       </div>
 
@@ -405,10 +406,11 @@ onMounted(load)
           <QAPanel :course-id="String(route.params.id)" />
         </div>
 
-        <!-- Contents -->
-        <div v-else class="grid grid-cols-1 gap-8 lg:grid-cols-4">
-        <!-- Left: Curriculum -->
-        <div class="lg:col-span-3">
+        <!-- Contents: one column the width of the page (rasm 37); the
+             percentage is the line under the hero, not a card beside the
+             list. -->
+        <div v-else>
+        <div>
           <div class="space-y-4">
             <AppCard v-for="topic in topics" :key="topic.id" padding="none" class="overflow-hidden border border-border shadow-sm">
               <button type="button" class="flex w-full items-center justify-between px-5 py-4 text-left transition-default hover:bg-surface-2" @click="toggleTopic(topic.id)">
@@ -602,14 +604,6 @@ onMounted(load)
           </div>
         </div>
 
-        <!-- Right: progress summary -->
-        <div class="hidden space-y-4 lg:block">
-          <AppCard v-if="progress">
-            <p class="text-[13px] text-ink-muted">{{ t('videos.completed') }}</p>
-            <p class="mt-1 text-[28px] font-semibold text-ink">{{ progress.completionPercent ?? 0 }}%</p>
-            <p class="text-[12px] text-ink-faint">{{ progress.completedItems }}/{{ progress.totalItems }}</p>
-          </AppCard>
-        </div>
         </div>
       </div>
     </template>
