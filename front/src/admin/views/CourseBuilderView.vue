@@ -6,6 +6,7 @@ import { ROLES } from '@lms/shared'
 import { coursesApi } from '@/services/courses'
 import { certificatesApi } from '@/services/certificates'
 import { useToast } from '@/composables/useToast'
+import { useAuthStore } from '@/stores/auth'
 import AppButton from '@/components/ui/AppButton.vue'
 import AppInput from '@/components/ui/AppInput.vue'
 import AppSelect from '@/components/ui/AppSelect.vue'
@@ -18,6 +19,7 @@ import { apiErrorText } from '@/utils/apiError'
 const { t } = useI18n()
 const router = useRouter()
 const toast = useToast()
+const auth = useAuthStore()
 
 const roleList = Object.values(ROLES)
 
@@ -67,16 +69,18 @@ coursesApi
     categories.value = []
   })
 // Only the people who manage templates can list them. A course author
-// without that permission simply gets no certificate picker rather than an
-// error on a page that is otherwise working.
-certificatesApi
-  .templates()
-  .then((rows) => {
-    templates.value = rows
-  })
-  .catch(() => {
-    templates.value = []
-  })
+// without that permission simply gets no certificate picker — and no
+// request either, so the console does not carry a 403 for a working page.
+if (auth.hasPermission('certificate:template:manage')) {
+  certificatesApi
+    .templates()
+    .then((rows) => {
+      templates.value = rows
+    })
+    .catch(() => {
+      templates.value = []
+    })
+}
 
 function addTag() {
   const value = tagInput.value.trim()
