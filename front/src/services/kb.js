@@ -28,4 +28,17 @@ export const kbApi = {
   comment(id, payload) {
     return http.post(`/kb/${id}/comments`, payload).then((r) => r.data.data)
   },
+  // Rasn 18–19 (news:manage): the content analytics and the trash.
+  analytics() {
+    return http.get('/kb/analytics').then((r) => r.data.data)
+  },
+  trash() {
+    return http.get('/kb/trash').then((r) => r.data.data.items)
+  },
+  restore(id) {
+    return http.post(`/kb/${id}/restore`).then((r) => r.data.data)
+  },
+  remove(id) {
+    return http.delete(`/kb/${id}`).then((r) => r.data.data)
+  },
 }

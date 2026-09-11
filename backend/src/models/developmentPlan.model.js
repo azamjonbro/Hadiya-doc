@@ -113,6 +113,11 @@ const developmentPlanSchema = new Schema(
     lockedVersion: { type: Number, default: null },
     lastReviewAt: { type: Date, default: null },
 
+    // Where the plan came from (rasn 13's "Назначения" count on a
+    // template) and what kind it is (rasn 14). Both optional: a plan
+    // written by hand has neither.
+    templateId: { type: Schema.Types.ObjectId, ref: 'DevelopmentPlanTemplate', default: null },
+    typeId: { type: Schema.Types.ObjectId, ref: 'DevelopmentPlanType', default: null },
     createdBy: { type: Schema.Types.ObjectId, ref: 'User', required: true },
     updatedBy: { type: Schema.Types.ObjectId, ref: 'User', default: null },
   },

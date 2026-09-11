@@ -27,6 +27,10 @@ export const newsController = {
     sendSuccess(res, await newsService.toggleLike(req.user, req.params.id))
   }),
 
+  allComments: asyncHandler(async (req, res) => {
+    sendSuccess(res, await newsService.allComments(req.validatedQuery))
+  }),
+
   comments: asyncHandler(async (req, res) => {
     sendSuccess(res, await newsService.comments(req.user, req.params.id))
   }),

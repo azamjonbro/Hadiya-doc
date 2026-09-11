@@ -391,83 +391,84 @@ onMounted(load)
       </div>
     </div>
 
-    <!-- Editor -->
-    <Modal v-model="editorOpen" :title="draft.id ? t('events.editEvent') : t('events.newEvent')" size="lg">
-      <div class="space-y-4">
-        <AppInput v-model="draft.title" :label="t('courses.fields.title')" required />
-        <div>
-          <label class="mb-1.5 block text-small font-medium text-ink">{{ t('courses.fields.description') }}</label>
-          <textarea
-            v-model="draft.description"
-            rows="2"
-            class="w-full rounded-md border border-border-strong bg-surface px-3.5 py-2.5 text-body text-ink outline-none transition-default focus:border-primary focus:ring-2 focus:ring-primary/15"
-          />
+    <!-- Editor: a page of its own, not a dialog (rasn 5) — a back arrow,
+         the title, then labels in a 200px column beside their fields and
+         the Create/Save button at the top right of the card -->
+    <div v-if="editorOpen" class="fixed inset-x-0 bottom-0 top-16 z-20 overflow-y-auto bg-surface-2 lg:left-14">
+      <div class="mx-auto w-full max-w-[1440px] px-6 py-6 lg:px-8">
+        <div class="flex items-center gap-4">
+          <button type="button" class="flex h-9 w-9 items-center justify-center rounded-full text-ink-muted transition-default hover:bg-surface-hover hover:text-ink" :aria-label="t('common.back')" @click="editorOpen = false">
+            <Icon name="arrow-left" size="20" />
+          </button>
+          <h1 class="text-[24px] font-semibold text-ink">{{ draft.id ? t('events.editEvent') : t('events.newEvent') }}</h1>
         </div>
-        <div class="grid gap-3 sm:grid-cols-2">
-          <AppSelect
-            v-model="draft.type"
-            :label="t('events.type')"
-            :options="TYPES.map((value) => ({ value, label: t('eventTypes.' + value) }))"
-          />
-          <AppSelect
-            v-model="draft.mode"
-            :label="t('events.modeLabel')"
-            :options="MODES.map((value) => ({ value, label: t(`events.mode.${value}`) }))"
-          />
-        </div>
-        <div class="grid gap-3 sm:grid-cols-2">
-          <AppDatePicker v-model="draft.startAt" with-time :label="t('events.startAt')" required />
-          <AppDatePicker v-model="draft.endAt" with-time :label="t('events.endAt')" required />
-        </div>
-        <AppInput v-if="draft.mode !== 'ONLINE'" v-model="draft.location" :label="t('events.location')" />
-
-        <template v-if="draft.mode !== 'OFFLINE'">
-          <AppInput v-model="draft.meeting.url" :label="t('events.meetingUrl')" />
-          <div class="grid gap-3 sm:grid-cols-2">
-            <AppInput v-model="draft.meeting.meetingId" :label="t('events.meetingId')" />
-            <AppInput
-              v-model="draft.meeting.passcode"
-              :label="t('events.passcode')"
-              :hint="t('events.passcodeHint')"
-            />
+        <div class="mt-4 rounded-2xl bg-surface p-8 shadow-sm">
+          <div class="flex items-center justify-between gap-4">
+            <p class="text-[15px] text-ink">{{ t('events.adminSubtitle') }}</p>
+            <AppButton :loading="saving" @click="save">{{ draft.id ? t('common.save') : t('common.create') }}</AppButton>
           </div>
-        </template>
+          <div class="mt-6 grid max-w-[1000px] grid-cols-1 items-center gap-x-6 gap-y-5 sm:grid-cols-[220px_minmax(0,1fr)]">
+            <label class="text-[15px] text-ink">* {{ t('courses.fields.title') }}:</label>
+            <AppInput v-model="draft.title" required />
 
-        <label class="flex items-center gap-2 text-small text-ink">
-          <input v-model="draft.requiresRegistration" type="checkbox" class="h-4 w-4 rounded border-border-strong" />
-          {{ t('events.requiresRegistration') }}
-        </label>
-        <AppInput
-          v-if="draft.requiresRegistration"
-          v-model="draft.capacity"
-          type="number"
-          :label="t('events.capacity')"
-          :hint="t('events.capacityHint')"
-        />
+            <label class="text-[15px] text-ink">{{ t('events.type') }}:</label>
+            <div class="flex items-center gap-3">
+              <AppSelect v-model="draft.type" class="w-72" :options="TYPES.map((value) => ({ value, label: t('eventTypes.' + value) }))" />
+              <AppSelect v-model="draft.mode" class="w-56" :options="MODES.map((value) => ({ value, label: t(`events.mode.${value}`) }))" />
+            </div>
 
-        <div>
-          <p class="mb-1.5 text-small font-medium text-ink">{{ t('events.reminders') }}</p>
-          <div class="flex flex-wrap gap-1.5">
-            <button
-              v-for="offset in REMINDER_OFFSETS"
-              :key="offset.value"
-              type="button"
-              class="rounded-full border px-3 py-1 text-caption transition-default"
-              :class="draft.remindBeforeMinutes.includes(offset.value) ? 'border-primary bg-primary-subtle text-primary' : 'border-border text-ink-muted hover:bg-surface-hover'"
-              @click="toggleReminder(offset.value)"
-            >
-              {{ t(`events.remind.${offset.key}`) }}
-            </button>
+            <label class="text-[15px] text-ink">{{ t('events.startAt') }}:</label>
+            <div class="flex flex-wrap items-center gap-3">
+              <AppDatePicker v-model="draft.startAt" with-time class="w-64" required />
+              <span class="text-ink-muted">—</span>
+              <AppDatePicker v-model="draft.endAt" with-time class="w-64" required />
+            </div>
+
+            <label class="self-start pt-2 text-[15px] text-ink">{{ t('courses.fields.description') }}:</label>
+            <textarea v-model="draft.description" rows="3" class="w-full rounded-md border border-border-strong bg-surface px-3.5 py-2.5 text-body text-ink outline-none transition-default focus:border-primary focus:ring-2 focus:ring-primary/15" />
+
+            <template v-if="draft.mode !== 'ONLINE'">
+              <label class="text-[15px] text-ink">{{ t('events.location') }}:</label>
+              <AppInput v-model="draft.location" :placeholder="t('events.location')" />
+            </template>
+
+            <label class="text-[15px] text-ink">{{ t('events.capacity') }}:</label>
+            <div class="flex items-center gap-3">
+              <AppInput v-model="draft.capacity" type="number" class="w-28" :disabled="!draft.requiresRegistration" />
+              <label class="flex items-center gap-2 text-small text-ink">
+                <input v-model="draft.requiresRegistration" type="checkbox" class="h-4 w-4 rounded border-border-strong" />
+                {{ t('events.requiresRegistration') }}
+              </label>
+            </div>
+
+            <template v-if="draft.mode !== 'OFFLINE'">
+              <label class="text-[15px] text-ink">{{ t('events.meetingUrl') }}:</label>
+              <AppInput v-model="draft.meeting.url" />
+              <label class="text-[15px] text-ink">{{ t('events.meetingId') }}:</label>
+              <div class="flex gap-3">
+                <AppInput v-model="draft.meeting.meetingId" class="flex-1" />
+                <AppInput v-model="draft.meeting.passcode" class="w-48" :placeholder="t('events.passcode')" />
+              </div>
+            </template>
+
+            <label class="text-[15px] text-ink">{{ t('events.reminders') }}:</label>
+            <div class="flex flex-wrap gap-1.5">
+              <button
+                v-for="offset in REMINDER_OFFSETS"
+                :key="offset.value"
+                type="button"
+                class="rounded-full border px-3 py-1 text-caption transition-default"
+                :class="draft.remindBeforeMinutes.includes(offset.value) ? 'border-primary bg-primary-subtle text-primary' : 'border-border text-ink-muted hover:bg-surface-hover'"
+                @click="toggleReminder(offset.value)"
+              >
+                {{ t(`events.remind.${offset.key}`) }}
+              </button>
+            </div>
           </div>
+          <p v-if="draft.id" class="mt-6 text-caption text-ink-faint">{{ t('events.editNotifyHint') }}</p>
         </div>
-
-        <p v-if="draft.id" class="text-caption text-ink-faint">{{ t('events.editNotifyHint') }}</p>
       </div>
-      <template #footer>
-        <AppButton variant="secondary" @click="editorOpen = false">{{ t('common.cancel') }}</AppButton>
-        <AppButton :loading="saving" @click="save">{{ t('common.save') }}</AppButton>
-      </template>
-    </Modal>
+    </div>
 
     <!-- Attendance sheet -->
     <Modal v-model="sheetOpen" :title="t('events.attendance')" size="lg">

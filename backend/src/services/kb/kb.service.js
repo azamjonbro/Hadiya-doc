@@ -4,6 +4,7 @@ import { KbCategory } from '../../models/kbCategory.model.js'
 import { KbView } from '../../models/kbView.model.js'
 import { KbComment } from '../../models/kbComment.model.js'
 import { auditLogRepository } from '../../repositories/auditLog.repository.js'
+import { userRepository } from '../../repositories/user.repository.js'
 import { isVisibleToActor } from '../access/visibility.js'
 import { slugify } from '../../utils/slugify.js'
 import { containsRegex } from '../../utils/escapeRegex.js'
@@ -252,6 +253,25 @@ export const kbService = {
     return { deleted: true }
   },
 
+  // Rasn 18's trash: what was deleted, newest first, and the way back.
+  async trash() {
+    const rows = await KbArticle.find({ deletedAt: { $ne: null } }).sort({ deletedAt: -1 }).lean()
+    return { items: rows.map((article) => ({ ...toListItem(article), deletedAt: article.deletedAt })) }
+  },
+
+  async restore(actor, id) {
+    const article = await KbArticle.findOneAndUpdate({ _id: id, deletedAt: { $ne: null } }, { $set: { deletedAt: null } }, { new: true })
+    if (!article) throw ApiError.notFound('Article not found')
+    await auditLogRepository.record({
+      actor: actor.id,
+      action: 'KB_ARTICLE_RESTORED',
+      entity: 'KbArticle',
+      entityId: id,
+      metadata: { title: article.title },
+    })
+    return toListItem(article)
+  },
+
   /**
    * "Was this helpful?"
    *
@@ -327,7 +347,39 @@ export const kbService = {
       .sort({ viewCount: 1 })
       .lean()
 
+    // Rasn 19's table: every published article with its views, how many
+    // distinct people opened it, and the share of positive votes — plus
+    // the three figures over the table. One aggregate over the view rows,
+    // one lookup for the authors and one for the spaces.
+    const ids = articles.map((article) => article._id)
+    const [viewers, authors, categories, audience] = await Promise.all([
+      KbView.aggregate([{ $match: { articleId: { $in: ids } } }, { $group: { _id: '$articleId', users: { $sum: 1 } } }]),
+      userRepository.findByIds([...new Set(articles.map((a) => String(a.createdBy)))]),
+      KbCategory.find({ _id: { $in: [...new Set(articles.map((a) => a.categoryId).filter(Boolean))] } }).lean(),
+      userRepository.countActive(),
+    ])
+    const usersById = new Map(viewers.map((row) => [String(row._id), row.users]))
+    const authorById = new Map(authors.map((user) => [String(user._id), user.fullName]))
+    const spaceById = new Map(categories.map((category) => [String(category._id), category.name]))
+    const items = articles.map((article) => {
+      const helpful = article.helpfulCount ?? 0
+      const notHelpful = article.notHelpfulCount ?? 0
+      return {
+        ...toListItem(article),
+        spaceName: article.categoryId ? (spaceById.get(String(article.categoryId)) ?? '') : '',
+        authorName: authorById.get(String(article.createdBy)) ?? '',
+        usersViewed: usersById.get(String(article._id)) ?? 0,
+        helpfulPercent: helpful + notHelpful ? Math.round((helpful / (helpful + notHelpful)) * 100) : null,
+      }
+    })
+    const votes = items.reduce((sum, item) => sum + item.helpfulCount + item.notHelpfulCount, 0)
+    const positive = items.reduce((sum, item) => sum + item.helpfulCount, 0)
+
     return {
+      items: items.sort((a, b) => b.viewCount - a.viewCount),
+      totalViews: items.reduce((sum, item) => sum + item.viewCount, 0),
+      audience,
+      positivePercent: votes ? Math.round((positive / votes) * 100) : null,
       total: articles.length,
       unread: articles.filter((article) => (article.viewCount ?? 0) === 0).length,
       leastRead: articles.slice(0, 10).map(toListItem),

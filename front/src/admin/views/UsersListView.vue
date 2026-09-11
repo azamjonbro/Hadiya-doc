@@ -12,7 +12,6 @@ import { useToast } from '@/composables/useToast'
 import AppButton from '@/components/ui/AppButton.vue'
 import EmployeeFormFields from '@/admin/components/employee/EmployeeFormFields.vue'
 import GeneratedPasswordField from '@/components/ui/GeneratedPasswordField.vue'
-import Modal from '@/components/ui/Modal.vue'
 import FaceEnrollmentWizard from '@/components/face/FaceEnrollmentWizard.vue'
 import Avatar from '@/components/ui/Avatar.vue'
 import Icon from '@/components/ui/Icon.vue'
@@ -472,48 +471,59 @@ onMounted(() => {
       <Pagination :page="page" :total-pages="totalPages" @update:page="goToPage" />
     </div>
 
-    <Modal v-model="showCreateModal" :title="t('users.newUser')" size="lg">
-      <form class="grid grid-cols-1 sm:grid-cols-2 gap-4" @submit.prevent="onCreateSubmit">
-        <EmployeeFormFields
-          :form="createForm"
-          :directory="directory"
-          :branch-options="branchOptions"
-          :can-manage-roles="auth.hasPermission('role:manage')"
-          :can-manage-lists="auth.hasPermission('user:update')"
-          @validity="fieldsValid = $event"
-        />
-
-        <p class="sm:col-span-2 mt-2 text-caption font-semibold uppercase tracking-widest text-ink-faint">
-          {{ t('users.sections.access') }}
-        </p>
-        <div class="sm:col-span-2">
-          <GeneratedPasswordField v-model="createForm.password" required :label="t('users.fields.password')" />
+    <!-- New user: a page of its own (rasn 7) — back arrow, the title, a
+         card with "general information" and Save at the top right -->
+    <div v-if="showCreateModal" class="fixed inset-x-0 bottom-0 top-16 z-20 overflow-y-auto bg-surface-2 lg:left-14">
+      <div class="mx-auto w-full max-w-[1440px] px-6 py-6 lg:px-8">
+        <div class="flex items-center gap-4">
+          <button type="button" class="flex h-9 w-9 items-center justify-center rounded-full text-ink-muted transition-default hover:bg-surface-hover hover:text-ink" :aria-label="t('common.back')" @click="showCreateModal = false">
+            <Icon name="arrow-left" size="20" />
+          </button>
+          <h1 class="text-[24px] font-semibold text-ink">{{ t('users.newUser') }}</h1>
         </div>
-
-        <div class="sm:col-span-2">
-          <p class="mb-1.5 text-small font-medium text-ink">{{ t('users.fields.assignCourses') }}</p>
-          <div v-if="assignableCourses.length" class="max-h-40 space-y-1.5 overflow-y-auto rounded-md border border-border-strong p-3">
-            <label v-for="course in assignableCourses" :key="course.id" class="flex items-center gap-2 text-small text-ink">
-              <input
-                type="checkbox"
-                class="h-4 w-4 rounded border-border-strong text-primary"
-                :checked="createForm.courseIds.includes(course.id)"
-                @change="toggleCourse(course.id)"
-              />
-              {{ course.title }}
-            </label>
+        <form class="mt-4 rounded-2xl bg-surface p-8 shadow-sm" @submit.prevent="onCreateSubmit">
+          <div class="flex items-center justify-between gap-4 border-b border-border pb-5">
+            <p class="text-[15px] text-ink">{{ t('users.sections.personal') }}</p>
+            <AppButton type="submit" :loading="createSubmitting">{{ createSubmitting ? t('users.creating') : t('common.save') }}</AppButton>
           </div>
-          <p v-else class="text-small text-ink-faint">{{ t('courses.empty') }}</p>
-        </div>
+          <div class="mt-6 grid max-w-[900px] grid-cols-1 gap-4 sm:grid-cols-2">
+            <EmployeeFormFields
+              :form="createForm"
+              :directory="directory"
+              :branch-options="branchOptions"
+              :can-manage-roles="auth.hasPermission('role:manage')"
+              :can-manage-lists="auth.hasPermission('user:update')"
+              @validity="fieldsValid = $event"
+            />
 
-        <p v-if="createError" class="sm:col-span-2 text-small text-danger">{{ createError }}</p>
+            <p class="mt-2 text-caption font-semibold uppercase tracking-widest text-ink-faint sm:col-span-2">
+              {{ t('users.sections.access') }}
+            </p>
+            <div class="sm:col-span-2">
+              <GeneratedPasswordField v-model="createForm.password" required :label="t('users.fields.password')" />
+            </div>
 
-        <div class="sm:col-span-2 flex justify-end gap-2 pt-2">
-          <AppButton type="button" variant="ghost" @click="showCreateModal = false">{{ t('users.cancel') }}</AppButton>
-          <AppButton type="submit" :loading="createSubmitting">{{ createSubmitting ? t('users.creating') : t('users.create') }}</AppButton>
-        </div>
-      </form>
-    </Modal>
+            <div class="sm:col-span-2">
+              <p class="mb-1.5 text-small font-medium text-ink">{{ t('users.fields.assignCourses') }}</p>
+              <div v-if="assignableCourses.length" class="max-h-40 space-y-1.5 overflow-y-auto rounded-md border border-border-strong p-3">
+                <label v-for="course in assignableCourses" :key="course.id" class="flex items-center gap-2 text-small text-ink">
+                  <input
+                    type="checkbox"
+                    class="h-4 w-4 rounded border-border-strong text-primary"
+                    :checked="createForm.courseIds.includes(course.id)"
+                    @change="toggleCourse(course.id)"
+                  />
+                  {{ course.title }}
+                </label>
+              </div>
+              <p v-else class="text-small text-ink-faint">{{ t('courses.empty') }}</p>
+            </div>
+
+            <p v-if="createError" class="text-small text-danger sm:col-span-2">{{ createError }}</p>
+          </div>
+        </form>
+      </div>
+    </div>
 
     <BulkMessageModal v-model="showBulkMessage" :users="selectedUsers" @sent="onBulkFinished" />
     <BulkGroupCreateModal v-model="showGroupCreate" :users="selectedUsers" @created="onBulkFinished" />

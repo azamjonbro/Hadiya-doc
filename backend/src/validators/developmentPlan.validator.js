@@ -122,3 +122,56 @@ export const listPlansQuerySchema = z.object({
 export const dueQuerySchema = z.object({
   withinDays: z.coerce.number().int().min(1).max(365).default(14),
 })
+
+// ----- plan types and templates (rasn 12–14) -----
+const outcomeSchema = z.object({
+  key: z.string().trim().min(1).max(40),
+  label: z.string().trim().min(1).max(80),
+  positive: z.boolean().optional().default(true),
+})
+
+export const createPlanTypeSchema = z.object({
+  name: z.string().trim().min(1).max(120),
+  description: z.string().trim().max(500).optional().default(''),
+  outcomes: z.array(outcomeSchema).min(1).max(10),
+  status: z.enum(['PUBLISHED', 'HIDDEN']).optional(),
+})
+
+export const updatePlanTypeSchema = createPlanTypeSchema.partial()
+
+const templateGoalSchema = z.object({
+  type: z.enum(['COURSE', 'COMPETENCY', 'OJT', 'CUSTOM']),
+  title: z.string().trim().min(1).max(200),
+  description: z.string().max(2000).optional().default(''),
+  courseId: objectId.nullable().optional(),
+  competencyId: objectId.nullable().optional(),
+  targetLevel: z.number().int().min(0).max(10).nullable().optional(),
+  ojtChecklistId: z.string().nullable().optional(),
+  dueInDays: z.number().int().min(0).max(3650).nullable().optional(),
+  weight: z.number().int().min(1).max(10).optional().default(1),
+  cpeCredits: z.number().min(0).max(1000).optional().default(0),
+})
+
+export const createPlanTemplateSchema = z.object({
+  name: z.string().trim().min(1).max(200),
+  typeId: objectId,
+  description: z.string().trim().max(2000).optional().default(''),
+  cover: z.string().optional().default(''),
+  durationDays: z.number().int().min(1).max(3650).optional().default(90),
+  goals: z.array(templateGoalSchema).max(50).optional().default([]),
+  status: z.enum(['PUBLISHED', 'HIDDEN']).optional(),
+})
+
+export const updatePlanTemplateSchema = createPlanTemplateSchema.partial()
+
+export const assignTemplateSchema = z
+  .object({
+    userIds: z.array(objectId).min(1).max(200),
+    periodStart: z.coerce.date(),
+    periodEnd: z.coerce.date().optional(),
+    status: z.enum(['DRAFT', 'ACTIVE']).optional(),
+  })
+  .refine((body) => !body.periodEnd || body.periodEnd > body.periodStart, {
+    message: 'The period has to end after it starts',
+    path: ['periodEnd'],
+  })

@@ -140,7 +140,39 @@
       "goalTitleRequired": "Maqsad nomini yozing",
       "goalNeedsCourse": "Kurs maqsadi uchun kurs tanlang",
       "goalNeedsCompetency": "Kompetensiya maqsadi uchun kompetensiya tanlang",
-      "targetLocked": "Maqsad turi va u ko‘rsatayotgan yozuv o‘zgartirilmaydi — o‘chirib, yangisini qo‘shing"
+      "targetLocked": "Maqsad turi va u ko‘rsatayotgan yozuv o‘zgartirilmaydi — o‘chirib, yangisini qo‘shing",
+      "drafts": {
+        "title": "Qoralamalar",
+        "hint": "Bu yerda siz ishlagan, hali tayinlanmagan rejalar qoralamalari saqlanadi."
+      },
+      "templates": {
+        "title": "Reja shablonlari",
+        "hint": "Shablonlar asosida xodimlar uchun rivojlanish rejalarini tez tayyorlash mumkin.",
+        "create": "Shablon yaratish",
+        "empty": "Hali shablon yo'q",
+        "name": "Nomi",
+        "type": "Reja turi",
+        "assignments": "Tayinlashlar",
+        "lastChange": "So'nggi o'zgarish",
+        "hidden": "Yashirilgan",
+        "createPlan": "Reja yaratish",
+        "duration": "Davomiyligi (kun)",
+        "goals": "Maqsadlar",
+        "dueInDays": "Kun (boshdan)",
+        "assigned": "{count} ta reja yaratildi",
+        "skipped": "{count} ta xodim o'tkazib yuborildi",
+        "assignHint": "Muddat: boshlanishdan {days} kun. Maqsad sanalari boshlanish kunidan hisoblanadi."
+      },
+      "types": {
+        "title": "Reja turlari",
+        "hint": "O'z reja turlaringizni yarating, o'tish natijalarini qo'shing va standart xabarlarni sozlang.",
+        "create": "Reja turini yaratish",
+        "name": "Nomi",
+        "outcomes": "O'tish natijalari",
+        "outcomesHint": "Birinchisi ijobiy, ikkinchisi salbiy yakun.",
+        "defaultPositive": "Maqsadlarga erishildi",
+        "defaultNegative": "Maqsadlarga erishilmadi"
+      }
     },
     "errors": {
       "GOAL_PROGRESS_DERIVED": "Bu maqsadning foizi kurs yoki kompetensiya yozuvidan o‘qiladi — qo‘lda kiritilmaydi",
@@ -292,7 +324,39 @@
       "goalTitleRequired": "Укажите название цели",
       "goalNeedsCourse": "Для цели-курса выберите курс",
       "goalNeedsCompetency": "Для цели-компетенции выберите компетенцию",
-      "targetLocked": "Тип цели и то, на что она указывает, не меняются — удалите её и добавьте новую"
+      "targetLocked": "Тип цели и то, на что она указывает, не меняются — удалите её и добавьте новую",
+      "drafts": {
+        "title": "Черновики",
+        "hint": "Здесь хранятся черновики планов развития, над которыми вы работали."
+      },
+      "templates": {
+        "title": "Шаблоны планов",
+        "hint": "Здесь хранятся шаблоны, на основе которых можно быстро подготовить планы развития для ваших сотрудников.",
+        "create": "Создать шаблон",
+        "empty": "Шаблонов пока нет",
+        "name": "Название",
+        "type": "Тип плана",
+        "assignments": "Назначения",
+        "lastChange": "Последние изменения",
+        "hidden": "Скрыто",
+        "createPlan": "Создать план",
+        "duration": "Длительность (дней)",
+        "goals": "Цели",
+        "dueInDays": "Дней от начала",
+        "assigned": "Создано планов: {count}",
+        "skipped": "Пропущено сотрудников: {count}",
+        "assignHint": "Срок: {days} дней от начала. Даты целей считаются от дня начала."
+      },
+      "types": {
+        "title": "Типы планов",
+        "hint": "Создавайте собственные типы планов, добавляйте возможные результаты прохождения и настраивайте сообщения по умолчанию.",
+        "create": "Создать тип плана",
+        "name": "Название",
+        "outcomes": "Результаты прохождения",
+        "outcomesHint": "Первый — положительный, второй — отрицательный итог.",
+        "defaultPositive": "Цели достигнуты",
+        "defaultNegative": "Цели не достигнуты"
+      }
     },
     "errors": {
       "GOAL_PROGRESS_DERIVED": "Процент этой цели читается из записи о курсе или компетенции — вручную не вводится",
@@ -444,7 +508,39 @@
       "goalTitleRequired": "Give the goal a title",
       "goalNeedsCourse": "A course goal needs a course",
       "goalNeedsCompetency": "A competency goal needs a competency",
-      "targetLocked": "A goal's kind and what it points at cannot be changed — delete it and add the right one"
+      "targetLocked": "A goal's kind and what it points at cannot be changed — delete it and add the right one",
+      "drafts": {
+        "title": "Drafts",
+        "hint": "Plans you worked on that are not assigned yet."
+      },
+      "templates": {
+        "title": "Plan templates",
+        "hint": "Templates let you prepare development plans for your people quickly.",
+        "create": "Create template",
+        "empty": "No templates yet",
+        "name": "Name",
+        "type": "Plan type",
+        "assignments": "Assignments",
+        "lastChange": "Last change",
+        "hidden": "Hidden",
+        "createPlan": "Create plan",
+        "duration": "Duration (days)",
+        "goals": "Goals",
+        "dueInDays": "Days from start",
+        "assigned": "{count} plans created",
+        "skipped": "{count} people skipped",
+        "assignHint": "Period: {days} days from the start. Goal dates count from the start day."
+      },
+      "types": {
+        "title": "Plan types",
+        "hint": "Create your own plan types, add the possible outcomes and set the default messages.",
+        "create": "Create plan type",
+        "name": "Name",
+        "outcomes": "Outcomes",
+        "outcomesHint": "The first is the positive ending, the second the negative.",
+        "defaultPositive": "Goals achieved",
+        "defaultNegative": "Goals not achieved"
+      }
     },
     "errors": {
       "GOAL_PROGRESS_DERIVED": "This goal's percentage is read from the course or competency record — it cannot be typed",

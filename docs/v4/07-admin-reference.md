@@ -32,22 +32,19 @@
 | 📰 Yangiliklar | 24–25 | Yangiliklar, Chat | Jadval: miniatyura · sarlavha · chop etilgan · kim ko'radi · o'qiganlar · ♡ · 💬 |
 | ⚙️ Sozlamalar | 26–27 | Sozlamalar, Bildirishnomalar | Quti tablar Asosiy · Dizayn · Funksiyalar, qoidalar bilan bo'limlar |
 
-## Ataylab boshqacha / qilinmagan
+## Keyingi bosqichda qo'shilganlar (2026-09-11, ikkinchi o'tish)
 
-- **Rasm 5, 7 (tadbir / foydalanuvchi yaratish sahifasi):** bizda modal
-  oyna, alohida sahifa emas — forma maydonlari bir xil.
-- **Rasm 12–14 (reja qoralamalari, shablonlari, turlari):** bizda reja
-  shablonlari/turlari tushunchasi yo'q; plitkalar mavjud holatlarga
-  xaritalangan (ACTIVE→jarayonda, DRAFT→boshlanmagan, REVIEWED→kutilmoqda).
-- **Rasm 6 "Guruhlar" ustuni:** foydalanuvchi qatorida guruhlar soni
-  yo'q (list endpointi bermaydi); o'rniga progress.
-- **Rasm 9 "Kod" va "Rahbar":** modelda maydon yo'q — "—".
-- **Rasm 17–19 (KB admin: Yaratish, Analitika, Savat):** admin uchun
-  alohida KB qobig'i yo'q; portal `/kb` ishlatiladi (maqola yaratish
-  `news:manage` bilan o'sha yerda).
-- **Rasm 24 "Bannerlar", "Izohlar" moderatsiyasi:** yo'q.
-- **Rasm 25 (yangilik muharriri, to'liq ekran):** bizda `/bos/news/:id`
-  sahifasi — chiplar (muqova/yorliq/kichik sarlavha) yo'q.
-- **AI-помощник yon tugmasi va "?" FAB:** yo'q.
-- **Oy/kun nomlari** "M09" ko'rinishida — headless Chrome'da `uz`
-  lokali yo'q; oddiy brauzerda to'g'ri chiqadi.
+| Rasm | Bizda |
+|---|---|
+| 5, 7 | Tadbir va foydalanuvchi yaratish — alohida sahifa (orqaga strelka, karta, o'ngda Saqlash), modal emas |
+| 12–14 | Qoralamalar (`/bos/development-plans/drafts`), reja shablonlari (`/bos/development-plans/templates` — yaratish, tahrirlash, "Reja yaratish" bilan xodimlarga tarqatish) va reja turlari (`/bos/development-plans/types` — ikkitasi tizimiy va qulflangan). API: `/development-plans/types`, `/development-plans/templates`, `POST /development-plans/templates/:id/assign` |
+| 17–19 | KB: "Analitika" (ko'rishlar, materiallar, ijobiy baholar; jadval — muallif, ko'rishlar, "N dan", 👍 ulushi) va "Savat" (tiklash) — `news:manage` uchun `/kb` qobig'ida |
+| 24 | "Izohlar" moderatsiyasi (`/bos/news/comments`, `GET /news/comments`) va "Bannerlar" (`/bos/news/banners` — qadalgan maqolalar portal slayderining boshida, `pinnedAt`) |
+| 25 | Yangilik muharriri to'liq ekranda: muqova / yorliq / kichik sarlavha chiplari, 40px sarlavha, "Sozlash va nashr" paneli; `subtitle` maydoni |
+| hammasi | "AI o'quv yordamchisi" yon yorlig'i (kurs tanlab chat) va "?" tugmasi (KB, API hujjati, ⌘K) |
+
+## Ataylab qolgan farqlar
+
+- Rasm 7 foydalanuvchi formasi ikki ustunli (maydonlar bir xil, joylashuv boshqacha).
+- Rasm 13 shablonlar va rasm 14 turlar bo'yicha "avto-tayinlash" yo'q — tayinlash qo'lda.
+- Oy/kun nomlari "M09" ko'rinishida faqat headless Chrome'da (`uz` lokali yo'q).

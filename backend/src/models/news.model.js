@@ -8,6 +8,12 @@ const newsSchema = new Schema(
     // render); see docs/security-threat-model.md.
     content: { type: String, required: true },
     cover: { type: String, default: '' },
+    // The line under the title (rasn 25's "Подзаголовок"); plain text like
+    // the body.
+    subtitle: { type: String, default: '', trim: true, maxlength: 300 },
+    // A banner (rasn 24's "Баннеры"): pinned articles lead the portal's
+    // slider in this order, newest pin first. Null = not a banner.
+    pinnedAt: { type: Date, default: null },
     images: { type: [String], default: [] },
     attachments: { type: [String], default: [] },
     tags: { type: [String], default: [] },

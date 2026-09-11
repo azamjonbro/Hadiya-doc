@@ -51,4 +51,33 @@ export const developmentPlansApi = {
   suggestions(userId) {
     return http.get(`/development-plans/suggestions/${userId}`).then((r) => r.data.data)
   },
+
+  // Rasn 12–14: plan types and templates (devplan:manage).
+  types() {
+    return http.get('/development-plans/types').then((r) => r.data.data.items)
+  },
+  createType(payload) {
+    return http.post('/development-plans/types', payload).then((r) => r.data.data)
+  },
+  updateType(id, payload) {
+    return http.patch(`/development-plans/types/${id}`, payload).then((r) => r.data.data)
+  },
+  removeType(id) {
+    return http.delete(`/development-plans/types/${id}`).then((r) => r.data.data)
+  },
+  templates() {
+    return http.get('/development-plans/templates').then((r) => r.data.data.items)
+  },
+  createTemplate(payload) {
+    return http.post('/development-plans/templates', payload).then((r) => r.data.data)
+  },
+  updateTemplate(id, payload) {
+    return http.patch(`/development-plans/templates/${id}`, payload).then((r) => r.data.data)
+  },
+  removeTemplate(id) {
+    return http.delete(`/development-plans/templates/${id}`).then((r) => r.data.data)
+  },
+  assignTemplate(id, payload) {
+    return http.post(`/development-plans/templates/${id}/assign`, payload).then((r) => r.data.data)
+  },
 }

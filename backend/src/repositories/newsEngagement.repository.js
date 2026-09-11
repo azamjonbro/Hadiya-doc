@@ -51,6 +51,20 @@ export const newsEngagementRepository = {
     return NewsReaction.countDocuments({ newsId })
   },
 
+  async listAllComments({ page = 1, limit = 25 }) {
+    const filter = { deletedAt: null }
+    const [rows, total] = await Promise.all([
+      NewsComment.find(filter)
+        .sort({ createdAt: -1 })
+        .skip((page - 1) * limit)
+        .limit(limit)
+        .populate('userId', 'fullName avatar')
+        .lean(),
+      NewsComment.countDocuments(filter),
+    ])
+    return { rows, total }
+  },
+
   listComments(newsId) {
     return NewsComment.find({ newsId, deletedAt: null }).sort({ createdAt: 1 }).populate('userId', 'fullName avatar').lean()
   },

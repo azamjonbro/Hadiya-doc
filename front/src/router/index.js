@@ -99,6 +99,8 @@ export const router = createRouter({
             { path: '', name: 'kb', component: () => import('@/views/kb/KbHomeView.vue'), meta: { titleKey: 'portal.nav.kb' } },
             { path: 'recent', name: 'kb-recent', component: () => import('@/views/kb/KbRecentView.vue'), meta: { titleKey: 'portal.nav.kb' } },
             { path: 'new', name: 'kb-new', component: () => import('@/views/kb/KbNewArticleView.vue'), meta: { titleKey: 'portal.nav.kb', permission: 'news:manage' } },
+            { path: 'analytics', name: 'kb-analytics', component: () => import('@/views/kb/KbAnalyticsView.vue'), meta: { titleKey: 'portal.nav.kb', permission: 'news:manage' } },
+            { path: 'trash', name: 'kb-trash', component: () => import('@/views/kb/KbTrashView.vue'), meta: { titleKey: 'portal.nav.kb', permission: 'news:manage' } },
             { path: 'spaces/:id', name: 'kb-space', component: () => import('@/views/kb/KbSpaceView.vue'), meta: { titleKey: 'portal.nav.kb' } },
             { path: 'a/:slug', name: 'kb-article', component: () => import('@/views/kb/KbArticleView.vue'), meta: { titleKey: 'portal.nav.kb' } },
           ],
@@ -187,6 +189,19 @@ export const router = createRouter({
           component: () => import('@/admin/views/NewsListView.vue'),
           meta: { permission: 'news:read', titleKey: 'nav.news' },
         },
+        // Literal segments before 'news/:id' (rasn 24's Comments and Banners)
+        {
+          path: 'news/comments',
+          name: 'admin-news-comments',
+          component: () => import('@/admin/views/NewsCommentsView.vue'),
+          meta: { permission: 'news:manage', titleKey: 'portal.newsDetail.comments' },
+        },
+        {
+          path: 'news/banners',
+          name: 'admin-news-banners',
+          component: () => import('@/admin/views/NewsBannersView.vue'),
+          meta: { permission: 'news:manage', titleKey: 'news.banners.title' },
+        },
         {
           path: 'news/:id',
           name: 'admin-news-detail',
@@ -267,6 +282,25 @@ export const router = createRouter({
           name: 'admin-development-plans',
           component: () => import('@/admin/views/DevelopmentPlansView.vue'),
           meta: { permission: 'devplan:manage', titleKey: 'devplan.adminTitle' },
+        },
+        // Rasn 12–14: the same list pinned to drafts, the templates, the types.
+        {
+          path: 'development-plans/drafts',
+          name: 'admin-development-plan-drafts',
+          component: () => import('@/admin/views/DevelopmentPlansView.vue'),
+          meta: { permission: 'devplan:manage', titleKey: 'devplan.drafts.title', draftsOnly: true },
+        },
+        {
+          path: 'development-plans/templates',
+          name: 'admin-development-plan-templates',
+          component: () => import('@/admin/views/PlanTemplatesView.vue'),
+          meta: { permission: 'devplan:manage', titleKey: 'devplan.templates.title' },
+        },
+        {
+          path: 'development-plans/types',
+          name: 'admin-development-plan-types',
+          component: () => import('@/admin/views/PlanTypesView.vue'),
+          meta: { permission: 'devplan:manage', titleKey: 'devplan.types.title' },
         },
         {
           path: 'compliance',
