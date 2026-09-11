@@ -3539,17 +3539,20 @@
   yo'q). Caching → Configuration → Browser Cache TTL → **Respect Existing
   Headers** qilinmaguncha brauzer worker yangilanishini 4 soatgacha
   kechiktirishi mumkin.
-- [ ] **INF-4** SMTP provayder hisobi — BLOK 1 uchun shart
-  · **Hisob yo'q** — serverda `SMTP_HOST` bo'sh, har bir xat `SKIPPED`
-  deb yoziladi (parol tiklash, eslatmalar, sertifikat xati **yetib
-  bormaydi**; bell/push ishlaydi). Kod tayyor (1.1, nodemailer, har
-  provayder SMTP gapiradi). Kerak: provayder hisobi (kompaniya pochtasi
-  yoki Brevo/Resend/Mailgun — SPF/DKIM `sds-max.uz` uchun) va
-  `backend/.env` da `SMTP_HOST`, `SMTP_PORT` (587 STARTTLS / 465 TLS),
-  `SMTP_SECURE`, `SMTP_USER`, `SMTP_PASSWORD`, `MAIL_FROM`. Tekshirish
-  skripti qo'shildi: `npm --prefix backend run check:mail -- --to siz@…`
-  — handshake + auth, keyin bitta haqiqiy xat; relay rad etsa 1 bilan
-  chiqadi (login xatosi Gmail relay bilan sinab ko'rildi).
+- [x] **INF-4** SMTP provayder hisobi — BLOK 1 uchun shart
+  · Bajarildi 2026-09-11: **Brevo** (bepul tarif, kuniga 300 xat) —
+  `smtp-relay.brevo.com:587` STARTTLS, login `b8d850001@smtp-brevo.com`,
+  `MAIL_FROM=abdullayevazamjon49@gmail.com` (Brevo'da tasdiqlangan
+  sender; `sds-max.uz` nomidan yuborish uchun domenni Brevo'da tasdiqlab
+  SPF/DKIM TXT yozuvlarini Cloudflare'ga qo'shish kerak — hozircha
+  qilinmagan). Sir faqat serverdagi `backend/.env` da.
+  **Tekshirildi:** `npm run check:mail -- --to …` — handshake + auth OK,
+  relay xatni qabul qildi; keyin **haqiqiy oqim**: prod'da
+  `POST /auth/password-reset/request` → `maillogs` da `SENT`, 1-urinish
+  («Parolni tiklash»). Shu paytgacha prod'da **hech bir xat ketmagan
+  edi** — 1.1 dan beri hammasi `SKIPPED`. Skript qo'shildi:
+  `npm --prefix backend run check:mail [-- --to addr]` — relay rad etsa
+  1 bilan chiqadi.
 
 ---
 

@@ -84,9 +84,16 @@ sahifasi.
 **BLOK 13 (Kengaytirilgan baholash) tugadi** (13.1–13.4): kompetensiya
 matritsasi, 360° (baholovchilar `managerId` dan, N≥3 muhr), OJT
 (muzlatilgan checklist, hukmlar 12.3 oflayn navbatida) va rivojlanish
-rejasi (progress hosila, CPE `PointsLedger` da). **Ochiq bandlar
-faqat 1.8 (to'xtatilgan) va INF-4 (SMTP hisobi — `check:mail` tayyor,
-hisob kerak).** INF-1…INF-3 2026-09-11 da yopildi. BLOK 14 doimiy.
+rejasi (progress hosila, CPE `PointsLedger` da). **Ochiq band
+faqat 1.8 (to'xtatilgan).** INF-1…INF-4 2026-09-11 da yopildi. BLOK 14
+doimiy.
+
+**Pochta endi ishlaydi (INF-4, 2026-09-11):** Brevo bepul tarifi
+(300/kun), `smtp-relay.brevo.com:587`, sender
+`abdullayevazamjon49@gmail.com`. Tekshirish:
+`ssh homeserver 'cd ~/qollanma/backend && npm run check:mail -- --to siz@…'`.
+`sds-max.uz` nomidan yuborish uchun Brevo'da domen tasdiqlanmagan
+(SPF/DKIM) — hozircha From gmail.
 
 **Media endi alohida hostda (INF-2, 2026-09-11):** `media.sds-max.uz` —
 nginx bloki `nginx/media.sds-max.uz.conf`, serverdagi `.env` da
