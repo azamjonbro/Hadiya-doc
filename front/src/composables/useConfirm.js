@@ -43,6 +43,13 @@ function ask(options = {}) {
   })
 }
 
+// Callable *and* an object: half the views write `await confirm({...})`
+// the way the note at the top shows, the other half `confirm.ask({...})`.
+// Returning a plain object made the first half throw "confirm is not a
+// function" on every delete button (found on prod, 2026-09-11, the paths
+// list) — the dialog never opened and nothing was deleted.
+const confirm = Object.assign((options) => ask(options), { state, ask, settle })
+
 export function useConfirm() {
-  return { state, ask, settle }
+  return confirm
 }
