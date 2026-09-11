@@ -30,6 +30,16 @@ import { ref } from 'vue'
 const needsRefresh = ref(false)
 const offlineReady = ref(false)
 
+// Where a reload costs something: a timed test, a video quiz, the SCORM
+// runtime with an attempt in progress. Everywhere else the new version is
+// taken the moment it is found — a deploy used to sit behind a banner
+// that people never noticed, and "still the old page" was the complaint.
+const HOLD_BACK = [/^\/videos\/[^/]+\/quiz/, /^\/assessments\//, /^\/scorm\//, /^\/quiz/]
+
+function safeToReload() {
+  return !HOLD_BACK.some((pattern) => pattern.test(window.location.pathname))
+}
+
 // How often to ask whether a new version exists. The browser checks on
 // navigation anyway; this covers the person who leaves the app open all
 // day, which in an LMS is most of them.
@@ -49,6 +59,11 @@ async function activate() {
   registration.waiting.postMessage({ type: 'SKIP_WAITING' })
 }
 
+function announce() {
+  needsRefresh.value = true
+  if (safeToReload()) activate()
+}
+
 export function usePwaUpdate() {
   return { needsRefresh, offlineReady, refresh: activate }
 }
@@ -64,7 +79,7 @@ export async function registerPwa() {
 
     // A version that was already waiting when this page opened — the
     // person closed the tab last time without taking it.
-    if (registration.waiting && navigator.serviceWorker.controller) needsRefresh.value = true
+    if (registration.waiting && navigator.serviceWorker.controller) announce()
 
     registration.addEventListener('updatefound', () => {
       const installing = registration.installing
@@ -72,8 +87,9 @@ export async function registerPwa() {
       installing.addEventListener('statechange', () => {
         if (installing.state !== 'installed') return
         if (navigator.serviceWorker.controller) {
-          // There is an old worker in control, so this one is waiting: ask.
-          needsRefresh.value = true
+          // There is an old worker in control, so this one is waiting:
+          // take it now unless a reload would cost an attempt — then ask.
+          announce()
         } else {
           // First install: nothing to interrupt, and worth saying once —
           // the useful moment to learn the app works without a network is
