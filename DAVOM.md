@@ -200,9 +200,14 @@ SSO 503 qaytaradi va kirish sahifasida tugma yo'q) va
 sir xavfsiz saqlanmasligi kerak emas). Ikkisi ham prodda **ataylab
 sozlanmagan**: yoqish — administrator qarori.
 
-**Testlar:** `npm --prefix backend test` — 956 test, 954 o'tadi, 2 tasi yiqiladi va
+**Testlar:** `npm --prefix backend test` — 1169 test, 1167 o'tadi, 2 tasi yiqiladi va
 ikkisi ham **eskidan** yiqilib turadi (`faceVerification`: yuz aniqlanmagan
-rasm; `facePolicy`: hisobni bloklash). Darslarga aloqasi yo'q.
+rasm; hisobni bloklash). Darslarga aloqasi yo'q. **Tuzoq:** `test` skripti
+ikki bosqichni `&&` bilan bog'lagan, shu ikki eski xato tufayli ikkinchi
+bosqich (`migrationDryRun.test.js`, 13 test) **hech qachon ishlamaydi** —
+uni alohida yugurting:
+`cd backend && node --test --test-concurrency=1 test/migrationDryRun.test.js`
+(2026-09-11: 13/13 o'tdi).
 
 **To'plamni ketma-ket ikki marta yugurtirmang.** `security.test.js`
 ataylab noto'g'ri parol bilan login qiladi va **login limiterini**
@@ -213,7 +218,7 @@ esa login qila olmay 429 oladi va **butun fayl bekor qilinadi**
 lekin `pass` soni tushib qoladi). Toza raqam kerak bo'lsa oldingi
 yugurishdan **15 daqiqa** kutib turing.
 
-Frontend testi ham paydo bo'ldi: `npm --prefix front test` (146 test,
+Frontend testi ham paydo bo'ldi: `npm --prefix front test` (155 test,
 `lessonBlocks.test.js` + `pwa.test.js` — ikkinchisi **build natijasini**
 o'qiydi, ya'ni `dist/` bo'lmasa skip qiladi) — bundler kerak emas, chunki sinaladigan
 mantiq `front/src/utils/` da, komponent ichida emas. Yangi front mantig'ini
