@@ -187,6 +187,19 @@ export const router = createRouter({
           component: () => import('@/admin/views/NewsListView.vue'),
           meta: { permission: 'news:read', titleKey: 'nav.news' },
         },
+        // Literal segments before 'news/:id' (rasn 24's Comments and Banners)
+        {
+          path: 'news/comments',
+          name: 'admin-news-comments',
+          component: () => import('@/admin/views/NewsCommentsView.vue'),
+          meta: { permission: 'news:manage', titleKey: 'portal.newsDetail.comments' },
+        },
+        {
+          path: 'news/banners',
+          name: 'admin-news-banners',
+          component: () => import('@/admin/views/NewsBannersView.vue'),
+          meta: { permission: 'news:manage', titleKey: 'news.banners.title' },
+        },
         {
           path: 'news/:id',
           name: 'admin-news-detail',

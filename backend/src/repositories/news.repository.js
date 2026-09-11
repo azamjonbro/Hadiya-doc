@@ -38,6 +38,10 @@ export const newsRepository = {
     return News.findByIdAndDelete(id)
   },
 
+  findByIds(ids) {
+    return News.find({ _id: { $in: ids } })
+  },
+
   listPage({ search, status, cursor, limit }) {
     const filter = { deletedAt: null }
     if (search) filter.title = containsRegex(search)

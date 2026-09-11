@@ -28,7 +28,13 @@ const search = ref('')
 
 // Slides: the newest articles that have a cover, at most five. Articles
 // without a picture stay in the list only — a text-only slide is a grey box.
-const slides = computed(() => items.value.filter((item) => item.cover).slice(0, 5))
+// Banners first (pinned in the admin, newest pin first), then the latest
+// covered articles fill the rest of the five slots.
+const slides = computed(() => {
+  const covered = items.value.filter((item) => item.cover)
+  const pinned = covered.filter((item) => item.pinned).sort((a, b) => new Date(b.pinnedAt) - new Date(a.pinnedAt))
+  return [...pinned, ...covered.filter((item) => !item.pinned)].slice(0, 5)
+})
 const slide = ref(0)
 let timer = null
 

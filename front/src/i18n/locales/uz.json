@@ -98,7 +98,8 @@
     "moveUp": "Yuqoriga",
     "moveDown": "Pastga",
     "create": "Yaratish",
-    "total": "Jami"
+    "total": "Jami",
+    "back": "Orqaga"
   },
   "auth": {
     "login": {
@@ -727,7 +728,26 @@
       "audience": "Kim ko'radi",
       "readers": "O'qiganlar"
     },
-    "yesterday": "kecha"
+    "yesterday": "kecha",
+    "editor": {
+      "cover": "Muqova",
+      "label": "Yorliq",
+      "subtitle": "Kichik sarlavha",
+      "titlePlaceholder": "Sarlavha qo'shing",
+      "bodyPlaceholder": "Yangilik bilan bo'lishing…",
+      "settingsPublish": "Sozlash va nashr",
+      "publish": "Nashr qilish"
+    },
+    "banners": {
+      "title": "Bannerlar",
+      "hint": "Bannerlar — xodim portalidagi yangiliklar slayderining birinchi o'rinlari. Muqovali chop etilgan maqolani qadab qo'ying.",
+      "active": "Faol bannerlar",
+      "empty": "Hali banner yo'q",
+      "candidates": "Qo'shish mumkin",
+      "noCandidates": "Muqovali chop etilgan maqola yo'q",
+      "pin": "Banner qilish",
+      "unpin": "Bannerdan olish"
+    }
   },
   "tasks": {
     "title": "Vazifalar",
@@ -1274,6 +1294,12 @@
       "unanswered": "Javobsiz savollar",
       "counts": "{total} ta savol · {unanswered} tasi javobsiz",
       "pick": "Savollarni ko'rish uchun ro'yxatdan kursni tanlang"
+    },
+    "help": {
+      "title": "Yordam",
+      "apiDocs": "API hujjati",
+      "search": "Qidiruv",
+      "pickCourse": "Yordamchi kurs doirasida javob beradi — avval kursni tanlang."
     }
   },
   "reports": {

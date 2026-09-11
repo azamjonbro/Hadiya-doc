@@ -23,6 +23,9 @@ function toPublicNews(news) {
     title: news.title,
     content: news.content,
     cover: news.cover,
+    subtitle: news.subtitle ?? '',
+    pinned: Boolean(news.pinnedAt),
+    pinnedAt: news.pinnedAt ?? null,
     images: news.images,
     attachments: news.attachments,
     tags: news.tags,
@@ -191,6 +194,31 @@ export const newsService = {
     }
   },
 
+  // Every comment on every article, newest first, for the moderation
+  // page (rasn 24's "Комментарии"); news:manage is on the route.
+  async allComments(query) {
+    const { rows, total } = await newsEngagementRepository.listAllComments(query)
+    const newsIds = [...new Set(rows.map((row) => String(row.newsId)))]
+    const articles = await newsRepository.findByIds(newsIds)
+    const titleById = new Map(articles.map((article) => [String(article._id), article.title]))
+    return {
+      items: rows.map((row) => ({
+        id: String(row._id),
+        newsId: String(row.newsId),
+        newsTitle: titleById.get(String(row.newsId)) ?? '',
+        body: row.body,
+        userId: String(row.userId?._id ?? row.userId),
+        fullName: row.userId?.fullName ?? '',
+        avatar: row.userId?.avatar ?? '',
+        createdAt: row.createdAt,
+      })),
+      page: query.page,
+      limit: query.limit,
+      total,
+      totalPages: Math.max(1, Math.ceil(total / query.limit)),
+    }
+  },
+
   // The author takes back their own words; news:manage removes anyone's.
   async removeComment(actor, id, commentId) {
     const comment = await newsEngagementRepository.findComment(commentId)
@@ -227,7 +255,12 @@ export const newsService = {
   async update(actor, id, payload) {
     const existing = await newsRepository.findById(id)
     if (!existing) throw ApiError.notFound('News not found')
-    const updated = await newsRepository.updateById(id, { ...payload, updatedBy: actor.id })
+    // `pinned` is a flag on the wire and a timestamp in the row, so the
+    // banner order is the order of pinning.
+    const { pinned, ...fields } = payload
+    if (pinned === true && !existing.pinnedAt) fields.pinnedAt = new Date()
+    if (pinned === false) fields.pinnedAt = null
+    const updated = await newsRepository.updateById(id, { ...fields, updatedBy: actor.id })
     await cacheDel(newsCacheKey(id))
     await auditLogRepository.record({
       actor: actor.id,

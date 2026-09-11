@@ -17,6 +17,10 @@ export const newsApi = {
   comment(id, body) {
     return http.post(`/news/${id}/comments`, { body }).then((r) => r.data.data)
   },
+  // Moderation (news:manage): every comment, newest first, paged.
+  allComments(params) {
+    return http.get('/news/comments', { params }).then((r) => r.data.data)
+  },
   removeComment(id, commentId) {
     return http.delete(`/news/${id}/comments/${commentId}`).then((r) => r.data.data)
   },

@@ -10,6 +10,7 @@ import {
   listNewsQuerySchema,
   feedQuerySchema,
   newsCommentSchema,
+  commentsModerationQuerySchema,
 } from '../../validators/news.validator.js'
 
 export const newsRouter = Router()
@@ -19,6 +20,13 @@ newsRouter.use(requirePermission(PERMISSIONS.NEWS_READ))
 
 newsRouter.get('/feed', validateQuery(feedQuerySchema), newsController.feed)
 newsRouter.get('/', validateQuery(listNewsQuerySchema), newsController.list)
+// Literal before '/:id': the moderation list of every comment.
+newsRouter.get(
+  '/comments',
+  requirePermission(PERMISSIONS.NEWS_MANAGE),
+  validateQuery(commentsModerationQuerySchema),
+  newsController.allComments
+)
 newsRouter.post('/', requirePermission(PERMISSIONS.NEWS_CREATE), validateBody(createNewsSchema), newsController.create)
 newsRouter.get('/:id', newsController.getById)
 newsRouter.patch(

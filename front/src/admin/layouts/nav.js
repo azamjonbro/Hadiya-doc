@@ -97,6 +97,8 @@ export const adminSections = [
     labelKey: 'admin.section.news',
     children: [
       { name: 'news', path: '/bos/news', labelKey: 'nav.news', permission: 'news:read' },
+      { name: 'news-comments', path: '/bos/news/comments', labelKey: 'portal.newsDetail.comments', permission: 'news:manage' },
+      { name: 'news-banners', path: '/bos/news/banners', labelKey: 'news.banners.title', permission: 'news:manage' },
       { name: 'chat', path: '/bos/chat', labelKey: 'nav.chat', permission: 'chat:support' },
     ],
   },

@@ -4,6 +4,7 @@ export const createNewsSchema = z.object({
   title: z.string().min(1, 'Title is required'),
   content: z.string().min(1, 'Content is required'),
   cover: z.string().optional().default(''),
+  subtitle: z.string().trim().max(300).optional().default(''),
   images: z.array(z.string()).optional().default([]),
   attachments: z.array(z.string()).optional().default([]),
   tags: z.array(z.string()).optional().default([]),
@@ -19,6 +20,8 @@ export const updateNewsSchema = z
     title: z.string().min(1).optional(),
     content: z.string().min(1).optional(),
     cover: z.string().optional(),
+    subtitle: z.string().trim().max(300).optional(),
+    pinned: z.boolean().optional(),
     images: z.array(z.string()).optional(),
     attachments: z.array(z.string()).optional(),
     tags: z.array(z.string()).optional(),
@@ -44,4 +47,9 @@ export const feedQuerySchema = z.object({
 
 export const newsCommentSchema = z.object({
   body: z.string().trim().min(1).max(2000),
+})
+
+export const commentsModerationQuerySchema = z.object({
+  page: z.coerce.number().int().min(1).optional().default(1),
+  limit: z.coerce.number().int().min(1).max(100).optional().default(25),
 })

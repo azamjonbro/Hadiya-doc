@@ -145,6 +145,27 @@ describe('news likes and comments', () => {
     assert.equal(await NewsComment.countDocuments({ newsId: id }), 2)
   })
 
+  test('moderation lists every comment for news:manage, and pinning is a flag on the wire', async () => {
+    const id = published._id
+    const mine = await api(`/news/${id}/comments`, { method: 'POST', headers: as('a'), body: JSON.stringify({ body: 'Moderate me' }) })
+    assert.equal(mine.status, 201)
+    const forbidden = await api('/news/comments', { headers: as('a') })
+    assert.equal(forbidden.status, 403)
+    const list = await api('/news/comments?limit=5', { headers: as('admin') })
+    assert.equal(list.status, 200, JSON.stringify(list.body))
+    const row = list.body.data.items.find((item) => item.id === mine.body.data.id)
+    assert.ok(row, 'the new comment is in the moderation list')
+    assert.equal(row.newsTitle, published.title)
+    assert.equal(row.fullName, 'a News')
+
+    const pinned = await api(`/news/${id}`, { method: 'PATCH', headers: as('admin'), body: JSON.stringify({ pinned: true }) })
+    assert.equal(pinned.status, 200, JSON.stringify(pinned.body))
+    assert.equal(pinned.body.data.pinned, true)
+    assert.ok(pinned.body.data.pinnedAt)
+    const unpinned = await api(`/news/${id}`, { method: 'PATCH', headers: as('admin'), body: JSON.stringify({ pinned: false }) })
+    assert.equal(unpinned.body.data.pinned, false)
+  })
+
   test('a draft cannot be liked or discussed by a reader', async () => {
     const like = await api(`/news/${draft._id}/like`, { method: 'POST', headers: as('a') })
     assert.equal(like.status, 404)

@@ -129,6 +129,7 @@ onBeforeUnmount(() => analytics.stop())
           </button>
           
           <h1 class="text-4xl lg:text-5xl font-bold text-white leading-tight drop-shadow-md">{{ news.title }}</h1>
+          <p v-if="news.subtitle" class="mt-3 max-w-3xl text-[18px] text-white/85">{{ news.subtitle }}</p>
           <div class="mt-4 flex flex-wrap items-center gap-3 text-small text-white/80 font-medium">
             <span class="flex items-center"><Icon name="calendar" size="14" class="mr-1.5" />{{ new Date(news.publishAt).toLocaleDateString(locale, { day: 'numeric', month: 'long', year: 'numeric' }) }}</span>
             <span>·</span>

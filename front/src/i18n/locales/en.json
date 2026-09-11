@@ -98,7 +98,8 @@
     "moveUp": "Move up",
     "moveDown": "Move down",
     "create": "Create",
-    "total": "Total"
+    "total": "Total",
+    "back": "Back"
   },
   "auth": {
     "login": {
@@ -727,7 +728,26 @@
       "audience": "Who sees",
       "readers": "Readers"
     },
-    "yesterday": "yesterday"
+    "yesterday": "yesterday",
+    "editor": {
+      "cover": "Cover",
+      "label": "Label",
+      "subtitle": "Subtitle",
+      "titlePlaceholder": "Add a title",
+      "bodyPlaceholder": "Share the news…",
+      "settingsPublish": "Settings & publish",
+      "publish": "Publish"
+    },
+    "banners": {
+      "title": "Banners",
+      "hint": "Banners lead the news slider on the employee portal. Pin a published article that has a cover.",
+      "active": "Active banners",
+      "empty": "No banners yet",
+      "candidates": "Available",
+      "noCandidates": "No published articles with a cover",
+      "pin": "Make a banner",
+      "unpin": "Unpin"
+    }
   },
   "tasks": {
     "title": "Tasks",
@@ -1274,6 +1294,12 @@
       "unanswered": "Unanswered",
       "counts": "{total} questions · {unanswered} unanswered",
       "pick": "Pick a course from the list to see its questions"
+    },
+    "help": {
+      "title": "Help",
+      "apiDocs": "API reference",
+      "search": "Search",
+      "pickCourse": "The assistant answers within a course — pick one first."
     }
   },
   "reports": {

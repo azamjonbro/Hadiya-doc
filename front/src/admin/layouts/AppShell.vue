@@ -13,6 +13,8 @@ import { sectionFor } from './nav'
 import Rail from './Rail.vue'
 import SubSidebar from './SubSidebar.vue'
 import Topbar from './Topbar.vue'
+import AiAssistantTab from './AiAssistantTab.vue'
+import HelpFab from './HelpFab.vue'
 
 const { t } = useI18n()
 const route = useRoute()
@@ -56,5 +58,7 @@ function skipToContent() {
         </div>
       </main>
     </div>
+    <AiAssistantTab v-if="auth.hasPermission('course:read')" />
+    <HelpFab />
   </div>
 </template>
