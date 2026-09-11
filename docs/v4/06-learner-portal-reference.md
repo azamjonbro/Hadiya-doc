@@ -78,7 +78,10 @@ Muddati) shu ikkitaga qisqaradi, "Muddati o'tgan" statusga aylanadi.
   fonsiz, ostida chiziq. Har biri: sarlavha 18px qalin (emoji bilan boshlanadi),
   qisqa matn 13px kulrang, footer: ♡ 211 · 💬 83 · 👁 735 (13px kulrang, 16px
   ikonka); o'ngda kichik muqova 170×22 (banner bo'lsa).
-- Bizda faqat ko'rishlar bor → ♡ va 💬 hozircha yo'q (backend kerak).
+- **♡ va 💬 bajarildi (2026-09-11):** `POST /news/:id/like` (toggle),
+  `GET/POST /news/:id/comments`, `DELETE …/comments/:commentId` (o'ziniki
+  yoki `news:manage`); feed va maqola `likes / comments / liked / views`
+  bilan keladi (`newsEngagement.repository.js`).
 
 ## 4. Rivojlanish rejalari (`/development-plan`) — rasm 05
 
@@ -162,14 +165,20 @@ Bizda bu admin panelda (`/bos/grading`); xodim portalida ruxsati borlarga
 - **Orgstruktura:** daraxt, kartalar 190×110 rangli sarlavha, pastda
   "▯ 160 ⌄" hisob; chap-pastda zoom `− 100% +`.
 
-Backend'da xodim uchun katalog endpointi yo'q (`USER_READ` kerak) → keyingi
-bosqich, alohida qaror.
+**Bajarildi (2026-09-11):** `GET /org/directory` (qidiruv, bo'lim,
+`newOnly`, sahifa; ishlayotgan faol xodimlar; JSHSHIR/tug'ilgan yil
+yo'q) va `GET /org/structure` (filial → bo'lim → bo'linma soni) —
+ikkalasi ham har qanday sessiyaga ochiq, chat kontaktlari ko'rsatadigan
+maydonlardan oshmaydi. Sahifa `EmployeesView.vue` (`/employees?tab=`):
+kartalar / yangilar / orgstruktura kartalari / jadval. "O'zi haqida"
+ustuni yo'q — modelda maydon yo'q. Orgstruktura odamlar daraxti emas,
+bo'limlar bo'yicha hisob (odamlar daraxti `user:read` talab qiladi).
 
 ## 9. Yon panellar (drawer, o'ngdan) — rasm 23–26
 
 | Panel | Kenglik | Tarkib |
 |---|---|---|
-| Tug'ilgan kunlar (sovg'a) | 310px | sarlavha 16px + ×; segment "Yaqinlari 0 / O'tganlari 1"; bo'sh holat |
+| Tug'ilgan kunlar (sovg'a) | 310px | sarlavha 16px + ×; segment "Yaqinlari 0 / O'tganlari 1"; bo'sh holat. **Bajarildi (2026-09-11):** `GET /org/birthdays` (±30 kun, UTC, yilsiz), `BirthdaysDrawer.vue` |
 | Xabarlar (chat) | 620px | chapda 220px ro'yxat (qidiruv + "+"; avatar 32, ism qalin 13px, oxirgi xabar 12px, sana), o'ngda "Kimga yozmoqchisiz…" |
 | Bildirishnomalar | 440px | sarlavha + ⚙ + ×; "Hammasini o'qilgan deb belgilash" o'ngda 12px; element: qo'ng'iroq doira 24 + matn 14px (kurs nomi **qalin**) + "1 kun oldin" 12px + o'ngda yashil nuqta 8px (o'qilmagan) |
 | Profil (avatar) | 560px | muqova 150px, avatar 110 markazda, muqovaga yarim kirgan; ism 22px, email 13px; 3 ta stat (raqam 28 + izoh 13, vertikal chiziqlar); "Mening profilim" 13px kulrang; menyu 52px qatorlar (› bilan): Admin portaliga o'tish (ruxsat bo'lsa) · Yutuqlar · Profil sozlamalari · O'qish tarixi · Chiqish |
@@ -217,7 +226,12 @@ Drawer fon: oq, chap tomonda soya, orqada qora/30% overlay.
   Tugallanmagan qizil · Boshlanmagan) | Ko'rilgan % | Ballar "– (80 %)" |
   Sarflangan vaqt hh:mm:ss. Qator 36px.
 
-Backend'da bunday jamlanma endpoint yo'q → keyingi bosqich.
+**Bajarildi (2026-09-11):** `GET /users/:id/learning-history` (o'zi yoki
+`user:read`), `learningHistory.service.js` — qatorlar `collectCourseItems`
+dan, ya'ni tugatish qoidasi bilan bir manbadan; sahifa
+`LearningHistoryView.vue`, qatorlar bosilganda ochiladi. Vaqt faqat
+video + SCORM soniyalaridan — hujjat va matn darsi vaqt o'lchamaydi,
+shuning uchun jadval ostida shu izoh turadi.
 
 ## 12. `···` menyusi — rasm 46
 

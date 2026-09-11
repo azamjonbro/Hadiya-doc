@@ -7,6 +7,19 @@ export const newsApi = {
   getById(id) {
     return http.get(`/news/${id}`).then((r) => r.data.data)
   },
+  // Portal §3. Toggle: the answer is the new state and the new count.
+  toggleLike(id) {
+    return http.post(`/news/${id}/like`).then((r) => r.data.data)
+  },
+  comments(id) {
+    return http.get(`/news/${id}/comments`).then((r) => r.data.data.items)
+  },
+  comment(id, body) {
+    return http.post(`/news/${id}/comments`, { body }).then((r) => r.data.data)
+  },
+  removeComment(id, commentId) {
+    return http.delete(`/news/${id}/comments/${commentId}`).then((r) => r.data.data)
+  },
 
   list(params) {
     return http.get('/news', { params }).then((r) => r.data.data)

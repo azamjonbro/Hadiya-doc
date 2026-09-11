@@ -1,3 +1,4 @@
+import mongoose from 'mongoose'
 import { PERMISSIONS } from '@lms/shared'
 import { pointsLedgerRepository } from '../../repositories/pointsLedger.repository.js'
 import { userRepository } from '../../repositories/user.repository.js'
@@ -74,14 +75,30 @@ export const pointsService = {
   },
 
   async getSummary(userId) {
-    const [summary, held] = await Promise.all([
+    const [summary, rank, held] = await Promise.all([
       pointsLedgerRepository.getSummary(userId),
+      pointsLedgerRepository.rankOf(userId),
       // Read from what was awarded, not recomputed from the totals (7.4).
       // Recomputing means a badge quietly disappears if a total ever drops,
       // and nothing can say when it was earned.
       UserBadge.find({ userId }, { code: 1 }).sort({ earnedAt: 1 }).lean(),
     ])
-    return { ...summary, badges: held.map((row) => row.code) }
+    return { ...summary, rank, badges: held.map((row) => row.code) }
+  },
+
+  // Where each point came from, newest first.
+  async getHistory(userId) {
+    const rows = await pointsLedgerRepository.listForUser(userId)
+    return {
+      items: rows.map((row) => ({
+        id: row._id.toString(),
+        points: row.points,
+        source: row.source,
+        courseTitle: row.courseId?.title ?? '',
+        itemTitle: row.videoId?.title ?? row.assessmentId?.title ?? '',
+        earnedAt: row.createdAt,
+      })),
+    }
   },
 
   // One ranking for both audiences: employees see the plain top-20, while
@@ -166,6 +183,14 @@ export const pointsService = {
       }
     }
 
+    // Badge counts ride along (portal §10 shows crown + badge per row):
+    // one grouped count over the page's ids, not a query per row.
+    const badgeCounts = await UserBadge.aggregate([
+      { $match: { userId: { $in: rows.map((row) => new mongoose.Types.ObjectId(row.userId)) } } },
+      { $group: { _id: '$userId', count: { $sum: 1 } } },
+    ])
+    const badgesBy = new Map(badgeCounts.map((row) => [String(row._id), row.count]))
+    rows = rows.map((row) => ({ ...row, badgeCount: badgesBy.get(row.userId) ?? 0 }))
     return { period, totalRanked, rows: withRanks(rows) }
   },
 }

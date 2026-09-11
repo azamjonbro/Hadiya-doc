@@ -24,7 +24,6 @@ import AppCard from '@/components/ui/AppCard.vue'
 import AppButton from '@/components/ui/AppButton.vue'
 import AppSelect from '@/components/ui/AppSelect.vue'
 import Badge from '@/components/ui/Badge.vue'
-import EmptyState from '@/components/ui/EmptyState.vue'
 import Skeleton from '@/components/ui/Skeleton.vue'
 import Icon from '@/components/ui/Icon.vue'
 import ProgressBar from '@/components/ui/ProgressBar.vue'
@@ -140,32 +139,22 @@ onMounted(load)
 </script>
 
 <template>
-
-  <div class="min-h-screen bg-bg pb-12">
-    <!-- Full Width Hero Banner -->
-    <div class="relative w-full bg-surface-2 flex items-end pt-24 pb-10">
-      <div class="absolute inset-0 bg-gradient-to-br from-indigo-900 via-purple-900 to-indigo-800"></div>
-      <div class="absolute inset-0 opacity-20 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAiIGhlaWdodD0iMjAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGNpcmNsZSBjeD0iMiIgY3k9IjIiIHI9IjIiIGZpbGw9IiNmZmYiIGZpbGwtb3BhY2l0eT0iMC4xNSIvPjwvc3ZnPg==')]"></div>
-      
-      <div class="relative z-10 w-full mx-auto max-w-[1440px] px-6 lg:px-8">
-        <h1 class="text-4xl font-bold text-white leading-tight drop-shadow-md">{{ t('devplan.mine') }}</h1>
-        <p class="mt-2 text-white/80 max-w-2xl text-body drop-shadow">{{ t('devplan.mineSubtitle') }}</p>
-      </div>
-    </div>
-
-    <div class="mx-auto w-full max-w-[1440px] px-6 lg:px-8 pt-8">
+  <!-- Portal §4: a plain white page, the title on an 840px column, the
+       empty state in the middle of it. -->
+  <div class="min-h-screen bg-surface pb-12">
+    <div class="mx-auto w-full max-w-[840px] px-4 pt-[72px]">
+      <h1 class="text-[24px] font-semibold text-ink">{{ t('devplan.mine') }}</h1>
+      <p class="mt-1 text-[13px] text-ink-muted">{{ t('devplan.mineSubtitle') }}</p>
 
     <div v-if="loading" class="mt-6 space-y-4">
       <Skeleton v-for="n in 2" :key="n" class="h-56 w-full rounded-lg" />
     </div>
 
-    <EmptyState
-      v-else-if="!plans.length"
-      class="mt-6"
-      icon="file-text"
-      :title="t('devplan.noPlan')"
-      :description="t('devplan.noPlanHint')"
-    />
+    <div v-else-if="!plans.length" class="mt-24 flex flex-col items-center text-center">
+      <span class="flex h-[100px] w-[100px] items-center justify-center rounded-full bg-surface-2 text-ink-faint"><Icon name="trending-up" size="40" /></span>
+      <p class="mt-4 text-[14px] text-ink-muted">{{ t('devplan.noPlan') }}</p>
+      <p class="mt-1 max-w-sm text-[13px] text-ink-faint">{{ t('devplan.noPlanHint') }}</p>
+    </div>
 
     <div v-else class="mt-6 space-y-5">
       <AppCard v-for="plan in plans" :key="plan.id" class="p-6">

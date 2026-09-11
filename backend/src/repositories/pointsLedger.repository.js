@@ -30,6 +30,33 @@ export const pointsLedgerRepository = {
     return rows[0] ?? { totalPoints: 0, videosCompleted: 0, quizzesPassed: 0, assessmentsPassed: 0 }
   },
 
+  // Dense rank of one person on the company board: how many distinct
+  // totals sit above theirs, plus one. Null with no points — an unranked
+  // person is not "last", they have not started.
+  async rankOf(userId) {
+    const { totalPoints } = await this.getSummary(userId)
+    if (!totalPoints) return null
+    const rows = await PointsLedger.aggregate([
+      { $group: { _id: '$userId', totalPoints: { $sum: '$points' } } },
+      { $match: { totalPoints: { $gt: totalPoints } } },
+      { $group: { _id: '$totalPoints' } },
+      { $count: 'n' },
+    ])
+    return (rows[0]?.n ?? 0) + 1
+  },
+
+  // The person's own ledger, newest first, with the course and the video or
+  // test each entry came from — the "Ballar" tab on the profile (portal §10).
+  listForUser(userId, limit = 100) {
+    return PointsLedger.find({ userId })
+      .sort({ createdAt: -1 })
+      .limit(limit)
+      .populate('courseId', 'title')
+      .populate('videoId', 'title')
+      .populate('assessmentId', 'title')
+      .lean()
+  },
+
   /**
    * The leaderboard itself, ranked and cut inside the database.
    *

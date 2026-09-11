@@ -56,6 +56,7 @@ export const portalMenuGroups = [
     labelKey: 'portal.nav.groupCompany',
     items: [
       { name: 'news', path: '/news', labelKey: 'nav.news' },
+      { name: 'employees', path: '/employees', labelKey: 'portal.nav.employees' },
       { name: 'chat', path: '/chat', labelKey: 'nav.chat' },
       { name: 'leaderboard', path: '/leaderboard', labelKey: 'nav.leaderboard' },
     ],

@@ -70,7 +70,13 @@ export const router = createRouter({
         { path: 'news/:id', name: 'news-detail', component: () => import('@/views/NewsDetailView.vue'), meta: { titleKey: 'nav.news' } },
         { path: 'tasks', name: 'tasks-list', component: () => import('@/views/TasksView.vue'), meta: { titleKey: 'nav.tasks', permission: 'task:read:own' } },
         { path: 'events', name: 'events-list', component: () => import('@/views/EventsView.vue'), meta: { titleKey: 'nav.events', permission: 'event:read' } },
-        { path: 'leaderboard', name: 'leaderboard', component: () => import('@/views/LeaderboardView.vue'), meta: { titleKey: 'nav.leaderboard' } },
+        // Rating, certificates and settings are tabs of the profile page
+        // now (portal §10); the old paths keep their names so existing
+        // links and the nav tables still resolve.
+        { path: 'profile', name: 'profile', component: () => import('@/views/ProfileView.vue'), meta: { titleKey: 'portal.nav.myProfile' } },
+        { path: 'employees', name: 'employees', component: () => import('@/views/EmployeesView.vue'), meta: { titleKey: 'portal.nav.employees' } },
+        { path: 'profile/history', name: 'learning-history', component: () => import('@/views/LearningHistoryView.vue'), meta: { titleKey: 'portal.profile.history' } },
+        { path: 'leaderboard', name: 'leaderboard', redirect: { path: '/profile', query: { tab: 'rating' } } },
         { path: 'chat', name: 'chat', component: () => import('@/views/ChatView.vue'), meta: { titleKey: 'nav.chat' } },
         { path: 'notifications', name: 'notifications', component: () => import('@/views/NotificationsView.vue'), meta: { titleKey: 'nav.notifications' } },
         { path: 'homework/:id', name: 'homework-detail', component: () => import('@/views/HomeworkView.vue'), meta: { titleKey: 'nav.courses' } },
@@ -83,6 +89,22 @@ export const router = createRouter({
         // phone, so it is a learner-side page, not an admin one.
         { path: 'ojt', name: 'ojt-sessions', component: () => import('@/views/OjtSessionsView.vue'), meta: { titleKey: 'ojt.title', permission: 'ojt:observe' } },
         { path: 'ojt/:sessionId', name: 'ojt-session', component: () => import('@/views/OjtObservationView.vue'), meta: { titleKey: 'ojt.observation', permission: 'ojt:observe' } },
+        // Knowledge base (portal §5): its own two-column shell under the
+        // top bar. Reading is open to everyone; the API gates writing.
+        {
+          path: 'kb',
+          component: () => import('@/views/kb/KbLayout.vue'),
+          meta: { titleKey: 'portal.nav.kb' },
+          children: [
+            { path: '', name: 'kb', component: () => import('@/views/kb/KbHomeView.vue'), meta: { titleKey: 'portal.nav.kb' } },
+            { path: 'recent', name: 'kb-recent', component: () => import('@/views/kb/KbRecentView.vue'), meta: { titleKey: 'portal.nav.kb' } },
+            { path: 'new', name: 'kb-new', component: () => import('@/views/kb/KbNewArticleView.vue'), meta: { titleKey: 'portal.nav.kb', permission: 'news:manage' } },
+            { path: 'spaces/:id', name: 'kb-space', component: () => import('@/views/kb/KbSpaceView.vue'), meta: { titleKey: 'portal.nav.kb' } },
+            { path: 'a/:slug', name: 'kb-article', component: () => import('@/views/kb/KbArticleView.vue'), meta: { titleKey: 'portal.nav.kb' } },
+          ],
+        },
+        // Portal §7 — the review queue for those allowed to grade.
+        { path: 'grading', name: 'grading', component: () => import('@/views/GradingView.vue'), meta: { titleKey: 'grading.title', permission: 'quiz:grade' } },
         { path: 'development-plan', name: 'my-development-plan', component: () => import('@/views/MyDevelopmentPlanView.vue'), meta: { titleKey: 'devplan.mine', permission: 'devplan:read:own' } },
         {
           path: 'events/:id',
@@ -92,8 +114,8 @@ export const router = createRouter({
         },
         { path: 'paths', name: 'paths-list', component: () => import('@/views/PathsView.vue'), meta: { titleKey: 'nav.paths', permission: 'path:read' } },
         { path: 'paths/:id', name: 'path-detail', component: () => import('@/views/PathDetailView.vue'), meta: { titleKey: 'nav.paths', permission: 'path:read' } },
-        { path: 'certificates', name: 'certificates', component: () => import('@/views/CertificatesView.vue'), meta: { titleKey: 'nav.certificates' } },
-        { path: 'settings', name: 'settings', component: () => import('@/views/SettingsView.vue'), meta: { titleKey: 'nav.settings' } },
+        { path: 'certificates', name: 'certificates', redirect: { path: '/profile', query: { tab: 'certificates' } } },
+        { path: 'settings', name: 'settings', redirect: { path: '/profile', query: { tab: 'settings' } } },
       ],
     },
     {

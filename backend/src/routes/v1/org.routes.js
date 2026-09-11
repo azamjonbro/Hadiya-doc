@@ -1,6 +1,8 @@
 import { Router } from 'express'
 import { authenticate } from '../../middlewares/auth.middleware.js'
 import { orgController } from '../../controllers/org.controller.js'
+import { validateQuery } from '../../middlewares/validate.middleware.js'
+import { directoryQuerySchema } from '../../validators/org.validator.js'
 
 export const orgRouter = Router()
 
@@ -12,3 +14,6 @@ orgRouter.use(authenticate)
 // privileged information — it is on their contract.
 orgRouter.get('/hierarchy', orgController.hierarchy)
 orgRouter.get('/chart', orgController.chart)
+orgRouter.get('/birthdays', orgController.birthdays)
+orgRouter.get('/directory', validateQuery(directoryQuerySchema), orgController.directory)
+orgRouter.get('/structure', orgController.structure)

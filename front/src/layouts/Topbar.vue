@@ -21,6 +21,7 @@ import { useChatStore } from '@/stores/chat'
 import { useNotifications } from '@/composables/useNotifications'
 import { portalPrimaryNav, portalMenuGroups } from './nav'
 import NotificationsDrawer from './NotificationsDrawer.vue'
+import BirthdaysDrawer from './BirthdaysDrawer.vue'
 import ChatDrawer from './ChatDrawer.vue'
 import ProfileDrawer from './ProfileDrawer.vue'
 import Icon from '@/components/ui/Icon.vue'
@@ -62,6 +63,7 @@ const moreRef = ref(null)
 onClickOutside(moreRef, () => (moreOpen.value = false))
 
 const notificationsOpen = ref(false)
+const birthdaysOpen = ref(false)
 const chatOpen = ref(false)
 const profileOpen = ref(false)
 
@@ -150,6 +152,15 @@ const canEnterAdmin = computed(() => auth.isSuperAdmin)
     <div class="ml-auto flex items-center gap-3 pr-4">
       <button
         type="button"
+        class="flex h-8 w-8 items-center justify-center rounded-full bg-white/20 text-white transition-default hover:bg-white/30"
+        :aria-label="t('portal.topbar.birthdays')"
+        @click="birthdaysOpen = true"
+      >
+        <Icon name="gift" size="17" />
+      </button>
+
+      <button
+        type="button"
         class="relative flex h-8 w-8 items-center justify-center rounded-full bg-white/20 text-white transition-default hover:bg-white/30"
         :aria-label="t('portal.topbar.messages')"
         @click="chatOpen = true"
@@ -204,6 +215,7 @@ const canEnterAdmin = computed(() => auth.isSuperAdmin)
       :mark-read="markRead"
       :mark-all-read="markAllRead"
     />
+    <BirthdaysDrawer v-model="birthdaysOpen" />
     <ChatDrawer v-model="chatOpen" />
     <ProfileDrawer v-model="profileOpen" />
   </header>

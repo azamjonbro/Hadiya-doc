@@ -34,7 +34,8 @@ import { canManageCourses } from '../courses/coursePermissions.js'
 // caller) with per-request visibility still enforced against the cached
 // value, and invalidated on every write below.
 const COURSE_CACHE_TTL = 5 * 60
-const courseCacheKey = (id) => `course:${id}`
+// v2: the cached shape gained `createdBy` (curators); old entries lack it.
+const courseCacheKey = (id) => `course:v2:${id}`
 
 // Anyone without course:create (i.e. not admin-tier) only ever sees
 // published courses — draft/archived content isn't exposed to the catalog.
@@ -211,9 +212,28 @@ export function toPublicCourse(course) {
       minPercent: course.completionRule?.minPercent ?? 100,
       requireAllRequired: course.completionRule?.requireAllRequired ?? true,
     },
+    createdBy: course.createdBy ? course.createdBy.toString() : null,
     createdAt: course.createdAt,
     updatedAt: course.updatedAt,
   }
+}
+
+// The people a learner may write to about the course (portal §13, "Kurator"):
+// the listed authors, or whoever created it when nobody is listed. Only
+// what a name card needs — an employee has no user:read, so the profile
+// itself stays out of reach.
+async function curatorsOf(course) {
+  const ids = course.authorIds?.length ? course.authorIds : course.createdBy ? [course.createdBy] : []
+  if (!ids.length) return []
+  const users = await userRepository.findByIds(ids)
+  return users
+    .filter((user) => user.isActive !== false)
+    .map((user) => ({
+      id: user._id.toString(),
+      fullName: user.fullName,
+      avatar: user.avatar ?? '',
+      position: user.position ?? '',
+    }))
 }
 
 // No-op unless explicitly requested and the course actually has a
@@ -329,7 +349,9 @@ export const courseService = {
     if (!canManageCourses(actor) && !(await isCourseVisibleToActor(actor, course))) {
       throw ApiError.notFound('Course not found')
     }
-    return course
+    // Looked up outside the cache: a renamed author should not wait for
+    // the course entry to expire.
+    return { ...course, curators: await curatorsOf(course) }
   },
 
   // Real per-user completion, computed from VideoProgress.completedAt —

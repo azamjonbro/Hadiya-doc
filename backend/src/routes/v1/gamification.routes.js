@@ -9,6 +9,7 @@ export const gamificationRouter = Router()
 gamificationRouter.use(authenticate)
 
 gamificationRouter.get('/me', gamificationController.getMySummary)
+gamificationRouter.get('/me/points', gamificationController.getMyPoints)
 gamificationRouter.get('/leaderboard', validateQuery(leaderboardQuerySchema), gamificationController.getLeaderboard)
 gamificationRouter.get('/badges', gamificationController.myBadges)
 gamificationRouter.get('/badges/catalog', gamificationController.badgeCatalog)

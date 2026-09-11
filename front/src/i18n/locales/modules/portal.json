@@ -18,7 +18,8 @@
           "courses": "Kurslar",
           "catalog": "Katalog",
           "news": "Yangiliklar"
-        }
+        },
+        "employees": "Xodimlar"
       },
       "topbar": {
         "birthdays": "Tug'ilgan kunlar",
@@ -92,7 +93,8 @@
           "courses": "Курсы",
           "catalog": "Каталог",
           "news": "Новости"
-        }
+        },
+        "employees": "Сотрудники"
       },
       "topbar": {
         "birthdays": "Дни рождения",
@@ -166,7 +168,8 @@
           "courses": "Courses",
           "catalog": "Catalog",
           "news": "News"
-        }
+        },
+        "employees": "Employees"
       },
       "topbar": {
         "birthdays": "Birthdays",

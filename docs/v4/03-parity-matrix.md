@@ -199,7 +199,7 @@
 | **Organization = mustaqil administratsiya** | ✓ | Yo'q — tenant izolyatsiyasi yo'q | NONE | 0 | — | §24 da baholanadi |
 | **Rahbar (manager) maydoni** | ✓ | Bor — `managerId`, tranzitiv `$graphLookup`, tsikl himoyasi | FULL | 100 | `user.model.js:32`, `orgHierarchy.service.js` | — |
 | **Interaktiv org chart** | ✓ | Yo'q | NONE | 0 | — | `OrgChartView` |
-| People / hamkasb profillari | ✓ | Chat kontaktlari + `useOrgDirectory` | PARTIAL | 50 | `useOrgDirectory.js`, `chat/contacts` | Profil sahifasi |
+| People / hamkasb profillari | ✓ | Xodimlar sahifasi: kartalar, yangilar, orgstruktura, jadval (2026-09-11) | FULL | 100 | `directory.service.js`, `EmployeesView.vue` | — |
 | Rollar (tayyor) | ✓ (5+Supervisor) | 9 ta seed — AUTHOR/INSTRUCTOR/MENTOR qo'shildi | FULL | 100 | `roles.js`, `permissions.js` (§8.2) | — |
 | **Custom rollar** | ✓ | Bor — kod o'zgartirmasdan | FULL | 100 | `role.model.js`, `POST /roles` | — |
 | **Rolni tahrirlash** | ✓ | Bor — `PATCH /roles/:id` + ruxsat grid'i | FULL | 100 | `roles.routes.js`, `RolesPermissionsView.vue` | — |
@@ -260,8 +260,8 @@
 | Darajalar (level) | ? | UI bor, backend qoidasi yo'q | PARTIAL | 25 | `LevelGauge.vue` | `levelFromPoints` |
 | Gamification sozlamalari | ? | Ball har videoda qo'lda | PARTIAL | 25 | `video.model.js:31-32` | Global default |
 | Newsfeed | ✓ | Bor + targeting | FULL | 100 | `news.model.js`, `NewsView.vue` | — |
-| **Newsfeed izohlari** | ✓ | Yo'q | NONE | 0 | `news.model.js` | `NewsComment` |
-| **Emoji reaksiya** | ✓ | Yo'q | NONE | 0 | — | `Reaction` |
+| **Newsfeed izohlari** | ✓ | Bor — tekis, matn, o'zi yoki `news:manage` o'chiradi (2026-09-11) | FULL | 100 | `newsComment.model.js`, `NewsDetailView.vue` | — |
+| **Emoji reaksiya** | ✓ | Faqat ♡ (bitta reaksiya, toggle); emoji to'plami yo'q | PARTIAL | 50 | `newsReaction.model.js` | Reaksiya turi |
 | News o'qish kuzatuvi | ✓ | Bor (scroll milestone, vaqt) | OURS+ | 100 | `newsView.model.js` | — |
 | Yangilik chiqqanda xabar | ? | **Yo'q** | VERIFY | 0 | `news.service.js` — `notify` yo'q | — |
 | Messenger: DM + guruh | ✓ | Bor + ovozli xabar + fayl + realtime | OURS+ | 100 | `chat.service.js` (719 satr) | — |

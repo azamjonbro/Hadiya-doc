@@ -4,17 +4,15 @@ import { useI18n } from 'vue-i18n'
 import { useAuthStore } from '@/stores/auth'
 import { useThemeStore } from '@/stores/theme'
 import { setLocale, availableLocales } from '@/i18n'
-import { gamificationApi } from '@/services/gamification'
 import { usersApi } from '@/services/users'
 import { useToast } from '@/composables/useToast'
 import { apiErrorText } from '@/utils/apiError'
-import { BADGE_ICONS } from '@/gamification/badgeIcons'
 import AppCard from '@/components/ui/AppCard.vue'
 import PanelSwitchCard from '@/components/ui/PanelSwitchCard.vue'
 import AppSelect from '@/components/ui/AppSelect.vue'
 import Avatar from '@/components/ui/Avatar.vue'
 import Icon from '@/components/ui/Icon.vue'
-import Tabs from '@/components/ui/Tabs.vue'
+import PillTabs from '@/components/portal/PillTabs.vue'
 import Skeleton from '@/components/ui/Skeleton.vue'
 import AppButton from '@/components/ui/AppButton.vue'
 import TwoFactorCard from '@/components/security/TwoFactorCard.vue'
@@ -29,7 +27,6 @@ const toast = useToast()
 const activeTab = ref('profile')
 const tabs = computed(() => [
   { value: 'profile', label: t('settings.tabs.profile') },
-  { value: 'activity', label: t('settings.tabs.activity') },
   { value: 'notifications', label: t('settings.tabs.notifications') },
   { value: 'preferences', label: t('settings.tabs.preferences') },
   // 11.6 — the second factor and the list of devices this account is
@@ -115,43 +112,19 @@ async function toggleChannel(row, channel) {
   }
 }
 
-const gamification = ref(null)
-
-async function loadGamification() {
-  try {
-    gamification.value = await gamificationApi.getMySummary()
-  } catch {
-    gamification.value = null
-  }
-}
-
-onMounted(() => {
-  loadGamification()
-  loadPrefs()
-})
+onMounted(loadPrefs)
 </script>
 
 <template>
-
-  <div class="min-h-screen bg-bg pb-12">
-    <!-- Full Width Hero Banner -->
-    <div class="relative w-full bg-surface-2 flex items-end pt-24 pb-10">
-      <div class="absolute inset-0 bg-gradient-to-br from-indigo-900 via-purple-900 to-indigo-800"></div>
-      <div class="absolute inset-0 opacity-20 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAiIGhlaWdodD0iMjAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGNpcmNsZSBjeD0iMiIgY3k9IjIiIHI9IjIiIGZpbGw9IiNmZmYiIGZpbGwtb3BhY2l0eT0iMC4xNSIvPjwvc3ZnPg==')]"></div>
-      
-      <div class="relative z-10 w-full mx-auto max-w-[1440px] px-6 lg:px-8">
-        <h1 class="text-4xl font-bold text-white leading-tight drop-shadow-md">{{ t('settings.title') }}</h1>
-      </div>
-    </div>
-
-    <div class="mx-auto w-full max-w-4xl px-6 lg:px-8 pt-8">
-
+  <!-- The settings tab of the profile page (reference §10): the account's
+       own sections, on the 880px column the page already provides. -->
+  <div>
     <!-- SUPERADMIN only. ADMIN and MANAGER never see it, because they cannot
          enter the admin panel at all — the button must not promise something
          the /bos guard then refuses. Convenience, not a control. -->
-    <PanelSwitchCard v-if="auth.isSuperAdmin" class="mt-6" direction="admin" />
+    <PanelSwitchCard v-if="auth.isSuperAdmin" class="mb-6" direction="admin" />
 
-    <Tabs class="mt-6" v-model="activeTab" :tabs="tabs" />
+    <PillTabs class="mt-4" v-model="activeTab" :tabs="tabs" />
 
     <div class="mt-6 space-y-6">
       <template v-if="activeTab === 'profile'">
@@ -164,41 +137,6 @@ onMounted(() => {
               <p class="text-small text-ink-faint">{{ auth.user?.email }}</p>
             </div>
           </div>
-        </AppCard>
-      </template>
-
-      <template v-else-if="activeTab === 'activity'">
-        <AppCard v-if="gamification" class="border border-border shadow-sm p-6">
-          <h2 class="text-[11px] font-bold uppercase tracking-widest text-ink-faint">{{ t('settings.sections.activity') }}</h2>
-          <div class="mt-4 grid grid-cols-3 gap-4 text-center">
-            <div class="rounded-md bg-surface-2 p-3">
-              <p class="text-h3 text-ink">{{ gamification.totalPoints }}</p>
-              <p class="text-caption text-ink-faint">{{ t('gamification.points') }}</p>
-            </div>
-            <div class="rounded-md bg-surface-2 p-3">
-              <p class="text-h3 text-ink">{{ gamification.videosCompleted }}</p>
-              <p class="text-caption text-ink-faint">{{ t('settings.activity.videosCompleted') }}</p>
-            </div>
-            <div class="rounded-md bg-surface-2 p-3">
-              <p class="text-h3 text-ink">{{ gamification.quizzesPassed }}</p>
-              <p class="text-caption text-ink-faint">{{ t('settings.activity.quizzesPassed') }}</p>
-            </div>
-          </div>
-        </AppCard>
-
-        <AppCard v-if="gamification" class="border border-border shadow-sm p-6">
-          <h2 class="text-[11px] font-bold uppercase tracking-widest text-ink-faint">{{ t('settings.sections.badges') }}</h2>
-          <div v-if="gamification.badges.length" class="mt-4 flex flex-wrap gap-2">
-            <span
-              v-for="code in gamification.badges"
-              :key="code"
-              class="flex items-center gap-1.5 rounded-full bg-primary-subtle px-3 py-1.5 text-small font-medium text-primary"
-            >
-              <Icon :name="BADGE_ICONS[code] ?? 'award'" size="14" />
-              {{ t(`gamification.badges.${code}.title`) }}
-            </span>
-          </div>
-          <p v-else class="mt-3 text-small text-ink-faint">{{ t('gamification.noBadgesYet') }}</p>
         </AppCard>
       </template>
 
@@ -298,7 +236,6 @@ onMounted(() => {
           </div>
         </AppCard>
       </template>
-    </div>
     </div>
   </div>
 </template>

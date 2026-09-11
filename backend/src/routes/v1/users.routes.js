@@ -12,6 +12,7 @@ import {
   updateUserSchema,
   listUsersQuerySchema,
   activityQuerySchema,
+  learningHistoryQuerySchema,
   bulkMessageSchema,
   bulkUserIdsSchema,
   notificationPrefsSchema,
@@ -105,6 +106,16 @@ usersRouter.get(
   '/:id/learning-stats',
   requireSelfOrPermission('id', PERMISSIONS.USER_READ),
   userController.getLearningStats
+)
+
+// The learner's own history table (portal §11); the same self-or-user:read
+// gate as the other per-user tabs so a manager can read it from the
+// employee page too.
+usersRouter.get(
+  '/:id/learning-history',
+  requireSelfOrPermission('id', PERMISSIONS.USER_READ),
+  validateQuery(learningHistoryQuerySchema),
+  userController.getLearningHistory
 )
 
 // Employee detail tabs: learning/effort levels, day-by-day activity, test

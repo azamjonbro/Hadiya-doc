@@ -1,0 +1,524 @@
+{
+  "uz": {
+    "portal": {
+      "news": {
+        "today": "Bugun",
+        "daysAgo": "{n} kun oldin"
+      },
+      "course": {
+        "about": "Kurs haqida",
+        "backToMine": "Mening kurslarimga qaytish",
+        "contactCurator": "Kurator bilan bog'lanish",
+        "inProgress": "Jarayonda",
+        "description": "Tavsif",
+        "materialCount": "{count} ta material",
+        "noDescription": "Kurs tavsifi kiritilmagan",
+        "curator": "Kurator",
+        "curatorHint": "O'qish bo'yicha savol bormi?"
+      },
+      "player": {
+        "resumeQuestion": "Qolgan savoldan davom etasizmi?",
+        "yes": "Ha",
+        "no": "Yo'q",
+        "pickOne": "Bitta javobni tanlang",
+        "questionOf": "Savol {n} / {total}",
+        "answer": "Javob berish",
+        "leaveTitle": "Testdan chiqasizmi?",
+        "leaveBody": "Vaqt to'xtamaydi. Qaytib kelganingizda qolgan savoldan davom etasiz.",
+        "leave": "Chiqish"
+      },
+      "profile": {
+        "tabs": {
+          "summary": "Umumiy",
+          "rating": "Reyting",
+          "points": "Ballar",
+          "badges": "Beydjlar",
+          "certificates": "Sertifikatlar",
+          "settings": "Sozlamalar"
+        },
+        "rankTitle": "Reytingdagi o'rin",
+        "fullRating": "To'liq reyting",
+        "myBadges": "Mening beydjlarim",
+        "myCertificates": "Mening sertifikatlarim",
+        "seeAll": "Hammasini ko'rish",
+        "forCourse": "«{title}» uchun",
+        "user": "Foydalanuvchi",
+        "date": "Sana",
+        "reason": "Nima uchun",
+        "noPoints": "Hali ball to'planmagan",
+        "earnedOn": "{date} da olindi",
+        "source": {
+          "COMPLETION": "Video tugallandi",
+          "QUIZ": "Test o'tildi",
+          "ASSESSMENT": "Yakuniy test topshirildi"
+        },
+        "metric": {
+          "VIDEOS_COMPLETED": "Tugallangan videolar",
+          "COURSES_COMPLETED": "Tugallangan kurslar",
+          "QUIZZES_PASSED": "O'tilgan testlar",
+          "TOTAL_POINTS": "Jami ball",
+          "CERTIFICATES_EARNED": "Sertifikatlar",
+          "PATHS_COMPLETED": "Tugallangan yo'nalishlar",
+          "PERFECT_QUIZZES": "100% testlar"
+        }
+      },
+      "kb": {
+        "create": "Yaratish",
+        "createAction": "Yaratish",
+        "article": "Maqola",
+        "space": "Bo'shliq",
+        "spaces": "Bo'shliqlar",
+        "overview": "Sharh",
+        "recent": "So'nggilar",
+        "newSpace": "Bo'shliq yaratish",
+        "spaceName": "Bo'shliq nomi",
+        "spaceDescription": "Tavsif",
+        "noSpaces": "Bo'shliqlar hali yo'q",
+        "searchPlaceholder": "Savol yoki maqola nomi…",
+        "searchInSpace": "Bu bo'shliqdan qidirish…",
+        "results": "Qidiruv natijalari",
+        "noResults": "Hech narsa topilmadi",
+        "articles": "Maqolalar",
+        "articleCount": "{count} ta maqola",
+        "noArticles": "Maqolalar hali yo'q",
+        "viewGrid": "Kartalar",
+        "viewList": "Ro'yxat",
+        "helpful": "Maqola foydali bo'ldimi?",
+        "yes": "Ha",
+        "no": "Yo'q",
+        "comments": "Izohlar",
+        "commentPlaceholder": "Izoh yozing…",
+        "send": "Yuborish",
+        "newArticle": "Yangi maqola",
+        "articleTitle": "Sarlavha",
+        "summary": "Qisqa tavsif",
+        "body": "Matn",
+        "noSpace": "Bo'shliqsiz",
+        "publish": "Chop etish"
+      },
+      "ojt": {
+        "iObserve": "Men o'qitaman",
+        "iAmObserved": "Meni o'qitishadi",
+        "filter": "Filtr",
+        "nothingFound": "Hech narsa topilmadi",
+        "tryOtherSearch": "Qidiruvni o'zgartirib ko'ring",
+        "clearFilters": "Filtrlarni tozalash"
+      },
+      "history": {
+        "title": "O'qish tarixi",
+        "intro": "Siz o'tgan kurslar va ulardagi materiallar — sana, holat, ko'rilgan ulush, ball va sarflangan vaqt.",
+        "date": "Sana / vaqt",
+        "materials": "Materiallar",
+        "status": "Holat",
+        "viewed": "Ko'rilgan",
+        "score": "Ballar",
+        "time": "Sarflangan vaqt",
+        "statuses": {
+          "NOT_STARTED": "Boshlanmagan",
+          "IN_PROGRESS": "Jarayonda",
+          "COMPLETED": "Tugallangan",
+          "FAILED": "Tugallanmagan"
+        },
+        "emptyTitle": "Tarix hali bo'sh",
+        "emptyBody": "Birinchi kursni boshlaganingizdan so'ng bu yerda ko'rinadi.",
+        "noItems": "Kursda hali material yo'q",
+        "loadError": "O'qish tarixini yuklab bo'lmadi",
+        "timeNote": "Vaqt faqat video va SCORM materiallari bo'yicha hisoblanadi; hujjat va matn darslari vaqtni o'lchamaydi."
+      },
+      "newsDetail": {
+        "like": "Yoqdi",
+        "liked": "Yoqdi",
+        "comments": "Izohlar",
+        "commentPlaceholder": "Izoh yozing…",
+        "send": "Yuborish",
+        "noComments": "Hali izoh yo'q — birinchi bo'ling.",
+        "removeComment": "Izohni o'chirish"
+      },
+      "birthdays": {
+        "upcoming": "Yaqinlari",
+        "past": "O'tganlari",
+        "today": "Bugun",
+        "tomorrow": "Ertaga",
+        "loadError": "Tug'ilgan kunlarni yuklab bo'lmadi",
+        "empty": {
+          "upcoming": "Yaqin {days} kunda tug'ilgan kunlar yo'q",
+          "past": "O'tgan {days} kunda tug'ilgan kunlar bo'lmagan"
+        }
+      },
+      "employees": {
+        "tabs": {
+          "people": "Xodimlar",
+          "new": "Yangi xodimlar",
+          "structure": "Orgstruktura",
+          "list": "Ro'yxat"
+        },
+        "count": "{count} xodim",
+        "seeStructure": "Orgstrukturada ko'rish",
+        "allDepartments": "Barcha bo'limlar",
+        "unassigned": "Bo'lim ko'rsatilmagan",
+        "empty": "Hech kim topilmadi",
+        "loadError": "Xodimlar ro'yxatini yuklab bo'lmadi",
+        "new": "Yangi",
+        "message": "Xabar yozish",
+        "columns": {
+          "name": "Ism",
+          "department": "Bo'lim",
+          "position": "Lavozim",
+          "manager": "Rahbar",
+          "phone": "Telefon",
+          "email": "Email",
+          "birthday": "Tug'ilgan kun"
+        },
+        "noBranch": "Filial ko'rsatilmagan"
+      }
+    }
+  },
+  "ru": {
+    "portal": {
+      "news": {
+        "today": "Сегодня",
+        "daysAgo": "{n} дн. назад"
+      },
+      "course": {
+        "about": "О курсе",
+        "backToMine": "Вернуться к моим курсам",
+        "contactCurator": "Связаться с куратором",
+        "inProgress": "В процессе",
+        "description": "Описание",
+        "materialCount": "{count} материал(ов)",
+        "noDescription": "Описание курса не заполнено",
+        "curator": "Куратор",
+        "curatorHint": "Есть вопрос по обучению?"
+      },
+      "player": {
+        "resumeQuestion": "Продолжить с оставшегося вопроса?",
+        "yes": "Да",
+        "no": "Нет",
+        "pickOne": "Выберите один ответ",
+        "questionOf": "Вопрос {n} из {total}",
+        "answer": "Ответить",
+        "leaveTitle": "Выйти из теста?",
+        "leaveBody": "Таймер не остановится. Когда вернётесь, продолжите с оставшегося вопроса.",
+        "leave": "Выйти"
+      },
+      "profile": {
+        "tabs": {
+          "summary": "Общее",
+          "rating": "Рейтинг",
+          "points": "Баллы",
+          "badges": "Бейджи",
+          "certificates": "Сертификаты",
+          "settings": "Настройки"
+        },
+        "rankTitle": "Место в рейтинге",
+        "fullRating": "Полный рейтинг",
+        "myBadges": "Мои бейджи",
+        "myCertificates": "Мои сертификаты",
+        "seeAll": "Смотреть все",
+        "forCourse": "За «{title}»",
+        "user": "Пользователь",
+        "date": "Дата",
+        "reason": "За что",
+        "noPoints": "Баллов пока нет",
+        "earnedOn": "Получен {date}",
+        "source": {
+          "COMPLETION": "Видео завершено",
+          "QUIZ": "Тест пройден",
+          "ASSESSMENT": "Итоговый тест сдан"
+        },
+        "metric": {
+          "VIDEOS_COMPLETED": "Завершённые видео",
+          "COURSES_COMPLETED": "Завершённые курсы",
+          "QUIZZES_PASSED": "Пройденные тесты",
+          "TOTAL_POINTS": "Всего баллов",
+          "CERTIFICATES_EARNED": "Сертификаты",
+          "PATHS_COMPLETED": "Завершённые траектории",
+          "PERFECT_QUIZZES": "Тесты на 100%"
+        }
+      },
+      "kb": {
+        "create": "Создать",
+        "createAction": "Создать",
+        "article": "Статья",
+        "space": "Пространство",
+        "spaces": "Пространства",
+        "overview": "Обзор",
+        "recent": "Недавние",
+        "newSpace": "Создать пространство",
+        "spaceName": "Название пространства",
+        "spaceDescription": "Описание",
+        "noSpaces": "Пространств пока нет",
+        "searchPlaceholder": "Вопрос или название статьи…",
+        "searchInSpace": "Поиск в этом пространстве…",
+        "results": "Результаты поиска",
+        "noResults": "Ничего не найдено",
+        "articles": "Статьи",
+        "articleCount": "{count} статей",
+        "noArticles": "Статей пока нет",
+        "viewGrid": "Карточки",
+        "viewList": "Список",
+        "helpful": "Статья была полезной?",
+        "yes": "Да",
+        "no": "Нет",
+        "comments": "Комментарии",
+        "commentPlaceholder": "Напишите комментарий…",
+        "send": "Отправить",
+        "newArticle": "Новая статья",
+        "articleTitle": "Заголовок",
+        "summary": "Краткое описание",
+        "body": "Текст",
+        "noSpace": "Без пространства",
+        "publish": "Опубликовать"
+      },
+      "ojt": {
+        "iObserve": "Я обучаю",
+        "iAmObserved": "Меня обучают",
+        "filter": "Фильтр",
+        "nothingFound": "Ничего не найдено",
+        "tryOtherSearch": "Попробуйте изменить поиск",
+        "clearFilters": "Сбросить фильтры"
+      },
+      "history": {
+        "title": "История обучения",
+        "intro": "Пройденные вами курсы и их материалы — дата, статус, доля просмотра, баллы и затраченное время.",
+        "date": "Дата / время",
+        "materials": "Материалы",
+        "status": "Статус",
+        "viewed": "Просмотрено",
+        "score": "Баллы",
+        "time": "Затрачено времени",
+        "statuses": {
+          "NOT_STARTED": "Не начато",
+          "IN_PROGRESS": "В процессе",
+          "COMPLETED": "Завершено",
+          "FAILED": "Не завершено"
+        },
+        "emptyTitle": "История пока пуста",
+        "emptyBody": "Появится здесь, как только вы начнёте первый курс.",
+        "noItems": "В курсе пока нет материалов",
+        "loadError": "Не удалось загрузить историю обучения",
+        "timeNote": "Время считается только по видео и SCORM-материалам; документы и текстовые уроки время не измеряют."
+      },
+      "newsDetail": {
+        "like": "Нравится",
+        "liked": "Нравится",
+        "comments": "Комментарии",
+        "commentPlaceholder": "Напишите комментарий…",
+        "send": "Отправить",
+        "noComments": "Комментариев пока нет — будьте первым.",
+        "removeComment": "Удалить комментарий"
+      },
+      "birthdays": {
+        "upcoming": "Ближайшие",
+        "past": "Прошедшие",
+        "today": "Сегодня",
+        "tomorrow": "Завтра",
+        "loadError": "Не удалось загрузить дни рождения",
+        "empty": {
+          "upcoming": "В ближайшие {days} дней дней рождения нет",
+          "past": "За прошедшие {days} дней дней рождения не было"
+        }
+      },
+      "employees": {
+        "tabs": {
+          "people": "Сотрудники",
+          "new": "Новые сотрудники",
+          "structure": "Оргструктура",
+          "list": "Список"
+        },
+        "count": "{count} сотр.",
+        "seeStructure": "Смотреть в оргструктуре",
+        "allDepartments": "Все отделы",
+        "unassigned": "Отдел не указан",
+        "empty": "Никого не найдено",
+        "loadError": "Не удалось загрузить список сотрудников",
+        "new": "Новый",
+        "message": "Написать",
+        "columns": {
+          "name": "Имя",
+          "department": "Отдел",
+          "position": "Должность",
+          "manager": "Руководитель",
+          "phone": "Телефон",
+          "email": "Email",
+          "birthday": "День рождения"
+        },
+        "noBranch": "Филиал не указан"
+      }
+    }
+  },
+  "en": {
+    "portal": {
+      "news": {
+        "today": "Today",
+        "daysAgo": "{n} days ago"
+      },
+      "course": {
+        "about": "About the course",
+        "backToMine": "Back to my courses",
+        "contactCurator": "Contact the curator",
+        "inProgress": "In progress",
+        "description": "Description",
+        "materialCount": "{count} materials",
+        "noDescription": "No description yet",
+        "curator": "Curator",
+        "curatorHint": "Have a question about the course?"
+      },
+      "player": {
+        "resumeQuestion": "Continue from where you left off?",
+        "yes": "Yes",
+        "no": "No",
+        "pickOne": "Pick one answer",
+        "questionOf": "Question {n} of {total}",
+        "answer": "Answer",
+        "leaveTitle": "Leave the test?",
+        "leaveBody": "The clock keeps running. When you come back you continue from the remaining question.",
+        "leave": "Leave"
+      },
+      "profile": {
+        "tabs": {
+          "summary": "Overview",
+          "rating": "Rating",
+          "points": "Points",
+          "badges": "Badges",
+          "certificates": "Certificates",
+          "settings": "Settings"
+        },
+        "rankTitle": "Rank",
+        "fullRating": "Full rating",
+        "myBadges": "My badges",
+        "myCertificates": "My certificates",
+        "seeAll": "See all",
+        "forCourse": "For “{title}”",
+        "user": "User",
+        "date": "Date",
+        "reason": "Reason",
+        "noPoints": "No points yet",
+        "earnedOn": "Earned on {date}",
+        "source": {
+          "COMPLETION": "Video completed",
+          "QUIZ": "Quiz passed",
+          "ASSESSMENT": "Final test passed"
+        },
+        "metric": {
+          "VIDEOS_COMPLETED": "Videos completed",
+          "COURSES_COMPLETED": "Courses completed",
+          "QUIZZES_PASSED": "Quizzes passed",
+          "TOTAL_POINTS": "Total points",
+          "CERTIFICATES_EARNED": "Certificates",
+          "PATHS_COMPLETED": "Paths completed",
+          "PERFECT_QUIZZES": "Perfect quizzes"
+        }
+      },
+      "kb": {
+        "create": "Create",
+        "createAction": "Create",
+        "article": "Article",
+        "space": "Space",
+        "spaces": "Spaces",
+        "overview": "Overview",
+        "recent": "Recent",
+        "newSpace": "Create a space",
+        "spaceName": "Space name",
+        "spaceDescription": "Description",
+        "noSpaces": "No spaces yet",
+        "searchPlaceholder": "A question or an article name…",
+        "searchInSpace": "Search in this space…",
+        "results": "Search results",
+        "noResults": "Nothing found",
+        "articles": "Articles",
+        "articleCount": "{count} articles",
+        "noArticles": "No articles yet",
+        "viewGrid": "Cards",
+        "viewList": "List",
+        "helpful": "Was this article helpful?",
+        "yes": "Yes",
+        "no": "No",
+        "comments": "Comments",
+        "commentPlaceholder": "Write a comment…",
+        "send": "Send",
+        "newArticle": "New article",
+        "articleTitle": "Title",
+        "summary": "Summary",
+        "body": "Body",
+        "noSpace": "No space",
+        "publish": "Publish"
+      },
+      "ojt": {
+        "iObserve": "I observe",
+        "iAmObserved": "I am observed",
+        "filter": "Filter",
+        "nothingFound": "Nothing found",
+        "tryOtherSearch": "Try a different search",
+        "clearFilters": "Clear filters"
+      },
+      "history": {
+        "title": "Learning history",
+        "intro": "The courses you have taken and their materials — date, status, share viewed, score and time spent.",
+        "date": "Date / time",
+        "materials": "Materials",
+        "status": "Status",
+        "viewed": "Viewed",
+        "score": "Score",
+        "time": "Time spent",
+        "statuses": {
+          "NOT_STARTED": "Not started",
+          "IN_PROGRESS": "In progress",
+          "COMPLETED": "Completed",
+          "FAILED": "Not completed"
+        },
+        "emptyTitle": "Nothing here yet",
+        "emptyBody": "It fills in once you start your first course.",
+        "noItems": "The course has no materials yet",
+        "loadError": "Could not load the learning history",
+        "timeNote": "Time is measured for videos and SCORM packages only; documents and text lessons do not track it."
+      },
+      "newsDetail": {
+        "like": "Like",
+        "liked": "Liked",
+        "comments": "Comments",
+        "commentPlaceholder": "Write a comment…",
+        "send": "Send",
+        "noComments": "No comments yet — be the first.",
+        "removeComment": "Delete comment"
+      },
+      "birthdays": {
+        "upcoming": "Upcoming",
+        "past": "Past",
+        "today": "Today",
+        "tomorrow": "Tomorrow",
+        "loadError": "Could not load birthdays",
+        "empty": {
+          "upcoming": "No birthdays in the next {days} days",
+          "past": "No birthdays in the past {days} days"
+        }
+      },
+      "employees": {
+        "tabs": {
+          "people": "People",
+          "new": "New hires",
+          "structure": "Org structure",
+          "list": "List"
+        },
+        "count": "{count} people",
+        "seeStructure": "See in org structure",
+        "allDepartments": "All departments",
+        "unassigned": "No department",
+        "empty": "Nobody found",
+        "loadError": "Could not load the directory",
+        "new": "New",
+        "message": "Send a message",
+        "columns": {
+          "name": "Name",
+          "department": "Department",
+          "position": "Position",
+          "manager": "Manager",
+          "phone": "Phone",
+          "email": "Email",
+          "birthday": "Birthday"
+        },
+        "noBranch": "No branch"
+      }
+    }
+  }
+}

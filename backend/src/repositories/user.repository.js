@@ -129,6 +129,61 @@ export const userRepository = {
       .limit(limit)
   },
 
+  // The employee-facing directory (portal §8): working, active people only,
+  // name-sorted because a person is looked up by name, not by creation
+  // order. `newSince` narrows to recent hires — hireDate when HR filled it
+  // in, the account's creation otherwise.
+  directoryFilter({ search, branch, department, subdivision, newSince } = {}) {
+    const filter = { isActive: true, terminationDate: null }
+    if (search?.trim()) {
+      const regex = containsRegex(search)
+      filter.$or = [{ fullName: regex }, { position: regex }, { department: regex }, { email: regex }]
+    }
+    if (branch) filter.branch = branch
+    if (department) filter.department = department
+    if (subdivision) filter.subdivision = subdivision
+    if (newSince) {
+      filter.$and = [
+        {
+          $or: [{ hireDate: { $gte: newSince } }, { hireDate: null, createdAt: { $gte: newSince } }],
+        },
+      ]
+    }
+    return filter
+  },
+
+  listDirectoryPage(params) {
+    const { page = 1, limit = 24 } = params
+    return User.find(this.directoryFilter(params))
+      .select('fullName avatar branch department subdivision position email phone managerId birthDate hireDate createdAt')
+      .sort({ fullName: 1, _id: 1 })
+      .skip((page - 1) * limit)
+      .limit(limit)
+      .lean()
+  },
+
+  countDirectory(params) {
+    return User.countDocuments(this.directoryFilter(params))
+  },
+
+  // Head-count by branch → department → subdivision, working people only.
+  // What the org-structure tab draws; no names, so it needs no permission.
+  countByStructure() {
+    return User.aggregate([
+      { $match: { isActive: true, terminationDate: null } },
+      { $group: { _id: { branch: '$branch', department: '$department', subdivision: '$subdivision' }, count: { $sum: 1 } } },
+      { $sort: { '_id.branch': 1, '_id.department': 1, '_id.subdivision': 1 } },
+    ])
+  },
+
+  // Everyone with a birth date on file, the few fields the birthday panel
+  // shows. Lean and projected: it is scanned once per open of the panel.
+  listActiveWithBirthdays() {
+    return User.find({ isActive: true, birthDate: { $ne: null } })
+      .select('fullName avatar department position birthDate')
+      .lean()
+  },
+
   create(data) {
     return User.create(data)
   },

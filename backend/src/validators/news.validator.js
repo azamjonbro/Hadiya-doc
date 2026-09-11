@@ -41,3 +41,7 @@ export const feedQuerySchema = z.object({
   cursor: z.string().optional(),
   limit: z.coerce.number().int().min(1).max(100).optional().default(20),
 })
+
+export const newsCommentSchema = z.object({
+  body: z.string().trim().min(1).max(2000),
+})

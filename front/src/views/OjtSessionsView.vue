@@ -28,10 +28,10 @@ import AppDatePicker from '@/components/ui/AppDatePicker.vue'
 import UserPicker from '@/components/ui/UserPicker.vue'
 import Badge from '@/components/ui/Badge.vue'
 import Modal from '@/components/ui/Modal.vue'
-import EmptyState from '@/components/ui/EmptyState.vue'
 import Skeleton from '@/components/ui/Skeleton.vue'
 import Pagination from '@/components/ui/Pagination.vue'
 import Icon from '@/components/ui/Icon.vue'
+import SearchField from '@/components/portal/SearchField.vue'
 
 const { t, locale } = useI18n()
 const router = useRouter()
@@ -84,6 +84,31 @@ const statusVariant = {
 }
 
 const isMyObservation = (session) => session.observerId === auth.user?.id
+
+// Portal §6: the segment splits the page by which side of the clipboard
+// the person is on. Both halves come from the same list — the server
+// already narrows it to sessions the caller is part of — so the switch
+// is client-side, as is the search box next to it.
+const side = ref('observer') // observer | trainee
+const search = ref('')
+const filtersOpen = ref(false)
+const visibleSessions = computed(() => {
+  const me = auth.user?.id
+  const q = search.value.trim().toLowerCase()
+  return sessions.value.filter((session) => {
+    if (!canManage.value || scope.value === 'true') {
+      if (side.value === 'observer' && session.observerId !== me) return false
+      if (side.value === 'trainee' && session.traineeId !== me) return false
+    }
+    if (q && !`${session.traineeName} ${session.observerName} ${session.checklistName}`.toLowerCase().includes(q)) return false
+    return true
+  })
+})
+function clearFilters() {
+  status.value = ''
+  search.value = ''
+  applyFilter()
+}
 
 async function load() {
   loading.value = true
@@ -172,57 +197,77 @@ onMounted(load)
 </script>
 
 <template>
-
-  <div class="min-h-screen bg-bg pb-12">
-    <!-- Full Width Hero Banner -->
-    <div class="relative w-full bg-surface-2 flex items-end pt-24 pb-10">
-      <div class="absolute inset-0 bg-gradient-to-br from-indigo-900 via-purple-900 to-indigo-800"></div>
-      <div class="absolute inset-0 opacity-20 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAiIGhlaWdodD0iMjAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGNpcmNsZSBjeD0iMiIgY3k9IjIiIHI9IjIiIGZpbGw9IiNmZmYiIGZpbGwtb3BhY2l0eT0iMC4xNSIvPjwvc3ZnPg==')]"></div>
-      
-      <div class="relative z-10 w-full mx-auto max-w-[1440px] px-6 lg:px-8 flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h1 class="text-4xl font-bold text-white leading-tight drop-shadow-md">{{ t('ojt.title') }}</h1>
-          <p class="mt-2 text-white/80 max-w-2xl text-body drop-shadow">{{ t('ojt.sessionsSubtitle') }}</p>
-        </div>
-        <AppButton v-if="canManage" icon="plus" variant="primary" class="shadow-lg shadow-primary/20 bg-white text-primary hover:bg-white/90" @click="openCreate">{{ t('ojt.newSession') }}</AppButton>
+  <div class="min-h-screen bg-surface pb-12">
+    <div class="mx-auto w-full max-w-[840px] px-4 pt-10">
+      <div class="flex flex-wrap items-center justify-between gap-3">
+        <h1 class="flex items-center gap-2 text-[24px] font-semibold text-ink">
+          {{ t('ojt.title') }}
+          <span class="flex h-5 w-5 items-center justify-center rounded-full bg-primary text-[12px] font-semibold text-primary-foreground" :title="t('ojt.sessionsSubtitle')">?</span>
+        </h1>
+        <AppButton v-if="canManage" icon="plus" size="sm" @click="openCreate">{{ t('ojt.newSession') }}</AppButton>
       </div>
-    </div>
 
-    <div class="mx-auto w-full max-w-[1440px] px-6 lg:px-8 pt-8">
+      <div class="mt-5 flex flex-wrap items-center justify-between gap-3">
+        <div class="flex rounded-lg bg-surface-2 p-0.5">
+          <button
+            type="button"
+            class="h-8 rounded-md px-3 text-[13px] transition-default"
+            :class="side === 'observer' ? 'bg-surface font-medium text-ink shadow-sm' : 'text-ink-muted'"
+            @click="side = 'observer'"
+          >{{ t('portal.ojt.iObserve') }}</button>
+          <button
+            type="button"
+            class="h-8 rounded-md px-3 text-[13px] transition-default"
+            :class="side === 'trainee' ? 'bg-surface font-medium text-ink shadow-sm' : 'text-ink-muted'"
+            @click="side = 'trainee'"
+          >{{ t('portal.ojt.iAmObserved') }}</button>
+        </div>
+        <div class="flex items-center gap-2">
+          <SearchField v-model="search" width="w-[150px]" />
+          <button
+            type="button"
+            class="flex h-9 items-center gap-1.5 rounded-md border border-border-strong px-3 text-[13px] text-ink hover:bg-surface-2"
+            :class="filtersOpen || status ? 'bg-surface-2' : ''"
+            @click="filtersOpen = !filtersOpen"
+          >
+            <Icon name="filter" size="14" />
+            {{ t('portal.ojt.filter') }}
+          </button>
+        </div>
+      </div>
 
-    <div class="mt-5 flex flex-wrap items-center gap-3">
-      <AppSelect
-        v-model="status"
-        class="w-44"
-        :aria-label="t('ojt.statusLabel')"
-        :placeholder="t('ojt.allStatuses')"
-        :options="statusOptions"
-        @update:model-value="applyFilter"
-      />
-      <AppSelect
-        v-if="canManage"
-        v-model="scope"
-        class="w-40"
-        :aria-label="t('ojt.scopeLabel')"
-        :options="scopeOptions"
-        @update:model-value="applyFilter"
-      />
-    </div>
+      <div v-if="filtersOpen" class="mt-3 flex flex-wrap items-center gap-3 rounded-lg border border-border bg-surface-2 p-3">
+        <AppSelect
+          v-model="status"
+          class="w-44"
+          :aria-label="t('ojt.statusLabel')"
+          :placeholder="t('ojt.allStatuses')"
+          :options="statusOptions"
+          @update:model-value="applyFilter"
+        />
+        <AppSelect
+          v-if="canManage"
+          v-model="scope"
+          class="w-40"
+          :aria-label="t('ojt.scopeLabel')"
+          :options="scopeOptions"
+          @update:model-value="applyFilter"
+        />
+      </div>
 
     <div v-if="loading" class="mt-6 space-y-3">
       <Skeleton v-for="n in 4" :key="n" class="h-24 w-full rounded-lg" />
     </div>
 
-    <EmptyState
-      v-else-if="!sessions.length"
-      class="mt-6"
-      icon="briefcase"
-      :title="t('ojt.emptySessions')"
-      :description="t('ojt.emptySessionsHint')"
-    />
+    <div v-else-if="!visibleSessions.length" class="mt-16 flex flex-col items-center text-center">
+      <span class="flex h-20 w-20 items-center justify-center rounded-full bg-surface-2 text-ink-faint"><Icon name="briefcase" size="32" /></span>
+      <p class="mt-4 text-[14px] font-semibold text-ink">{{ sessions.length ? t('portal.ojt.nothingFound') : t('ojt.emptySessions') }}</p>
+      <p class="mt-1 text-[13px] text-ink-muted">{{ sessions.length || status || search ? t('portal.ojt.tryOtherSearch') : t('ojt.emptySessionsHint') }}</p>
+      <AppButton v-if="status || search" class="mt-4" size="sm" variant="secondary" @click="clearFilters">{{ t('portal.ojt.clearFilters') }}</AppButton>
+    </div>
 
     <div v-else class="mt-4 space-y-3">
-      <AppCard v-for="session in sessions" :key="session.id" class="p-4">
+      <AppCard v-for="session in visibleSessions" :key="session.id" class="p-4">
         <div class="flex flex-wrap items-start justify-between gap-3">
           <div class="min-w-0 flex-1">
             <div class="flex flex-wrap items-center gap-2">
