@@ -114,8 +114,11 @@ function itemsOf(stageId) {
 // Items that point at no stage (or a deleted one) sit above the first stage.
 const looseItems = computed(() => itemsOf(null))
 
-function addStage() {
-  path.value.sections.push({ id: mintId(), title: t('pathBuilder.stageDefault', { n: stages.value.length + 1 }), order: stages.value.length, itemIds: [] })
+/** A new stage at the end, or right after `after` when adding from a stage's own "+". */
+function addStage(after = null) {
+  const order = after ? after.order + 1 : stages.value.length
+  for (const stage of path.value.sections) if (stage.order >= order) stage.order += 1
+  path.value.sections.push({ id: mintId(), title: t('pathBuilder.stageDefault', { n: stages.value.length + 1 }), order, itemIds: [] })
 }
 
 function renameStage(stage) {
@@ -603,9 +606,13 @@ onMounted(async () => {
             <p class="mt-8 max-w-[300px] text-[14px] leading-relaxed text-ink-muted">{{ t('pathBuilder.structure.emptyHint') }}</p>
             <div class="relative mt-6" @click.stop>
               <AppButton icon="plus" @click="menuFor = menuFor === 'empty' ? '' : 'empty'">{{ t('pathBuilder.structure.add') }}</AppButton>
-              <div v-if="menuFor === 'empty'" class="absolute left-1/2 z-20 mt-1 w-52 -translate-x-1/2 rounded-md border border-border bg-surface py-1 text-left text-[13px] shadow-md">
-                <button type="button" class="flex w-full items-center gap-2 px-3 py-2 hover:bg-surface-2" @click="menuFor = ''; openPicker(null)"><Icon name="book-open" size="14" /> {{ t('pathBuilder.addCourses') }}</button>
-                <button type="button" class="flex w-full items-center gap-2 px-3 py-2 hover:bg-surface-2" @click="menuFor = ''; addStage()"><Icon name="layers" size="14" /> {{ t('pathBuilder.structure.addStage') }}</button>
+              <div v-if="menuFor === 'empty'" class="absolute left-1/2 z-20 mt-3 flex -translate-x-1/2 gap-2 rounded-xl bg-surface p-3 shadow-lg ring-1 ring-border">
+                <button type="button" class="flex h-[104px] w-[88px] flex-col items-center justify-center gap-4 rounded-lg bg-surface-2 text-[14px] text-ink hover:bg-surface-hover" @click="menuFor = ''; addStage()">
+                  <Icon name="map-pin" size="26" class="text-ink-muted" /> {{ t('pathBuilder.structure.stage') }}
+                </button>
+                <button type="button" class="flex h-[104px] w-[88px] flex-col items-center justify-center gap-4 rounded-lg text-[14px] text-ink hover:bg-surface-2" @click="menuFor = ''; openPicker(null)">
+                  <Icon name="book-open" size="26" class="text-ink-muted" /> {{ t('pathBuilder.structure.course') }}
+                </button>
               </div>
             </div>
           </div>
@@ -732,9 +739,19 @@ onMounted(async () => {
 
               <div class="grid grid-cols-[120px_1fr] py-3">
                 <span class="relative z-10 flex justify-end pr-[13px] pt-1.5"><span class="h-1.5 w-1.5 rounded-full bg-border-strong" /></span>
-                <button type="button" class="flex items-center gap-2 pl-8 text-[13px] text-primary hover:underline" @click="openPicker(stage.id)">
-                  <Icon name="plus" size="16" class="rounded-full border border-primary" /> {{ t('pathBuilder.structure.add') }}
-                </button>
+                <div class="relative pl-8" @click.stop>
+                  <button type="button" class="flex items-center gap-2 text-[13px] text-primary hover:underline" @click="menuFor = menuFor === `add-${stage.id}` ? '' : `add-${stage.id}`">
+                    <Icon name="plus" size="16" class="rounded-full border border-primary" /> {{ t('pathBuilder.structure.add') }}
+                  </button>
+                  <div v-if="menuFor === `add-${stage.id}`" class="absolute left-8 z-20 mt-2 flex gap-2 rounded-xl bg-surface p-3 shadow-lg ring-1 ring-border">
+                    <button type="button" class="flex h-[104px] w-[88px] flex-col items-center justify-center gap-4 rounded-lg bg-surface-2 text-[14px] text-ink hover:bg-surface-hover" @click="menuFor = ''; addStage(stage)">
+                      <Icon name="map-pin" size="26" class="text-ink-muted" /> {{ t('pathBuilder.structure.stage') }}
+                    </button>
+                    <button type="button" class="flex h-[104px] w-[88px] flex-col items-center justify-center gap-4 rounded-lg text-[14px] text-ink hover:bg-surface-2" @click="menuFor = ''; openPicker(stage.id)">
+                      <Icon name="book-open" size="26" class="text-ink-muted" /> {{ t('pathBuilder.structure.course') }}
+                    </button>
+                  </div>
+                </div>
               </div>
             </div>
 
