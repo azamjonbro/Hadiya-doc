@@ -2540,7 +2540,8 @@
       "courseOrStage": "Kurs / Bosqich",
       "deadline": "Bajarish muddati",
       "add": "Qo'shish",
-      "addStage": "Bosqich qo'shish"
+      "addStage": "Bosqich qo'shish",
+      "emptyHint": "Bosqichlar yaratish va trayektoriyaga kurslar qo'shish uchun «Qo'shish» tugmasini bosing."
     },
     "basic": {
       "hint": "Bu yerda o'quv trayektoriyasining asosiy xususiyatlarini sozlash mumkin.",
