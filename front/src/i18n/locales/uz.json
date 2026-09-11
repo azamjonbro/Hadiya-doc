@@ -1267,6 +1267,13 @@
       "development": "Rivojlanish rejalari",
       "news": "Yangiliklar lentasi",
       "appraisal": "Xodimlarni baholash"
+    },
+    "qa": {
+      "title": "Kurslar bo'yicha savollar",
+      "empty": "Hali savol berilmagan",
+      "unanswered": "Javobsiz savollar",
+      "counts": "{total} ta savol · {unanswered} tasi javobsiz",
+      "pick": "Savollarni ko'rish uchun ro'yxatdan kursni tanlang"
     }
   },
   "reports": {

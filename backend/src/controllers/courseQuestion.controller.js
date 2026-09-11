@@ -3,6 +3,10 @@ import { asyncHandler } from '../utils/asyncHandler.js'
 import { sendSuccess } from '../utils/apiResponse.js'
 
 export const courseQuestionController = {
+  summary: asyncHandler(async (req, res) => {
+    sendSuccess(res, await courseQuestionService.summary(req.user))
+  }),
+
   create: asyncHandler(async (req, res) => {
     sendSuccess(res, await courseQuestionService.create(req.user, req.params.id, req.body), 'Question posted', 201)
   }),

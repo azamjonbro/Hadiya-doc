@@ -1,6 +1,10 @@
 import { http } from './http'
 
 export const courseQuestionsApi = {
+  // Admin Q&A (rasn 20): { items: [{ courseId, title, total, unanswered }] }
+  summary() {
+    return http.get('/courses/questions/summary').then((r) => r.data.data.items)
+  },
   list(courseId, params) {
     return http.get(`/courses/${courseId}/questions`, { params }).then((r) => r.data.data)
   },

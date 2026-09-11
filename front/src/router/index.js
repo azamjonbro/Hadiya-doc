@@ -251,6 +251,12 @@ export const router = createRouter({
         // drawn inside the admin shell so the section has both its pages
         // (rasn 21–22).
         {
+          path: 'questions',
+          name: 'admin-course-questions',
+          component: () => import('@/admin/views/CourseQuestionsView.vue'),
+          meta: { permission: 'course:update', titleKey: 'admin.qa.title' },
+        },
+        {
           path: 'ojt/sessions',
           name: 'admin-ojt-sessions',
           component: () => import('@/views/OjtSessionsView.vue'),

@@ -52,6 +52,22 @@ export const courseQuestionService = {
     return hydrated
   },
 
+  // The admin Q&A page (rasn 20): every course that has questions, named,
+  // with its counts. Course-managing staff only — the counts span courses
+  // a learner may not see.
+  async summary(actor) {
+    if (!canManageCourses(actor)) throw ApiError.forbidden('Missing required permission: course:update')
+    const rows = await courseQuestionRepository.summarize()
+    const courses = await courseRepository.findByIds(rows.map((row) => row.courseId))
+    const titleById = new Map(courses.map((course) => [String(course._id), course.title]))
+    return {
+      items: rows
+        .filter((row) => titleById.has(row.courseId))
+        .map((row) => ({ ...row, title: titleById.get(row.courseId) }))
+        .sort((a, b) => b.unanswered - a.unanswered || b.total - a.total),
+    }
+  },
+
   async list(actor, courseId, query) {
     await loadVisibleCourse(actor, courseId)
     const rows = await courseQuestionRepository.listPage(courseId, query)

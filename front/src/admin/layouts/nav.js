@@ -57,7 +57,16 @@ export const adminSections = [
   // The knowledge base is one shell for everyone (portal §5); the admin
   // reaches it through the rail like iSpring does.
   { key: 'kb', icon: 'info', path: '/kb', labelKey: 'portal.nav.kb' },
-  { key: 'grading', icon: 'message-square', path: '/bos/grading', labelKey: 'grading.title', permission: 'quiz:grade' },
+  {
+    key: 'questions',
+    icon: 'message-square',
+    path: '/bos/questions',
+    labelKey: 'admin.qa.title',
+    children: [
+      { name: 'questions', path: '/bos/questions', labelKey: 'admin.qa.title', permission: 'course:update' },
+      { name: 'grading', path: '/bos/grading', labelKey: 'grading.title', permission: 'quiz:grade' },
+    ],
+  },
   {
     key: 'ojt',
     icon: 'check-square',

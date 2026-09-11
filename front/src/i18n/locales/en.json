@@ -1267,6 +1267,13 @@
       "development": "Development plans",
       "news": "News feed",
       "appraisal": "Staff appraisal"
+    },
+    "qa": {
+      "title": "Questions by course",
+      "empty": "No questions yet",
+      "unanswered": "Unanswered",
+      "counts": "{total} questions · {unanswered} unanswered",
+      "pick": "Pick a course from the list to see its questions"
     }
   },
   "reports": {
