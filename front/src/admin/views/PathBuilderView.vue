@@ -118,7 +118,7 @@ const looseItems = computed(() => itemsOf(null))
 function addStage(after = null) {
   const order = after ? after.order + 1 : stages.value.length
   for (const stage of path.value.sections) if (stage.order >= order) stage.order += 1
-  path.value.sections.push({ id: mintId(), title: t('pathBuilder.stageDefault', { n: stages.value.length + 1 }), order, itemIds: [] })
+  path.value.sections.push({ id: mintId(), title: t('pathBuilder.stageDefault'), order, itemIds: [] })
 }
 
 function renameStage(stage) {
@@ -576,7 +576,7 @@ onMounted(async () => {
         </div>
 
         <!-- ===== Structure ===== -->
-        <div v-if="tab === 'structure'" class="px-6 py-6">
+        <div v-if="tab === 'structure'" class="min-h-[520px] px-6 py-6">
           <div class="flex flex-wrap items-center justify-between gap-4">
             <p class="text-[13px] text-ink">{{ t('pathBuilder.structure.hint') }}</p>
             <div class="flex items-center gap-3">
@@ -619,7 +619,7 @@ onMounted(async () => {
 
           <div v-else class="relative mt-2">
             <!-- The dotted timeline behind the stage markers -->
-            <div class="absolute bottom-6 left-[103px] top-6 border-l-2 border-dotted border-border-strong" />
+            <div class="absolute bottom-8 left-[103px] top-14 border-l-2 border-dotted border-border-strong" />
 
             <!-- Loose items (no stage) -->
             <template v-if="looseItems.length">
@@ -674,14 +674,16 @@ onMounted(async () => {
             </template>
 
             <!-- Stages -->
-            <div v-for="(stage, index) in stages" :key="stage.id" class="pt-6">
+            <div v-for="(stage, index) in stages" :key="stage.id" class="group/stage pt-6">
               <div class="grid grid-cols-[120px_1fr_200px] items-center">
-                <div class="relative z-10 flex justify-end pr-[6px]">
-                  <span class="h-5 w-5 rounded-full border-2 border-border-strong bg-surface" />
+                <div class="relative z-10 flex justify-end pr-[4px]">
+                  <span class="flex h-6 w-6 items-center justify-center rounded-full border-2 border-border-strong bg-surface">
+                    <span class="h-3 w-3 rounded-full border-2 border-border" />
+                  </span>
                 </div>
                 <h3 class="pl-8 text-[18px] font-semibold text-ink">{{ stage.title }}</h3>
                 <div class="relative flex justify-end" @click.stop>
-                  <button type="button" class="rounded-md p-2 text-ink-muted hover:bg-surface-2" @click="menuFor = menuFor === stage.id ? '' : stage.id">
+                  <button type="button" class="rounded-md p-2 text-ink-muted opacity-0 transition-default hover:bg-surface-2 group-hover/stage:opacity-100 focus:opacity-100" :class="menuFor === stage.id ? 'opacity-100' : ''" @click="menuFor = menuFor === stage.id ? '' : stage.id">
                     <Icon name="more-horizontal" size="16" />
                   </button>
                   <div v-if="menuFor === stage.id" class="absolute right-0 top-9 z-20 w-48 rounded-md border border-border bg-surface py-1 text-[13px] shadow-md">
@@ -755,12 +757,6 @@ onMounted(async () => {
               </div>
             </div>
 
-            <div class="grid grid-cols-[120px_1fr] pt-4">
-              <span />
-              <button type="button" class="flex items-center gap-2 pl-8 text-[13px] text-ink-muted hover:text-ink" @click="addStage">
-                <Icon name="plus" size="16" /> {{ t('pathBuilder.structure.addStage') }}
-              </button>
-            </div>
           </div>
         </div>
 

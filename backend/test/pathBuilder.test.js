@@ -103,7 +103,8 @@ describe('trajectory builder', () => {
     })
     assert.equal(created.status, 201, JSON.stringify(created.body))
     pathId = created.body.data.id
-    assert.equal(created.body.data.orderMode, 'SEQUENTIAL')
+    assert.equal(created.body.data.orderMode, 'BY_DAYS')
+    assert.equal(created.body.data.sequential, false)
     assert.equal(created.body.data.inCatalog, false)
     assert.equal(created.body.data.notifications.assign.enabled, true)
 

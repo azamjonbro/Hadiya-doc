@@ -2517,7 +2517,7 @@
     "day": "Day {n}",
     "days": "{n} days",
     "noDeadline": "No deadline",
-    "stageDefault": "Stage {n}",
+    "stageDefault": "New stage",
     "renameStage": "Rename stage",
     "removeStageTitle": "Delete this stage?",
     "removeStageMessage": "“{title}” will be deleted. Its courses stay on the path.",

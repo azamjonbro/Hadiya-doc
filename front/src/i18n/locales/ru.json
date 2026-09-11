@@ -2517,7 +2517,7 @@
     "day": "День {n}",
     "days": "{n} дн.",
     "noDeadline": "Без срока",
-    "stageDefault": "Этап {n}",
+    "stageDefault": "Новый этап",
     "renameStage": "Переименовать этап",
     "removeStageTitle": "Удалить этап?",
     "removeStageMessage": "«{title}» будет удалён. Курсы из него останутся в траектории.",
