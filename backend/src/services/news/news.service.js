@@ -1,6 +1,7 @@
 import { PERMISSIONS } from '@lms/shared'
 import { newsRepository } from '../../repositories/news.repository.js'
 import { newsViewRepository } from '../../repositories/newsView.repository.js'
+import { newsEngagementRepository } from '../../repositories/newsEngagement.repository.js'
 import { userRepository } from '../../repositories/user.repository.js'
 import { roleRepository } from '../../repositories/role.repository.js'
 import { auditLogRepository } from '../../repositories/auditLog.repository.js'
@@ -101,11 +102,20 @@ export const newsService = {
     })
     const hasMore = rows.length > query.limit
     const items = hasMore ? rows.slice(0, -1) : rows
-    // Reader count rides along with the feed (portal §3 shows it under
-    // each item); a separate request per card would be one per row.
-    const views = await newsViewRepository.countByNews(items.map((row) => row._id))
+    // Reader, like and comment counts ride along with the feed (portal §3
+    // shows them under each item); a separate request per card would be
+    // three per row.
+    const ids = items.map((row) => row._id)
+    const [views, engagement] = await Promise.all([
+      newsViewRepository.countByNews(ids),
+      newsEngagementRepository.summarize(ids, actor.id),
+    ])
     return {
-      items: items.map((row) => ({ ...toPublicNews(row), views: views[String(row._id)] ?? 0 })),
+      items: items.map((row) => ({
+        ...toPublicNews(row),
+        views: views[String(row._id)] ?? 0,
+        ...engagement[String(row._id)],
+      })),
       nextCursor: hasMore ? items[items.length - 1]._id.toString() : null,
     }
   },
@@ -122,7 +132,71 @@ export const newsService = {
     if (news.status !== 'PUBLISHED' && !canManageNews(actor)) {
       throw ApiError.notFound('News not found')
     }
-    return news
+    // Outside the cache: the counts change with every tap, and "liked by
+    // me" is per reader while the article entry is shared.
+    const [engagement, views] = await Promise.all([
+      newsEngagementRepository.summarize([news.id], actor.id),
+      newsViewRepository.countByNews([news.id]),
+    ])
+    return { ...news, views: views[news.id] ?? 0, ...engagement[news.id] }
+  },
+
+  // A published article only: liking or discussing a draft would leak
+  // that it exists. `getById` already answers 404 for a draft to anyone
+  // who cannot manage news.
+  async toggleLike(actor, id) {
+    await this.getById(actor, id)
+    const liked = await newsEngagementRepository.toggleLike(id, actor.id)
+    return { liked, likes: await newsEngagementRepository.countLikes(id) }
+  },
+
+  async comments(actor, id) {
+    await this.getById(actor, id)
+    const rows = await newsEngagementRepository.listComments(id)
+    return {
+      items: rows.map((row) => ({
+        id: String(row._id),
+        body: row.body,
+        userId: String(row.userId?._id ?? row.userId),
+        fullName: row.userId?.fullName ?? '',
+        avatar: row.userId?.avatar ?? '',
+        createdAt: row.createdAt,
+      })),
+    }
+  },
+
+  async comment(actor, id, { body }) {
+    await this.getById(actor, id)
+    const row = await newsEngagementRepository.createComment({ newsId: id, userId: actor.id, body })
+    const author = await userRepository.findById(actor.id)
+    return {
+      id: String(row._id),
+      body: row.body,
+      userId: String(actor.id),
+      fullName: author?.fullName ?? '',
+      avatar: author?.avatar ?? '',
+      createdAt: row.createdAt,
+    }
+  },
+
+  // The author takes back their own words; news:manage removes anyone's.
+  async removeComment(actor, id, commentId) {
+    const comment = await newsEngagementRepository.findComment(commentId)
+    if (!comment || String(comment.newsId) !== String(id)) throw ApiError.notFound('Comment not found')
+    const own = String(comment.userId) === String(actor.id)
+    if (!own && !actor.permissions?.includes(PERMISSIONS.NEWS_MANAGE)) {
+      throw ApiError.forbidden('Missing required permission: news:manage')
+    }
+    await newsEngagementRepository.softDeleteComment(commentId)
+    if (!own) {
+      await auditLogRepository.record({
+        actor: actor.id,
+        action: 'NEWS_COMMENT_REMOVED',
+        entity: 'News',
+        entityId: id,
+        metadata: { commentId, authorId: String(comment.userId) },
+      })
+    }
   },
 
   async create(actor, payload) {

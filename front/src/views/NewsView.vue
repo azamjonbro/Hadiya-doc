@@ -169,6 +169,8 @@ onBeforeUnmount(stopTimer)
               <h3 class="text-[18px] font-semibold leading-snug text-ink">{{ item.title }}</h3>
               <p class="mt-1.5 line-clamp-2 text-[13px] leading-relaxed text-ink-muted">{{ excerpt(item.content) }}</p>
               <div class="mt-3 flex items-center gap-4 text-[13px] text-ink-muted">
+                <span class="inline-flex items-center gap-1.5" :class="item.liked ? 'text-danger' : ''"><Icon name="heart" size="16" />{{ item.likes ?? 0 }}</span>
+                <span class="inline-flex items-center gap-1.5"><Icon name="message-square" size="16" />{{ item.comments ?? 0 }}</span>
                 <span class="inline-flex items-center gap-1.5"><Icon name="eye" size="16" />{{ item.views ?? 0 }}</span>
                 <span>{{ relativeDate(item.publishAt) }}</span>
               </div>

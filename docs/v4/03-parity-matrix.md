@@ -260,8 +260,8 @@
 | Darajalar (level) | ? | UI bor, backend qoidasi yo'q | PARTIAL | 25 | `LevelGauge.vue` | `levelFromPoints` |
 | Gamification sozlamalari | ? | Ball har videoda qo'lda | PARTIAL | 25 | `video.model.js:31-32` | Global default |
 | Newsfeed | ✓ | Bor + targeting | FULL | 100 | `news.model.js`, `NewsView.vue` | — |
-| **Newsfeed izohlari** | ✓ | Yo'q | NONE | 0 | `news.model.js` | `NewsComment` |
-| **Emoji reaksiya** | ✓ | Yo'q | NONE | 0 | — | `Reaction` |
+| **Newsfeed izohlari** | ✓ | Bor — tekis, matn, o'zi yoki `news:manage` o'chiradi (2026-09-11) | FULL | 100 | `newsComment.model.js`, `NewsDetailView.vue` | — |
+| **Emoji reaksiya** | ✓ | Faqat ♡ (bitta reaksiya, toggle); emoji to'plami yo'q | PARTIAL | 50 | `newsReaction.model.js` | Reaksiya turi |
 | News o'qish kuzatuvi | ✓ | Bor (scroll milestone, vaqt) | OURS+ | 100 | `newsView.model.js` | — |
 | Yangilik chiqqanda xabar | ? | **Yo'q** | VERIFY | 0 | `news.service.js` — `notify` yo'q | — |
 | Messenger: DM + guruh | ✓ | Bor + ovozli xabar + fayl + realtime | OURS+ | 100 | `chat.service.js` (719 satr) | — |

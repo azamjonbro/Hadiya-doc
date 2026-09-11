@@ -124,6 +124,15 @@
         "noItems": "Kursda hali material yo'q",
         "loadError": "O'qish tarixini yuklab bo'lmadi",
         "timeNote": "Vaqt faqat video va SCORM materiallari bo'yicha hisoblanadi; hujjat va matn darslari vaqtni o'lchamaydi."
+      },
+      "newsDetail": {
+        "like": "Yoqdi",
+        "liked": "Yoqdi",
+        "comments": "Izohlar",
+        "commentPlaceholder": "Izoh yozing…",
+        "send": "Yuborish",
+        "noComments": "Hali izoh yo'q — birinchi bo'ling.",
+        "removeComment": "Izohni o'chirish"
       }
     }
   },
@@ -252,6 +261,15 @@
         "noItems": "В курсе пока нет материалов",
         "loadError": "Не удалось загрузить историю обучения",
         "timeNote": "Время считается только по видео и SCORM-материалам; документы и текстовые уроки время не измеряют."
+      },
+      "newsDetail": {
+        "like": "Нравится",
+        "liked": "Нравится",
+        "comments": "Комментарии",
+        "commentPlaceholder": "Напишите комментарий…",
+        "send": "Отправить",
+        "noComments": "Комментариев пока нет — будьте первым.",
+        "removeComment": "Удалить комментарий"
       }
     }
   },
@@ -380,6 +398,15 @@
         "noItems": "The course has no materials yet",
         "loadError": "Could not load the learning history",
         "timeNote": "Time is measured for videos and SCORM packages only; documents and text lessons do not track it."
+      },
+      "newsDetail": {
+        "like": "Like",
+        "liked": "Liked",
+        "comments": "Comments",
+        "commentPlaceholder": "Write a comment…",
+        "send": "Send",
+        "noComments": "No comments yet — be the first.",
+        "removeComment": "Delete comment"
       }
     }
   }

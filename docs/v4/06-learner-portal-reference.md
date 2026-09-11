@@ -78,7 +78,10 @@ Muddati) shu ikkitaga qisqaradi, "Muddati o'tgan" statusga aylanadi.
   fonsiz, ostida chiziq. Har biri: sarlavha 18px qalin (emoji bilan boshlanadi),
   qisqa matn 13px kulrang, footer: ♡ 211 · 💬 83 · 👁 735 (13px kulrang, 16px
   ikonka); o'ngda kichik muqova 170×22 (banner bo'lsa).
-- Bizda faqat ko'rishlar bor → ♡ va 💬 hozircha yo'q (backend kerak).
+- **♡ va 💬 bajarildi (2026-09-11):** `POST /news/:id/like` (toggle),
+  `GET/POST /news/:id/comments`, `DELETE …/comments/:commentId` (o'ziniki
+  yoki `news:manage`); feed va maqola `likes / comments / liked / views`
+  bilan keladi (`newsEngagement.repository.js`).
 
 ## 4. Rivojlanish rejalari (`/development-plan`) — rasm 05
 

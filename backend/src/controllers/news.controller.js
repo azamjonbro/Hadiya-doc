@@ -23,6 +23,23 @@ export const newsController = {
     sendSuccess(res, await newsService.update(req.user, req.params.id, req.body), 'News updated')
   }),
 
+  toggleLike: asyncHandler(async (req, res) => {
+    sendSuccess(res, await newsService.toggleLike(req.user, req.params.id))
+  }),
+
+  comments: asyncHandler(async (req, res) => {
+    sendSuccess(res, await newsService.comments(req.user, req.params.id))
+  }),
+
+  comment: asyncHandler(async (req, res) => {
+    sendSuccess(res, await newsService.comment(req.user, req.params.id, req.body), 'Comment added', 201)
+  }),
+
+  removeComment: asyncHandler(async (req, res) => {
+    await newsService.removeComment(req.user, req.params.id, req.params.commentId)
+    sendSuccess(res, null, 'Comment deleted')
+  }),
+
   remove: asyncHandler(async (req, res) => {
     await newsService.remove(req.user, req.params.id)
     sendSuccess(res, null, 'News deleted')
