@@ -2517,7 +2517,7 @@
     "day": "Kun {n}",
     "days": "{n} kun",
     "noDeadline": "Muddatsiz",
-    "stageDefault": "Bosqich {n}",
+    "stageDefault": "Yangi bosqich",
     "renameStage": "Bosqich nomini o'zgartirish",
     "removeStageTitle": "Bosqich o'chirilsinmi?",
     "removeStageMessage": "«{title}» o'chiriladi. Undagi kurslar trayektoriyada qoladi.",

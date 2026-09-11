@@ -233,8 +233,10 @@ export const pathService = {
   },
 
   async create(actor, payload) {
+    // A new path opens its courses by day (the builder's default), unless
+    // the caller says otherwise.
     const path = await LearningPath.create({
-      ...withSequential(payload),
+      ...withSequential({ orderMode: 'BY_DAYS', ...payload }),
       slug: await uniqueSlugFor(payload.title),
       createdBy: actor.id,
     })
