@@ -107,6 +107,17 @@ kutib turing. `/sw.js` `no-cache` qoidasi ham qo'llandi; Cloudflare
 zona sozlamasi *Browser Cache TTL* hali "4 hours" — dashboard'da
 "Respect Existing Headers" ga o'tkazish kerak.
 
+**Xodim portali (2026-09-11):** `docs/v4/06-learner-portal-reference.md`
+dagi "Bajarish tartibi" 1–7 **to'liq bajarildi** — qobiq, kurslar,
+katalog, kurs sahifasi, test pleyeri, yangiliklar (♡/💬 bilan), profil
+(6 tab), bilimlar bazasi, OJT/reja/grading, o'qish tarixi
+(`/profile/history`), tug'ilgan kunlar draweri, xodimlar sahifasi
+(`/employees`). Qolgan yagona band — **§15 slayd pleyeri**: bizda slayd
+kontent turi yo'q, bu alohida mahsulot qarori. Portal ishi **`BRO`**
+filialida boradi, `main` ga PR orqali qo'shiladi (PR'ni `gh pr merge`
+bilan avtomatik qo'shib bo'lmadi — foydalanuvchi o'zi merge qiladi);
+serverga `git push ssh://homeserver/~/qollanma BRO:main` bilan chiqadi.
+
 **UI qayta dizayn (2026-09-11, `676be84`):** xodim sahifalarida to'liq
 kenglikdagi hero banner, admin panelda `text-[28px] font-bold`
 sarlavha, Tabs `pill` varianti, topbar'da chat + bildirishnoma
