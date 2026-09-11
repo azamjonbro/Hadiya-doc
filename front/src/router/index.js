@@ -99,6 +99,8 @@ export const router = createRouter({
             { path: '', name: 'kb', component: () => import('@/views/kb/KbHomeView.vue'), meta: { titleKey: 'portal.nav.kb' } },
             { path: 'recent', name: 'kb-recent', component: () => import('@/views/kb/KbRecentView.vue'), meta: { titleKey: 'portal.nav.kb' } },
             { path: 'new', name: 'kb-new', component: () => import('@/views/kb/KbNewArticleView.vue'), meta: { titleKey: 'portal.nav.kb', permission: 'news:manage' } },
+            { path: 'analytics', name: 'kb-analytics', component: () => import('@/views/kb/KbAnalyticsView.vue'), meta: { titleKey: 'portal.nav.kb', permission: 'news:manage' } },
+            { path: 'trash', name: 'kb-trash', component: () => import('@/views/kb/KbTrashView.vue'), meta: { titleKey: 'portal.nav.kb', permission: 'news:manage' } },
             { path: 'spaces/:id', name: 'kb-space', component: () => import('@/views/kb/KbSpaceView.vue'), meta: { titleKey: 'portal.nav.kb' } },
             { path: 'a/:slug', name: 'kb-article', component: () => import('@/views/kb/KbArticleView.vue'), meta: { titleKey: 'portal.nav.kb' } },
           ],

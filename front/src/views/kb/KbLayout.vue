@@ -122,6 +122,25 @@ onMounted(() => loadCategories().catch(() => {}))
           <Icon name="clock" size="15" class="text-ink-muted" />
           {{ t('portal.kb.recent') }}
         </RouterLink>
+        <!-- Rasn 17: the editor's two extra rows — analytics and the trash -->
+        <template v-if="canManage">
+          <RouterLink
+            :to="{ name: 'kb-analytics' }"
+            class="flex h-[30px] items-center gap-2 rounded-md px-2 text-[13px] text-ink hover:bg-surface-2"
+            :class="route.name === 'kb-analytics' ? 'bg-surface-hover font-medium' : ''"
+          >
+            <Icon name="bar-chart" size="15" class="text-ink-muted" />
+            {{ t('portal.kb.analytics') }}
+          </RouterLink>
+          <RouterLink
+            :to="{ name: 'kb-trash' }"
+            class="flex h-[30px] items-center gap-2 rounded-md px-2 text-[13px] text-ink hover:bg-surface-2"
+            :class="route.name === 'kb-trash' ? 'bg-surface-hover font-medium' : ''"
+          >
+            <Icon name="trash" size="15" class="text-ink-muted" />
+            {{ t('nav.trash') }}
+          </RouterLink>
+        </template>
       </nav>
 
       <p class="mt-5 px-2 text-[11px] font-semibold uppercase tracking-wider text-ink-faint">

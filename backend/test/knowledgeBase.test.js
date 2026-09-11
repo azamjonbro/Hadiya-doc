@@ -261,5 +261,37 @@ describe('knowledge base (7.2)', () => {
       assert.ok(Array.isArray(report.leastRead))
       assert.ok(report.unhelpful.some((item) => item.id === String(openArticle._id)))
     })
+
+    test('the table rows carry author, viewers and the positive share (rasn 19)', async () => {
+      const report = await kbService.analytics()
+      const row = report.items.find((item) => item.id === String(openArticle._id))
+      assert.ok(row, 'the open article is in the table')
+      assert.equal(row.authorName, author.fullName)
+      assert.equal(typeof row.usersViewed, 'number')
+      assert.ok(row.usersViewed >= 1)
+      assert.equal(typeof report.totalViews, 'number')
+      assert.equal(typeof report.audience, 'number')
+      // One "not helpful" vote and no "helpful": 0%, not null.
+      assert.equal(row.helpfulPercent, 0)
+    })
+  })
+
+  describe('trash', () => {
+    test('a deleted article is in the trash and comes back on restore', async () => {
+      const article = await kbService.create(authorActor(), {
+        title: `Trashed ${stamp}`,
+        body: '<p>gone</p>',
+        categoryId: category,
+        status: 'PUBLISHED',
+      })
+      await kbService.remove(authorActor(), article.id)
+      let trash = await kbService.trash()
+      assert.ok(trash.items.some((item) => item.id === article.id))
+      const restored = await kbService.restore(authorActor(), article.id)
+      assert.equal(restored.id, article.id)
+      trash = await kbService.trash()
+      assert.ok(!trash.items.some((item) => item.id === article.id))
+      await assert.rejects(() => kbService.restore(authorActor(), article.id))
+    })
   })
 })

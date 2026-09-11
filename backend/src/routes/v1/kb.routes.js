@@ -27,6 +27,7 @@ kbRouter.post(
   kbController.createCategory
 )
 kbRouter.get('/analytics', requirePermission(PERMISSIONS.NEWS_MANAGE), kbController.analytics)
+kbRouter.get('/trash', requirePermission(PERMISSIONS.NEWS_MANAGE), kbController.trash)
 
 // Reading is open to everybody signed in; which articles they actually see
 // is decided by targeting inside the service (the same rule as courses).
@@ -41,6 +42,7 @@ kbRouter.patch(
 )
 kbRouter.delete('/:id', requirePermission(PERMISSIONS.NEWS_MANAGE), kbController.remove)
 kbRouter.get('/:id/versions', requirePermission(PERMISSIONS.NEWS_MANAGE), kbController.versions)
+kbRouter.post('/:id/restore', requirePermission(PERMISSIONS.NEWS_MANAGE), kbController.restore)
 
 kbRouter.post('/:id/rate', validateBody(rateArticleSchema), kbController.rate)
 kbRouter.get('/:id/comments', kbController.comments)

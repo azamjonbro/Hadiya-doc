@@ -45,4 +45,12 @@ export const kbController = {
   analytics: asyncHandler(async (_req, res) => {
     sendSuccess(res, await kbService.analytics())
   }),
+
+  trash: asyncHandler(async (_req, res) => {
+    sendSuccess(res, await kbService.trash())
+  }),
+
+  restore: asyncHandler(async (req, res) => {
+    sendSuccess(res, await kbService.restore(req.user, req.params.id), 'Article restored')
+  }),
 }
