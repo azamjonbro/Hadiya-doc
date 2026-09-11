@@ -165,8 +165,14 @@ Bizda bu admin panelda (`/bos/grading`); xodim portalida ruxsati borlarga
 - **Orgstruktura:** daraxt, kartalar 190×110 rangli sarlavha, pastda
   "▯ 160 ⌄" hisob; chap-pastda zoom `− 100% +`.
 
-Backend'da xodim uchun katalog endpointi yo'q (`USER_READ` kerak) → keyingi
-bosqich, alohida qaror.
+**Bajarildi (2026-09-11):** `GET /org/directory` (qidiruv, bo'lim,
+`newOnly`, sahifa; ishlayotgan faol xodimlar; JSHSHIR/tug'ilgan yil
+yo'q) va `GET /org/structure` (filial → bo'lim → bo'linma soni) —
+ikkalasi ham har qanday sessiyaga ochiq, chat kontaktlari ko'rsatadigan
+maydonlardan oshmaydi. Sahifa `EmployeesView.vue` (`/employees?tab=`):
+kartalar / yangilar / orgstruktura kartalari / jadval. "O'zi haqida"
+ustuni yo'q — modelda maydon yo'q. Orgstruktura odamlar daraxti emas,
+bo'limlar bo'yicha hisob (odamlar daraxti `user:read` talab qiladi).
 
 ## 9. Yon panellar (drawer, o'ngdan) — rasm 23–26
 

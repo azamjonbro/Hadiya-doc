@@ -199,7 +199,7 @@
 | **Organization = mustaqil administratsiya** | ✓ | Yo'q — tenant izolyatsiyasi yo'q | NONE | 0 | — | §24 da baholanadi |
 | **Rahbar (manager) maydoni** | ✓ | Bor — `managerId`, tranzitiv `$graphLookup`, tsikl himoyasi | FULL | 100 | `user.model.js:32`, `orgHierarchy.service.js` | — |
 | **Interaktiv org chart** | ✓ | Yo'q | NONE | 0 | — | `OrgChartView` |
-| People / hamkasb profillari | ✓ | Chat kontaktlari + `useOrgDirectory` | PARTIAL | 50 | `useOrgDirectory.js`, `chat/contacts` | Profil sahifasi |
+| People / hamkasb profillari | ✓ | Xodimlar sahifasi: kartalar, yangilar, orgstruktura, jadval (2026-09-11) | FULL | 100 | `directory.service.js`, `EmployeesView.vue` | — |
 | Rollar (tayyor) | ✓ (5+Supervisor) | 9 ta seed — AUTHOR/INSTRUCTOR/MENTOR qo'shildi | FULL | 100 | `roles.js`, `permissions.js` (§8.2) | — |
 | **Custom rollar** | ✓ | Bor — kod o'zgartirmasdan | FULL | 100 | `role.model.js`, `POST /roles` | — |
 | **Rolni tahrirlash** | ✓ | Bor — `PATCH /roles/:id` + ruxsat grid'i | FULL | 100 | `roles.routes.js`, `RolesPermissionsView.vue` | — |

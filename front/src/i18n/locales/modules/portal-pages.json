@@ -144,6 +144,32 @@
           "upcoming": "Yaqin {days} kunda tug'ilgan kunlar yo'q",
           "past": "O'tgan {days} kunda tug'ilgan kunlar bo'lmagan"
         }
+      },
+      "employees": {
+        "tabs": {
+          "people": "Xodimlar",
+          "new": "Yangi xodimlar",
+          "structure": "Orgstruktura",
+          "list": "Ro'yxat"
+        },
+        "count": "{count} xodim",
+        "seeStructure": "Orgstrukturada ko'rish",
+        "allDepartments": "Barcha bo'limlar",
+        "unassigned": "Bo'lim ko'rsatilmagan",
+        "empty": "Hech kim topilmadi",
+        "loadError": "Xodimlar ro'yxatini yuklab bo'lmadi",
+        "new": "Yangi",
+        "message": "Xabar yozish",
+        "columns": {
+          "name": "Ism",
+          "department": "Bo'lim",
+          "position": "Lavozim",
+          "manager": "Rahbar",
+          "phone": "Telefon",
+          "email": "Email",
+          "birthday": "Tug'ilgan kun"
+        },
+        "noBranch": "Filial ko'rsatilmagan"
       }
     }
   },
@@ -292,6 +318,32 @@
           "upcoming": "В ближайшие {days} дней дней рождения нет",
           "past": "За прошедшие {days} дней дней рождения не было"
         }
+      },
+      "employees": {
+        "tabs": {
+          "people": "Сотрудники",
+          "new": "Новые сотрудники",
+          "structure": "Оргструктура",
+          "list": "Список"
+        },
+        "count": "{count} сотр.",
+        "seeStructure": "Смотреть в оргструктуре",
+        "allDepartments": "Все отделы",
+        "unassigned": "Отдел не указан",
+        "empty": "Никого не найдено",
+        "loadError": "Не удалось загрузить список сотрудников",
+        "new": "Новый",
+        "message": "Написать",
+        "columns": {
+          "name": "Имя",
+          "department": "Отдел",
+          "position": "Должность",
+          "manager": "Руководитель",
+          "phone": "Телефон",
+          "email": "Email",
+          "birthday": "День рождения"
+        },
+        "noBranch": "Филиал не указан"
       }
     }
   },
@@ -440,6 +492,32 @@
           "upcoming": "No birthdays in the next {days} days",
           "past": "No birthdays in the past {days} days"
         }
+      },
+      "employees": {
+        "tabs": {
+          "people": "People",
+          "new": "New hires",
+          "structure": "Org structure",
+          "list": "List"
+        },
+        "count": "{count} people",
+        "seeStructure": "See in org structure",
+        "allDepartments": "All departments",
+        "unassigned": "No department",
+        "empty": "Nobody found",
+        "loadError": "Could not load the directory",
+        "new": "New",
+        "message": "Send a message",
+        "columns": {
+          "name": "Name",
+          "department": "Department",
+          "position": "Position",
+          "manager": "Manager",
+          "phone": "Phone",
+          "email": "Email",
+          "birthday": "Birthday"
+        },
+        "noBranch": "No branch"
       }
     }
   }

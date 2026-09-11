@@ -74,6 +74,7 @@ export const router = createRouter({
         // now (portal §10); the old paths keep their names so existing
         // links and the nav tables still resolve.
         { path: 'profile', name: 'profile', component: () => import('@/views/ProfileView.vue'), meta: { titleKey: 'portal.nav.myProfile' } },
+        { path: 'employees', name: 'employees', component: () => import('@/views/EmployeesView.vue'), meta: { titleKey: 'portal.nav.employees' } },
         { path: 'profile/history', name: 'learning-history', component: () => import('@/views/LearningHistoryView.vue'), meta: { titleKey: 'portal.profile.history' } },
         { path: 'leaderboard', name: 'leaderboard', redirect: { path: '/profile', query: { tab: 'rating' } } },
         { path: 'chat', name: 'chat', component: () => import('@/views/ChatView.vue'), meta: { titleKey: 'nav.chat' } },

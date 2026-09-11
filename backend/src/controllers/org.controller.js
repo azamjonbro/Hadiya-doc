@@ -1,5 +1,6 @@
 import { orgHierarchyService } from '../services/org/orgHierarchy.service.js'
 import { birthdaysService } from '../services/org/birthdays.service.js'
+import { directoryService } from '../services/org/directory.service.js'
 import { userRepository } from '../repositories/user.repository.js'
 import { ApiError } from '../utils/ApiError.js'
 import { asyncHandler } from '../utils/asyncHandler.js'
@@ -85,5 +86,16 @@ export const orgController = {
   // the year is not in the answer.
   birthdays: asyncHandler(async (req, res) => {
     sendSuccess(res, await birthdaysService.around())
+  }),
+
+  // The employee directory and the head-count tree (portal §8). Same
+  // reasoning as birthdays: nothing here is beyond what the chat contacts
+  // list already shows every employee.
+  directory: asyncHandler(async (req, res) => {
+    sendSuccess(res, await directoryService.list(req.validatedQuery))
+  }),
+
+  structure: asyncHandler(async (req, res) => {
+    sendSuccess(res, await directoryService.structure())
   }),
 }
