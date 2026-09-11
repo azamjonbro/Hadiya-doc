@@ -1,4 +1,5 @@
 import { orgHierarchyService } from '../services/org/orgHierarchy.service.js'
+import { birthdaysService } from '../services/org/birthdays.service.js'
 import { userRepository } from '../repositories/user.repository.js'
 import { ApiError } from '../utils/ApiError.js'
 import { asyncHandler } from '../utils/asyncHandler.js'
@@ -77,5 +78,12 @@ export const orgController = {
       trees.push(await orgHierarchyService.subtree(root._id))
     }
     sendSuccess(res, { roots: trees })
+  }),
+
+  // Colleagues' birthdays around today (portal §9). Open to every employee,
+  // like the chat directory: names and departments are already shared, and
+  // the year is not in the answer.
+  birthdays: asyncHandler(async (req, res) => {
+    sendSuccess(res, await birthdaysService.around())
   }),
 }

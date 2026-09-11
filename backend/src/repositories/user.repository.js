@@ -129,6 +129,14 @@ export const userRepository = {
       .limit(limit)
   },
 
+  // Everyone with a birth date on file, the few fields the birthday panel
+  // shows. Lean and projected: it is scanned once per open of the panel.
+  listActiveWithBirthdays() {
+    return User.find({ isActive: true, birthDate: { $ne: null } })
+      .select('fullName avatar department position birthDate')
+      .lean()
+  },
+
   create(data) {
     return User.create(data)
   },

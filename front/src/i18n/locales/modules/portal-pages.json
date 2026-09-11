@@ -133,6 +133,17 @@
         "send": "Yuborish",
         "noComments": "Hali izoh yo'q — birinchi bo'ling.",
         "removeComment": "Izohni o'chirish"
+      },
+      "birthdays": {
+        "upcoming": "Yaqinlari",
+        "past": "O'tganlari",
+        "today": "Bugun",
+        "tomorrow": "Ertaga",
+        "loadError": "Tug'ilgan kunlarni yuklab bo'lmadi",
+        "empty": {
+          "upcoming": "Yaqin {days} kunda tug'ilgan kunlar yo'q",
+          "past": "O'tgan {days} kunda tug'ilgan kunlar bo'lmagan"
+        }
       }
     }
   },
@@ -270,6 +281,17 @@
         "send": "Отправить",
         "noComments": "Комментариев пока нет — будьте первым.",
         "removeComment": "Удалить комментарий"
+      },
+      "birthdays": {
+        "upcoming": "Ближайшие",
+        "past": "Прошедшие",
+        "today": "Сегодня",
+        "tomorrow": "Завтра",
+        "loadError": "Не удалось загрузить дни рождения",
+        "empty": {
+          "upcoming": "В ближайшие {days} дней дней рождения нет",
+          "past": "За прошедшие {days} дней дней рождения не было"
+        }
       }
     }
   },
@@ -407,6 +429,17 @@
         "send": "Send",
         "noComments": "No comments yet — be the first.",
         "removeComment": "Delete comment"
+      },
+      "birthdays": {
+        "upcoming": "Upcoming",
+        "past": "Past",
+        "today": "Today",
+        "tomorrow": "Tomorrow",
+        "loadError": "Could not load birthdays",
+        "empty": {
+          "upcoming": "No birthdays in the next {days} days",
+          "past": "No birthdays in the past {days} days"
+        }
       }
     }
   }

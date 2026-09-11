@@ -172,7 +172,7 @@ bosqich, alohida qaror.
 
 | Panel | Kenglik | Tarkib |
 |---|---|---|
-| Tug'ilgan kunlar (sovg'a) | 310px | sarlavha 16px + ×; segment "Yaqinlari 0 / O'tganlari 1"; bo'sh holat |
+| Tug'ilgan kunlar (sovg'a) | 310px | sarlavha 16px + ×; segment "Yaqinlari 0 / O'tganlari 1"; bo'sh holat. **Bajarildi (2026-09-11):** `GET /org/birthdays` (±30 kun, UTC, yilsiz), `BirthdaysDrawer.vue` |
 | Xabarlar (chat) | 620px | chapda 220px ro'yxat (qidiruv + "+"; avatar 32, ism qalin 13px, oxirgi xabar 12px, sana), o'ngda "Kimga yozmoqchisiz…" |
 | Bildirishnomalar | 440px | sarlavha + ⚙ + ×; "Hammasini o'qilgan deb belgilash" o'ngda 12px; element: qo'ng'iroq doira 24 + matn 14px (kurs nomi **qalin**) + "1 kun oldin" 12px + o'ngda yashil nuqta 8px (o'qilmagan) |
 | Profil (avatar) | 560px | muqova 150px, avatar 110 markazda, muqovaga yarim kirgan; ism 22px, email 13px; 3 ta stat (raqam 28 + izoh 13, vertikal chiziqlar); "Mening profilim" 13px kulrang; menyu 52px qatorlar (› bilan): Admin portaliga o'tish (ruxsat bo'lsa) · Yutuqlar · Profil sozlamalari · O'qish tarixi · Chiqish |

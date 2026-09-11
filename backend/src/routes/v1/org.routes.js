@@ -12,3 +12,4 @@ orgRouter.use(authenticate)
 // privileged information — it is on their contract.
 orgRouter.get('/hierarchy', orgController.hierarchy)
 orgRouter.get('/chart', orgController.chart)
+orgRouter.get('/birthdays', orgController.birthdays)
