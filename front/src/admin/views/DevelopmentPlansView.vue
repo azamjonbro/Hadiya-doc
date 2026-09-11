@@ -42,7 +42,6 @@ import Modal from '@/components/ui/Modal.vue'
 import EmptyState from '@/components/ui/EmptyState.vue'
 import Skeleton from '@/components/ui/Skeleton.vue'
 import Icon from '@/components/ui/Icon.vue'
-import Tabs from '@/components/ui/Tabs.vue'
 import Pagination from '@/components/ui/Pagination.vue'
 import ProgressBar from '@/components/ui/ProgressBar.vue'
 import ProgressRing from '@/components/ui/ProgressRing.vue'
@@ -132,6 +131,25 @@ function emptyReviewDraft() {
 const totalPages = computed(() => Math.max(1, Math.ceil(total.value / limit)))
 
 const statusOptions = computed(() => PLAN_STATUSES.map((value) => ({ value, label: t(`devplan.status.${value}`) })))
+
+// Rasn 11's tiles map onto the plan statuses we have: in progress is
+// ACTIVE, not started is DRAFT, awaiting a decision is REVIEWED.
+const statusTiles = computed(() => [
+  { key: 'ACTIVE', label: t('devplan.status.ACTIVE'), active: tab.value === 'all' && filterStatus.value === 'ACTIVE', count: total.value },
+  { key: 'DRAFT', label: t('devplan.status.DRAFT'), active: tab.value === 'all' && filterStatus.value === 'DRAFT', count: total.value },
+  { key: 'REVIEWED', label: t('devplan.status.REVIEWED'), active: tab.value === 'all' && filterStatus.value === 'REVIEWED', count: total.value },
+  { key: 'COMPLETED', label: t('devplan.status.COMPLETED'), active: tab.value === 'all' && filterStatus.value === 'COMPLETED', count: total.value },
+  { key: '', label: t('devplan.allPlans'), active: tab.value === 'all' && !filterStatus.value, count: total.value },
+  { key: 'due', label: t('devplan.dueSoon'), active: tab.value === 'due', count: dueRows.value.length },
+])
+function pickTile(tile) {
+  if (tile.key === 'due') {
+    tab.value = 'due'
+    return
+  }
+  tab.value = 'all'
+  filterStatus.value = tile.key
+}
 const goalTypeOptions = computed(() => GOAL_TYPES.map((value) => ({ value, label: t(`devplan.type.${value}`) })))
 const goalStatusOptions = computed(() =>
   GOAL_STATUSES.map((value) => ({ value, label: t(`devplan.goalStatus.${value}`) }))
@@ -616,7 +634,24 @@ onMounted(() => {
       <AppButton v-if="canManage" icon="plus" @click="openNewPlan">{{ t('devplan.newPlan') }}</AppButton>
     </div>
 
-    <Tabs v-model="tab" class="mt-5" :tabs="tabs" />
+    <!-- Rasn 11: the status strip — each tile is a filter; the count on
+         the lit one is the server's total for it. The "due soon" view
+         keeps its own tile at the end. -->
+    <div class="mt-5 rounded-xl border border-border p-2">
+      <div class="grid grid-cols-2 gap-2 md:grid-cols-3 xl:grid-cols-6">
+        <button
+          v-for="tile in statusTiles"
+          :key="tile.key"
+          type="button"
+          class="rounded-lg px-4 py-3 text-left transition-default"
+          :class="tile.active ? 'bg-surface-2 shadow-[inset_3px_0_0_0_rgb(var(--color-primary))]' : 'hover:bg-surface-2'"
+          @click="pickTile(tile)"
+        >
+          <p class="text-[14px] text-ink-muted">{{ tile.label }}</p>
+          <p class="mt-1 text-[24px] font-semibold text-ink">{{ tile.active ? tile.count : '·' }}</p>
+        </button>
+      </div>
+    </div>
 
     <div class="mt-4 flex flex-wrap items-end gap-3">
       <template v-if="tab === 'all'">

@@ -24,7 +24,6 @@ import { competenciesApi } from '@/services/competencies'
 import { useToast } from '@/composables/useToast'
 import { useConfirm } from '@/composables/useConfirm'
 import { apiErrorText } from '@/utils/apiError'
-import AppCard from '@/components/ui/AppCard.vue'
 import AppButton from '@/components/ui/AppButton.vue'
 import AppInput from '@/components/ui/AppInput.vue'
 import AppSelect from '@/components/ui/AppSelect.vue'
@@ -285,38 +284,42 @@ onMounted(() => {
       :description="t('ojt.emptyChecklistsHint')"
     />
 
-    <div v-else class="mt-4 space-y-3">
-      <AppCard v-for="checklist in filtered" :key="checklist.id" class="flex flex-wrap items-start justify-between gap-4 p-4">
-        <div class="min-w-0 flex-1">
-          <div class="flex flex-wrap items-center gap-2">
-            <p class="truncate font-medium text-ink">{{ checklist.name }}</p>
-            <Badge :variant="statusVariant[checklist.status]" size="sm">{{ t(`ojt.status.${checklist.status}`) }}</Badge>
-            <span class="text-caption text-ink-faint">{{ t('ojt.versionLabel', { version: checklist.version }) }}</span>
-          </div>
-
-          <p v-if="checklist.description" class="mt-1 line-clamp-2 text-small text-ink-muted">
-            {{ checklist.description }}
-          </p>
-
-          <p class="mt-2 text-caption text-ink-faint">
-            <span v-if="checklist.position" class="mr-3">
-              <Icon name="briefcase" size="11" class="mr-1 inline" />{{ checklist.position }}
-            </span>
-            <span v-if="checklist.department" class="mr-3">
-              <Icon name="building" size="11" class="mr-1 inline" />{{ checklist.department }}
-            </span>
-            <span class="mr-3">{{ t('ojt.itemsCount', { count: checklist.items.length }) }}</span>
-            <span>{{ t('ojt.thresholdShort', { percent: checklist.passThresholdPercent }) }}</span>
-          </p>
-        </div>
-
-        <div class="flex shrink-0 gap-2">
-          <AppButton variant="secondary" size="sm" icon="pencil" @click="openEdit(checklist)">
-            {{ t('common.edit') }}
-          </AppButton>
-          <AppButton variant="ghost" size="sm" icon="trash" :aria-label="t('common.delete')" @click="remove(checklist)" />
-        </div>
-      </AppCard>
+    <!-- Rasn 22: a flat table — clipboard icon + name, status chip,
+         position/department, items and threshold, edit/delete on hover -->
+    <div v-else class="mt-4 overflow-x-auto">
+      <table class="w-full min-w-[760px] text-[14px]">
+        <thead>
+          <tr class="h-11 border-b border-border text-left text-[13px] text-ink-muted">
+            <th class="pl-3 pr-2 font-medium text-ink">{{ t('ojt.name') }} <Icon name="chevron-up" size="12" class="inline text-ink-faint" /></th>
+            <th class="w-36 px-2 font-medium">{{ t('ojt.statusLabel') }}</th>
+            <th class="w-56 px-2 font-medium">{{ t('ojt.position') }}</th>
+            <th class="w-40 px-2 font-medium">{{ t('ojt.items') }}</th>
+            <th class="w-28 pr-3"></th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-for="checklist in filtered" :key="checklist.id" class="group h-14 border-b border-border transition-default last:border-b-0 hover:bg-surface-2">
+            <td class="pl-3 pr-2">
+              <button type="button" class="flex items-center gap-3 text-left" @click="openEdit(checklist)">
+                <Icon name="check-square" size="18" class="shrink-0 text-ink-muted" />
+                <span class="min-w-0">
+                  <span class="block truncate text-ink">{{ checklist.name }}</span>
+                  <span v-if="checklist.description" class="block truncate text-caption text-ink-muted">{{ checklist.description }}</span>
+                </span>
+              </button>
+            </td>
+            <td class="px-2"><Badge :variant="statusVariant[checklist.status]" size="sm">{{ t(`ojt.status.${checklist.status}`) }}</Badge></td>
+            <td class="px-2 text-ink-muted">{{ [checklist.position, checklist.department].filter(Boolean).join(' · ') || '—' }}</td>
+            <td class="px-2 text-ink-muted">{{ t('ojt.itemsCount', { count: checklist.items.length }) }} · {{ t('ojt.thresholdShort', { percent: checklist.passThresholdPercent }) }}</td>
+            <td class="pr-3 text-right">
+              <span class="flex items-center justify-end gap-1 opacity-0 transition-default focus-within:opacity-100 group-hover:opacity-100">
+                <button type="button" class="flex h-8 w-8 items-center justify-center rounded-md text-ink-muted transition-default hover:bg-surface-hover hover:text-ink" :aria-label="t('common.edit')" @click="openEdit(checklist)"><Icon name="pencil" size="15" /></button>
+                <button type="button" class="flex h-8 w-8 items-center justify-center rounded-md text-ink-muted transition-default hover:bg-surface-hover hover:text-danger" :aria-label="t('common.delete')" @click="remove(checklist)"><Icon name="trash" size="15" /></button>
+              </span>
+            </td>
+          </tr>
+        </tbody>
+      </table>
     </div>
 
     <Modal v-model="modalOpen" size="lg" :title="editingId ? t('ojt.editChecklist') : t('ojt.newChecklist')">

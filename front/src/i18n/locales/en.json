@@ -1265,7 +1265,8 @@
       "library": "Course library",
       "users": "User management",
       "development": "Development plans",
-      "news": "News feed"
+      "news": "News feed",
+      "appraisal": "Staff appraisal"
     }
   },
   "reports": {

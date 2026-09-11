@@ -7,12 +7,24 @@
 import { useI18n } from 'vue-i18n'
 import { useRoute } from 'vue-router'
 
-defineProps({ section: { type: Object, required: true }, pages: { type: Array, required: true } })
+import { computed } from 'vue'
+
+const props = defineProps({ section: { type: Object, required: true }, pages: { type: Array, required: true } })
 const { t } = useI18n()
 const route = useRoute()
 
+// The longest matching page wins, so /bos/ojt/sessions lights "sessions"
+// and not the checklists page at /bos/ojt as well.
+const activePath = computed(() => {
+  let best = ''
+  for (const page of props.pages) {
+    const hit = route.path === page.path || route.path.startsWith(`${page.path}/`)
+    if (hit && page.path.length > best.length) best = page.path
+  }
+  return best
+})
 function isActive(path) {
-  return route.path === path || route.path.startsWith(`${path}/`)
+  return activePath.value === path
 }
 </script>
 

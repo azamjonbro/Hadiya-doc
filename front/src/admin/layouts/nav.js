@@ -41,11 +41,7 @@ export const adminSections = [
     icon: 'trending-up',
     path: '/bos/development-plans',
     labelKey: 'admin.section.development',
-    children: [
-      { name: 'development-plans', path: '/bos/development-plans', labelKey: 'devplan.adminTitle', permission: 'devplan:manage' },
-      { name: 'competencies', path: '/bos/competencies', labelKey: 'competency.title', permission: 'competency:manage' },
-      { name: 'competency-matrix', path: '/bos/competencies/matrix', labelKey: 'competency.matrix', permission: 'competency:assess' },
-    ],
+    children: [{ name: 'development-plans', path: '/bos/development-plans', labelKey: 'devplan.adminTitle', permission: 'devplan:manage' }],
   },
   {
     key: 'reports',
@@ -62,8 +58,29 @@ export const adminSections = [
   // reaches it through the rail like iSpring does.
   { key: 'kb', icon: 'info', path: '/kb', labelKey: 'portal.nav.kb' },
   { key: 'grading', icon: 'message-square', path: '/bos/grading', labelKey: 'grading.title', permission: 'quiz:grade' },
-  { key: 'ojt', icon: 'check-square', path: '/bos/ojt', labelKey: 'ojt.adminTitle', permission: 'ojt:manage' },
-  { key: 'review360', icon: 'refresh', path: '/bos/review360', labelKey: 'review360.title', permission: 'review360:manage' },
+  {
+    key: 'ojt',
+    icon: 'check-square',
+    path: '/bos/ojt/sessions',
+    labelKey: 'ojt.title',
+    children: [
+      { name: 'ojt-sessions', path: '/bos/ojt/sessions', labelKey: 'ojt.sessionsTitle', permission: 'ojt:manage' },
+      { name: 'ojt', path: '/bos/ojt', labelKey: 'ojt.adminTitle', permission: 'ojt:manage' },
+    ],
+  },
+  // Rasn 23: "staff appraisal" holds the 360° sessions and the
+  // competency profiles they are scored against.
+  {
+    key: 'review360',
+    icon: 'refresh',
+    path: '/bos/review360',
+    labelKey: 'admin.section.appraisal',
+    children: [
+      { name: 'review360', path: '/bos/review360', labelKey: 'review360.title', permission: 'review360:manage' },
+      { name: 'competencies', path: '/bos/competencies', labelKey: 'competency.title', permission: 'competency:manage' },
+      { name: 'competency-matrix', path: '/bos/competencies/matrix', labelKey: 'competency.matrix', permission: 'competency:assess' },
+    ],
+  },
   {
     key: 'news',
     icon: 'newspaper',
