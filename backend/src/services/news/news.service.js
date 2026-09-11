@@ -82,8 +82,20 @@ export const newsService = {
     const rows = await newsRepository.listPage(query)
     const hasMore = rows.length > query.limit
     const items = hasMore ? rows.slice(0, -1) : rows
+    // The admin table (rasn 24) shows readers, likes and comments per row;
+    // the same three aggregates the feed pays for, without "liked by me".
+    const ids = items.map((row) => row._id)
+    const [views, engagement] = await Promise.all([
+      newsViewRepository.countByNews(ids),
+      newsEngagementRepository.summarize(ids, null),
+    ])
     return {
-      items: items.map(toPublicNews),
+      items: items.map((row) => ({
+        ...toPublicNews(row),
+        views: views[String(row._id)] ?? 0,
+        likes: engagement[String(row._id)]?.likes ?? 0,
+        comments: engagement[String(row._id)]?.comments ?? 0,
+      })),
       nextCursor: hasMore ? items[items.length - 1]._id.toString() : null,
     }
   },

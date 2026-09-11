@@ -1,10 +1,9 @@
 <script setup>
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useAuthStore } from '@/stores/auth'
 import { useThemeStore } from '@/stores/theme'
 import { setLocale, availableLocales } from '@/i18n'
-import AppCard from '@/components/ui/AppCard.vue'
 import PanelSwitchCard from '@/components/ui/PanelSwitchCard.vue'
 import AppSelect from '@/components/ui/AppSelect.vue'
 import Avatar from '@/components/ui/Avatar.vue'
@@ -24,36 +23,81 @@ const languageOptions = computed(() => availableLocales.map((code) => ({ value: 
 function onLocaleChange(code) {
   setLocale(code)
 }
+
+// Rasn 26: three boxed tabs — the basics (account, security), the look,
+// and the features (policies, AI, integrations).
+const TABS = ['basic', 'design', 'features']
+const tab = ref('basic')
 </script>
 
 <template>
-  <div class="mx-auto w-full max-w-[1440px] px-6 lg:px-8 py-8">
-    <div class="flex flex-wrap items-center justify-between gap-3 pb-4 border-b border-border mb-6">
-      <h1 class="text-[28px] font-bold text-ink">{{ t('settings.title') }}</h1>
+  <div class="mx-auto w-full max-w-[1440px] px-6 py-6 lg:px-8">
+    <h1 class="text-[24px] font-semibold text-ink">{{ t('settings.title') }}</h1>
+
+    <!-- Boxed tabs: the active one on white, joined to the panel below -->
+    <div class="mt-5 flex border-b border-border">
+      <button
+        v-for="key in TABS"
+        :key="key"
+        type="button"
+        role="tab"
+        :aria-selected="tab === key"
+        class="-mb-px flex h-12 items-center border px-7 text-[15px] transition-default"
+        :class="tab === key ? 'border-border border-b-surface bg-surface text-ink border-t-2 border-t-primary' : 'border-transparent text-ink-muted hover:text-ink'"
+        @click="tab = key"
+      >
+        {{ t(`settings.tabs.${key}`) }}
+      </button>
     </div>
 
-    <!-- Everyone who can reach this page came from the employee side and can
-         go back to it; no role check needed. -->
-    <PanelSwitchCard class="mt-6" direction="user" />
+    <!-- ===== Basic ===== -->
+    <template v-if="tab === 'basic'">
+      <p class="mt-6 text-[14px] text-ink-muted">{{ t('settings.tabs.basicHint') }}</p>
 
-    <div class="mt-6 space-y-6">
-      <AppCard>
-        <h2 class="text-small font-semibold text-ink">{{ t('settings.sections.profile') }}</h2>
-        <div class="mt-3 flex items-center gap-3">
-          <Avatar :name="auth.user?.fullName" size="lg" />
+      <section class="mt-6 border-t border-border pt-6">
+        <h2 class="text-[18px] font-medium text-ink">{{ t('settings.sections.profile') }}</h2>
+        <div class="mt-4 grid max-w-3xl grid-cols-[200px_1fr] items-center gap-x-6 gap-y-4 text-[14px]">
+          <span class="text-ink-muted">{{ t('users.fields.fullName') }}</span>
+          <span class="flex items-center gap-3 text-ink"><Avatar :name="auth.user?.fullName" size="sm" />{{ auth.user?.fullName }}</span>
+          <span class="text-ink-muted">Email</span>
+          <span class="text-ink">{{ auth.user?.email || '—' }}</span>
+          <span class="text-ink-muted">{{ t('users.role') }}</span>
+          <span class="text-ink">{{ auth.user?.role }}</span>
+          <span class="text-ink-muted">{{ t('settings.sections.language') }}</span>
+          <div class="max-w-xs"><AppSelect :model-value="locale" :options="languageOptions" @update:model-value="onLocaleChange" /></div>
+        </div>
+      </section>
+
+      <!-- Everyone who can reach this page came from the employee side and
+           can go back to it; no role check needed. -->
+      <section class="mt-6 border-t border-border pt-6">
+        <PanelSwitchCard direction="user" />
+      </section>
+
+      <!-- SUPERADMIN only, like the rest of face verification: how often
+           an employee has to prove who they are is not a course-editing
+           decision, and there is no per-course override to soften it. -->
+      <section v-if="auth.isSuperAdmin" class="mt-6 border-t border-border pt-6">
+        <h2 class="text-[18px] font-medium text-ink">{{ t('settings.sections.security') }}</h2>
+        <div class="mt-4 space-y-6">
+          <SsoSettingsCard />
           <div>
-            <p class="text-body font-medium text-ink">{{ auth.user?.fullName }}</p>
-            <p class="text-small text-ink-faint">{{ auth.user?.email }}</p>
-            <p class="text-caption text-ink-faint">{{ auth.user?.role }}</p>
+            <h3 class="text-small font-semibold text-ink">{{ t('facePolicy.title') }}</h3>
+            <p class="mt-1 text-caption text-ink-faint">{{ t('facePolicy.hint') }}</p>
+            <div class="mt-4"><FacePolicyForm /></div>
           </div>
         </div>
-      </AppCard>
+      </section>
+    </template>
 
-      <AppCard>
-        <h2 class="text-small font-semibold text-ink">{{ t('settings.sections.appearance') }}</h2>
-        <div class="mt-3 flex items-center justify-between">
-          <span class="text-body text-ink">{{ t('settings.appearance.theme') }}</span>
-          <div class="flex gap-1.5 rounded-md border border-border p-1">
+    <!-- ===== Design ===== -->
+    <template v-else-if="tab === 'design'">
+      <p class="mt-6 text-[14px] text-ink-muted">{{ t('settings.tabs.designHint') }}</p>
+      <section class="mt-6 border-t border-border pt-6">
+        <h2 class="text-[18px] font-medium text-ink">{{ t('settings.sections.appearance') }}</h2>
+        <div class="mt-4 grid max-w-3xl grid-cols-[200px_1fr] items-center gap-x-6 gap-y-4 text-[14px]">
+          <span class="text-ink-muted">{{ t('settings.appearance.theme') }}</span>
+          <div class="flex w-max gap-1.5 rounded-md border border-border p-1">
             <button
               type="button"
               class="rounded px-3 py-1 text-small transition-default"
@@ -71,45 +115,31 @@ function onLocaleChange(code) {
               {{ t('settings.appearance.dark') }}
             </button>
           </div>
+          <span class="text-ink-muted">{{ t('portal.brand') }}</span>
+          <span class="text-ink">{{ t('portal.brand') }}</span>
         </div>
-      </AppCard>
+      </section>
+    </template>
 
-      <AppCard>
-        <h2 class="text-small font-semibold text-ink">{{ t('settings.sections.language') }}</h2>
-        <div class="mt-3">
-          <AppSelect :model-value="locale" :options="languageOptions" @update:model-value="onLocaleChange" />
-        </div>
-      </AppCard>
+    <!-- ===== Features ===== -->
+    <template v-else>
+      <p class="mt-6 text-[14px] text-ink-muted">{{ t('settings.tabs.featuresHint') }}</p>
 
-      <!-- SUPERADMIN only, like the rest of face verification: how often an
-           employee has to prove who they are is not a course-editing
-           decision, and there is no per-course override to soften it. -->
-      <AppCard v-if="auth.isSuperAdmin">
-        <h2 class="text-small font-semibold text-ink">{{ t('facePolicy.title') }}</h2>
-        <p class="mt-1 text-caption text-ink-faint">{{ t('facePolicy.hint') }}</p>
-        <div class="mt-4">
-          <FacePolicyForm />
-        </div>
-      </AppCard>
-
-      <!-- Organisation-wide default. Individual courses can tighten or relax
-           it from their own page; this is what they inherit. -->
-      <AppCard v-if="auth.hasPermission('course:read')">
-        <h2 class="text-small font-semibold text-ink">{{ t('attention.admin.title') }}</h2>
+      <!-- Organisation-wide default. Individual courses can tighten or
+           relax it from their own page; this is what they inherit. -->
+      <section v-if="auth.hasPermission('course:read')" class="mt-6 border-t border-border pt-6">
+        <h2 class="text-[18px] font-medium text-ink">{{ t('attention.admin.title') }}</h2>
         <p class="mt-1 text-caption text-ink-faint">{{ t('attention.admin.globalHint') }}</p>
-        <div class="mt-4">
-      <!-- The AI budget (10.6): SUPERADMIN only, like the other
-           platform-wide policies on this page. -->
-      <AiSettingsCard v-if="auth.isSuperAdmin" />
+        <div class="mt-4"><AttentionPolicyForm :readonly="!auth.hasPermission('course:update')" /></div>
+      </section>
 
-      <!-- API keys (11.1): the same authority as the AI budget above. -->
-      <ApiKeysCard v-if="auth.isSuperAdmin" />
-      <WebhooksCard v-if="auth.isSuperAdmin" />
-      <SsoSettingsCard v-if="auth.isSuperAdmin" />
-
-          <AttentionPolicyForm :readonly="!auth.hasPermission('course:update')" />
-        </div>
-      </AppCard>
-    </div>
+      <!-- The AI budget (10.6), API keys (11.1) and webhooks: SUPERADMIN
+           only, like the other platform-wide policies on this page. -->
+      <template v-if="auth.isSuperAdmin">
+        <section class="mt-6 border-t border-border pt-6"><AiSettingsCard /></section>
+        <section class="mt-6 border-t border-border pt-6"><ApiKeysCard /></section>
+        <section class="mt-6 border-t border-border pt-6"><WebhooksCard /></section>
+      </template>
+    </template>
   </div>
 </template>

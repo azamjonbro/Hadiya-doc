@@ -11,6 +11,7 @@ import { computed, onMounted, reactive, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
 import { branchesApi } from '@/services/branches'
+import { orgApi } from '@/services/org'
 import { useConfirm } from '@/composables/useConfirm'
 import { useToast } from '@/composables/useToast'
 import AppInput from '@/components/ui/AppInput.vue'
@@ -56,6 +57,24 @@ async function load() {
 
 // The employees list already filters by branch, so this page hands off rather
 // than growing its own copy of that table.
+// The tree under a branch comes from the head-count structure (portal
+// §8): departments and subdivisions are free-text on the user, so this is
+// the only place they exist as a hierarchy.
+const structure = ref(null)
+const expanded = ref(new Set())
+orgApi
+  .structure()
+  .then((result) => (structure.value = result))
+  .catch(() => (structure.value = { branches: [] }))
+function departmentsOf(branchName) {
+  return structure.value?.branches.find((b) => b.name === branchName)?.departments ?? []
+}
+function toggleExpand(name) {
+  const next = new Set(expanded.value)
+  next.has(name) ? next.delete(name) : next.add(name)
+  expanded.value = next
+}
+
 function openEmployees(branch) {
   router.push({ name: 'admin-users-list', query: { branch: branch.name } })
 }
@@ -153,7 +172,7 @@ onMounted(load)
   <div class="px-6 py-6">
     <div class="flex items-end justify-between gap-4">
       <div>
-        <h1 class="text-[28px] font-bold text-ink">{{ t('branchesPage.title') }}</h1>
+        <h1 class="text-[24px] font-semibold text-ink">{{ t('branchesPage.title') }}</h1>
         <p class="mt-1 text-small text-ink-faint">{{ t('branchesPage.subtitle') }}</p>
       </div>
       <div class="flex items-center gap-3">
@@ -188,75 +207,94 @@ onMounted(load)
       </template>
     </EmptyState>
 
-    <div v-else class="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-      <AppCard v-for="branch in items" :key="branch.name" hover>
-        <div class="flex items-start gap-3">
-          <span class="grid h-10 w-10 shrink-0 place-items-center rounded-lg bg-primary-subtle text-primary">
-            <Icon name="building" size="18" />
-          </span>
-          <div class="min-w-0 flex-1">
-            <h2 class="truncate text-body font-semibold text-ink">{{ branch.name }}</h2>
-            <!-- A branch nobody is in yet is the interesting case: it means a
-                 course was targeted at an office before anyone was moved into
-                 it, and that course currently reaches nobody. -->
-            <Badge v-if="!branch.employees" variant="warning" size="sm" class="mt-1">
-              {{ t('branchesPage.noEmployees') }}
-            </Badge>
-          </div>
-
-          <!-- Renaming needs a record to rename, so it stays disabled for a
-               name that only exists on employee and course records — with the
-               reason in the tooltip, because a button that is simply absent
-               reads as "this branch is special somehow". Deleting works
-               either way: there the name itself is the handle. -->
-          <div class="flex shrink-0 gap-1">
-            <button
-              type="button"
-              :disabled="!branch.id"
-              class="grid h-7 w-7 place-items-center rounded text-ink-faint transition-default hover:bg-surface-2 hover:text-ink disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent disabled:hover:text-ink-faint"
-              :title="branch.id ? t('branchesPage.rename') : t('branchesPage.undeclaredHint')"
-              @click="openRename(branch)"
-            >
-              <Icon name="pencil" size="14" />
-            </button>
-            <button
-              type="button"
-              :disabled="removing === branch.name"
-              class="grid h-7 w-7 place-items-center rounded text-ink-faint transition-default hover:bg-danger-subtle hover:text-danger disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent disabled:hover:text-ink-faint"
-              :title="t('branchesPage.delete')"
-              @click="removeBranch(branch)"
-            >
-              <Icon name="trash" size="14" />
-            </button>
-          </div>
-        </div>
-
-        <div class="mt-4 grid grid-cols-2 gap-2">
-          <button
-            type="button"
-            class="rounded-md border border-border p-2.5 text-left transition-default hover:border-border-strong hover:bg-surface-2"
-            @click="openEmployees(branch)"
-          >
-            <p class="text-h3 leading-none text-ink">{{ branch.employees }}</p>
-            <p class="mt-1 text-caption text-ink-faint">
-              {{ t('branchesPage.employees') }}
-              <template v-if="branch.employees && branch.activeEmployees !== branch.employees">
-                · {{ t('branchesPage.activeOf', { active: branch.activeEmployees }) }}
+    <!-- Rasn 9: a tree table — the branch, its departments under it,
+         their subdivisions under those; code, head, head-count. Codes and
+         heads are not on the model, and the column says so with "—". -->
+    <div v-else class="mt-6 overflow-x-auto">
+      <table class="w-full min-w-[720px] text-[14px]">
+        <thead>
+          <tr class="h-11 border-b border-border text-left text-[13px] text-ink-muted">
+            <th class="pl-3 pr-2 font-medium">{{ t('branchesPage.columns.name') }}</th>
+            <th class="w-40 px-2 font-medium">{{ t('branchesPage.columns.code') }}</th>
+            <th class="w-48 px-2 font-medium">{{ t('branchesPage.columns.head') }}</th>
+            <th class="w-40 px-2 font-medium">{{ t('branchesPage.columns.total') }}</th>
+            <th class="w-24 pr-3"></th>
+          </tr>
+        </thead>
+        <tbody>
+          <template v-for="branch in items" :key="branch.name">
+            <tr class="h-14 border-b border-border transition-default hover:bg-surface-2">
+              <td class="pl-3 pr-2">
+                <span class="flex items-center gap-2">
+                  <button
+                    type="button"
+                    class="flex h-6 w-6 items-center justify-center rounded text-ink-faint transition-default hover:bg-surface-hover"
+                    :class="departmentsOf(branch.name).length ? '' : 'invisible'"
+                    :aria-expanded="expanded.has(branch.name)"
+                    :aria-label="t('common.viewDetails')"
+                    @click="toggleExpand(branch.name)"
+                  >
+                    <Icon :name="expanded.has(branch.name) ? 'chevron-down' : 'chevron-right'" size="14" />
+                  </button>
+                  <Icon name="building" size="18" class="text-ink-muted" />
+                  <button type="button" class="text-ink hover:text-primary" @click="openEmployees(branch)">{{ branch.name }}</button>
+                  <Badge v-if="!branch.employees" variant="warning" size="sm">{{ t('branchesPage.noEmployees') }}</Badge>
+                </span>
+              </td>
+              <td class="px-2 text-ink-muted">—</td>
+              <td class="px-2 text-ink-muted">—</td>
+              <td class="px-2 text-ink">{{ branch.employees }}</td>
+              <td class="pr-3 text-right">
+                <span class="flex justify-end gap-1">
+                  <button
+                    type="button"
+                    :disabled="!branch.id"
+                    class="grid h-8 w-8 place-items-center rounded-md text-ink-faint transition-default hover:bg-surface-hover hover:text-ink disabled:cursor-not-allowed disabled:opacity-40"
+                    :title="branch.id ? t('branchesPage.rename') : t('branchesPage.undeclaredHint')"
+                    @click="openRename(branch)"
+                  >
+                    <Icon name="pencil" size="15" />
+                  </button>
+                  <button
+                    type="button"
+                    :disabled="removing === branch.name"
+                    class="grid h-8 w-8 place-items-center rounded-md text-ink-faint transition-default hover:bg-danger-subtle hover:text-danger disabled:opacity-40"
+                    :title="t('branchesPage.delete')"
+                    @click="removeBranch(branch)"
+                  >
+                    <Icon name="trash" size="15" />
+                  </button>
+                </span>
+              </td>
+            </tr>
+            <template v-if="expanded.has(branch.name)">
+              <template v-for="dept in departmentsOf(branch.name)" :key="`${branch.name}/${dept.name}`">
+                <tr class="h-12 border-b border-border transition-default hover:bg-surface-2">
+                  <td class="pl-12 pr-2">
+                    <span class="flex items-center gap-2">
+                      <Icon name="building" size="16" class="text-ink-faint" />
+                      <router-link :to="{ name: 'admin-users-list', query: { branch: branch.name, department: dept.name } }" class="text-ink hover:text-primary">{{ dept.name || t('portal.employees.unassigned') }}</router-link>
+                    </span>
+                  </td>
+                  <td class="px-2 text-ink-muted">—</td>
+                  <td class="px-2 text-ink-muted">—</td>
+                  <td class="px-2 text-ink">{{ dept.count }}</td>
+                  <td></td>
+                </tr>
+                <tr v-for="sub in dept.subdivisions" :key="`${branch.name}/${dept.name}/${sub.name}`" class="h-11 border-b border-border text-ink-muted">
+                  <td class="pl-20 pr-2">{{ sub.name }}</td>
+                  <td class="px-2">—</td>
+                  <td class="px-2">—</td>
+                  <td class="px-2 text-ink">{{ sub.count }}</td>
+                  <td></td>
+                </tr>
               </template>
-            </p>
-          </button>
-
-          <button
-            type="button"
-            class="rounded-md border border-border p-2.5 text-left transition-default hover:border-border-strong hover:bg-surface-2"
-            @click="openCourses(branch)"
-          >
-            <p class="text-h3 leading-none text-ink">{{ branch.courses }}</p>
-            <p class="mt-1 text-caption text-ink-faint">{{ t('branchesPage.courses') }}</p>
-          </button>
-        </div>
-      </AppCard>
+            </template>
+          </template>
+        </tbody>
+      </table>
     </div>
+
     <Modal
       v-model="dialog.open"
       :title="dialog.editing ? t('branchesPage.rename') : t('branchesPage.create')"

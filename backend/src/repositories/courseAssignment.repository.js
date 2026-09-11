@@ -13,6 +13,17 @@ export const courseAssignmentRepository = {
     return CourseAssignment.find({ userId }).sort({ assignedAt: -1 })
   },
 
+  // How many people each course is assigned to — one aggregate for a page
+  // of the library, keyed by course id as a string.
+  async countByCourses(courseIds) {
+    if (!courseIds.length) return {}
+    const rows = await CourseAssignment.aggregate([
+      { $match: { courseId: { $in: courseIds } } },
+      { $group: { _id: '$courseId', count: { $sum: 1 } } },
+    ])
+    return Object.fromEntries(rows.map((row) => [String(row._id), row.count]))
+  },
+
   listByCourse(courseId) {
     return CourseAssignment.find({ courseId }).sort({ assignedAt: -1 })
   },

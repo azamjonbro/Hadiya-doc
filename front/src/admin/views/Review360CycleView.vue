@@ -158,7 +158,7 @@ onMounted(async () => {
       <div class="mt-4 flex flex-wrap items-start justify-between gap-4">
         <div class="min-w-0">
           <div class="flex flex-wrap items-center gap-2">
-            <h1 class="text-[28px] font-bold text-ink">{{ cycle.name }}</h1>
+            <h1 class="text-[24px] font-semibold text-ink">{{ cycle.name }}</h1>
             <Badge :variant="statusVariant[cycle.status]" size="sm">
               {{ t(`review360.status.${cycle.status}`) }}
             </Badge>

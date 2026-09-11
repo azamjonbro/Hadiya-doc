@@ -96,7 +96,9 @@
     "yes": "True",
     "no": "False",
     "moveUp": "Move up",
-    "moveDown": "Move down"
+    "moveDown": "Move down",
+    "create": "Create",
+    "total": "Total"
   },
   "auth": {
     "login": {
@@ -396,7 +398,15 @@
     "duplicate": "Duplicate",
     "duplicateTitle": "Duplicate this course?",
     "duplicateMessage": "Everything in “{title}” — modules, videos, documents and tests — is copied into a new draft. Assignments and anyone’s progress are not.",
-    "loadFailed": "Could not load the course list"
+    "loadFailed": "Could not load the course list",
+    "columns": {
+      "name": "Name",
+      "type": "Type",
+      "assignments": "Assignments",
+      "author": "Author",
+      "added": "Added"
+    },
+    "import": "SCORM import"
   },
   "videos": {
     "empty": "No videos uploaded yet",
@@ -709,7 +719,15 @@
       "departmentTargets": "Departments (comma-separated, empty = everyone)",
       "roleTargets": "Roles (empty = everyone)",
       "expiryAt": "Expiry date"
-    }
+    },
+    "columns": {
+      "thumb": "Thumbnail",
+      "title": "Title",
+      "published": "Published",
+      "audience": "Who sees",
+      "readers": "Readers"
+    },
+    "yesterday": "yesterday"
   },
   "tasks": {
     "title": "Tasks",
@@ -833,7 +851,11 @@
       "NO_SHOW": "Did not come",
       "CANCELLED": "Cancelled"
     },
-    "loadFailed": "Could not load the event"
+    "loadFailed": "Could not load the event",
+    "views": {
+      "month": "Month",
+      "list": "List"
+    }
   },
   "eventTypes": {
     "MEETING": "Meeting",
@@ -859,11 +881,12 @@
   "settings": {
     "title": "Settings",
     "tabs": {
-      "profile": "Profile",
-      "activity": "Activity",
-      "notifications": "Notifications",
-      "preferences": "Preferences",
-      "security": "Security"
+      "basic": "Basic",
+      "design": "Design",
+      "features": "Features",
+      "basicHint": "Account details, language and security settings.",
+      "designHint": "How the portal looks: theme and brand.",
+      "featuresHint": "Platform features: attention policy, AI, integrations."
     },
     "sections": {
       "profile": "Profile",
@@ -1236,6 +1259,21 @@
     },
     "notifications": {
       "empty": "No notifications"
+    },
+    "section": {
+      "materials": "Learning materials",
+      "library": "Course library",
+      "users": "User management",
+      "development": "Development plans",
+      "news": "News feed",
+      "appraisal": "Staff appraisal"
+    },
+    "qa": {
+      "title": "Questions by course",
+      "empty": "No questions yet",
+      "unanswered": "Unanswered",
+      "counts": "{total} questions · {unanswered} unanswered",
+      "pick": "Pick a course from the list to see its questions"
     }
   },
   "reports": {
@@ -1352,6 +1390,12 @@
         "weekly": "every {day} at {at}",
         "monthly": "on day {day} at {at}"
       }
+    },
+    "groups": {
+      "learners": "By learners",
+      "courses": "By courses",
+      "events": "By events",
+      "extra": "More"
     }
   },
   "audit": {
@@ -1824,7 +1868,13 @@
     "deletedDetached": "Branch “{name}” deleted — cleared from {users} employee(s) and {courses} course(s).",
     "name": "Branch name",
     "renamed": "Renamed — moved {users} employee(s) and {courses} course(s)",
-    "confirmDelete": "Delete the branch “{name}”?"
+    "confirmDelete": "Delete the branch “{name}”?",
+    "columns": {
+      "name": "Department",
+      "code": "Code",
+      "head": "Head",
+      "total": "Total users"
+    }
   },
   "orgLists": {
     "select": "Select",
@@ -1970,7 +2020,8 @@
       "DEPARTMENT": "Sees only employees in their own department.",
       "TEAM": "Sees everyone below them in the org chart, whatever department they are in.",
       "SELF": "Sees only their own data."
-    }
+    },
+    "permissions": "Permissions"
   },
   "team": {
     "title": "My team",

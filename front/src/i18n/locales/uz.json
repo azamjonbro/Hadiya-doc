@@ -96,7 +96,9 @@
     "yes": "To‘g‘ri",
     "no": "Noto‘g‘ri",
     "moveUp": "Yuqoriga",
-    "moveDown": "Pastga"
+    "moveDown": "Pastga",
+    "create": "Yaratish",
+    "total": "Jami"
   },
   "auth": {
     "login": {
@@ -396,7 +398,15 @@
     "duplicate": "Nusxalash",
     "duplicateTitle": "Kurs nusxalansinmi?",
     "duplicateMessage": "«{title}» kursining butun mazmuni (mavzular, video, hujjat, testlar) yangi qoralama kursga ko‘chiriladi. Xodimlarning tayinlovi va progressi ko‘chirilmaydi.",
-    "loadFailed": "Kurslar ro'yxatini yuklab bo'lmadi"
+    "loadFailed": "Kurslar ro'yxatini yuklab bo'lmadi",
+    "columns": {
+      "name": "Nomi",
+      "type": "Turi",
+      "assignments": "Tayinlash",
+      "author": "Muallif",
+      "added": "Qo'shilgan"
+    },
+    "import": "SCORM import"
   },
   "videos": {
     "empty": "Videolar hali yuklanmagan",
@@ -709,7 +719,15 @@
       "departmentTargets": "Bo'limlar (vergul bilan, bo'sh = hammaga)",
       "roleTargets": "Rollar (bo'sh = hammaga)",
       "expiryAt": "Amal qilish muddati"
-    }
+    },
+    "columns": {
+      "thumb": "Miniatyura",
+      "title": "Sarlavha",
+      "published": "Chop etilgan",
+      "audience": "Kim ko'radi",
+      "readers": "O'qiganlar"
+    },
+    "yesterday": "kecha"
   },
   "tasks": {
     "title": "Vazifalar",
@@ -833,7 +851,11 @@
       "NO_SHOW": "Kelmadi",
       "CANCELLED": "Bekor qildi"
     },
-    "loadFailed": "Tadbirni yuklab bo'lmadi"
+    "loadFailed": "Tadbirni yuklab bo'lmadi",
+    "views": {
+      "month": "Oy",
+      "list": "Ro'yxat"
+    }
   },
   "eventTypes": {
     "MEETING": "Uchrashuv",
@@ -859,11 +881,12 @@
   "settings": {
     "title": "Sozlamalar",
     "tabs": {
-      "profile": "Profil",
-      "activity": "Faollik",
-      "notifications": "Bildirishnomalar",
-      "preferences": "Ko'rinish",
-      "security": "Xavfsizlik"
+      "basic": "Asosiy",
+      "design": "Dizayn",
+      "features": "Funksiyalar",
+      "basicHint": "Bu yerda hisob ma'lumotlari, til va xavfsizlik sozlamalari.",
+      "designHint": "Portalning ko'rinishi: mavzu va brend.",
+      "featuresHint": "Platforma imkoniyatlari: diqqat siyosati, AI, integratsiyalar."
     },
     "sections": {
       "profile": "Profil",
@@ -1236,6 +1259,21 @@
     },
     "notifications": {
       "empty": "Bildirishnomalar yo'q"
+    },
+    "section": {
+      "materials": "O'quv materiallari",
+      "library": "Kurslar kutubxonasi",
+      "users": "Foydalanuvchilarni boshqarish",
+      "development": "Rivojlanish rejalari",
+      "news": "Yangiliklar lentasi",
+      "appraisal": "Xodimlarni baholash"
+    },
+    "qa": {
+      "title": "Kurslar bo'yicha savollar",
+      "empty": "Hali savol berilmagan",
+      "unanswered": "Javobsiz savollar",
+      "counts": "{total} ta savol · {unanswered} tasi javobsiz",
+      "pick": "Savollarni ko'rish uchun ro'yxatdan kursni tanlang"
     }
   },
   "reports": {
@@ -1352,6 +1390,12 @@
         "weekly": "har {day}, {at}",
         "monthly": "har oyning {day}-kuni, {at}"
       }
+    },
+    "groups": {
+      "learners": "O'quvchilar bo'yicha",
+      "courses": "Kurslar bo'yicha",
+      "events": "Tadbirlar bo'yicha",
+      "extra": "Qo'shimcha"
     }
   },
   "audit": {
@@ -1824,7 +1868,13 @@
     "deletedDetached": "«{name}» filiali o'chirildi: {users} xodim va {courses} kursdan olib tashlandi.",
     "name": "Filial nomi",
     "renamed": "Nomi o'zgartirildi: {users} xodim, {courses} kurs ko'chirildi",
-    "confirmDelete": "«{name}» filiali o'chirilsinmi?"
+    "confirmDelete": "«{name}» filiali o'chirilsinmi?",
+    "columns": {
+      "name": "Bo'linma nomi",
+      "code": "Bo'linma kodi",
+      "head": "Rahbar",
+      "total": "Jami xodimlar"
+    }
   },
   "orgLists": {
     "select": "Tanlang",
@@ -1970,7 +2020,8 @@
       "DEPARTMENT": "Faqat o'zi turgan bo'lim xodimlarini ko'radi.",
       "TEAM": "Tashkiliy tuzilmada o'zidan pastdagi hammani ko'radi — bo'limdan qat'i nazar.",
       "SELF": "Faqat o'z ma'lumotini ko'radi."
-    }
+    },
+    "permissions": "Ruxsatlar"
   },
   "team": {
     "title": "Mening jamoam",

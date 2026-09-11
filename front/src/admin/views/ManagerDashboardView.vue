@@ -72,7 +72,7 @@ onMounted(load)
   <div class="px-6 py-8">
     <div class="flex flex-wrap items-start justify-between gap-3">
       <div>
-        <h1 class="text-[28px] font-bold text-ink">{{ t('team.title') }}</h1>
+        <h1 class="text-[24px] font-semibold text-ink">{{ t('team.title') }}</h1>
         <p class="mt-1 max-w-2xl text-small text-ink-muted">{{ t('team.hint') }}</p>
       </div>
       <div class="flex flex-wrap items-center gap-3">

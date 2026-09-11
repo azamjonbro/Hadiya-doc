@@ -13,7 +13,6 @@ import { eventsApi } from '@/services/events'
 import { useToast } from '@/composables/useToast'
 import { useConfirm } from '@/composables/useConfirm'
 import { apiErrorText } from '@/utils/apiError'
-import AppCard from '@/components/ui/AppCard.vue'
 import AppButton from '@/components/ui/AppButton.vue'
 import AppInput from '@/components/ui/AppInput.vue'
 import AppSelect from '@/components/ui/AppSelect.vue'
@@ -66,8 +65,14 @@ const sheetRows = ref([])
 const sheetLoading = ref(false)
 const attendance = ref({})
 
-const upcoming = computed(() => items.value.filter((event) => new Date(event.endAt) >= new Date()))
-const past = computed(() => items.value.filter((event) => new Date(event.endAt) < new Date()))
+const search = ref('')
+const typeFilter = ref('')
+const filtered = computed(() => {
+  const q = search.value.trim().toLowerCase()
+  return items.value.filter((event) => (!typeFilter.value || event.type === typeFilter.value) && (!q || event.title.toLowerCase().includes(q)))
+})
+const upcoming = computed(() => filtered.value.filter((event) => new Date(event.endAt) >= new Date()))
+const past = computed(() => filtered.value.filter((event) => new Date(event.endAt) < new Date()))
 
 function formatWhen(value) {
   return new Date(value).toLocaleString(locale.value, {
@@ -85,6 +90,43 @@ function toLocalInput(value) {
   // Z would be read as local and shift the event by the offset.
   const pad = (n) => String(n).padStart(2, '0')
   return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`
+}
+
+// Rasn 4: the month grid. Monday-first, six rows so the grid never
+// jumps between months; events keyed by local calendar day.
+const view = ref('month')
+const cursor = ref(new Date(new Date().getFullYear(), new Date().getMonth(), 1))
+const monthLabel = computed(() => cursor.value.toLocaleDateString(locale.value, { month: 'long', year: 'numeric' }))
+const weekdays = computed(() => {
+  const monday = new Date(2024, 0, 1) // a Monday
+  return Array.from({ length: 7 }, (_, i) => new Date(monday.getTime() + i * 86400e3).toLocaleDateString(locale.value, { weekday: 'short' }))
+})
+const dayKey = (date) => `${date.getFullYear()}-${date.getMonth()}-${date.getDate()}`
+const monthCells = computed(() => {
+  const first = cursor.value
+  const offset = (first.getDay() + 6) % 7
+  const start = new Date(first.getFullYear(), first.getMonth(), 1 - offset)
+  const byDay = new Map()
+  for (const event of filtered.value) {
+    const key = dayKey(new Date(event.startAt))
+    if (!byDay.has(key)) byDay.set(key, [])
+    byDay.get(key).push(event)
+  }
+  const todayKey = dayKey(new Date())
+  return Array.from({ length: 42 }, (_, i) => {
+    const date = new Date(start.getFullYear(), start.getMonth(), start.getDate() + i)
+    const key = dayKey(date)
+    return { key, day: date.getDate(), inMonth: date.getMonth() === first.getMonth(), today: key === todayKey, events: byDay.get(key) ?? [] }
+  })
+})
+function shiftMonth(delta) {
+  cursor.value = new Date(cursor.value.getFullYear(), cursor.value.getMonth() + delta, 1)
+}
+function goToday() {
+  cursor.value = new Date(new Date().getFullYear(), new Date().getMonth(), 1)
+}
+function timeOf(value) {
+  return new Date(value).toLocaleTimeString(locale.value, { hour: '2-digit', minute: '2-digit' })
 }
 
 async function load() {
@@ -247,65 +289,107 @@ onMounted(load)
 </script>
 
 <template>
-  <div class="mx-auto w-full max-w-[1440px] px-6 lg:px-8 py-8">
-    <div class="flex flex-wrap items-center justify-between gap-3 pb-4 border-b border-border">
-      <div>
-        <h1 class="text-[28px] font-bold text-ink">{{ t('events.adminTitle') }}</h1>
-        <p class="mt-1 text-small text-ink-muted">{{ t('events.adminSubtitle') }}</p>
-      </div>
+  <div class="mx-auto w-full max-w-[1600px] px-6 py-6 lg:px-8">
+    <!-- Rasn 4: title, "New event" on the right; a filter card (search,
+         type); then the month grid with Today · ‹ month › · Month/List -->
+    <div class="flex flex-wrap items-center justify-between gap-3">
+      <h1 class="text-[24px] font-semibold text-ink">{{ t('events.adminTitle') }}</h1>
       <AppButton icon="plus" @click="openNew">{{ t('events.newEvent') }}</AppButton>
     </div>
 
-    <div v-if="loading" class="mt-6 space-y-3">
-      <Skeleton v-for="n in 4" :key="n" class="h-20 w-full rounded-xl" />
-    </div>
-    <EmptyState
-      v-else-if="!items.length"
-      class="mt-6"
-      icon="calendar"
-      :title="t('events.empty')"
-      :description="t('events.adminEmptyHint')"
-    />
-
-    <template v-else>
-      <section v-for="group in [{ key: 'upcoming', rows: upcoming }, { key: 'past', rows: past }]" :key="group.key">
-        <h2 v-if="group.rows.length" class="mt-6 mb-4 text-h3 text-ink">
-          {{ t(`events.${group.key}`) }}
-        </h2>
-        <div class="space-y-3">
-          <AppCard v-for="event in group.rows" :key="event.id" class="flex flex-wrap items-center justify-between gap-4 p-5">
-            <div class="min-w-0 flex-1">
-              <div class="flex flex-wrap items-center gap-2 mb-1.5">
-                <p class="truncate text-[15px] font-semibold text-ink">{{ event.title }}</p>
-                <Badge variant="neutral" size="sm">{{ t('eventTypes.' + event.type) }}</Badge>
-                <Badge v-if="event.status === 'CANCELLED'" variant="danger" size="sm">{{ t('events.cancelled') }}</Badge>
-                <Badge v-if="event.mode !== 'OFFLINE'" variant="info" size="sm">{{ t(`events.mode.${event.mode}`) }}</Badge>
-              </div>
-              <p class="mt-0.5 flex flex-wrap items-center gap-x-3 text-small text-ink-muted">
-                <span>{{ formatWhen(event.startAt) }}</span>
-                <span v-if="event.location">· {{ event.location }}</span>
-                <span v-if="event.requiresRegistration">
-                  · {{ event.capacity ? t('events.seats', { taken: event.registeredCount, total: event.capacity }) : t('events.registeredCount', { count: event.registeredCount }) }}
-                </span>
-              </p>
-            </div>
-            <div class="flex shrink-0 gap-2">
-              <AppButton v-if="event.requiresRegistration" variant="secondary" size="sm" icon="users" @click="openSheet(event)">
-                {{ t('events.attendance') }}
-              </AppButton>
-              <AppButton variant="ghost" size="sm" icon="pencil" @click="openEdit(event)" />
-              <AppButton
-                v-if="event.status !== 'CANCELLED'"
-                variant="ghost"
-                size="sm"
-                icon="close"
-                @click="cancelEvent(event)"
-              />
-            </div>
-          </AppCard>
+    <div class="mt-5 rounded-xl border border-border">
+      <div class="flex flex-wrap items-center gap-4 border-b border-border px-5 py-4">
+        <div class="w-64">
+          <AppInput v-model="search" icon="search" :placeholder="t('common.search')" />
         </div>
-      </section>
-    </template>
+        <div class="w-52">
+          <AppSelect v-model="typeFilter" :placeholder="t('events.type')" :options="[{ value: '', label: t('common.all') }, ...TYPES.map((value) => ({ value, label: t('eventTypes.' + value) }))]" />
+        </div>
+      </div>
+
+      <div class="flex flex-wrap items-center justify-between gap-3 px-5 py-3">
+        <button type="button" class="text-[14px] text-ink hover:text-primary" @click="goToday">{{ t('portal.news.today') }}</button>
+        <div class="flex items-center gap-4">
+          <button type="button" class="flex h-8 w-8 items-center justify-center rounded-md text-ink-muted hover:bg-surface-2" :aria-label="t('a11y.previousPage')" @click="shiftMonth(-1)"><Icon name="chevron-left" size="18" /></button>
+          <p class="min-w-[180px] text-center text-[18px] font-medium text-ink">{{ monthLabel }}</p>
+          <button type="button" class="flex h-8 w-8 items-center justify-center rounded-md text-ink-muted hover:bg-surface-2" :aria-label="t('a11y.nextPage')" @click="shiftMonth(1)"><Icon name="chevron-right" size="18" /></button>
+        </div>
+        <div class="flex items-center gap-5 text-[14px]">
+          <button type="button" :class="view === 'month' ? 'font-medium text-ink' : 'text-ink-muted hover:text-ink'" @click="view = 'month'">{{ t('events.views.month') }}</button>
+          <button type="button" :class="view === 'list' ? 'font-medium text-ink' : 'text-ink-muted hover:text-ink'" @click="view = 'list'">{{ t('events.views.list') }}</button>
+        </div>
+      </div>
+
+      <div v-if="loading" class="p-5"><Skeleton class="h-96 w-full rounded-lg" /></div>
+
+      <!-- Month grid: Monday first, 6 rows, the other months' days greyed,
+           today on a green disc, the cell of today tinted -->
+      <div v-else-if="view === 'month'" class="border-t border-border">
+        <div class="grid grid-cols-7 border-b border-border text-center text-[13px] text-ink-muted">
+          <div v-for="d in weekdays" :key="d" class="border-r border-border py-2 last:border-r-0">{{ d }}</div>
+        </div>
+        <div class="grid grid-cols-7">
+          <div
+            v-for="cell in monthCells"
+            :key="cell.key"
+            class="min-h-[120px] border-b border-r border-border p-2 text-right [&:nth-child(7n)]:border-r-0"
+            :class="cell.today ? 'bg-surface-2' : ''"
+          >
+            <span
+              class="inline-flex h-7 min-w-7 items-center justify-center rounded-full px-1 text-[14px]"
+              :class="cell.today ? 'bg-primary font-semibold text-primary-foreground' : cell.inMonth ? 'text-ink' : 'text-ink-faint'"
+            >{{ cell.day }}</span>
+            <ul class="mt-1 space-y-1 text-left">
+              <li v-for="event in cell.events" :key="event.id">
+                <button
+                  type="button"
+                  class="block w-full truncate rounded px-1.5 py-0.5 text-left text-[12px] transition-default"
+                  :class="event.status === 'CANCELLED' ? 'bg-surface-2 text-ink-faint line-through' : 'bg-primary-subtle text-primary hover:bg-primary hover:text-primary-foreground'"
+                  :title="event.title"
+                  @click="openEdit(event)"
+                >
+                  {{ timeOf(event.startAt) }} {{ event.title }}
+                </button>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <!-- List: the two groups as before -->
+      <div v-else class="border-t border-border px-5 py-4">
+        <EmptyState v-if="!filtered.length" icon="calendar" :title="t('events.empty')" :description="t('events.adminEmptyHint')" />
+        <template v-else>
+          <section v-for="group in [{ key: 'upcoming', rows: upcoming }, { key: 'past', rows: past }]" :key="group.key">
+            <h2 v-if="group.rows.length" class="mb-3 mt-4 text-[16px] font-medium text-ink">{{ t(`events.${group.key}`) }}</h2>
+            <div class="divide-y divide-border">
+              <div v-for="event in group.rows" :key="event.id" class="flex flex-wrap items-center justify-between gap-4 py-4">
+                <div class="min-w-0 flex-1">
+                  <div class="mb-1 flex flex-wrap items-center gap-2">
+                    <p class="truncate text-[15px] font-medium text-ink">{{ event.title }}</p>
+                    <Badge variant="neutral" size="sm">{{ t('eventTypes.' + event.type) }}</Badge>
+                    <Badge v-if="event.status === 'CANCELLED'" variant="danger" size="sm">{{ t('events.cancelled') }}</Badge>
+                    <Badge v-if="event.mode !== 'OFFLINE'" variant="info" size="sm">{{ t(`events.mode.${event.mode}`) }}</Badge>
+                  </div>
+                  <p class="flex flex-wrap items-center gap-x-3 text-small text-ink-muted">
+                    <span>{{ formatWhen(event.startAt) }}</span>
+                    <span v-if="event.location">· {{ event.location }}</span>
+                    <span v-if="event.requiresRegistration">
+                      · {{ event.capacity ? t('events.seats', { taken: event.registeredCount, total: event.capacity }) : t('events.registeredCount', { count: event.registeredCount }) }}
+                    </span>
+                  </p>
+                </div>
+                <div class="flex shrink-0 gap-2">
+                  <AppButton v-if="event.requiresRegistration" variant="secondary" size="sm" icon="users" @click="openSheet(event)">{{ t('events.attendance') }}</AppButton>
+                  <AppButton variant="ghost" size="sm" icon="pencil" @click="openEdit(event)" />
+                  <AppButton v-if="event.status !== 'CANCELLED'" variant="ghost" size="sm" icon="close" @click="cancelEvent(event)" />
+                </div>
+              </div>
+            </div>
+          </section>
+        </template>
+      </div>
+    </div>
 
     <!-- Editor -->
     <Modal v-model="editorOpen" :title="draft.id ? t('events.editEvent') : t('events.newEvent')" size="lg">

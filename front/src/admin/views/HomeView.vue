@@ -3,12 +3,14 @@ import { computed, onMounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useAuthStore } from '@/stores/auth'
 import { dashboardApi } from '@/services/dashboard'
+import { newsApi } from '@/services/news'
 import StatCard from '@/admin/components/dashboard/StatCard.vue'
 import RankedListCard from '@/admin/components/dashboard/RankedListCard.vue'
 import StatusBarList from '@/admin/components/dashboard/StatusBarList.vue'
 import Chart from '@/components/ui/Chart.vue'
 import DashboardScopeSwitch from '@/admin/components/dashboard/DashboardScopeSwitch.vue'
 import AppCard from '@/components/ui/AppCard.vue'
+import AppButton from '@/components/ui/AppButton.vue'
 import Skeleton from '@/components/ui/Skeleton.vue'
 import Icon from '@/components/ui/Icon.vue'
 import { apiErrorText } from '@/utils/apiError'
@@ -54,7 +56,21 @@ async function loadDashboard() {
   }
 }
 
-onMounted(loadDashboard)
+// Rasm 1's right column: the latest articles with their comment counts.
+// The feed already carries likes/comments per row (portal §3).
+const newsRows = ref([])
+async function loadNews() {
+  try {
+    newsRows.value = (await newsApi.feed({ limit: 5 })).items
+  } catch {
+    newsRows.value = []
+  }
+}
+
+onMounted(() => {
+  loadDashboard()
+  loadNews()
+})
 
 function minutes(seconds) {
   return Math.round((seconds ?? 0) / 60)
@@ -144,12 +160,11 @@ const taskCompletionItems = computed(
 </script>
 
 <template>
-  <div class="mx-auto w-full max-w-[1440px] px-6 lg:px-8 py-8">
-    <div class="flex flex-wrap items-end justify-between gap-4">
-      <div>
-        <h1 class="text-[28px] font-bold text-ink">{{ t(greetingKey) }}, {{ firstName }}</h1>
-        <p class="mt-1 text-body text-ink-muted">{{ t('admin.dashboard.subtitle') }}</p>
-      </div>
+  <!-- Rasm 1: the dashboard sits straight on the grey ground; its tiles
+       and panels are the white cards. -->
+  <div class="mx-auto w-full max-w-[1600px] px-6 py-6">
+    <div class="flex flex-wrap items-center justify-between gap-4">
+      <h1 class="text-[24px] font-semibold text-ink">{{ t('nav.dashboard') }}</h1>
       <div class="flex flex-wrap items-center gap-3">
         <p v-if="dashboard?.generatedAt" class="text-caption text-ink-faint">
           {{ t('dashboard.generatedAt') }} {{ new Date(dashboard.generatedAt).toLocaleString(locale) }}
@@ -165,9 +180,9 @@ const taskCompletionItems = computed(
 
     <template v-else-if="dashboardLoading">
       <div class="mt-6 grid grid-cols-2 gap-4 lg:grid-cols-4">
-        <Skeleton v-for="i in 4" :key="i" class="h-28 w-full" />
+        <Skeleton v-for="i in 4" :key="i" class="h-24 w-full rounded-2xl" />
       </div>
-      <Skeleton class="mt-6 h-48 w-full" />
+      <Skeleton class="mt-6 h-48 w-full rounded-2xl" />
     </template>
 
     <!-- Fenced, not broken. The company figures cover people this manager
@@ -182,81 +197,102 @@ const taskCompletionItems = computed(
     <p v-else-if="dashboardError" class="mt-6 text-small text-danger">{{ dashboardError }}</p>
 
     <template v-else-if="dashboard">
-      <!-- Primary KPIs -->
-      <div class="mt-6 grid grid-cols-2 gap-4 lg:grid-cols-4">
-        <StatCard :label="t('dashboard.cards.totalEmployees')" :value="dashboard.cards.totalEmployees" icon="users" tone="primary" />
-        <StatCard :label="t('dashboard.cards.mandatoryCourses')" :value="dashboard.cards.mandatoryCourses" icon="graduation-cap" tone="primary" />
-        <StatCard :label="t('dashboard.cards.avgCompletionPercent')" :value="dashboard.cards.avgCompletionPercent" suffix="%" icon="trending-up" tone="success" />
-        <StatCard :label="t('dashboard.cards.overdueAssignments')" :value="dashboard.cards.overdueAssignments" icon="alert-triangle" tone="danger" />
+      <!-- Four tiles -->
+      <div class="mt-5 grid grid-cols-2 gap-4 lg:grid-cols-4">
+        <StatCard :label="t('dashboard.cards.totalCourses')" :value="dashboard.cards.totalCourses" icon="file-text" tone="primary" />
+        <StatCard :label="t('dashboard.cards.totalEmployees')" :value="dashboard.cards.totalEmployees" icon="user" tone="primary" />
+        <StatCard :label="t('dashboard.cards.activeEmployees')" :value="dashboard.cards.activeEmployees" icon="users" tone="primary" />
+        <StatCard :label="t('dashboard.cards.overdueAssignments')" :value="dashboard.cards.overdueAssignments" icon="alert-triangle" :tone="dashboard.cards.overdueAssignments > 0 ? 'danger' : 'primary'" />
       </div>
 
-      <!-- Secondary metrics strip -->
-      <div class="mt-4 grid grid-cols-3 gap-3 lg:grid-cols-6">
-        <StatCard size="compact" :label="t('dashboard.cards.activeEmployees')" :value="dashboard.cards.activeEmployees" />
-        <StatCard size="compact" :label="t('dashboard.cards.totalCourses')" :value="dashboard.cards.totalCourses" />
-        <StatCard size="compact" :label="t('dashboard.cards.completedAssignments')" :value="dashboard.cards.completedAssignments" />
-        <StatCard size="compact" :label="t('dashboard.cards.avgWatchTimeSeconds')" :value="minutes(dashboard.cards.avgWatchTimeSeconds)" suffix=" min" />
-        <StatCard size="compact" :label="t('dashboard.cards.newsEngagementPercent')" :value="dashboard.cards.newsEngagementPercent" suffix="%" />
-        <StatCard size="compact" :label="t('dashboard.cards.activeSessions')" :value="dashboard.cards.activeSessions" />
-      </div>
-
-      <!-- What the platform grew in blocks 3-7: assessment, certificates,
-           events, paths and compliance (8.5). -->
-      <div class="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
-        <StatCard size="compact" :label="t('dashboard.cards.quizAttempts')" :value="dashboard.cards.quizAttempts" />
-        <StatCard size="compact" :label="t('dashboard.cards.quizPassRatePercent')" :value="dashboard.cards.quizPassRatePercent" suffix="%" />
-        <StatCard size="compact" :label="t('dashboard.cards.certificatesIssued')" :value="dashboard.cards.certificatesIssued" />
-        <StatCard size="compact" :label="t('dashboard.cards.certificatesExpiringSoon')" :value="dashboard.cards.certificatesExpiringSoon" />
-        <StatCard size="compact" :label="t('dashboard.cards.upcomingEvents')" :value="dashboard.cards.upcomingEvents" />
-        <StatCard size="compact" :label="t('dashboard.cards.pathEnrollmentsActive')" :value="dashboard.cards.pathEnrollmentsActive" />
-      </div>
-
-      <!-- Attention required -->
-      <section class="mt-8">
-        <h2 class="mb-3 text-h3 text-ink">{{ t('dashboard.attention.title') }}</h2>
-        <AppCard v-if="attentionItems.length === 0" class="flex items-center gap-3">
-          <span class="flex h-9 w-9 items-center justify-center rounded-full bg-success-subtle text-success">
-            <Icon name="check-circle" size="17" />
-          </span>
-          <p class="text-small text-ink-muted">{{ t('dashboard.attention.allClear') }}</p>
-        </AppCard>
-        <div v-else class="divide-y divide-border rounded-lg border border-border bg-surface">
-          <router-link v-for="(item, i) in attentionItems" :key="i" :to="item.to" class="flex items-center justify-between gap-3 p-4 transition-default hover:bg-surface-2">
-            <div class="flex items-center gap-3">
-              <span class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full" :class="toneChip[item.tone]">
-                <Icon :name="item.icon" size="15" />
+      <div class="mt-4 grid grid-cols-1 gap-4 xl:grid-cols-[1fr_minmax(0,0.95fr)]">
+        <!-- Left column -->
+        <div class="space-y-4">
+          <!-- Attention: the reference's "new training requests" row, a
+               badge with the count on a pale circle -->
+          <div class="rounded-2xl bg-surface px-6 py-5 shadow-sm">
+            <div class="flex items-center gap-4">
+              <span class="relative flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-primary-subtle text-primary">
+                <Icon name="alert-circle" size="20" />
+                <span v-if="attentionItems.length" class="absolute -right-1 -top-1 flex h-6 min-w-6 items-center justify-center rounded-full bg-primary px-1.5 text-[12px] font-semibold text-primary-foreground">{{ attentionItems.length }}</span>
               </span>
-              <p class="text-small text-ink">{{ item.text }}</p>
+              <p class="text-[18px] font-medium text-ink">{{ t('dashboard.attention.title') }}</p>
             </div>
-            <span class="flex shrink-0 items-center gap-1 text-caption font-medium text-primary">
-              {{ t('common.viewDetails') }}
-              <Icon name="chevron-right" size="13" />
-            </span>
-          </router-link>
-        </div>
-      </section>
+            <p v-if="attentionItems.length === 0" class="mt-4 flex items-center gap-2 text-small text-ink-muted">
+              <Icon name="check-circle" size="15" class="text-success" />{{ t('dashboard.attention.allClear') }}
+            </p>
+            <div v-else class="mt-4 divide-y divide-border">
+              <router-link v-for="(item, i) in attentionItems" :key="i" :to="item.to" class="flex items-center justify-between gap-3 py-3 transition-default hover:text-primary">
+                <div class="flex items-center gap-3">
+                  <span class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full" :class="toneChip[item.tone]">
+                    <Icon :name="item.icon" size="15" />
+                  </span>
+                  <p class="text-small text-ink">{{ item.text }}</p>
+                </div>
+                <Icon name="chevron-right" size="14" class="text-ink-faint" />
+              </router-link>
+            </div>
+          </div>
 
-      <!-- Training health -->
-      <section class="mt-8">
-        <h2 class="mb-3 text-h3 text-ink">{{ t('dashboard.title') }}</h2>
-        <Chart
-          type="line"
-          :title="t('dashboard.charts.watchTimeByDay')"
-          :series="watchTimeSeries"
-          :format="(seconds) => `${minutes(seconds)} min`"
-        />
-      </section>
+          <!-- Unchecked assignments → grading queue -->
+          <div class="rounded-2xl bg-surface px-6 py-5 shadow-sm">
+            <div class="flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <p class="text-[18px] font-medium text-ink">{{ t('grading.title') }}</p>
+                <p class="text-[13px] text-ink-muted">{{ t('dashboard.cards.quizAttempts') }}: {{ dashboard.cards.quizAttempts }} · {{ t('dashboard.cards.quizPassRatePercent') }}: {{ dashboard.cards.quizPassRatePercent }}%</p>
+              </div>
+              <AppButton v-if="auth.hasPermission('quiz:grade')" variant="secondary" @click="$router.push('/bos/grading')">{{ t('grading.title') }} →</AppButton>
+            </div>
+          </div>
+
+          <!-- Training health -->
+          <div class="[&>div]:border-0 [&>div]:p-0 [&>div]:shadow-none rounded-2xl bg-surface px-6 py-5 shadow-sm">
+            <Chart
+              type="line"
+              :title="t('dashboard.charts.watchTimeByDay')"
+              :series="watchTimeSeries"
+              :format="(seconds) => `${minutes(seconds)} min`"
+            />
+          </div>
+        </div>
+
+        <!-- Right column -->
+        <div class="space-y-4">
+          <div class="rounded-2xl bg-surface px-6 py-5 shadow-sm">
+            <p class="text-[18px] font-medium text-ink">{{ t('dashboard.cards.completedAssignments') }}</p>
+            <p class="text-[13px] text-ink-muted">{{ t('dashboard.cards.avgCompletionPercent') }}: {{ dashboard.cards.avgCompletionPercent }}% · {{ t('dashboard.cards.certificatesIssued') }}: {{ dashboard.cards.certificatesIssued }}</p>
+            <p class="mt-4 text-[28px] font-semibold text-ink">{{ dashboard.cards.completedAssignments }}</p>
+          </div>
+
+          <!-- News comments -->
+          <div class="rounded-2xl bg-surface px-6 py-5 shadow-sm">
+            <div class="flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <p class="text-[18px] font-medium text-ink">{{ t('portal.newsDetail.comments') }}</p>
+                <p class="text-[13px] text-ink-muted">{{ t('dashboard.cards.newsEngagementPercent') }}: {{ dashboard.cards.newsEngagementPercent }}%</p>
+              </div>
+              <AppButton variant="secondary" @click="$router.push('/bos/news')">{{ t('nav.news') }} →</AppButton>
+            </div>
+            <ul class="mt-3 divide-y divide-border">
+              <li v-for="row in newsRows" :key="row.id" class="flex items-center gap-4 py-3">
+                <span class="h-12 w-20 shrink-0 rounded bg-surface-2 bg-cover bg-center" :style="row.cover ? { backgroundImage: `url(${row.cover})` } : {}"></span>
+                <div class="min-w-0 flex-1">
+                  <router-link :to="`/news/${row.id}`" class="block truncate text-[15px] text-ink hover:text-primary">{{ row.title }}</router-link>
+                  <p class="text-[12px] text-ink-muted">{{ row.comments ?? 0 }} · {{ t('portal.newsDetail.comments').toLowerCase() }} · ♡ {{ row.likes ?? 0 }} · 👁 {{ row.views ?? 0 }}</p>
+                </div>
+                <span class="flex h-7 min-w-7 items-center justify-center rounded-full bg-primary px-2 text-[12px] font-semibold text-primary-foreground">{{ row.comments ?? 0 }}</span>
+              </li>
+              <li v-if="!newsRows.length" class="py-6 text-center text-small text-ink-muted">{{ t('dashboard.empty.news') }}</li>
+            </ul>
+          </div>
+        </div>
+      </div>
 
       <!-- Analytics grid -->
-      <section class="mt-8">
+      <section class="mt-4">
         <div class="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
           <RankedListCard :title="t('dashboard.charts.courseCompletion')" :items="courseCompletionItems" :empty-text="t('dashboard.empty.courses')" value-suffix="%" />
           <RankedListCard :title="t('dashboard.charts.mostDifficultCourses')" :items="mostDifficultItems" :empty-text="t('dashboard.empty.courses')" value-suffix="%" />
-          <!-- Bars, not a ranked list: these four are buckets along a scale
-               and their order is 0-25, 25-50, 50-75, 75-100. A ranked list
-               sorts by count, so the same figures came out in a different
-               order every day and the shape of the distribution — which is
-               the only thing this chart is for — was unreadable. -->
           <Chart
             type="bar"
             :title="t('dashboard.charts.employeeProgress')"

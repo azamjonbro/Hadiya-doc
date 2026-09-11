@@ -70,6 +70,9 @@ coursesRouter.delete(
   courseCategoryController.remove
 )
 coursesRouter.get('/tags', requirePermission(PERMISSIONS.COURSE_READ), courseCategoryController.tags)
+// Literal segment, before '/:id' like the others: the admin Q&A page's
+// course list with question counts.
+coursesRouter.get('/questions/summary', requirePermission(PERMISSIONS.COURSE_UPDATE), courseQuestionController.summary)
 coursesRouter.get('/:id', requirePermission(PERMISSIONS.COURSE_READ), courseController.getById)
 coursesRouter.get('/:id/progress', requirePermission(PERMISSIONS.COURSE_READ), courseController.getMyProgress)
 coursesRouter.get(

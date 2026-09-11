@@ -1,4 +1,15 @@
 <script setup>
+// "bugun" / "kecha" / a date — the reference's Published column.
+function relativeDayFactory(t, locale) {
+  return (value) => {
+    if (!value) return '—'
+    const date = new Date(value)
+    const days = Math.floor((Date.now() - date.getTime()) / 86400e3)
+    if (days === 0) return t('portal.news.today')
+    if (days === 1) return t('news.yesterday')
+    return date.toLocaleDateString(locale.value, { day: 'numeric', month: 'short', year: 'numeric' })
+  }
+}
 import { onMounted, reactive, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
@@ -18,6 +29,7 @@ import Icon from '@/components/ui/Icon.vue'
 import { apiErrorText } from '@/utils/apiError'
 
 const { t, locale } = useI18n()
+const relativeDay = relativeDayFactory(t, locale)
 const auth = useAuthStore()
 const router = useRouter()
 
@@ -99,7 +111,7 @@ onMounted(loadFirstPage)
 <template>
   <div class="mx-auto w-full max-w-[1440px] px-6 lg:px-8 py-8">
     <div class="flex items-center justify-between">
-      <h1 class="text-[28px] font-bold text-ink">{{ t('news.title') }}</h1>
+      <h1 class="text-[24px] font-semibold text-ink">{{ t('news.title') }}</h1>
       <AppButton v-if="auth.hasPermission('news:create')" icon="plus" @click="showCreateModal = true">{{ t('news.newArticle') }}</AppButton>
     </div>
 
@@ -109,24 +121,59 @@ onMounted(loadFirstPage)
       <Skeleton v-for="i in 4" :key="i" class="h-20 w-full" />
     </div>
 
-    <div v-else-if="items.length" class="mt-6 space-y-3">
-      <AppCard v-for="item in items" :key="item.id" padding="none">
-        <div class="flex items-center justify-between gap-3 p-4">
-          <div class="min-w-0 cursor-pointer" @click="router.push(`/bos/news/${item.id}`)">
-            <p class="truncate text-small font-medium text-ink">{{ item.title }}</p>
-            <p class="mt-1 flex items-center gap-2">
-              <Badge :variant="statusBadge[item.status]" size="sm">{{ t(`courses.status.${item.status.toLowerCase()}`) }}</Badge>
-              <span class="text-caption text-ink-faint">{{ new Date(item.publishAt).toLocaleDateString(locale) }}</span>
-            </p>
-          </div>
-          <AppButton variant="ghost" size="sm" icon="bar-chart" @click="expandedReportId = expandedReportId === item.id ? null : item.id">
-            {{ t('videoReport.title') }}
-          </AppButton>
-        </div>
-        <div v-if="expandedReportId === item.id" class="px-4 pb-4">
-          <NewsReportPanel :news-id="item.id" />
-        </div>
-      </AppCard>
+    <!-- Rasn 24: thumbnail, title, published, who sees it, readers,
+         ♡, 💬; the report opens under the row -->
+    <div v-else-if="items.length" class="mt-4 overflow-x-auto">
+      <table class="w-full min-w-[900px] text-[14px]">
+        <thead>
+          <tr class="h-11 border-b border-border text-left text-[13px] text-ink-muted">
+            <th class="w-28 pl-3 pr-2 font-medium">{{ t('news.columns.thumb') }}</th>
+            <th class="px-2 font-medium">{{ t('news.columns.title') }}</th>
+            <th class="w-32 px-2 font-medium text-ink">{{ t('news.columns.published') }} <Icon name="chevron-down" size="12" class="inline text-ink-faint" /></th>
+            <th class="w-36 px-2 font-medium">{{ t('news.columns.audience') }}</th>
+            <th class="w-28 px-2 font-medium">{{ t('news.columns.readers') }}</th>
+            <th class="w-16 px-2"><Icon name="heart" size="16" class="text-ink-muted" /></th>
+            <th class="w-16 px-2"><Icon name="message-square" size="16" class="text-ink-muted" /></th>
+            <th class="w-28 pr-3 text-right"><Icon name="settings" size="16" class="inline text-ink-muted" /></th>
+          </tr>
+        </thead>
+        <tbody>
+          <template v-for="item in items" :key="item.id">
+            <tr class="group h-[76px] border-b border-border transition-default hover:bg-surface-2">
+              <td class="pl-3 pr-2">
+                <span class="flex h-14 w-24 items-center justify-center overflow-hidden rounded bg-surface-2 text-ink-faint">
+                  <img v-if="item.cover" :src="item.cover" alt="" class="h-full w-full object-cover" />
+                  <Icon v-else name="image" size="18" />
+                </span>
+              </td>
+              <td class="px-2">
+                <button type="button" class="line-clamp-2 text-left text-ink hover:text-primary" @click="router.push(`/bos/news/${item.id}`)">{{ item.title }}</button>
+              </td>
+              <td class="px-2 text-ink">
+                <template v-if="item.status === 'PUBLISHED'">{{ relativeDay(item.publishAt) }}</template>
+                <span v-else class="text-ink-muted">{{ t('courses.status.draft') }}</span>
+              </td>
+              <td class="px-2 text-ink">
+                <template v-if="item.status !== 'PUBLISHED'">—</template>
+                <template v-else-if="item.departmentTargets?.length || item.roleTargets?.length">{{ [...(item.departmentTargets ?? []), ...(item.roleTargets ?? [])].join(', ') }}</template>
+                <template v-else>{{ t('common.all') }}</template>
+              </td>
+              <td class="px-2 text-ink">{{ item.status === 'PUBLISHED' ? item.views ?? 0 : '—' }}</td>
+              <td class="px-2 text-ink">{{ item.status === 'PUBLISHED' ? item.likes ?? 0 : '—' }}</td>
+              <td class="px-2 text-ink">{{ item.status === 'PUBLISHED' ? item.comments ?? 0 : '—' }}</td>
+              <td class="pr-3 text-right">
+                <span class="flex items-center justify-end gap-1 opacity-0 transition-default focus-within:opacity-100 group-hover:opacity-100">
+                  <button type="button" class="flex h-8 w-8 items-center justify-center rounded-md text-ink-muted transition-default hover:bg-surface-hover hover:text-ink" :aria-label="t('common.edit')" @click="router.push(`/bos/news/${item.id}`)"><Icon name="pencil" size="15" /></button>
+                  <button type="button" class="flex h-8 w-8 items-center justify-center rounded-md text-ink-muted transition-default hover:bg-surface-hover hover:text-ink" :aria-label="t('videoReport.title')" @click="expandedReportId = expandedReportId === item.id ? null : item.id"><Icon name="bar-chart" size="15" /></button>
+                </span>
+              </td>
+            </tr>
+            <tr v-if="expandedReportId === item.id" class="border-b border-border">
+              <td colspan="8" class="px-3 py-4"><NewsReportPanel :news-id="item.id" /></td>
+            </tr>
+          </template>
+        </tbody>
+      </table>
     </div>
 
     <EmptyState v-else icon="newspaper" :title="t('news.empty')" class="mt-6" />

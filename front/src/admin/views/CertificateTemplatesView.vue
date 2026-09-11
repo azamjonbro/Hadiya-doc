@@ -289,7 +289,7 @@ onMounted(loadTemplates)
   <div class="px-6 py-8">
     <div class="flex flex-wrap items-center justify-between gap-4">
       <div>
-        <h1 class="text-[28px] font-bold text-ink">{{ t('certTemplates.title') }}</h1>
+        <h1 class="text-[24px] font-semibold text-ink">{{ t('certTemplates.title') }}</h1>
         <p class="mt-1 text-small text-ink-muted">{{ t('certTemplates.subtitle') }}</p>
       </div>
       <AppButton v-if="tab === 'templates' && !draft" icon="plus" @click="newTemplate">

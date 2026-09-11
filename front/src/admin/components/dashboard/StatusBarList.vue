@@ -25,7 +25,7 @@ const toneChip = {
 </script>
 
 <template>
-  <div class="rounded-lg border border-border bg-surface p-5">
+  <div class="rounded-2xl bg-surface p-5 shadow-sm">
     <h3 class="text-small font-semibold text-ink">{{ title }}</h3>
     <p v-if="items.length === 0" class="mt-4 text-small text-ink-faint">{{ emptyText }}</p>
     <ul v-else class="mt-4 space-y-3">

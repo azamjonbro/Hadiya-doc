@@ -118,6 +118,13 @@ filialida boradi, `main` ga PR orqali qo'shiladi (PR'ni `gh pr merge`
 bilan avtomatik qo'shib bo'lmadi — foydalanuvchi o'zi merge qiladi);
 serverga `git push ssh://homeserver/~/qollanma BRO:main` bilan chiqadi.
 
+**Admin paneli iSpring qobig'ida (2026-09-11):** `rasn/` dagi 27 ta admin
+skrinshot bo'yicha — ikonka reli + bo'lim ustuni + o'rtada qidiruv +
+oq karta (`admin/layouts/{Rail,SubSidebar,AppShell,Topbar}.vue`,
+`nav.js` → `adminSections`). Xarita va ataylab qolgan farqlar:
+`docs/v4/07-admin-reference.md`. Yangi: `/bos/questions` (kurslar
+bo'yicha savollar), `/bos/ojt/sessions`, `GET /courses/questions/summary`.
+
 **UI qayta dizayn (2026-09-11, `676be84`):** xodim sahifalarida to'liq
 kenglikdagi hero banner, admin panelda `text-[28px] font-bold`
 sarlavha, Tabs `pill` varianti, topbar'da chat + bildirishnoma

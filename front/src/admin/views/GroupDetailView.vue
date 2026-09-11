@@ -234,7 +234,7 @@ onMounted(load)
     <template v-else-if="group">
       <div class="mt-5 flex flex-wrap items-start justify-between gap-4">
         <div class="min-w-0">
-          <h1 class="text-[28px] font-bold text-ink">{{ group.name }}</h1>
+          <h1 class="text-[24px] font-semibold text-ink">{{ group.name }}</h1>
           <p v-if="group.description" class="mt-1 text-small text-ink-muted">{{ group.description }}</p>
           <div class="mt-2 flex flex-wrap items-center gap-2">
             <Badge variant="primary" size="sm">{{ t('groups.memberCount', { count: group.memberCount }) }}</Badge>

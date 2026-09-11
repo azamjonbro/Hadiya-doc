@@ -15,6 +15,7 @@ import GeneratedPasswordField from '@/components/ui/GeneratedPasswordField.vue'
 import Modal from '@/components/ui/Modal.vue'
 import FaceEnrollmentWizard from '@/components/face/FaceEnrollmentWizard.vue'
 import Avatar from '@/components/ui/Avatar.vue'
+import Icon from '@/components/ui/Icon.vue'
 import Badge from '@/components/ui/Badge.vue'
 import ProgressBar from '@/components/ui/ProgressBar.vue'
 import Pagination from '@/components/ui/Pagination.vue'
@@ -85,14 +86,16 @@ const filterFields = computed(() => [
   { key: 'status', type: 'select', placeholder: t('users.filters.allStatuses'), options: statusOptions.value },
 ])
 
+// Rasn 6's columns: name (with the id under it), status as an icon,
+// department with the branch as its path, progress, role.
 const columns = computed(() => [
   { key: 'fullName', label: t('users.fields.fullName'), skeletonWidth: 'w-40' },
-  { key: 'role', label: t('users.role'), skeletonWidth: 'w-20' },
-  { key: 'branch', label: t('users.fields.branch') },
+  { key: 'status', label: t('users.status'), skeletonWidth: 'w-6', width: 'w-20' },
   { key: 'department', label: t('users.fields.department') },
-  { key: 'progress', label: t('users.columns.progress'), skeletonWidth: 'w-16' },
-  { key: 'status', label: t('users.status'), skeletonWidth: 'w-16' },
+  { key: 'progress', label: t('users.columns.progress'), skeletonWidth: 'w-16', width: 'w-40' },
+  { key: 'role', label: t('users.role'), skeletonWidth: 'w-20', width: 'w-36' },
 ])
+const filtersOpen = ref(false)
 const PAGE_SIZE = 15
 
 const items = ref([])
@@ -347,29 +350,47 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="mx-auto w-full max-w-[1440px] px-6 lg:px-8 py-8 bg-surface">
-    <div class="flex flex-wrap items-center justify-between gap-3 pb-4 mb-6">
-      <div>
-        <h1 class="text-[28px] font-bold text-ink">{{ t('users.title') }}</h1>
-      </div>
+  <div class="mx-auto w-full max-w-[1440px] px-6 lg:px-8 py-8">
+    <div class="flex flex-wrap items-center justify-between gap-3">
+      <h1 class="text-[24px] font-semibold text-ink">{{ t('users.title') }}</h1>
       <div class="flex items-center gap-2">
+        <button
+          type="button"
+          class="flex h-10 w-10 items-center justify-center rounded-lg bg-surface-2 text-ink-muted transition-default hover:bg-surface-hover hover:text-ink"
+          :aria-label="t('common.filter')"
+          :aria-expanded="filtersOpen"
+          @click="filtersOpen = !filtersOpen"
+        >
+          <Icon name="filter" size="18" />
+        </button>
         <!-- Its own permission (§8.2): creating one account and creating
              three hundred are different decisions. -->
         <AppButton
           v-if="auth.hasPermission('user:import')"
-          variant="outline"
+          variant="secondary"
           icon="upload"
           @click="showImportWizard = true"
         >
           {{ t('userImport.open') }}
         </AppButton>
-        <AppButton v-if="auth.hasPermission('user:create')" icon="plus" @click="showCreateModal = true">{{ t('users.newUser') }}</AppButton>
+        <AppButton v-if="auth.hasPermission('user:create')" icon="user-plus" @click="showCreateModal = true">{{ t('users.newUser') }}</AppButton>
+      </div>
+    </div>
+
+    <!-- "Jami: N" on the left, "1–25 / N" with ‹ › on the right (rasn 6) -->
+    <div class="mt-6 flex flex-wrap items-center justify-between gap-3">
+      <p class="text-[18px] font-medium text-ink">{{ t('common.total') }}: {{ total }}</p>
+      <div v-if="total > 0" class="flex items-center gap-2 text-[13px] text-ink-muted">
+        <span>{{ t('common.pagination.range', { from: rangeStart, to: rangeEnd, total }) }}</span>
+        <button type="button" class="flex h-8 w-8 items-center justify-center rounded-md transition-default hover:bg-surface-2 disabled:opacity-40" :disabled="page === 1" :aria-label="t('a11y.previousPage')" @click="goToPage(page - 1)"><Icon name="chevron-left" size="16" /></button>
+        <button type="button" class="flex h-8 w-8 items-center justify-center rounded-md transition-default hover:bg-surface-2 disabled:opacity-40" :disabled="page >= totalPages" :aria-label="t('a11y.nextPage')" @click="goToPage(page + 1)"><Icon name="chevron-right" size="16" /></button>
       </div>
     </div>
 
     <UserImportWizard v-model="showImportWizard" @imported="loadFirstPage" />
 
     <FilterBar
+      v-if="filtersOpen"
       v-model="filters"
       class="mt-5"
       :fields="filterFields"
@@ -425,8 +446,10 @@ onMounted(() => {
         <Badge variant="neutral" size="sm">{{ row.role }}</Badge>
       </template>
 
-      <template #cell-branch="{ row }"><span class="text-ink-muted">{{ row.branch || '—' }}</span></template>
-      <template #cell-department="{ row }"><span class="text-ink-muted">{{ row.department || '—' }}</span></template>
+      <template #cell-department="{ row }">
+        <p class="text-ink">{{ row.department || '—' }}</p>
+        <p v-if="row.branch" class="text-caption text-ink-muted">{{ row.branch }}</p>
+      </template>
 
       <template #cell-progress="{ row }">
         <div class="flex items-center gap-2">
@@ -436,25 +459,17 @@ onMounted(() => {
       </template>
 
       <template #cell-status="{ row }">
-        <!-- Archived outranks inactive: both accounts are switched off, but
-             only one of them is a person who left, and that is the
-             distinction this column is asked about. -->
-        <Badge v-if="row.isArchived" variant="neutral" dot size="sm">
-          {{ t('users.filters.archived') }}
-        </Badge>
-        <Badge v-else :variant="row.isActive ? 'success' : 'danger'" dot size="sm">
-          {{ row.isActive ? t('users.filters.active') : t('users.filters.inactive') }}
-        </Badge>
+        <!-- Rasn 6: an active account shows nothing; a switched-off one an
+             icon. Archived outranks inactive: both accounts are off, but
+             only one of them is a person who left. -->
+        <span v-if="row.isArchived" class="text-ink-faint" :title="t('users.filters.archived')"><Icon name="log-out" size="16" /></span>
+        <span v-else-if="!row.isActive" class="text-ink-faint" :title="t('users.filters.inactive')"><Icon name="eye-off" size="16" /></span>
+        <span v-else aria-hidden="true"></span>
       </template>
     </DataTable>
 
-    <!-- Kept mounted whenever there are results, even for a single page, so
-         the count stays visible and the table does not jump between pages. -->
-    <div v-if="total > 0" class="mt-4 flex flex-wrap items-center justify-between gap-3">
-      <p class="text-small text-ink-muted">
-        {{ t('common.pagination.range', { from: rangeStart, to: rangeEnd, total }) }}
-      </p>
-      <Pagination v-if="totalPages > 1" :page="page" :total-pages="totalPages" @update:page="goToPage" />
+    <div v-if="totalPages > 1" class="mt-4 flex justify-end">
+      <Pagination :page="page" :total-pages="totalPages" @update:page="goToPage" />
     </div>
 
     <Modal v-model="showCreateModal" :title="t('users.newUser')" size="lg">

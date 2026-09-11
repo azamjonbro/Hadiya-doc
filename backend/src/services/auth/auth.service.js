@@ -1,3 +1,4 @@
+import { resolveRoleScope } from '@lms/shared'
 import { userRepository } from '../../repositories/user.repository.js'
 import { roleRepository } from '../../repositories/role.repository.js'
 import { sessionRepository } from '../../repositories/session.repository.js'
@@ -44,6 +45,10 @@ export function toPublicUser(user, role) {
     avatar: user.avatar,
     role: role.name,
     permissions: role.permissions,
+    // The SPA's router reads this before /users/me has answered: without
+    // it a SUPERADMIN reloading /bos was bounced to the team dashboard as
+    // "scoped" for the first paint.
+    scope: resolveRoleScope(role),
   }
 }
 

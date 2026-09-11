@@ -126,7 +126,7 @@ export const router = createRouter({
       // and nobody else — see the guard.
       meta: { admin: true },
       children: [
-        { path: '', name: 'admin-dashboard', component: () => import('@/admin/views/HomeView.vue'), meta: { titleKey: 'nav.dashboard' } },
+        { path: '', name: 'admin-dashboard', component: () => import('@/admin/views/HomeView.vue'), meta: { titleKey: 'nav.dashboard', plain: true } },
         {
           path: 'users',
           name: 'admin-users-list',
@@ -246,6 +246,21 @@ export const router = createRouter({
           name: 'admin-ojt',
           component: () => import('@/admin/views/OjtChecklistsView.vue'),
           meta: { permission: 'ojt:manage', titleKey: 'ojt.adminTitle' },
+        },
+        // The sessions list is the same page the observer uses (portal §6),
+        // drawn inside the admin shell so the section has both its pages
+        // (rasn 21–22).
+        {
+          path: 'questions',
+          name: 'admin-course-questions',
+          component: () => import('@/admin/views/CourseQuestionsView.vue'),
+          meta: { permission: 'course:update', titleKey: 'admin.qa.title' },
+        },
+        {
+          path: 'ojt/sessions',
+          name: 'admin-ojt-sessions',
+          component: () => import('@/views/OjtSessionsView.vue'),
+          meta: { permission: 'ojt:manage', titleKey: 'ojt.title' },
         },
         {
           path: 'development-plans',
