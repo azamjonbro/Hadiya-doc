@@ -96,7 +96,9 @@
     "yes": "True",
     "no": "False",
     "moveUp": "Move up",
-    "moveDown": "Move down"
+    "moveDown": "Move down",
+    "create": "Create",
+    "total": "Total"
   },
   "auth": {
     "login": {
@@ -396,7 +398,15 @@
     "duplicate": "Duplicate",
     "duplicateTitle": "Duplicate this course?",
     "duplicateMessage": "Everything in “{title}” — modules, videos, documents and tests — is copied into a new draft. Assignments and anyone’s progress are not.",
-    "loadFailed": "Could not load the course list"
+    "loadFailed": "Could not load the course list",
+    "columns": {
+      "name": "Name",
+      "type": "Type",
+      "assignments": "Assignments",
+      "author": "Author",
+      "added": "Added"
+    },
+    "import": "SCORM import"
   },
   "videos": {
     "empty": "No videos uploaded yet",
@@ -1831,7 +1841,13 @@
     "deletedDetached": "Branch “{name}” deleted — cleared from {users} employee(s) and {courses} course(s).",
     "name": "Branch name",
     "renamed": "Renamed — moved {users} employee(s) and {courses} course(s)",
-    "confirmDelete": "Delete the branch “{name}”?"
+    "confirmDelete": "Delete the branch “{name}”?",
+    "columns": {
+      "name": "Department",
+      "code": "Code",
+      "head": "Head",
+      "total": "Total users"
+    }
   },
   "orgLists": {
     "select": "Select",
@@ -1977,7 +1993,8 @@
       "DEPARTMENT": "Sees only employees in their own department.",
       "TEAM": "Sees everyone below them in the org chart, whatever department they are in.",
       "SELF": "Sees only their own data."
-    }
+    },
+    "permissions": "Permissions"
   },
   "team": {
     "title": "My team",

@@ -75,10 +75,12 @@ const alignClass = { left: 'text-left', center: 'text-center', right: 'text-righ
 </script>
 
 <template>
-  <div class="overflow-x-auto rounded-lg border border-border bg-surface">
+  <!-- Flat (rasn 6, 8–10): rules between rows, a 13px grey header, 56px
+       rows — the table sits on the page card, not in a box of its own -->
+  <div class="overflow-x-auto">
     <table class="w-full text-left">
       <thead>
-        <tr class="border-b border-border text-caption font-semibold uppercase tracking-wide text-ink-faint">
+        <tr class="h-11 border-b border-border text-[13px] text-ink-muted">
           <th v-if="selectable" class="w-10 px-4 py-3">
             <input
               type="checkbox"
@@ -116,7 +118,7 @@ const alignClass = { left: 'text-left', center: 'text-center', right: 'text-righ
         <tr
           v-for="(row, index) in rows"
           :key="keyOf(row, index)"
-          class="border-b border-border text-small transition-default last:border-0 hover:bg-surface-2"
+          class="h-14 border-b border-border text-[14px] transition-default last:border-0 hover:bg-surface-2"
           :class="clickableRows ? 'cursor-pointer' : ''"
           @click="clickableRows && emit('row-click', row)"
         >

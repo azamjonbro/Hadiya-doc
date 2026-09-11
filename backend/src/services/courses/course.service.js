@@ -317,8 +317,25 @@ export const courseService = {
         courseRepository.listPage(effectiveQuery),
         courseRepository.count(effectiveQuery),
       ])
+      // The admin library's table (rasn 2) names the author and says
+      // whether the course is assigned; two lookups for the page, not
+      // one per row, and only for people who manage courses.
+      let decorate = (course) => course
+      if (canManageCourses(actor)) {
+        const authorIds = [...new Set(rows.map((row) => row.createdBy && String(row.createdBy)).filter(Boolean))]
+        const [authors, assignments] = await Promise.all([
+          authorIds.length ? userRepository.findByIds(authorIds) : [],
+          courseAssignmentRepository.countByCourses(rows.map((row) => row._id)),
+        ])
+        const nameById = new Map(authors.map((user) => [String(user._id), user.fullName]))
+        decorate = (course) => ({
+          ...course,
+          authorName: course.createdBy ? (nameById.get(course.createdBy) ?? '') : '',
+          assignmentCount: assignments[course.id] ?? 0,
+        })
+      }
       return {
-        items: rows.map(toPublicCourse),
+        items: rows.map(toPublicCourse).map(decorate),
         page: query.page,
         limit: query.limit,
         total,

@@ -17,6 +17,7 @@ import EmptyState from '@/components/ui/EmptyState.vue'
 import Icon from '@/components/ui/Icon.vue'
 import CourseDangerActions from '@/admin/components/CourseDangerActions.vue'
 import { apiErrorText } from '@/utils/apiError'
+import { onClickOutside } from '@/composables/onClickOutside'
 
 const { t, locale } = useI18n()
 const auth = useAuthStore()
@@ -159,21 +160,101 @@ function onCourseArchived(updated) {
   if (index !== -1) items.value[index] = updated
 }
 
+// Rasn 3: the Create menu — the content types the library can start.
+// Each leads to the page that makes one; a type we have no page for is
+// not offered.
+const filtersOpen = ref(false)
+const createOpen = ref(false)
+const createRef = ref(null)
+onClickOutside(createRef, () => (createOpen.value = false))
+const createItems = computed(() =>
+  [
+    { key: 'course', icon: 'layers', tone: 'bg-sky-100 text-sky-600', labelKey: 'portal.courses.typeCourse', to: '/bos/courses/new', permission: 'course:create' },
+    { key: 'path', icon: 'trending-up', tone: 'bg-violet-100 text-violet-600', labelKey: 'portal.courses.typePath', to: '/bos/paths', permission: 'path:manage' },
+    { key: 'quiz', icon: 'check-circle', tone: 'bg-emerald-100 text-emerald-600', labelKey: 'questions.title', to: '/bos/question-banks', permission: 'quiz:configure' },
+    { key: 'task', icon: 'pencil', tone: 'bg-amber-100 text-amber-600', labelKey: 'nav.tasks', to: '/bos/tasks', permission: 'task:create' },
+    { key: 'scorm', icon: 'upload', tone: 'bg-teal-100 text-teal-600', labelKey: 'courses.import', to: '/bos/courses/new?import=scorm', permission: 'course:create' },
+    { key: 'ai', icon: 'sparkles', tone: 'bg-rose-100 text-rose-600', labelKey: 'ai.title', to: '/bos/ai', permission: 'course:create' },
+  ].filter((item) => auth.hasPermission(item.permission)),
+)
+function create(item) {
+  createOpen.value = false
+  router.push(item.to)
+}
+
+const selected = ref([])
+const allSelected = computed(() => items.value.length > 0 && selected.value.length === items.value.length)
+function toggleAll() {
+  selected.value = allSelected.value ? [] : items.value.map((course) => course.id)
+}
+
 onMounted(load)
 </script>
 
 <template>
-  <div class="mx-auto w-full max-w-[1440px] px-6 lg:px-8 py-8">
-    <div class="flex flex-wrap items-center justify-between gap-3 pb-4 border-b border-border mb-6">
+  <div class="mx-auto w-full max-w-[1440px] px-6 py-6 lg:px-8">
+    <!-- Rasn 2: the library name, the collaborator avatars under it, and
+         on the right "···", upload, "create with AI" and the green
+         Create menu -->
+    <div class="flex flex-wrap items-start justify-between gap-3">
       <div>
-        <h1 class="text-[24px] font-semibold text-ink">{{ t('courses.title') }}</h1>
+        <h1 class="text-[24px] font-semibold text-ink">{{ t('admin.section.library') }}</h1>
+        <p class="mt-1 text-[13px] text-ink-muted">{{ t('common.pagination.range', { from: rangeStart, to: rangeEnd, total }) }}</p>
       </div>
-      <AppButton v-if="auth.hasPermission('course:create')" icon="plus" @click="router.push('/bos/courses/new')">{{ t('courses.newCourse') }}</AppButton>
+      <div class="flex flex-wrap items-center gap-2">
+        <button
+          type="button"
+          class="flex h-10 w-10 items-center justify-center rounded-lg bg-surface-2 text-ink-muted transition-default hover:bg-surface-hover hover:text-ink"
+          :aria-label="t('common.filter')"
+          :aria-expanded="filtersOpen"
+          @click="filtersOpen = !filtersOpen"
+        >
+          <Icon name="filter" size="18" />
+        </button>
+        <button
+          v-if="auth.hasPermission('course:create')"
+          type="button"
+          class="flex h-10 w-10 items-center justify-center rounded-lg bg-surface-2 text-ink-muted transition-default hover:bg-surface-hover hover:text-ink"
+          :title="t('courses.import')"
+          :aria-label="t('courses.import')"
+          @click="router.push('/bos/courses/new?import=scorm')"
+        >
+          <Icon name="upload" size="18" />
+        </button>
+        <!-- The AI course button carries the reference's gradient ring -->
+        <span v-if="auth.hasPermission('course:create')" class="rounded-lg bg-gradient-to-r from-rose-500 via-purple-500 to-blue-500 p-[2px]">
+          <button
+            type="button"
+            class="flex h-9 items-center gap-2 rounded-[6px] bg-surface px-4 text-[14px] font-medium text-ink transition-default hover:bg-surface-2"
+            @click="router.push('/bos/ai')"
+          >
+            <Icon name="plus" size="16" />{{ t('ai.title') }}
+          </button>
+        </span>
+        <div v-if="auth.hasPermission('course:create')" ref="createRef" class="relative">
+          <AppButton icon="plus" :aria-expanded="createOpen" aria-haspopup="menu" @click="createOpen = !createOpen">{{ t('common.create') }}</AppButton>
+          <Transition enter-active-class="transition-default" enter-from-class="opacity-0 -translate-y-1" leave-active-class="transition-default" leave-to-class="opacity-0 -translate-y-1">
+            <div v-if="createOpen" class="absolute right-0 z-20 mt-2 grid w-[380px] grid-cols-2 gap-1 rounded-xl bg-surface p-3 shadow-xl" role="menu">
+              <button
+                v-for="item in createItems"
+                :key="item.key"
+                type="button"
+                role="menuitem"
+                class="flex items-center gap-3 rounded-lg px-3 py-2.5 text-left text-[14px] text-ink transition-default hover:bg-surface-2"
+                @click="create(item)"
+              >
+                <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-md" :class="item.tone"><Icon :name="item.icon" size="18" /></span>
+                {{ t(item.labelKey) }}
+              </button>
+            </div>
+          </Transition>
+        </div>
+      </div>
     </div>
 
-    <!-- items-center: unlabelled controls, and the button is shorter than
-         the fields — see the same note in UsersListView. -->
-    <div class="mt-5 flex flex-wrap items-center gap-3">
+    <!-- Filters fold away behind the funnel: the reference's library has a
+         search in the top bar and nothing above the table -->
+    <div v-if="filtersOpen" class="mt-5 flex flex-wrap items-center gap-3">
       <div class="w-64">
         <AppInput v-model="filters.search" icon="search" :placeholder="t('courses.filters.search')" @keyup.enter="loadFirstPage" />
       </div>
@@ -186,20 +267,10 @@ onMounted(load)
         />
       </div>
       <div class="w-48">
-        <BranchSelect
-          v-model="filters.branch"
-          :options="branchOptions"
-          :placeholder="t('courses.filters.allBranches')"
-          @update:model-value="loadFirstPage"
-        />
+        <BranchSelect v-model="filters.branch" :options="branchOptions" :placeholder="t('courses.filters.allBranches')" @update:model-value="loadFirstPage" />
       </div>
       <div class="w-48">
-        <AppSelect
-          v-model="filters.categoryId"
-          :placeholder="t('courses.filters.allCategories')"
-          :options="categoryOptions"
-          @update:model-value="loadFirstPage"
-        />
+        <AppSelect v-model="filters.categoryId" :placeholder="t('courses.filters.allCategories')" :options="categoryOptions" @update:model-value="loadFirstPage" />
       </div>
       <div class="w-44">
         <AppSelect
@@ -210,78 +281,72 @@ onMounted(load)
         />
       </div>
       <div v-if="tagOptions.length" class="w-44">
-        <AppSelect
-          v-model="filters.tag"
-          :placeholder="t('courses.filters.allTags')"
-          :options="tagOptions"
-          @update:model-value="loadFirstPage"
-        />
+        <AppSelect v-model="filters.tag" :placeholder="t('courses.filters.allTags')" :options="tagOptions" @update:model-value="loadFirstPage" />
       </div>
       <AppButton variant="outline" icon="search" @click="loadFirstPage">{{ t('courses.filters.apply') }}</AppButton>
-      <AppButton v-if="hasActiveFilters" variant="ghost" icon="close" @click="clearFilters">
-        {{ t('courses.filters.clear') }}
-      </AppButton>
+      <AppButton v-if="hasActiveFilters" variant="ghost" icon="close" @click="clearFilters">{{ t('courses.filters.clear') }}</AppButton>
     </div>
 
     <p v-if="errorMessage" class="mt-4 text-small text-danger">{{ errorMessage }}</p>
 
-    <div v-if="loading" class="mt-6 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
-      <Skeleton v-for="i in 6" :key="i" class="h-52 w-full" />
+    <div v-if="loading" class="mt-6 space-y-2">
+      <Skeleton v-for="i in 6" :key="i" class="h-14 w-full rounded-lg" />
     </div>
 
-    <div v-else-if="items.length" class="mt-6 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
-      <AppCard
-        v-for="course in items"
-        :key="course.id"
-        padding="none"
-        hover
-        class="group relative flex cursor-pointer flex-col overflow-hidden"
-        @click="router.push(`/bos/courses/${course.id}`)"
-      >
-        <!-- Destructive actions stay hidden until the card is hovered or
-             something inside it has focus, so the grid reads as a catalog
-             rather than a row of delete buttons. Keyboard users get them via
-             focus-within rather than never. -->
-        <CourseDangerActions
-          :course="course"
-          layout="icons"
-          class="absolute right-2 top-2 z-10 opacity-0 transition-default focus-within:opacity-100 group-hover:opacity-100"
-          @archived="onCourseArchived"
-          @deleted="onCourseDeleted"
-        />
-        <div
-          class="flex h-32 items-center justify-center bg-surface-2 text-ink-faint"
-          :style="course.cover ? `background-image:url(${course.cover});background-size:cover;background-position:center` : ''"
-        >
-          <Icon v-if="!course.cover" name="book-open" size="24" />
-        </div>
-        <div class="flex flex-1 flex-col p-4">
-          <Badge :variant="statusBadge[course.status]" size="sm" class="self-start">{{ t(`courses.status.${course.status.toLowerCase()}`) }}</Badge>
-          <h3 class="mt-2.5 line-clamp-2 text-small font-semibold text-ink">{{ course.title }}</h3>
-          <p v-if="course.description" class="mt-1 line-clamp-2 text-caption text-ink-faint">{{ course.description }}</p>
-          <div v-if="course.tags?.length" class="mt-2 flex flex-wrap gap-1">
-            <span v-for="tag in course.tags.slice(0, 3)" :key="tag" class="rounded-full bg-surface-2 px-2 py-0.5 text-caption text-ink-muted">
-              {{ tag }}
-            </span>
-          </div>
-          <p class="mt-auto flex flex-wrap items-center gap-x-2 pt-3 text-caption text-ink-faint">
-            <span>{{ t(`courses.level.${course.level ?? 'BEGINNER'}`) }}</span>
-            <span v-if="course.estimatedMinutes">· {{ t('courses.minutes', { count: course.estimatedMinutes }) }}</span>
-            <span>· {{ new Date(course.updatedAt).toLocaleDateString(locale) }}</span>
-          </p>
-        </div>
-      </AppCard>
+    <!-- The table (rasn 2): checkbox, icon + name, type, assignments,
+         author, added; 56px rows -->
+    <div v-else-if="items.length" class="mt-4 overflow-x-auto">
+      <table class="w-full min-w-[860px] text-[14px]">
+        <thead>
+          <tr class="h-11 border-b border-border text-left text-[13px] text-ink-muted">
+            <th class="w-10 pl-3"><input type="checkbox" class="h-4 w-4 rounded border-border-strong" :checked="allSelected" :aria-label="t('common.all')" @change="toggleAll" /></th>
+            <th class="pr-2 font-medium text-ink">{{ t('courses.columns.name') }} <Icon name="chevron-up" size="12" class="inline text-ink-faint" /></th>
+            <th class="w-36 px-2 font-medium">{{ t('courses.columns.type') }}</th>
+            <th class="w-40 px-2 font-medium">{{ t('courses.columns.assignments') }}</th>
+            <th class="w-48 px-2 font-medium">{{ t('courses.columns.author') }}</th>
+            <th class="w-44 px-2 font-medium">{{ t('courses.columns.added') }}</th>
+            <th class="w-24 pr-3 text-right"><Icon name="settings" size="16" class="inline text-ink-muted" /></th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr
+            v-for="course in items"
+            :key="course.id"
+            class="group h-14 cursor-pointer border-b border-border transition-default last:border-b-0 hover:bg-surface-2"
+            @click="router.push(`/bos/courses/${course.id}`)"
+          >
+            <td class="pl-3" @click.stop><input v-model="selected" type="checkbox" :value="course.id" class="h-4 w-4 rounded border-border-strong" /></td>
+            <td class="pr-2">
+              <span class="flex items-center gap-3">
+                <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-sky-100 text-sky-600 dark:bg-sky-500/15 dark:text-sky-300"><Icon name="layers" size="18" /></span>
+                <span class="min-w-0">
+                  <span class="block truncate text-ink">{{ course.title }}</span>
+                  <Badge v-if="course.status !== 'PUBLISHED'" :variant="statusBadge[course.status]" size="sm">{{ t(`courses.status.${course.status.toLowerCase()}`) }}</Badge>
+                </span>
+              </span>
+            </td>
+            <td class="px-2 text-ink">{{ t('portal.courses.typeCourse') }}</td>
+            <td class="px-2 text-ink">{{ course.assignmentCount ? t('portal.courses.assigned') : '—' }}</td>
+            <td class="px-2 text-ink">{{ course.authorName || '—' }}</td>
+            <td class="px-2 text-ink-muted">{{ new Date(course.createdAt).toLocaleDateString(locale, { day: 'numeric', month: 'short', year: 'numeric' }) }}</td>
+            <td class="pr-3 text-right" @click.stop>
+              <CourseDangerActions
+                :course="course"
+                layout="icons"
+                class="justify-end opacity-0 transition-default focus-within:opacity-100 group-hover:opacity-100"
+                @archived="onCourseArchived"
+                @deleted="onCourseDeleted"
+              />
+            </td>
+          </tr>
+        </tbody>
+      </table>
     </div>
 
     <EmptyState v-else icon="book-open" :title="t('courses.empty')" class="mt-6" />
 
-    <!-- Kept mounted whenever there are results, even for a single page, so
-         the count stays visible and the grid does not jump as pages change. -->
-    <div v-if="total > 0" class="mt-6 flex flex-wrap items-center justify-between gap-3">
-      <p class="text-small text-ink-muted">
-        {{ t('common.pagination.range', { from: rangeStart, to: rangeEnd, total }) }}
-      </p>
-      <Pagination v-if="totalPages > 1" :page="page" :total-pages="totalPages" @update:page="goToPage" />
+    <div v-if="totalPages > 1" class="mt-6 flex justify-end">
+      <Pagination :page="page" :total-pages="totalPages" @update:page="goToPage" />
     </div>
   </div>
 </template>

@@ -7,9 +7,7 @@ import { groupsApi } from '@/services/groups'
 import { useToast } from '@/composables/useToast'
 import AppButton from '@/components/ui/AppButton.vue'
 import AppInput from '@/components/ui/AppInput.vue'
-import AppCard from '@/components/ui/AppCard.vue'
 import Modal from '@/components/ui/Modal.vue'
-import Badge from '@/components/ui/Badge.vue'
 import Skeleton from '@/components/ui/Skeleton.vue'
 import EmptyState from '@/components/ui/EmptyState.vue'
 import Icon from '@/components/ui/Icon.vue'
@@ -72,16 +70,21 @@ onMounted(load)
 
 <template>
   <div class="mx-auto w-full max-w-[1440px] px-6 lg:px-8 py-8">
-    <div class="flex flex-wrap items-center justify-between gap-3">
-      <h1 class="text-[24px] font-semibold text-ink">{{ t('groups.title') }}</h1>
-      <AppButton v-if="canManage" icon="plus" @click="openCreate">{{ t('groups.newGroup') }}</AppButton>
+    <!-- Rasn 10: title, one line of help, "New group" on the right; the
+         search is a small field under it; then a flat table with a
+         group icon, the name and the head-count -->
+    <div class="flex flex-wrap items-start justify-between gap-3">
+      <div>
+        <h1 class="text-[24px] font-semibold text-ink">{{ t('groups.title') }}</h1>
+        <p class="mt-1 max-w-2xl text-[14px] text-ink-muted">{{ t('groups.emptyHint') }}</p>
+      </div>
+      <AppButton v-if="canManage" icon="users" @click="openCreate">{{ t('groups.newGroup') }}</AppButton>
     </div>
 
     <form class="mt-5 flex flex-wrap items-center gap-3" @submit.prevent="load">
       <div class="w-full max-w-xs">
         <AppInput v-model="search" :placeholder="t('groups.searchPlaceholder')" icon="search" />
       </div>
-      <AppButton type="submit" variant="secondary">{{ t('common.filter') }}</AppButton>
     </form>
 
     <div v-if="loading" class="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -101,29 +104,37 @@ onMounted(load)
       </template>
     </EmptyState>
 
-    <div v-else class="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-      <AppCard
-        v-for="group in groups"
-        :key="group.id"
-        hover
-        as="button"
-        class="text-left"
-        @click="router.push(`/bos/groups/${group.id}`)"
-      >
-        <div class="flex items-start justify-between gap-3">
-          <div class="min-w-0">
-            <h2 class="truncate text-h3 text-ink">{{ group.name }}</h2>
-            <p v-if="group.description" class="mt-1 line-clamp-2 text-small text-ink-muted">{{ group.description }}</p>
-          </div>
-          <Icon name="chevron-right" size="16" class="mt-1 shrink-0 text-ink-faint" />
-        </div>
-        <div class="mt-4 flex flex-wrap items-center gap-2">
-          <Badge variant="primary" size="sm">{{ t('groups.memberCount', { count: group.memberCount }) }}</Badge>
-          <Badge variant="info" size="sm">{{ t('groups.courseCount', { count: group.courseCount }) }}</Badge>
-          <span v-if="group.department" class="text-caption text-ink-faint">{{ group.department }}</span>
-        </div>
-      </AppCard>
-    </div>
+    <table v-else class="mt-5 w-full text-[14px]">
+      <thead>
+        <tr class="h-11 border-b border-border text-left text-[13px] text-ink-muted">
+          <th class="pl-3 pr-2 font-medium text-ink">{{ t('groups.fields.name') }} <Icon name="chevron-up" size="12" class="inline text-ink-faint" /></th>
+          <th class="w-48 px-2 font-medium">{{ t('groups.fields.department') }}</th>
+          <th class="w-40 px-2 font-medium">{{ t('courses.title') }}</th>
+          <th class="w-40 pr-3 font-medium">{{ t('users.title') }}</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr
+          v-for="group in groups"
+          :key="group.id"
+          class="h-14 cursor-pointer border-b border-border transition-default last:border-b-0 hover:bg-surface-2"
+          @click="router.push(`/bos/groups/${group.id}`)"
+        >
+          <td class="pl-3 pr-2">
+            <span class="flex items-center gap-3">
+              <Icon name="users" size="18" class="text-ink-muted" />
+              <span class="min-w-0">
+                <span class="block truncate text-ink">{{ group.name }}</span>
+                <span v-if="group.description" class="block truncate text-caption text-ink-muted">{{ group.description }}</span>
+              </span>
+            </span>
+          </td>
+          <td class="px-2 text-ink-muted">{{ group.department || '—' }}</td>
+          <td class="px-2 text-ink">{{ group.courseCount }}</td>
+          <td class="pr-3 text-ink">{{ group.memberCount }}</td>
+        </tr>
+      </tbody>
+    </table>
 
     <Modal v-model="showCreate" :title="t('groups.newGroup')" :description="t('groups.newGroupHint')">
       <form id="create-group" class="space-y-4" @submit.prevent="onCreate">
