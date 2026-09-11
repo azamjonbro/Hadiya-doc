@@ -85,8 +85,10 @@ sahifasi.
 matritsasi, 360° (baholovchilar `managerId` dan, N≥3 muhr), OJT
 (muzlatilgan checklist, hukmlar 12.3 oflayn navbatida) va rivojlanish
 rejasi (progress hosila, CPE `PointsLedger` da). **Ochiq bandlar
-faqat 1.8 (to'xtatilgan) va INF-1…INF-4 (infratuzilma, koddan
-tashqarida).** BLOK 14 doimiy.
+faqat 1.8 (to'xtatilgan), INF-2 (media hosti — nginx bloki tayyor, sudo +
+Cloudflare hostname kerak) va INF-4 (SMTP hisobi — `check:mail` tayyor,
+hisob kerak).** INF-1 va INF-3 2026-09-11 da o'lchab belgilandi. BLOK 14
+doimiy.
 
 **UI qayta dizayn (2026-09-11, `676be84`):** xodim sahifalarida to'liq
 kenglikdagi hero banner, admin panelda `text-[28px] font-bold`

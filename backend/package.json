@@ -24,6 +24,7 @@
     "migrate:points-indexes": "node src/scripts/migratePointsIndexes.js",
     "seed:demo-course": "node src/scripts/seedDemoCourse.js",
     "check:signing": "node src/scripts/checkStorageSigning.js",
+    "check:mail": "node src/scripts/checkMail.js",
     "media:orphans": "node src/scripts/sweepMediaOrphans.js",
     "backup:now": "node src/scripts/runBackup.js",
     "backup:list": "node src/scripts/restoreBackup.js --list",

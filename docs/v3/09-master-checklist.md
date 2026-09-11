@@ -3487,12 +3487,57 @@
 
 ## Infratuzilma qarori (koddan tashqarida, lekin bloklovchi)
 
-- [ ] **INF-1** 🔴 **Ajratilgan server** — hozir 1.9 GB RAM, olti begona sayt
+- [x] **INF-1** 🔴 **Ajratilgan server** — hozir 1.9 GB RAM, olti begona sayt
   bilan bir VM'da. BLOK 9 (SCORM, ffmpeg subtitr) va BLOK 10 (AI) buni
   ko'tarmaydi. Tavsiya: **4 vCPU / 8 GB RAM / 200 GB SSD**, object storage alohida.
+  · 2026-08-31 da uy serveriga ko'chdi (`homeserver`, Cloudflare tunnel).
+  O'lchandi (2026-09-11): **4 vCPU, 11,7 GB RAM (9,2 GB bo'sh), 98 GB SSD
+  (76 GB bo'sh)** — CPU/RAM tavsiyadan yuqori, disk 200 dan kam, lekin
+  hozircha 19 % band. MinIO shu qutida (alohida object storage yo'q).
+  Server hali ham umumiy: pm2 da 7 ta begona ilova (`dacha`, `hadiya`,
+  `hadiya-api`, `harajat`, `hrbot`, `oil`, `swiss-backend`), Mongo ham
+  umumiy — [Tuzoqlar §5–6](../../DAVOM.md) o'z kuchida.
 - [ ] **INF-2** Media uchun ochiq host (`media.sds-max.uz`) — 0.5 bilan bog'liq
-- [ ] **INF-3** CDN — HLS segmentlar va statik fayllar uchun
+  · **Maqsadning o'zi bajarilgan:** 0.5 dan beri presigned havolalar
+  `qollanma.sds-max.uz` (API hosti) ustidan ishlaydi, `check:signing`
+  prod'da 200 qaytaradi. Alohida host esa **tayyorlangan, qo'llanmagan** —
+  `nginx/media.sds-max.uz.conf` (faqat `lms-images` ochiq, `lms-materials`
+  / `lms-chat` presigned, qolgani 404). Qo'llash uchun **sudo va Cloudflare
+  dashboard** kerak, Claude'da ikkalasi yo'q:
+  1. Cloudflare Zero Trust → tunnel → Public hostname: `media.sds-max.uz` → `http://localhost:80`
+  2. `sudo cp ~/qollanma/nginx/media.sds-max.uz.conf /etc/nginx/sites-available/media.sds-max.uz && sudo ln -s /etc/nginx/sites-available/media.sds-max.uz /etc/nginx/sites-enabled/ && sudo nginx -t && sudo systemctl reload nginx`
+  3. `backend/.env`: `S3_SIGNING_ENDPOINT=https://media.sds-max.uz`, `S3_PUBLIC_URL=https://media.sds-max.uz/lms-images`; `pm2 reload qollanma`, `pm2 reload qollanma-worker`
+  4. `npm --prefix backend run check:signing` — ikkala bucket 200 bo'lsa belgilang.
+  Eski `/media/` va `/lms-*/` location'lar API hostida qoladi — bazadagi
+  rasm URL'lari absolyut. Cloudflare Free bitta javobni **100 MB** gacha
+  o'tkazadi — undan katta material yuklab olish har ikki hostda ham
+  uziladi; bu limit host almashtirish bilan ketmaydi.
+- [x] **INF-3** CDN — HLS segmentlar va statik fayllar uchun
+  · **Statik va rasmlar Cloudflare edge'da** — o'lchandi (2026-09-11):
+  `spring.sds-max.uz/assets/*` `immutable, 1y` → ikkinchi so'rovda
+  `cf-cache-status: HIT`; `qollanma.sds-max.uz/media/lms-images/*`
+  `max-age=2592000` → `HIT`. **HLS ataylab CDN'da emas:** segmentlar
+  `/api/v1/videos/:id/:quality/:file?token=` orqali, har foydalanuvchiga
+  qisqa muddatli token bilan (`videoStream.routes.js`) — edge'da
+  keshlash tokenni chetlab o'tish demak; `.ts`/`.m3u8` Cloudflare'ning
+  standart kesh ro'yxatida ham yo'q, API javoblarida Cache-Control yo'q,
+  ya'ni tasodifan ham keshlanmaydi. Kerak bo'lsa yo'l: nginx
+  `auth_request` (backend tokenni tekshiradi) + `proxy_cache` — origin'da
+  kesh, edge'da emas. Hozirgi yuk (bitta quti, ichki foydalanuvchilar)
+  buni talab qilmaydi. **Qolgan bitta narsa sudo kutmoqda:** `/sw.js` va
+  `/manifest.json` uchun `no-cache` (12.1) — `nginx/spring.sds-max.uz.conf`
+  tayyor, `sudo cp … && sudo nginx -t && sudo systemctl reload nginx`.
 - [ ] **INF-4** SMTP provayder hisobi — BLOK 1 uchun shart
+  · **Hisob yo'q** — serverda `SMTP_HOST` bo'sh, har bir xat `SKIPPED`
+  deb yoziladi (parol tiklash, eslatmalar, sertifikat xati **yetib
+  bormaydi**; bell/push ishlaydi). Kod tayyor (1.1, nodemailer, har
+  provayder SMTP gapiradi). Kerak: provayder hisobi (kompaniya pochtasi
+  yoki Brevo/Resend/Mailgun — SPF/DKIM `sds-max.uz` uchun) va
+  `backend/.env` da `SMTP_HOST`, `SMTP_PORT` (587 STARTTLS / 465 TLS),
+  `SMTP_SECURE`, `SMTP_USER`, `SMTP_PASSWORD`, `MAIL_FROM`. Tekshirish
+  skripti qo'shildi: `npm --prefix backend run check:mail -- --to siz@…`
+  — handshake + auth, keyin bitta haqiqiy xat; relay rad etsa 1 bilan
+  chiqadi (login xatosi Gmail relay bilan sinab ko'rildi).
 
 ---
 
