@@ -330,7 +330,9 @@ export const router = createRouter({
           path: 'paths/:id',
           name: 'admin-path-builder',
           component: () => import('@/admin/views/PathBuilderView.vue'),
-          meta: { permission: 'path:manage', titleKey: 'paths.adminTitle' },
+          // Two cards on the grey ground (header, tabs) — the builder draws
+          // them itself, like the admin home.
+          meta: { permission: 'path:manage', titleKey: 'paths.adminTitle', plain: true },
         },
         {
           path: 'question-banks',

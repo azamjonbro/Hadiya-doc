@@ -124,6 +124,8 @@ async function pathProgress(filters, t) {
   if (ids && ids.length === 0) return empty(columns)
 
   const filter = scopeMatch(ids)
+  // The builder's "Hisobotlar" tab asks about one path.
+  if (filters.pathId) filter.pathId = filters.pathId
   const totalRows = await countFor(PathEnrollment, filter)
   const rows = await PathEnrollment.find(filter)
     .sort({ completionPercent: 1 })

@@ -45,6 +45,9 @@ const pathEnrollmentSchema = new Schema(
     // Stamped when the deadline reminder goes out, so the daily job does not
     // send it again every morning until the deadline passes.
     deadlineReminderSentAt: { type: Date, default: null },
+    // Which "N days after the deadline" reminders have gone out, by N —
+    // the builder allows several (1, 3, 7…) and each is sent once.
+    overdueRemindersSent: { type: [Number], default: [] },
   },
   { timestamps: true }
 )

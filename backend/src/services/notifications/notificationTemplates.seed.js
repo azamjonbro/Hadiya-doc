@@ -55,6 +55,9 @@ export const TEMPLATE_TYPES = [
   'EVENT_CANCELLED',
   'EVENT_RESCHEDULED',
   'PATH_ASSIGNED',
+  'PATH_DEADLINE_APPROACHING',
+  'PATH_OVERDUE',
+  'PATH_COMPLETED_ADMIN',
   'COMPLIANCE_RETRAINING_DUE',
   'ATTENTION_ALERT',
   'PROCTORING_FOREIGN_FACE',
@@ -829,6 +832,72 @@ export const TEMPLATE_SEED = {
       body: '{{userName}}, the learning path "{{pathTitle}}" has been assigned to you — {{courseCount}} course(s). Due {{deadline}}.',
       push: 'New learning path: {{pathTitle}}',
       defaults: { deadline: 'with no set date' },
+    },
+  },
+
+  PATH_DEADLINE_APPROACHING: {
+    placeholders: ['userName', 'pathTitle', 'deadline', 'daysLeft', 'appUrl'],
+    uz: {
+      subject: 'Muddat yaqin: {{pathTitle}}',
+      body: '{{userName}}, "{{pathTitle}}" o\'quv yo\'lini tugatishga {{daysLeft}} kun qoldi. Muddat: {{deadline}}.',
+      push: '{{pathTitle}} — {{daysLeft}} kun qoldi',
+      defaults: {},
+    },
+    ru: {
+      subject: 'Скоро срок: {{pathTitle}}',
+      body: '{{userName}}, до срока траектории «{{pathTitle}}» осталось {{daysLeft}} дн. Срок: {{deadline}}.',
+      push: '{{pathTitle}} — осталось {{daysLeft}} дн.',
+      defaults: {},
+    },
+    en: {
+      subject: 'Due soon: {{pathTitle}}',
+      body: '{{userName}}, the learning path "{{pathTitle}}" is due in {{daysLeft}} day(s), on {{deadline}}.',
+      push: '{{pathTitle}} — {{daysLeft}} day(s) left',
+      defaults: {},
+    },
+  },
+
+  PATH_OVERDUE: {
+    placeholders: ['userName', 'pathTitle', 'deadline', 'daysOverdue', 'appUrl'],
+    uz: {
+      subject: 'Muddat o\'tdi: {{pathTitle}}',
+      body: '{{userName}}, "{{pathTitle}}" o\'quv yo\'lining muddati {{deadline}} kuni tugagan — {{daysOverdue}} kun kechikdi. Iltimos, yakunlang.',
+      push: '{{pathTitle}} — muddat o\'tdi',
+      defaults: {},
+    },
+    ru: {
+      subject: 'Срок истёк: {{pathTitle}}',
+      body: '{{userName}}, срок траектории «{{pathTitle}}» истёк {{deadline}} — просрочка {{daysOverdue}} дн. Пожалуйста, завершите её.',
+      push: '{{pathTitle}} — срок истёк',
+      defaults: {},
+    },
+    en: {
+      subject: 'Overdue: {{pathTitle}}',
+      body: '{{userName}}, the learning path "{{pathTitle}}" was due on {{deadline}} — {{daysOverdue}} day(s) ago. Please finish it.',
+      push: '{{pathTitle}} — overdue',
+      defaults: {},
+    },
+  },
+
+  PATH_COMPLETED_ADMIN: {
+    placeholders: ['userName', 'pathTitle', 'learnerName', 'appUrl'],
+    uz: {
+      subject: '{{learnerName}} yo\'lni tugatdi: {{pathTitle}}',
+      body: '{{learnerName}} "{{pathTitle}}" o\'quv yo\'lini yakunladi.',
+      push: '{{learnerName}} — {{pathTitle}} tugatildi',
+      defaults: {},
+    },
+    ru: {
+      subject: '{{learnerName}} завершил(а) траекторию: {{pathTitle}}',
+      body: '{{learnerName}} прошёл(ла) траекторию «{{pathTitle}}».',
+      push: '{{learnerName}} — {{pathTitle}} завершена',
+      defaults: {},
+    },
+    en: {
+      subject: '{{learnerName}} finished: {{pathTitle}}',
+      body: '{{learnerName}} has completed the learning path "{{pathTitle}}".',
+      push: '{{learnerName}} — {{pathTitle}} completed',
+      defaults: {},
     },
   },
 

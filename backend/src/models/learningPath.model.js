@@ -25,8 +25,41 @@ const pathItemSchema = new Schema(
     // Finer than `sequential`: an item that needs two specific earlier ones
     // rather than simply everything before it.
     prerequisiteIds: { type: [Schema.Types.ObjectId], default: [] },
+    // The stage this item sits under on the builder's timeline. Null means
+    // "before the first stage" — a path with no stages at all is still a
+    // flat list.
+    sectionId: { type: Schema.Types.ObjectId, default: null },
+    // BY_DAYS ordering: the item opens this many days after enrolment
+    // ("Kun 10" on the builder). Ignored in the other modes.
+    startDay: { type: Number, min: 0, default: 0 },
+    // Days the learner gets for this one item once it opens; 0 = no deadline
+    // of its own (the path's deadline, if any, still applies).
+    deadlineDays: { type: Number, min: 0, default: 0 },
   },
   { _id: true }
+)
+
+// The four "Bildirishnomalar" switches on the builder. Subject/text are the
+// administrator's own wording for the assignment message, with %TITLE%,
+// %DUE_DATE% and %LINK% filled in; empty means the seeded template.
+const pathNotificationsSchema = new Schema(
+  {
+    assign: {
+      enabled: { type: Boolean, default: true },
+      subject: { type: String, default: '' },
+      text: { type: String, default: '' },
+    },
+    beforeDeadline: {
+      enabled: { type: Boolean, default: false },
+      days: { type: Number, min: 1, max: 365, default: 3 },
+    },
+    afterDeadline: {
+      enabled: { type: Boolean, default: false },
+      days: { type: [Number], default: [1] },
+    },
+    completionToAdmins: { type: Boolean, default: false },
+  },
+  { _id: false }
 )
 
 // Purely presentational grouping ("Week 1", "Safety basics"). The order the
@@ -47,6 +80,14 @@ const learningPathSchema = new Schema(
     slug: { type: String, required: true, unique: true, trim: true, lowercase: true },
     description: { type: String, default: '' },
     cover: { type: String, default: '' },
+    // The small square image in lists; `cover` is the wide one on the page.
+    thumbnail: { type: String, default: '' },
+    // Who answers questions about this programme. Shown on the learner's
+    // page and told when somebody finishes (notifications.completionToAdmins).
+    curatorId: { type: Schema.Types.ObjectId, ref: 'User', default: null },
+    tags: { type: [String], default: [] },
+    // Advertised effort in minutes; 0 = not set.
+    learningTimeMinutes: { type: Number, min: 0, default: 0 },
     kind: {
       type: String,
       enum: ['GENERAL', 'ONBOARDING', 'CERTIFICATION', 'DEVELOPMENT'],
@@ -58,6 +99,11 @@ const learningPathSchema = new Schema(
     // done. Enforced server-side at the point a playback token is issued —
     // a lock that exists only in the sidebar is bypassed by typing the URL.
     sequential: { type: Boolean, default: true },
+    // How the items open: SEQUENTIAL is `sequential: true`; BY_DAYS opens
+    // each item on its `startDay` after enrolment; FREE opens everything at
+    // once. `sequential` is kept in step by the service so the older lock
+    // code keeps reading one boolean.
+    orderMode: { type: String, enum: ['SEQUENTIAL', 'BY_DAYS', 'FREE'], default: 'SEQUENTIAL' },
 
     items: { type: [pathItemSchema], default: [] },
     sections: { type: [pathSectionSchema], default: [] },
@@ -72,6 +118,16 @@ const learningPathSchema = new Schema(
     // How long finishing the path counts for, in days. 0 means it does not
     // expire.
     validityDays: { type: Number, min: 0, default: 0 },
+
+    // Access tab. `inCatalog` is whether a learner may pick the path up
+    // themselves; a path only ever assigned by rule or by hand stays out of
+    // the catalogue. Documents written before the field existed are read as
+    // in the catalogue (path.service: `inCatalog !== false`) so nothing that
+    // was visible disappears.
+    inCatalog: { type: Boolean, default: false },
+    // Days given to a new enrolment when the assigner names no deadline.
+    defaultDeadlineDays: { type: Number, min: 0, default: 0 },
+    notifications: { type: pathNotificationsSchema, default: () => ({}) },
 
     createdBy: { type: Schema.Types.ObjectId, ref: 'User', required: true },
     updatedBy: { type: Schema.Types.ObjectId, ref: 'User', default: null },

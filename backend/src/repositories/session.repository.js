@@ -24,6 +24,19 @@ export const sessionRepository = {
     return Session.findOne({ refreshTokenHash })
   },
 
+  /**
+   * The live end of a rotation chain: S1 → S2 → S3, given S1. Null when the
+   * chain ends in a session that was revoked for real (logout, "sign out
+   * everywhere") rather than replaced.
+   */
+  async findLiveReplacement(session) {
+    let current = session
+    for (let hops = 0; hops < 20 && current?.replacedBy; hops += 1) {
+      current = await Session.findById(current.replacedBy)
+    }
+    return current && !current.revoked ? current : null
+  },
+
   async revoke(sessionId) {
     await Session.updateOne({ _id: sessionId }, { $set: { revoked: true } })
   },
