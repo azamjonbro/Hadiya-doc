@@ -145,10 +145,10 @@ onMounted(load)
             v-for="cat in grouped"
             :key="cat.id"
             type="button"
-            class="flex gap-5 rounded-lg bg-surface p-4 text-left shadow-[0_1px_3px_rgba(0,0,0,0.08)] transition-default hover:shadow-md"
+            class="flex flex-col gap-4 rounded-lg bg-surface p-4 text-left shadow-[0_1px_3px_rgba(0,0,0,0.08)] transition-default hover:shadow-md sm:flex-row sm:gap-5"
             @click="openCategory(cat.id)"
           >
-            <div class="relative h-[92px] w-[164px] shrink-0 overflow-hidden rounded-md bg-surface-2">
+            <div class="relative h-[140px] w-full shrink-0 overflow-hidden rounded-md bg-surface-2 sm:h-[92px] sm:w-[164px]">
               <img v-if="cat.cover" :src="cat.cover" alt="" class="h-full w-full object-cover" />
               <div v-else class="flex h-full w-full items-center justify-center text-white/80" :style="`background:${cat.color}`">
                 <Icon name="book-open" size="32" />
@@ -173,9 +173,9 @@ onMounted(load)
           <article
             v-for="course in visibleCourses"
             :key="course.id"
-            class="flex gap-5 rounded-lg bg-surface p-4 shadow-[0_1px_3px_rgba(0,0,0,0.08)] transition-default hover:shadow-md"
+            class="flex flex-col gap-4 rounded-lg bg-surface p-4 shadow-[0_1px_3px_rgba(0,0,0,0.08)] transition-default hover:shadow-md sm:flex-row sm:gap-5"
           >
-            <router-link :to="`/courses/${course.id}`" class="relative h-[92px] w-[164px] shrink-0 overflow-hidden rounded-md bg-surface-2">
+            <router-link :to="`/courses/${course.id}`" class="relative h-[140px] w-full shrink-0 overflow-hidden rounded-md bg-surface-2 sm:h-[92px] sm:w-[164px]">
               <img v-if="course.cover" :src="course.cover" alt="" class="h-full w-full object-cover" />
               <div v-else class="flex h-full w-full items-center justify-center bg-slate-700 text-white/70">
                 <Icon name="book-open" size="28" />

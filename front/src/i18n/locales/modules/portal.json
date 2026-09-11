@@ -12,7 +12,13 @@
         "groupCompany": "Kompaniya",
         "groupDevelopment": "Rivojlanish",
         "grading": "Vazifalarni tekshirish",
-        "myProfile": "Mening profilim"
+        "myProfile": "Mening profilim",
+        "short": {
+          "home": "Bosh",
+          "courses": "Kurslar",
+          "catalog": "Katalog",
+          "news": "Yangiliklar"
+        }
       },
       "topbar": {
         "birthdays": "Tug'ilgan kunlar",
@@ -80,7 +86,13 @@
         "groupCompany": "Компания",
         "groupDevelopment": "Развитие",
         "grading": "Проверка заданий",
-        "myProfile": "Мой профиль"
+        "myProfile": "Мой профиль",
+        "short": {
+          "home": "Главная",
+          "courses": "Курсы",
+          "catalog": "Каталог",
+          "news": "Новости"
+        }
       },
       "topbar": {
         "birthdays": "Дни рождения",
@@ -148,7 +160,13 @@
         "groupCompany": "Company",
         "groupDevelopment": "Development",
         "grading": "Assignment review",
-        "myProfile": "My profile"
+        "myProfile": "My profile",
+        "short": {
+          "home": "Home",
+          "courses": "Courses",
+          "catalog": "Catalog",
+          "news": "News"
+        }
       },
       "topbar": {
         "birthdays": "Birthdays",

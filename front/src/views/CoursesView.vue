@@ -141,10 +141,10 @@ onMounted(load)
         <ul v-if="visible.length" class="space-y-4">
           <li v-for="item in visible" :key="item.key">
             <article
-              class="flex cursor-pointer gap-7 rounded-lg bg-surface p-7 shadow-[0_1px_3px_rgba(0,0,0,0.08)] transition-default hover:shadow-md"
+              class="flex cursor-pointer flex-col gap-5 rounded-lg bg-surface p-5 shadow-[0_1px_3px_rgba(0,0,0,0.08)] transition-default hover:shadow-md sm:flex-row sm:gap-7 sm:p-7"
               @click="router.push(item.to)"
             >
-              <div class="relative h-[124px] w-[224px] shrink-0 overflow-hidden rounded bg-surface-2">
+              <div class="relative h-[160px] w-full shrink-0 overflow-hidden rounded bg-surface-2 sm:h-[124px] sm:w-[224px]">
                 <img v-if="item.cover" :src="item.cover" alt="" class="h-full w-full object-cover" />
                 <div v-else class="flex h-full w-full items-center justify-center bg-slate-700 text-white/70">
                   <Icon :name="item.kind === 'path' ? 'layers' : 'book-open'" size="40" />

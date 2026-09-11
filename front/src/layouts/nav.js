@@ -76,9 +76,10 @@ export const systemNav = [
   { name: 'settings', path: '/settings', icon: 'settings', labelKey: 'nav.settings' },
 ]
 
+// Short labels: five of them share 400px.
 export const bottomNav = [
-  { name: 'dashboard', path: '/', icon: 'home', labelKey: 'nav.dashboard' },
-  { name: 'courses', path: '/courses', icon: 'book-open', labelKey: 'nav.courses' },
-  { name: 'tasks', path: '/tasks', icon: 'check-square', labelKey: 'nav.tasks' },
-  { name: 'news', path: '/news', icon: 'newspaper', labelKey: 'nav.news' },
+  { name: 'dashboard', path: '/', icon: 'home', labelKey: 'portal.nav.short.home' },
+  { name: 'courses', path: '/courses', icon: 'book-open', labelKey: 'portal.nav.short.courses' },
+  { name: 'catalog', path: '/catalog', icon: 'grid', labelKey: 'portal.nav.short.catalog' },
+  { name: 'news', path: '/news', icon: 'newspaper', labelKey: 'portal.nav.short.news' },
 ]
