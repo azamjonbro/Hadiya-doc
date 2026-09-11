@@ -210,7 +210,7 @@ onMounted(load)
   <div class="px-6 py-8">
     <div class="flex flex-wrap items-center justify-between gap-3">
       <div>
-        <h1 class="text-h1 text-ink">{{ t('competency.title') }}</h1>
+        <h1 class="text-[28px] font-bold text-ink">{{ t('competency.title') }}</h1>
         <p class="mt-1 text-small text-ink-muted">{{ t('competency.subtitle') }}</p>
       </div>
       <AppButton icon="plus" @click="openNew">{{ t('competency.new') }}</AppButton>

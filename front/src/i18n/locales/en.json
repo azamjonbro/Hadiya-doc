@@ -280,6 +280,7 @@
     "creating": "Creating...",
     "loadMore": "Load more",
     "searchPlaceholder": "Search courses...",
+    "itemCount": "{count} items",
     "modules": "modules",
     "videos": "videos",
     "duration": "duration",

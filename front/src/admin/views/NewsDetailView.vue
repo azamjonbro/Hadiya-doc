@@ -101,7 +101,7 @@ onMounted(load)
     <Skeleton v-if="loading" class="mt-5 h-64 w-full" />
 
     <template v-else-if="news">
-      <h1 class="mt-4 text-h1 text-ink">{{ news.title }}</h1>
+      <h1 class="mt-4 text-[28px] font-bold text-ink">{{ news.title }}</h1>
 
       <AppCard class="mt-6">
         <form class="grid grid-cols-1 sm:grid-cols-2 gap-4" @submit.prevent="onSave">

@@ -27,10 +27,10 @@ function onNavigate() {
 </script>
 
 <template>
-  <Transition enter-active-class="transition-default" enter-from-class="opacity-0" leave-active-class="transition-default" leave-to-class="opacity-0">
-    <div v-if="ui.mobileNavOpen" class="fixed inset-0 z-40 bg-slate-950/50 lg:hidden" @click="ui.mobileNavOpen = false" />
-  </Transition>
-
+  <!-- Single root on purpose: AppShell passes `hidden lg:flex` as a class,
+       and a fragment root would silently drop it — the sidebar then sat
+       open on every phone. The old mobile overlay lived here; nothing
+       opens it since the topbar redesign, so it is gone. -->
   <aside
     class="flex h-full shrink-0 flex-col border-r border-border bg-surface transition-[width] duration-200"
     :class="ui.sidebarCollapsed ? 'w-18' : 'w-64'"

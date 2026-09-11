@@ -29,7 +29,7 @@ function onLocaleChange(code) {
 <template>
   <div class="mx-auto w-full max-w-[1440px] px-6 lg:px-8 py-8">
     <div class="flex flex-wrap items-center justify-between gap-3 pb-4 border-b border-border mb-6">
-      <h1 class="text-h1 text-ink">{{ t('settings.title') }}</h1>
+      <h1 class="text-[28px] font-bold text-ink">{{ t('settings.title') }}</h1>
     </div>
 
     <!-- Everyone who can reach this page came from the employee side and can

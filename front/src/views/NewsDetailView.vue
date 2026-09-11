@@ -41,38 +41,47 @@ onBeforeUnmount(() => analytics.stop())
 </script>
 
 <template>
-  <div class="mx-auto max-w-3xl px-6 py-8">
-    <button type="button" class="flex items-center gap-1.5 text-small font-medium text-ink-muted transition-default hover:text-ink" @click="router.push('/news')">
-      <Icon name="chevron-left" size="16" />
-      {{ t('news.title') }}
-    </button>
 
+  <div class="min-h-screen bg-bg pb-12">
     <template v-if="loading">
-      <Skeleton class="mt-6 h-8 w-3/4" />
-      <Skeleton class="mt-3 h-4 w-1/3" />
-      <Skeleton class="mt-6 h-64 w-full" />
+      <div class="mx-auto max-w-6xl px-6 py-8 mt-12 space-y-3">
+        <Skeleton class="h-10 w-64" />
+        <Skeleton class="h-64 w-full rounded-xl" />
+      </div>
     </template>
 
-    <p v-if="errorMessage" class="mt-4 text-small text-danger">{{ errorMessage }}</p>
+    <div v-else-if="errorMessage" class="mx-auto max-w-3xl px-6 py-12">
+      <p class="mt-4 text-small text-danger">{{ errorMessage }}</p>
+    </div>
 
     <template v-else-if="news">
-      <h1 class="mt-6 text-h1 text-ink leading-tight">{{ news.title }}</h1>
-      <div class="mt-4 flex items-center gap-3 text-small text-ink-muted font-medium">
-        <span><Icon name="calendar" size="14" class="inline mr-1" />{{ new Date(news.publishAt).toLocaleDateString(locale, { day: 'numeric', month: 'long', year: 'numeric' }) }}</span>
-        <span>·</span>
-        <span><Icon name="clock" size="14" class="inline mr-1" />{{ readingMinutes(news.content) }} {{ t('common.minRead') }}</span>
+      <!-- Full Width Hero Banner -->
+      <div class="relative w-full bg-surface-2 flex items-end pt-24 pb-10" :style="news.cover ? `background-image:url(${news.cover});background-size:cover;background-position:center` : ''">
+        <div class="absolute inset-0 bg-gradient-to-t from-slate-900 to-slate-900/40" :class="!news.cover ? 'from-indigo-900 via-purple-900 to-indigo-800' : ''"></div>
+        <div v-if="!news.cover" class="absolute inset-0 opacity-20 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAiIGhlaWdodD0iMjAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGNpcmNsZSBjeD0iMiIgY3k9IjIiIHI9IjIiIGZpbGw9IiNmZmYiIGZpbGwtb3BhY2l0eT0iMC4xNSIvPjwvc3ZnPg==')]"></div>
+        
+        <div class="relative z-10 w-full mx-auto max-w-[1440px] px-6 lg:px-8">
+          <button type="button" class="mb-6 flex items-center gap-1.5 text-small font-medium text-white/70 transition-default hover:text-white" @click="router.push('/news')">
+            <Icon name="chevron-left" size="16" />
+            {{ t('news.title') }}
+          </button>
+          
+          <h1 class="text-4xl lg:text-5xl font-bold text-white leading-tight drop-shadow-md">{{ news.title }}</h1>
+          <div class="mt-4 flex flex-wrap items-center gap-3 text-small text-white/80 font-medium">
+            <span class="flex items-center"><Icon name="calendar" size="14" class="mr-1.5" />{{ new Date(news.publishAt).toLocaleDateString(locale, { day: 'numeric', month: 'long', year: 'numeric' }) }}</span>
+            <span>·</span>
+            <span class="flex items-center"><Icon name="clock" size="14" class="mr-1.5" />{{ readingMinutes(news.content) }} {{ t('common.minRead') }}</span>
+          </div>
+        </div>
       </div>
 
-      <div
-        v-if="news.cover"
-        class="mt-8 h-80 rounded-md border border-border shadow-sm bg-surface-2"
-        :style="`background-image:url(${news.cover});background-size:cover;background-position:center`"
-      />
+      <div class="mx-auto w-full max-w-[960px] px-6 lg:px-8 pt-12 pb-16">
 
-      <div class="mt-10 whitespace-pre-wrap text-body leading-relaxed text-ink">{{ news.content }}</div>
+      <div class="whitespace-pre-wrap text-[17px] leading-loose text-ink/90 font-medium">{{ news.content }}</div>
 
       <div v-if="news.tags?.length" class="mt-10 flex flex-wrap gap-2 pt-6 border-t border-border">
         <span v-for="tag in news.tags" :key="tag" class="rounded border border-border bg-surface-2 px-3 py-1 text-caption font-semibold text-ink-muted">#{{ tag }}</span>
+      </div>
       </div>
     </template>
   </div>

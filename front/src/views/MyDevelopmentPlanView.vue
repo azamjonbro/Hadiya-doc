@@ -140,9 +140,20 @@ onMounted(load)
 </script>
 
 <template>
-  <div class="mx-auto max-w-4xl px-6 py-8">
-    <h1 class="text-h1 text-ink">{{ t('devplan.mine') }}</h1>
-    <p class="mt-1 text-small text-ink-muted">{{ t('devplan.mineSubtitle') }}</p>
+
+  <div class="min-h-screen bg-bg pb-12">
+    <!-- Full Width Hero Banner -->
+    <div class="relative w-full bg-surface-2 flex items-end pt-24 pb-10">
+      <div class="absolute inset-0 bg-gradient-to-br from-indigo-900 via-purple-900 to-indigo-800"></div>
+      <div class="absolute inset-0 opacity-20 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAiIGhlaWdodD0iMjAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGNpcmNsZSBjeD0iMiIgY3k9IjIiIHI9IjIiIGZpbGw9IiNmZmYiIGZpbGwtb3BhY2l0eT0iMC4xNSIvPjwvc3ZnPg==')]"></div>
+      
+      <div class="relative z-10 w-full mx-auto max-w-[1440px] px-6 lg:px-8">
+        <h1 class="text-4xl font-bold text-white leading-tight drop-shadow-md">{{ t('devplan.mine') }}</h1>
+        <p class="mt-2 text-white/80 max-w-2xl text-body drop-shadow">{{ t('devplan.mineSubtitle') }}</p>
+      </div>
+    </div>
+
+    <div class="mx-auto w-full max-w-[1440px] px-6 lg:px-8 pt-8">
 
     <div v-if="loading" class="mt-6 space-y-4">
       <Skeleton v-for="n in 2" :key="n" class="h-56 w-full rounded-lg" />
@@ -319,6 +330,7 @@ onMounted(load)
           </div>
         </div>
       </AppCard>
+    </div>
     </div>
   </div>
 </template>

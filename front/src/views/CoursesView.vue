@@ -110,43 +110,46 @@ async function enroll(course) {
 onMounted(load)
 </script>
 
+<template>
+
   <div class="min-h-screen bg-bg pb-12">
-    <!-- Full Width Hero Banner -->
-    <div class="relative w-full bg-surface-2 flex items-end pt-24 pb-10">
-      <div class="absolute inset-0 bg-gradient-to-br from-indigo-900 via-purple-900 to-indigo-800"></div>
-      <div class="absolute inset-0 opacity-30 bg-[url('https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?auto=format&fit=crop&q=80&w=2000')] bg-cover bg-center"></div>
-      <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent"></div>
+    <!-- Premium Full Width Hero Banner -->
+    <div class="relative w-full h-[320px] flex items-center overflow-hidden">
+      <!-- Background Image with zoom animation -->
+      <div class="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?auto=format&fit=crop&q=80&w=2000')] bg-cover bg-center animate-[pulse_10s_ease-in-out_infinite] scale-105"></div>
       
-      <div class="relative z-10 w-full mx-auto max-w-[1440px] px-6 lg:px-8 flex flex-col md:flex-row md:items-end justify-between gap-6">
-        <div>
-          <h1 class="text-4xl font-bold text-white leading-tight drop-shadow-md">{{ t('courses.myLearning') }}</h1>
-          <p class="mt-2 text-white/80 max-w-2xl text-body drop-shadow">{{ t('courses.catalog') }} - Explore and continue your learning journey.</p>
+      <!-- Glassmorphic Gradient Overlays -->
+      <div class="absolute inset-0 bg-gradient-to-r from-primary/90 via-primary/70 to-transparent"></div>
+      <div class="absolute inset-0 bg-gradient-to-t from-bg via-transparent to-transparent"></div>
+      <div class="absolute inset-0 backdrop-blur-[2px]"></div>
+      
+      <div class="relative z-10 w-full mx-auto max-w-[1440px] px-6 lg:px-8 mt-8">
+        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/20 backdrop-blur-md border border-white/30 text-white text-sm font-medium mb-4 shadow-sm">
+          <Icon name="sparkles" size="14" class="text-yellow-300" />
+          {{ t('courses.tabs.catalog') }}
         </div>
-        
-        <div class="flex items-center gap-4 text-small bg-black/30 backdrop-blur-md px-4 py-2.5 rounded-lg border border-white/10">
-          <label class="flex items-center gap-2 cursor-pointer text-white/90 hover:text-white transition-default">
-            <input v-model="showCompleted" type="checkbox" class="h-4 w-4 rounded border-white/30 bg-white/10 text-primary focus:ring-primary/50" />
-            {{ t('courses.showCompleted') }}
-          </label>
-        </div>
+        <h1 class="text-5xl lg:text-6xl font-black text-white leading-tight drop-shadow-lg tracking-tight">{{ t('courses.myLearning') }}</h1>
       </div>
     </div>
 
-    <!-- White Tabs & Search Band -->
-    <div class="bg-surface border-b border-border shadow-sm">
-      <div class="mx-auto max-w-[1440px] px-6 lg:px-8 flex flex-col sm:flex-row sm:items-center justify-between gap-4 py-2 sm:py-0">
-        <Tabs v-model="activeTab" :tabs="tabs" class="-mb-px" />
+    <!-- Glassmorphic Tabs & Search Band -->
+    <div class="relative z-20 mx-auto max-w-[1440px] px-6 lg:px-8 -mt-10 mb-8">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 rounded-2xl bg-surface/80 backdrop-blur-xl border border-white/20 shadow-[0_8px_30px_rgb(0,0,0,0.12)]">
+        <div class="flex items-center">
+          <Tabs v-model="activeTab" :tabs="tabs" variant="pill" class="bg-surface-2/50 rounded-xl p-1" />
+        </div>
         
-        <div class="flex items-center gap-2 sm:py-3">
-          <div class="flex items-center gap-2 rounded-lg border border-border bg-surface-2 px-3 py-2 text-ink-faint focus-within:border-primary/50 focus-within:bg-surface focus-within:shadow-sm w-full sm:w-64 transition-default">
-            <Icon name="search" size="16" />
+        <div class="flex items-center w-full sm:w-72 relative group">
+          <div class="absolute inset-0 bg-primary/5 rounded-xl blur-md group-focus-within:bg-primary/20 transition-all duration-300"></div>
+          <div class="relative flex flex-1 items-center gap-2 rounded-xl border border-border/50 bg-surface/50 backdrop-blur-md px-4 py-2.5 text-ink-faint focus-within:border-primary focus-within:shadow-[0_0_0_2px_rgba(var(--color-primary),0.2)] transition-all duration-300">
+            <Icon name="search" size="18" class="text-ink-muted group-focus-within:text-primary transition-colors" />
             <input type="text" v-model="search" :placeholder="t('users.filters.search')" class="w-full bg-transparent text-small text-ink placeholder:text-ink-muted focus:outline-none" />
           </div>
         </div>
       </div>
     </div>
 
-    <div class="mx-auto w-full max-w-[1440px] px-6 lg:px-8 pt-8">
+    <div class="mx-auto w-full max-w-[1440px] px-6 lg:px-8 pt-2">
       <p v-if="errorMessage" class="mb-6 text-small text-danger">{{ errorMessage }}</p>
 
       <template v-if="loading">
@@ -162,32 +165,48 @@ onMounted(load)
             v-for="a in filteredAssignments"
             :key="a.id"
             padding="none"
-            hover
-            class="cursor-pointer overflow-hidden border border-border shadow-sm flex flex-col rounded-xl hover:shadow-md hover:-translate-y-1 transition-all duration-300"
+            class="group cursor-pointer overflow-hidden border border-border/50 bg-surface shadow-sm rounded-2xl hover:shadow-[0_20px_40px_-15px_rgba(0,0,0,0.1)] hover:-translate-y-1.5 transition-all duration-300 flex flex-col relative"
             @click="router.push(`/courses/${a.courseId}`)"
           >
-          <div
-            class="flex h-36 shrink-0 items-center justify-center bg-surface-2 text-ink-faint"
-            :style="a.course?.cover ? `background-image:url(${a.course.cover});background-size:cover;background-position:center` : ''"
-          >
-            <Icon v-if="!a.course?.cover" name="book-open" size="24" />
-          </div>
-          <div class="flex flex-1 flex-col p-5">
-            <div class="flex items-center gap-2 mb-3">
-              <Badge :variant="a.mandatory ? 'primary' : 'neutral'" size="sm">{{ a.mandatory ? t('courses.mandatory') : t('courses.optional') }}</Badge>
-              <Badge :variant="badgeVariant(a)" size="sm">{{ badgeLabel(a) }}</Badge>
-            </div>
-            <h3 class="line-clamp-2 text-small font-semibold text-ink leading-snug">{{ a.course?.title }}</h3>
-            <p v-if="a.course?.description" class="mt-2 line-clamp-2 text-caption text-ink-muted leading-relaxed">{{ a.course.description }}</p>
-            <div class="mt-auto pt-4 border-t border-border border-dashed">
-              <div class="mb-2 flex items-center justify-between text-caption font-medium text-ink-muted">
-                <span>{{ courseProgress(a.courseId) }}%</span>
-                <span v-if="a.deadline" class="flex items-center gap-1"><Icon name="clock" size="12"/>{{ new Date(a.deadline).toLocaleDateString(locale) }}</span>
+            <!-- Glowing background effect on hover -->
+            <div class="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+            
+            <div
+              class="relative flex h-44 shrink-0 items-center justify-center text-ink-faint overflow-hidden"
+            >
+              <!-- Cover image with zoom effect -->
+              <div class="absolute inset-0 bg-surface-2 transition-transform duration-700 group-hover:scale-105"
+                   :style="a.course?.cover ? `background-image:url(${a.course.cover});background-size:cover;background-position:center` : ''">
               </div>
-              <ProgressBar :value="a.status === 'COMPLETED' ? 100 : courseProgress(a.courseId)" size="sm" />
+              <Icon v-if="!a.course?.cover" name="book-open" size="32" class="relative z-10 drop-shadow-sm transition-transform duration-500 group-hover:scale-110" />
+              <!-- Bottom gradient overlay for text legibility -->
+              <div class="absolute inset-x-0 bottom-0 h-28 bg-gradient-to-t from-black/80 to-transparent"></div>
+              
+              <!-- Badges positioned over the image -->
+              <div class="absolute top-3 left-3 flex flex-wrap gap-1.5 z-20">
+                <Badge :variant="a.mandatory ? 'primary' : 'neutral'" size="sm" class="shadow-sm backdrop-blur-md bg-white/95 text-black border-none font-bold">{{ a.mandatory ? t('courses.mandatory') : t('courses.optional') }}</Badge>
+                <Badge :variant="badgeVariant(a)" size="sm" class="shadow-sm font-bold">{{ badgeLabel(a) }}</Badge>
+              </div>
             </div>
-          </div>
-        </AppCard>
+            
+            <div class="relative flex flex-1 flex-col p-5 z-10">
+              <h3 class="line-clamp-2 text-base font-bold text-ink leading-tight group-hover:text-primary transition-colors duration-300">{{ a.course?.title }}</h3>
+              <p v-if="a.course?.description" class="mt-2.5 line-clamp-2 text-small text-ink-muted leading-relaxed">{{ a.course.description }}</p>
+              
+              <div class="mt-auto pt-6">
+                <div class="mb-2.5 flex items-center justify-between text-small font-semibold text-ink-muted">
+                  <span :class="courseProgress(a.courseId) === 100 ? 'text-success' : 'text-primary'">{{ courseProgress(a.courseId) }}% Complete</span>
+                  <span v-if="a.deadline" class="flex items-center gap-1.5 text-caption text-ink-faint bg-surface-2 px-2.5 py-1 rounded-md border border-border/50 shadow-sm"><Icon name="clock" size="12"/>{{ new Date(a.deadline).toLocaleDateString(locale) }}</span>
+                </div>
+                <div class="w-full bg-surface-2 rounded-full h-1.5 overflow-hidden border border-border/30">
+                  <div class="h-full rounded-full transition-all duration-1000 ease-out" 
+                       :class="a.status === 'COMPLETED' ? 'bg-success shadow-[0_0_10px_rgba(var(--color-success),0.5)]' : 'bg-primary shadow-[0_0_10px_rgba(var(--color-primary),0.5)]'" 
+                       :style="`width: ${a.status === 'COMPLETED' ? 100 : courseProgress(a.courseId)}%`">
+                  </div>
+                </div>
+              </div>
+            </div>
+          </AppCard>
       </div>
       <EmptyState v-else icon="graduation-cap" :title="t('courses.noAssignments')" class="mt-6" />
 
@@ -201,28 +220,38 @@ onMounted(load)
               v-for="course in discoverCatalog"
               :key="course.id"
               padding="none"
-              hover
-              class="cursor-pointer overflow-hidden border border-border shadow-sm rounded-xl hover:shadow-md hover:-translate-y-1 transition-all duration-300"
+              class="group cursor-pointer overflow-hidden border border-border/50 bg-surface shadow-sm rounded-2xl hover:shadow-[0_20px_40px_-15px_rgba(0,0,0,0.1)] hover:-translate-y-1.5 transition-all duration-300 flex flex-col relative"
               @click="router.push(`/courses/${course.id}`)"
             >
+            <div class="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+            
             <div
-              class="flex h-32 items-center justify-center bg-surface-2 text-ink-faint"
-              :style="course.cover ? `background-image:url(${course.cover});background-size:cover;background-position:center` : ''"
+              class="relative flex h-40 items-center justify-center text-ink-faint overflow-hidden"
             >
-              <Icon v-if="!course.cover" name="book-open" size="24" />
+              <!-- Cover image with zoom effect -->
+              <div class="absolute inset-0 bg-surface-2 transition-transform duration-700 group-hover:scale-105"
+                   :style="course.cover ? `background-image:url(${course.cover});background-size:cover;background-position:center` : ''">
+              </div>
+              <Icon v-if="!course.cover" name="book-open" size="32" class="relative z-10 drop-shadow-sm transition-transform duration-500 group-hover:scale-110" />
+              <!-- Bottom gradient overlay -->
+              <div class="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-black/60 to-transparent z-10"></div>
             </div>
-            <div class="flex flex-col p-4">
-              <h3 class="line-clamp-2 text-small font-semibold text-ink">{{ course.title }}</h3>
-              <p v-if="course.description" class="mt-1 line-clamp-2 text-caption text-ink-faint">{{ course.description }}</p>
-              <AppButton
-                class="mt-3.5"
-                size="sm"
-                icon="plus"
-                :loading="enrollingId === course.id"
-                @click.stop="enroll(course)"
-              >
-                {{ t('courses.join') }}
-              </AppButton>
+            
+            <div class="relative flex flex-col p-5 z-20 flex-1">
+              <h3 class="line-clamp-2 text-base font-bold text-ink group-hover:text-primary transition-colors duration-300">{{ course.title }}</h3>
+              <p v-if="course.description" class="mt-2 line-clamp-2 text-small text-ink-muted leading-relaxed">{{ course.description }}</p>
+              
+              <div class="mt-auto pt-5">
+                <AppButton
+                  class="w-full shadow-sm hover:shadow-md transition-shadow group-hover:bg-primary-hover"
+                  size="sm"
+                  icon="plus"
+                  :loading="enrollingId === course.id"
+                  @click.stop="enroll(course)"
+                >
+                  {{ t('courses.join') }}
+                </AppButton>
+              </div>
             </div>
           </AppCard>
           </div>

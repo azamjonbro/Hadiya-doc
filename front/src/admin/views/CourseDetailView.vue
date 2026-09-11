@@ -214,7 +214,7 @@ onMounted(load)
     <template v-else-if="course">
       <div class="mt-5 flex flex-wrap items-center justify-between gap-3">
         <div class="flex items-center gap-3">
-          <h1 class="text-h1 text-ink">{{ course.title }}</h1>
+          <h1 class="text-[28px] font-bold text-ink">{{ course.title }}</h1>
           <Badge :variant="statusBadge[course.status]">{{ t(`courses.status.${course.status.toLowerCase()}`) }}</Badge>
         </div>
         <!-- Header rather than inside the edit form: the form is collapsed by

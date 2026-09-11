@@ -330,7 +330,7 @@ onBeforeUnmount(() => clearInterval(typingTimer))
 <template>
   <div class="mx-auto flex h-[calc(100vh-4rem)] w-full max-w-[100rem] flex-col px-3 py-4 sm:px-6 sm:py-6">
     <div class="flex items-baseline justify-between gap-3">
-      <h1 class="text-h1 text-ink">{{ t('chat.title') }}</h1>
+      <h1 class="text-[28px] font-bold text-ink">{{ t('chat.title') }}</h1>
       <p class="text-caption text-ink-muted">
         {{ t('chat.summary', { chats: chat.conversations.length, people: chat.contacts.length }) }}
       </p>

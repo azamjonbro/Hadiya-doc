@@ -85,7 +85,7 @@ onMounted(() => {
         <Icon name="shield" size="18" />
         <span class="text-small">{{ t('verify.heading') }}</span>
       </div>
-      <h1 class="mt-2 text-h1 text-ink">{{ t('verify.title') }}</h1>
+      <h1 class="mt-2 text-[28px] font-bold text-ink">{{ t('verify.title') }}</h1>
       <p class="mt-1 text-small text-ink-muted">{{ t('verify.subtitle') }}</p>
 
       <form class="mt-6 flex gap-2" @submit.prevent="submit">

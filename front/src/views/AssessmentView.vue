@@ -209,6 +209,7 @@ onBeforeUnmount(() => {
 })
 </script>
 
+<template>
   <div class="min-h-screen bg-bg pb-12">
     <!-- Fixed rather than absolute: the sitting cannot start behind it, and
          on a long briefing the check must not be somewhere up the page. -->
@@ -383,6 +384,7 @@ onBeforeUnmount(() => {
               {{ t('assessment.submit') }}
             </AppButton>
           </div>
+        </AppCard>
         </div>
       </template>
 

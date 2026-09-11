@@ -249,7 +249,7 @@ onMounted(() => {
   <div class="px-6 py-8">
     <div class="flex flex-wrap items-center justify-between gap-3">
       <div>
-        <h1 class="text-h1 text-ink">{{ t('ojt.adminTitle') }}</h1>
+        <h1 class="text-[28px] font-bold text-ink">{{ t('ojt.adminTitle') }}</h1>
         <p class="mt-1 text-small text-ink-muted">{{ t('ojt.adminSubtitle') }}</p>
       </div>
       <AppButton icon="plus" @click="openNew">{{ t('ojt.newChecklist') }}</AppButton>

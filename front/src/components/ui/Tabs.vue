@@ -2,19 +2,23 @@
 defineProps({
   modelValue: { type: String, required: true },
   tabs: { type: Array, required: true }, // [{ value, label, count }]
+  variant: { type: String, default: 'line' }, // 'line' or 'pill'
 })
 
 defineEmits(['update:modelValue'])
 </script>
 
 <template>
-  <div class="flex items-center gap-1 overflow-x-auto border-b border-border">
+  <div class="flex items-center gap-1 overflow-x-auto" :class="variant === 'line' ? 'border-b border-border' : ''">
     <button
       v-for="tab in tabs"
       :key="tab.value"
       type="button"
       class="relative flex shrink-0 items-center gap-1.5 px-3.5 py-2.5 text-small font-medium transition-default"
-      :class="modelValue === tab.value ? 'text-ink' : 'text-ink-muted hover:text-ink'"
+      :class="[
+        variant === 'line' ? (modelValue === tab.value ? 'text-ink' : 'text-ink-muted hover:text-ink') : '',
+        variant === 'pill' ? (modelValue === tab.value ? 'bg-surface shadow-sm text-ink rounded-full px-5 py-2' : 'text-ink-muted hover:text-ink rounded-full px-5 py-2') : ''
+      ]"
       @click="$emit('update:modelValue', tab.value)"
     >
       {{ tab.label }}
@@ -26,6 +30,7 @@ defineEmits(['update:modelValue'])
         {{ tab.count }}
       </span>
       <span
+        v-if="variant === 'line'"
         class="absolute inset-x-0 -bottom-px h-0.5 rounded-full transition-default"
         :class="modelValue === tab.value ? 'bg-primary' : 'bg-transparent'"
       />

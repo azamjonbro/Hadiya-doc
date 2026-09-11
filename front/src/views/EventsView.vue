@@ -103,11 +103,20 @@ onMounted(load)
 </script>
 
 <template>
-  <div class="mx-auto max-w-3xl px-6 py-8">
-    <div class="flex items-center justify-between">
-      <h1 class="text-h1 text-ink">{{ t('events.title') }}</h1>
-      <AppButton v-if="auth.hasPermission('event:create')" icon="plus" @click="showCreateModal = true">{{ t('events.newEvent') }}</AppButton>
+
+  <div class="min-h-screen bg-bg pb-12">
+    <!-- Full Width Hero Banner -->
+    <div class="relative w-full bg-surface-2 flex items-end pt-24 pb-10">
+      <div class="absolute inset-0 bg-gradient-to-br from-indigo-900 via-purple-900 to-indigo-800"></div>
+      <div class="absolute inset-0 opacity-20 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAiIGhlaWdodD0iMjAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGNpcmNsZSBjeD0iMiIgY3k9IjIiIHI9IjIiIGZpbGw9IiNmZmYiIGZpbGwtb3BhY2l0eT0iMC4xNSIvPjwvc3ZnPg==')]"></div>
+      
+      <div class="relative z-10 w-full mx-auto max-w-[1440px] px-6 lg:px-8 flex items-center justify-between">
+        <h1 class="text-4xl font-bold text-white leading-tight drop-shadow-md">{{ t('events.title') }}</h1>
+        <AppButton v-if="auth.hasPermission('event:create')" icon="plus" variant="primary" class="shadow-lg shadow-primary/20 bg-white text-primary hover:bg-white/90" @click="showCreateModal = true">{{ t('events.newEvent') }}</AppButton>
+      </div>
     </div>
+
+    <div class="mx-auto w-full max-w-[1440px] px-6 lg:px-8 pt-8">
 
     <p v-if="errorMessage" class="mt-4 text-small text-danger">{{ errorMessage }}</p>
 
@@ -167,5 +176,6 @@ onMounted(load)
         </div>
       </form>
     </Modal>
+    </div>
   </div>
 </template>

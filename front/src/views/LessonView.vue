@@ -204,31 +204,42 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <div class="mx-auto max-w-3xl px-6 py-8">
-    <button
-      type="button"
-      class="flex items-center gap-1.5 text-small text-ink-muted transition-default hover:text-ink"
-      @click="lesson ? router.push(`/courses/${lesson.courseId}`) : router.back()"
-    >
-      <Icon name="chevron-left" size="16" />
-      {{ t('common.goBack') }}
-    </button>
 
-    <div v-if="loading" class="mt-6 space-y-3">
+  <div class="min-h-screen bg-bg pb-12">
+    <div v-if="loading" class="mx-auto max-w-4xl px-6 py-8 mt-12 space-y-3">
       <Skeleton class="h-9 w-72" />
       <Skeleton class="h-24 w-full rounded-xl" />
       <Skeleton class="h-24 w-full rounded-xl" />
     </div>
 
-    <p v-else-if="errorMessage" class="mt-6 text-small text-danger">{{ errorMessage }}</p>
+    <p v-else-if="errorMessage" class="mx-auto max-w-3xl px-6 mt-6 text-small text-danger">{{ errorMessage }}</p>
 
     <template v-else-if="lesson">
-      <header class="mt-4 border-b border-border pb-4">
-        <div class="flex items-start justify-between gap-3">
-          <h1 class="text-h1 text-ink">{{ lesson.title }}</h1>
-          <Badge v-if="completed" variant="success" size="sm">{{ t('lesson.completed') }}</Badge>
+      <!-- Full Width Hero Banner -->
+      <div class="relative w-full bg-surface-2 flex items-end pt-24 pb-10">
+        <div class="absolute inset-0 bg-gradient-to-br from-indigo-900 via-purple-900 to-indigo-800"></div>
+        <div class="absolute inset-0 opacity-20 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAiIGhlaWdodD0iMjAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGNpcmNsZSBjeD0iMiIgY3k9IjIiIHI9IjIiIGZpbGw9IiNmZmYiIGZpbGwtb3BhY2l0eT0iMC4xNSIvPjwvc3ZnPg==')]"></div>
+        
+        <div class="relative z-10 w-full mx-auto max-w-[1440px] px-6 lg:px-8">
+          <button
+            type="button"
+            class="mb-6 flex items-center gap-1.5 text-small text-white/70 hover:text-white transition-default"
+            @click="lesson ? router.push(`/courses/${lesson.courseId}`) : router.back()"
+          >
+            <Icon name="chevron-left" size="16" />
+            {{ t('common.goBack') }}
+          </button>
+          
+          <div class="flex items-start justify-between gap-3">
+            <h1 class="text-4xl font-bold text-white leading-tight drop-shadow-md">{{ lesson.title }}</h1>
+            <Badge v-if="completed" variant="success" size="sm" class="shadow-lg">{{ t('lesson.completed') }}</Badge>
+          </div>
+          <p v-if="lesson.description" class="mt-2 text-white/80 max-w-2xl text-body drop-shadow">{{ lesson.description }}</p>
         </div>
-        <p v-if="lesson.description" class="mt-1.5 text-small text-ink-muted">{{ lesson.description }}</p>
+      </div>
+
+      <div class="mx-auto w-full max-w-[960px] px-6 lg:px-8 pt-8">
+        <header class="border-b border-border pb-4">
         <!-- 12.2 — read from the saved copy. Said plainly, because
              progress is not being recorded from here. -->
         <p v-if="fromOffline" class="mt-2 flex items-center gap-1.5 text-caption text-warning">
@@ -267,6 +278,7 @@ onBeforeUnmount(() => {
           <Icon name="check-circle" size="15" />
           {{ t('lesson.completedNote') }}
         </p>
+      </div>
       </div>
     </template>
   </div>

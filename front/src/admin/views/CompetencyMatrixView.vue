@@ -298,7 +298,7 @@ onMounted(() => {
   <div class="px-6 py-8">
     <div class="flex flex-wrap items-center justify-between gap-3">
       <div>
-        <h1 class="text-h1 text-ink">{{ t('competency.matrix') }}</h1>
+        <h1 class="text-[28px] font-bold text-ink">{{ t('competency.matrix') }}</h1>
         <p class="mt-1 text-small text-ink-muted">{{ t('competency.matrixSubtitle') }}</p>
       </div>
       <AppButton variant="secondary" size="sm" icon="refresh" :loading="loading" @click="load">

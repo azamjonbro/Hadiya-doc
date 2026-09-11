@@ -378,18 +378,29 @@ onUnmounted(() => stopWatchingQueue?.())
 </script>
 
 <template>
-  <div class="mx-auto w-full max-w-2xl px-4 py-5 pb-24 sm:px-6">
-    <AppButton
-      variant="ghost"
-      size="sm"
-      icon="arrow-left"
-      class="-ml-2"
-      @click="router.push({ name: 'ojt-sessions' })"
-    >
-      {{ t('ojt.backToSessions') }}
-    </AppButton>
+  <div class="min-h-screen bg-bg pb-12">
+    <!-- Full Width Hero Banner -->
+    <div class="relative w-full bg-surface-2 flex items-end pt-24 pb-10">
+      <div class="absolute inset-0 bg-gradient-to-br from-indigo-900 via-purple-900 to-indigo-800"></div>
+      <div class="absolute inset-0 opacity-20 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAiIGhlaWdodD0iMjAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGNpcmNsZSBjeD0iMiIgY3k9IjIiIHI9IjIiIGZpbGw9IiNmZmYiIGZpbGwtb3BhY2l0eT0iMC4xNSIvPjwvc3ZnPg==')]"></div>
+      
+      <div class="relative z-10 w-full mx-auto max-w-[1440px] px-6 lg:px-8">
+        <button
+          type="button"
+          class="mb-6 flex items-center gap-1.5 text-small font-medium text-white/70 transition-default hover:text-white"
+          @click="router.push({ name: 'ojt-sessions' })"
+        >
+          <Icon name="arrow-left" size="16" />
+          {{ t('ojt.backToSessions') }}
+        </button>
+        <h1 class="text-4xl font-bold text-white leading-tight drop-shadow-md" v-if="session">{{ session.traineeName }}</h1>
+        <h1 class="text-4xl font-bold text-white leading-tight drop-shadow-md" v-else>{{ t('ojt.title') }}</h1>
+      </div>
+    </div>
 
-    <div v-if="loading" class="mt-4 space-y-3">
+    <div class="mx-auto w-full max-w-[1440px] px-6 lg:px-8 pt-8">
+      <div class="mx-auto max-w-4xl">
+      <div v-if="loading" class="space-y-3">
       <Skeleton class="h-28 w-full rounded-lg" />
       <Skeleton v-for="n in 3" :key="n" class="h-36 w-full rounded-lg" />
     </div>
@@ -599,5 +610,7 @@ onUnmounted(() => stopWatchingQueue?.())
         </template>
       </AppCard>
     </template>
+      </div>
+    </div>
   </div>
 </template>

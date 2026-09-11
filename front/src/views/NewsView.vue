@@ -59,6 +59,8 @@ async function loadMore() {
 onMounted(load)
 </script>
 
+<template>
+
   <div class="min-h-screen bg-bg pb-12">
     <!-- Full Width Hero Banner -->
     <div class="relative w-full bg-primary flex flex-col justify-center items-center py-24 px-6">
@@ -106,7 +108,7 @@ onMounted(load)
             <div class="mb-4">
               <Badge variant="primary">{{ t('news.featured') }}</Badge>
             </div>
-            <h2 class="text-h1 text-ink leading-tight">{{ featured.title }}</h2>
+            <h2 class="text-[28px] font-bold text-ink leading-tight">{{ featured.title }}</h2>
             <div class="mt-5 flex items-center gap-2 text-small font-medium text-ink-muted">
               <span><Icon name="calendar" size="14" class="inline mr-1" />{{ new Date(featured.publishAt).toLocaleDateString(locale, { day: 'numeric', month: 'long', year: 'numeric' }) }}</span>
               <span>·</span>

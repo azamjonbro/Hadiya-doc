@@ -202,7 +202,7 @@ onMounted(async () => {
     <template v-else-if="path">
       <div class="mt-4 flex flex-wrap items-start justify-between gap-4">
         <div class="min-w-0">
-          <h1 class="text-h1 text-ink">{{ path.title }}</h1>
+          <h1 class="text-[28px] font-bold text-ink">{{ path.title }}</h1>
           <div class="mt-1.5 flex flex-wrap items-center gap-2">
             <Badge :variant="path.status === 'PUBLISHED' ? 'success' : 'neutral'" size="sm">
               {{ t(`paths.status.${path.status}`) }}

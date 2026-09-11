@@ -109,29 +109,41 @@ onMounted(load)
 </script>
 
 <template>
-  <div class="mx-auto max-w-2xl px-6 py-8">
-    <button type="button" class="flex items-center gap-1.5 text-small text-ink-muted hover:text-ink" @click="router.back()">
-      <Icon name="chevron-left" size="16" />
-      {{ t('common.goBack') }}
-    </button>
 
-    <div v-if="loading" class="mt-6 space-y-3">
+  <div class="min-h-screen bg-bg pb-12">
+    <div v-if="loading" class="mx-auto max-w-6xl px-6 py-8 mt-12 space-y-3">
       <Skeleton class="h-10 w-64" />
-      <Skeleton class="h-32 w-full rounded-xl" />
+      <Skeleton class="h-64 w-full rounded-xl" />
     </div>
 
     <template v-else-if="assignment">
-      <h1 class="mt-4 text-h1 text-ink">{{ assignment.title }}</h1>
-      <div class="mt-2 flex flex-wrap items-center gap-2 text-caption text-ink-faint">
-        <span v-if="assignment.dueAt">
-          {{ t('homework.due', { date: new Date(assignment.dueAt).toLocaleDateString(locale) }) }}
-        </span>
-        <Badge v-if="state.late && !state.closed" variant="warning" size="sm">{{ t('homework.lateNow') }}</Badge>
-        <Badge v-if="state.closed" variant="danger" size="sm">{{ t('homework.closed') }}</Badge>
-        <span v-if="assignment.maxAttempts">
-          · {{ t('homework.attemptsLeft', { used: handedIn.length, total: assignment.maxAttempts }) }}
-        </span>
+      <!-- Full Width Hero Banner -->
+      <div class="relative w-full bg-surface-2 flex items-end pt-24 pb-10">
+        <div class="absolute inset-0 bg-gradient-to-br from-indigo-900 via-purple-900 to-indigo-800"></div>
+        <div class="absolute inset-0 opacity-20 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAiIGhlaWdodD0iMjAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGNpcmNsZSBjeD0iMiIgY3k9IjIiIHI9IjIiIGZpbGw9IiNmZmYiIGZpbGwtb3BhY2l0eT0iMC4xNSIvPjwvc3ZnPg==')]"></div>
+        
+        <div class="relative z-10 w-full mx-auto max-w-[1440px] px-6 lg:px-8">
+          <button type="button" class="mb-6 flex items-center gap-1.5 text-small text-white/70 hover:text-white transition-default" @click="router.back()">
+            <Icon name="chevron-left" size="16" />
+            {{ t('common.goBack') }}
+          </button>
+          
+          <h1 class="text-4xl font-bold text-white leading-tight drop-shadow-md">{{ assignment.title }}</h1>
+          <div class="mt-4 flex flex-wrap items-center gap-2 text-caption text-white/80">
+            <span v-if="assignment.dueAt">
+              {{ t('homework.due', { date: new Date(assignment.dueAt).toLocaleDateString(locale) }) }}
+            </span>
+            <Badge v-if="state.late && !state.closed" variant="warning" size="sm">{{ t('homework.lateNow') }}</Badge>
+            <Badge v-if="state.closed" variant="danger" size="sm">{{ t('homework.closed') }}</Badge>
+            <span v-if="assignment.maxAttempts">
+              · {{ t('homework.attemptsLeft', { used: handedIn.length, total: assignment.maxAttempts }) }}
+            </span>
+          </div>
+        </div>
       </div>
+
+      <div class="mx-auto w-full max-w-[1440px] px-6 lg:px-8 pt-8 grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div class="lg:col-span-2 space-y-6">
 
       <p v-if="assignment.instructions" class="mt-4 whitespace-pre-wrap text-small text-ink-muted">
         {{ assignment.instructions }}
@@ -198,6 +210,8 @@ onMounted(load)
       <p v-else class="mt-6 text-small text-ink-muted">
         {{ state.closed ? t('homework.closedHint') : t('homework.noAttemptsLeft') }}
       </p>
+        </div>
+      </div>
     </template>
   </div>
 </template>

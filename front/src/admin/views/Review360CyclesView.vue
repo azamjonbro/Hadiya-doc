@@ -439,7 +439,7 @@ onMounted(async () => {
   <div class="px-6 py-8">
     <div class="flex flex-wrap items-center justify-between gap-3">
       <div>
-        <h1 class="text-h1 text-ink">{{ t('review360.title') }}</h1>
+        <h1 class="text-[28px] font-bold text-ink">{{ t('review360.title') }}</h1>
         <p class="mt-1 text-small text-ink-muted">{{ t('review360.subtitle') }}</p>
       </div>
       <AppButton v-if="canManage" icon="plus" @click="tab === 'cycles' ? openNewCycle() : openNewTemplate()">

@@ -238,6 +238,8 @@ async function load() {
 onMounted(load)
 </script>
 
+<template>
+
   <div class="min-h-screen bg-bg pb-12">
     <template v-if="loading">
       <div class="mx-auto max-w-6xl px-6 py-8">
@@ -306,7 +308,7 @@ onMounted(load)
           <div v-if="progress" class="hidden md:flex items-center gap-4 py-3">
             <div class="flex flex-col items-end">
               <span class="text-caption font-semibold text-ink">{{ progress.completionPercent ?? 0 }}% {{ t('videos.completed') }}</span>
-              <span class="text-[11px] text-ink-faint">{{ progress.completedItems }}/{{ progress.totalItems }} items</span>
+              <span class="text-[11px] text-ink-faint">{{ progress.completedItems }}/{{ progress.totalItems }}</span>
             </div>
             <div class="w-32">
               <ProgressBar :value="progress.completionPercent ?? 0" size="sm" :variant="progress.completed ? 'success' : 'primary'" />
@@ -327,7 +329,7 @@ onMounted(load)
                   <p class="mt-1 text-small font-semibold text-ink">{{ topic.title }}</p>
                 </div>
                 <div class="flex items-center gap-3">
-                  <span class="text-caption font-medium text-ink-faint">{{ topicItemCount(topic.id) }} items</span>
+                  <span class="text-caption font-medium text-ink-faint">{{ t('courses.itemCount', { count: topicItemCount(topic.id) }) }}</span>
                   <Icon :name="openTopics.has(topic.id) ? 'chevron-up' : 'chevron-down'" size="16" class="text-ink-muted" />
                 </div>
               </button>

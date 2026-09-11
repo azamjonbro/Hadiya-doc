@@ -110,7 +110,7 @@ onMounted(load)
   <div class="mx-auto w-full max-w-[1440px] px-6 lg:px-8 py-8">
     <div class="flex items-center justify-between">
       <div>
-        <h1 class="text-h1 text-ink">{{ t('notifications.title') }}</h1>
+        <h1 class="text-[28px] font-bold text-ink">{{ t('notifications.title') }}</h1>
         <p v-if="unreadCount > 0" class="mt-1 text-small text-ink-muted">{{ unreadCount }} unread</p>
       </div>
       <AppButton variant="ghost" size="sm" icon="check-square" :disabled="unreadCount === 0" @click="markAllRead">

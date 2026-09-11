@@ -280,6 +280,7 @@
     "creating": "Создание...",
     "loadMore": "Показать ещё",
     "searchPlaceholder": "Поиск курсов...",
+    "itemCount": "{count} элем.",
     "modules": "модулей",
     "videos": "видео",
     "duration": "длительность",

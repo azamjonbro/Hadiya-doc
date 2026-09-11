@@ -235,7 +235,7 @@ const highlights = [
         <!-- Password accepted, a code from the authenticator app still
              stands between this login and a session. -->
         <template v-if="pendingTwoFactorToken">
-          <h1 class="text-h1 text-ink">{{ t('auth.twoFactor.title') }}</h1>
+          <h1 class="text-[28px] font-bold text-ink">{{ t('auth.twoFactor.title') }}</h1>
           <p class="mt-2 text-small text-ink-muted">{{ t('auth.twoFactor.subtitle') }}</p>
 
           <form class="mt-8 space-y-4" @submit.prevent="submitTwoFactor">
@@ -267,7 +267,7 @@ const highlights = [
         </template>
 
         <template v-else-if="!pendingVerificationToken">
-          <h1 class="text-h1 text-ink">{{ t('auth.login.title') }}</h1>
+          <h1 class="text-[28px] font-bold text-ink">{{ t('auth.login.title') }}</h1>
           <p class="mt-2 text-small text-ink-muted">{{ t('auth.login.subtitle') }}</p>
 
           <form class="mt-8 space-y-4" @submit.prevent="onSubmit">

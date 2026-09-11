@@ -66,7 +66,7 @@ onMounted(load)
   <div class="mx-auto w-full max-w-[1440px] px-6 lg:px-8 py-8">
     <div class="flex flex-wrap items-center justify-between gap-3">
       <div>
-        <h1 class="text-h1 text-ink">{{ t('paths.adminTitle') }}</h1>
+        <h1 class="text-[28px] font-bold text-ink">{{ t('paths.adminTitle') }}</h1>
         <p class="mt-1 text-small text-ink-muted">{{ t('paths.adminSubtitle') }}</p>
       </div>
       <AppButton icon="plus" @click="create">{{ t('paths.newPath') }}</AppButton>

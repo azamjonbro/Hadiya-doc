@@ -9,7 +9,8 @@
   --color-surface: 255 255 255;
   --color-surface-2: 250 250 252;
   --color-surface-hover: 238 240 242;
-  --color-border: 224 224 224;  /* Every value below was measured, not eyeballed — see
+  --color-border: 224 224 224;
+  /* Every value below was measured, not eyeballed — see
      test/a11yContrast.test.js, which recomputes the WCAG ratios from this
      file and fails the build when a pair drops under AA. The numbers moved
      in 12.4 because three of them were failing: 153-grey "faint" text was
@@ -24,8 +25,13 @@
   --color-text-muted: 88 88 88;
   --color-text-faint: 106 106 106;
 
-  --color-primary: 76 183 38;
-  --color-primary-hover: 65 156 32;
+  /* The brand green is 76 183 38, but white on it is 2.59:1 and it is
+     2.6:1 as a link on white — under AA for text of any size. Only a
+     shade this deep clears 4.5:1 on both white and the subtle tint; the
+     dark theme keeps the bright brand shade because there the label on
+     it is dark, not white. */
+  --color-primary: 52 124 26;
+  --color-primary-hover: 46 110 23;
   --color-primary-foreground: 255 255 255;
   --color-primary-subtle: 236 248 230;
 
@@ -66,7 +72,7 @@
 
   --color-primary: 76 183 38;
   --color-primary-hover: 86 200 48;
-  --color-primary-foreground: 255 255 255;
+  --color-primary-foreground: 10 12 20;
   --color-primary-subtle: 23 45 15;
 
   --color-success: 52 211 153;

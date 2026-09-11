@@ -146,7 +146,7 @@ onMounted(load)
 
 <template>
   <div class="px-6 py-8">
-    <h1 class="text-h1 text-ink">{{ t('roles.title') }}</h1>
+    <h1 class="text-[28px] font-bold text-ink">{{ t('roles.title') }}</h1>
     <p class="mt-1 max-w-2xl text-small text-ink-muted">{{ t('roles.hint') }}</p>
 
     <AppCard class="mt-6">

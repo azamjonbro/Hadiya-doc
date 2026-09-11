@@ -153,7 +153,7 @@ onMounted(load)
   <div class="px-6 py-6">
     <div class="flex items-end justify-between gap-4">
       <div>
-        <h1 class="text-h1 text-ink">{{ t('branchesPage.title') }}</h1>
+        <h1 class="text-[28px] font-bold text-ink">{{ t('branchesPage.title') }}</h1>
         <p class="mt-1 text-small text-ink-faint">{{ t('branchesPage.subtitle') }}</p>
       </div>
       <div class="flex items-center gap-3">

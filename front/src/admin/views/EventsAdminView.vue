@@ -250,7 +250,7 @@ onMounted(load)
   <div class="mx-auto w-full max-w-[1440px] px-6 lg:px-8 py-8">
     <div class="flex flex-wrap items-center justify-between gap-3 pb-4 border-b border-border">
       <div>
-        <h1 class="text-h1 text-ink">{{ t('events.adminTitle') }}</h1>
+        <h1 class="text-[28px] font-bold text-ink">{{ t('events.adminTitle') }}</h1>
         <p class="mt-1 text-small text-ink-muted">{{ t('events.adminSubtitle') }}</p>
       </div>
       <AppButton icon="plus" @click="openNew">{{ t('events.newEvent') }}</AppButton>

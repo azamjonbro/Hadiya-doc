@@ -69,6 +69,7 @@ function blockedTitle(item) {
 onMounted(load)
 </script>
 
+<template>
   <div class="min-h-screen bg-bg pb-12">
     <div v-if="loading" class="mx-auto max-w-6xl px-6 py-8 mt-12 space-y-3">
       <Skeleton class="h-10 w-64" />
@@ -129,34 +130,6 @@ onMounted(load)
       <div class="mx-auto max-w-[1440px] px-6 lg:px-8 mt-8 grid grid-cols-1 lg:grid-cols-4 gap-8">
         <div class="lg:col-span-3">
           <div class="space-y-3">
-      <h1 class="mt-4 text-h1 text-ink">{{ path.title }}</h1>
-      <div class="mt-2 flex flex-wrap items-center gap-2">
-        <Badge variant="neutral" size="sm">{{ t(`paths.kind.${path.kind}`) }}</Badge>
-        <Badge v-if="path.sequential" variant="info" size="sm">{{ t('paths.sequential') }}</Badge>
-        <span class="text-caption text-ink-faint">{{ t('paths.stepCount', { count: path.totalRequired }) }}</span>
-      </div>
-      <p v-if="path.description" class="mt-3 text-small text-ink-muted">{{ path.description }}</p>
-
-      <AppCard v-if="path.enrollment" class="mt-6 p-6 border border-border shadow-sm">
-        <div class="flex items-center justify-between gap-4">
-          <div class="min-w-0">
-            <p class="text-small font-semibold text-ink">
-              {{ path.enrollment.status === 'COMPLETED' ? t('paths.completed') : t('paths.inProgress') }}
-            </p>
-            <p class="mt-1 text-caption text-ink-muted">
-              {{ t('paths.requiredDone', { done: path.completedRequired, total: path.totalRequired }) }}
-            </p>
-          </div>
-          <AppButton v-if="nextStep" @click="open(nextStep)">{{ t('paths.continue') }}</AppButton>
-        </div>
-        <ProgressBar class="mt-4" :value="path.completionPercent" :variant="path.complete ? 'success' : 'primary'" />
-      </AppCard>
-
-      <AppCard v-else class="mt-6 flex items-center justify-between gap-4 p-6 border border-border shadow-sm">
-        <p class="text-small font-medium text-ink-muted">{{ t('paths.notEnrolled') }}</p>
-        <AppButton :loading="joining" @click="join">{{ t('paths.join') }}</AppButton>
-      </AppCard>
-
           <div
             v-for="(item, index) in path.items"
             :key="item.id"
@@ -196,4 +169,5 @@ onMounted(load)
         </div>
       </div>
     </template>
+  </div>
 </template>

@@ -140,15 +140,33 @@ onMounted(load)
 </script>
 
 <template>
-  <div class="mx-auto max-w-3xl px-6 py-8">
-    <button
-      type="button"
-      class="inline-flex items-center gap-1.5 text-small text-ink-muted transition-default hover:text-ink"
-      @click="router.push({ name: 'my-reviews' })"
-    >
-      <Icon name="arrow-left" size="14" />
-      {{ t('review360.mine') }}
-    </button>
+
+  <div class="min-h-screen bg-bg pb-12">
+    <!-- Full Width Hero Banner -->
+    <div class="relative w-full bg-surface-2 flex items-end pt-24 pb-10">
+      <div class="absolute inset-0 bg-gradient-to-br from-indigo-900 via-purple-900 to-indigo-800"></div>
+      <div class="absolute inset-0 opacity-20 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAiIGhlaWdodD0iMjAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGNpcmNsZSBjeD0iMiIgY3k9IjIiIHI9IjIiIGZpbGw9IiNmZmYiIGZpbGwtb3BhY2l0eT0iMC4xNSIvPjwvc3ZnPg==')]"></div>
+      
+      <div class="relative z-10 w-full mx-auto max-w-[1440px] px-6 lg:px-8">
+        <button
+          type="button"
+          class="mb-6 inline-flex items-center gap-1.5 text-small font-medium text-white/70 transition-default hover:text-white"
+          @click="router.push({ name: 'my-reviews' })"
+        >
+          <Icon name="arrow-left" size="14" />
+          {{ t('review360.mine') }}
+        </button>
+        <h1 class="text-4xl font-bold text-white leading-tight drop-shadow-md" v-if="assignment">
+          {{ t('review360.respondAbout', { name: assignment.subject.fullName }) }}
+        </h1>
+        <h1 class="text-4xl font-bold text-white leading-tight drop-shadow-md" v-else>
+          {{ t('review360.mine') }}
+        </h1>
+      </div>
+    </div>
+
+    <div class="mx-auto w-full max-w-[1440px] px-6 lg:px-8 pt-8">
+      <div class="mx-auto max-w-4xl">
 
     <div v-if="loading" class="mt-6 space-y-3">
       <Skeleton class="h-24 w-full rounded-lg" />
@@ -168,7 +186,7 @@ onMounted(load)
         <div class="flex flex-wrap items-center gap-3">
           <Avatar :name="assignment.subject.fullName" :src="assignment.subject.avatar" size="lg" />
           <div class="min-w-0">
-            <h1 class="text-h2 text-ink">{{ t('review360.respondAbout', { name: assignment.subject.fullName }) }}</h1>
+            <h2 class="text-h2 text-ink">{{ assignment.subject.fullName }}</h2>
             <p class="mt-0.5 text-small text-ink-muted">
               {{ assignment.subject.position }}
               <span v-if="assignment.subject.department">· {{ assignment.subject.department }}</span>
@@ -298,5 +316,7 @@ onMounted(load)
         <AppButton :loading="submitting" icon="send" @click="submit">{{ t('review360.respondSubmit') }}</AppButton>
       </div>
     </template>
+      </div>
+    </div>
   </div>
 </template>

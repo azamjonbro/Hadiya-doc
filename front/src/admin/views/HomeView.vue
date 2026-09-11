@@ -147,7 +147,7 @@ const taskCompletionItems = computed(
   <div class="mx-auto w-full max-w-[1440px] px-6 lg:px-8 py-8">
     <div class="flex flex-wrap items-end justify-between gap-4">
       <div>
-        <h1 class="text-h1 text-ink">{{ t(greetingKey) }}, {{ firstName }}</h1>
+        <h1 class="text-[28px] font-bold text-ink">{{ t(greetingKey) }}, {{ firstName }}</h1>
         <p class="mt-1 text-body text-ink-muted">{{ t('admin.dashboard.subtitle') }}</p>
       </div>
       <div class="flex flex-wrap items-center gap-3">

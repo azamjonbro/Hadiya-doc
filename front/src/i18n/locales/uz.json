@@ -280,6 +280,7 @@
     "creating": "Yaratilmoqda...",
     "loadMore": "Yana yuklash",
     "searchPlaceholder": "Kurslarni qidirish...",
+    "itemCount": "{count} ta element",
     "modules": "modul",
     "videos": "video",
     "duration": "davomiyligi",

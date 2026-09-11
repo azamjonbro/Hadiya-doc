@@ -101,6 +101,7 @@ async function cancel() {
 onMounted(load)
 </script>
 
+<template>
   <div class="min-h-screen bg-bg pb-12">
     <div v-if="loading" class="mx-auto max-w-6xl px-6 py-8 mt-12 space-y-3">
       <Skeleton class="h-10 w-64" />
@@ -202,8 +203,8 @@ onMounted(load)
             {{ t('events.passcode') }}: <span class="font-mono text-ink">{{ event.meeting.passcode }}</span>
           </p>
         </div>
-      </AppCard>
-
+          </AppCard>
+        </div>
       </div>
     </template>
   </div>
