@@ -8,6 +8,10 @@ const props = defineProps({
   modelValue: { type: Boolean, default: false },
   title: { type: String, default: '' },
   width: { type: String, default: 'max-w-xl' },
+  // A panel whose first thing is a picture (the profile drawer) has no
+  // room for a title bar: the caller draws its own close button and takes
+  // the full height, padding included.
+  plain: { type: Boolean, default: false },
 })
 
 const emit = defineEmits(['update:modelValue'])
@@ -62,7 +66,7 @@ useFocusTrap(panel, {
             :aria-label="title ? undefined : t('a11y.panel')"
             tabindex="-1"
           >
-            <div class="flex items-center justify-between border-b border-border px-6 py-4">
+            <div v-if="!plain" class="flex items-center justify-between border-b border-border px-6 py-4">
               <h2 :id="titleId" class="text-h3 text-ink">{{ title }}</h2>
               <button
                 type="button"
@@ -73,7 +77,7 @@ useFocusTrap(panel, {
                 <Icon name="close" size="18" />
               </button>
             </div>
-            <div class="flex-1 overflow-y-auto px-6 py-5">
+            <div class="flex-1 overflow-y-auto" :class="plain ? '' : 'px-6 py-5'">
               <slot />
             </div>
           </div>

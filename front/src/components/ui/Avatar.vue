@@ -4,7 +4,7 @@ import { computed } from 'vue'
 const props = defineProps({
   name: { type: String, default: '' },
   src: { type: String, default: '' },
-  size: { type: String, default: 'md' }, // xs | sm | md | lg | xl
+  size: { type: String, default: 'md' }, // xs | sm | md | lg | xl | 2xl
   status: { type: String, default: '' }, // online | offline | away
 })
 
@@ -23,6 +23,8 @@ const sizes = {
   md: 'h-10 w-10 text-body',
   lg: 'h-14 w-14 text-h3',
   xl: 'h-20 w-20 text-h2',
+  // The profile drawer and page: 110px, halfway over a cover photo.
+  '2xl': 'h-[110px] w-[110px] text-[36px]',
 }
 
 const palette = [

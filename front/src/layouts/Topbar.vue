@@ -1,12 +1,28 @@
 <script setup>
-import { ref, computed } from 'vue'
-import { onClickOutside } from '@/composables/onClickOutside'
+/**
+ * The portal's top bar (docs/v4/06-learner-portal-reference.md §0, §12).
+ *
+ * One bar for every page: wordmark left, five links in the middle with a
+ * "···" panel for the rest, and a cluster of round buttons on the right
+ * that open drawers rather than pages — notifications, messages and the
+ * profile are things a person glances at from wherever they are, and a
+ * full navigation for each would throw away the page they were on.
+ *
+ * Links whose route does not exist yet are filtered out here rather than
+ * left as 404s: the nav config names the whole portal, the router says
+ * which parts are built.
+ */
+import { computed, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from 'vue-router'
+import { onClickOutside } from '@/composables/onClickOutside'
 import { useAuthStore } from '@/stores/auth'
-import { workspaceNav } from './nav'
-import { useNotifications } from '@/composables/useNotifications'
 import { useChatStore } from '@/stores/chat'
+import { useNotifications } from '@/composables/useNotifications'
+import { portalPrimaryNav, portalMenuGroups } from './nav'
+import NotificationsDrawer from './NotificationsDrawer.vue'
+import ChatDrawer from './ChatDrawer.vue'
+import ProfileDrawer from './ProfileDrawer.vue'
 import Icon from '@/components/ui/Icon.vue'
 import Avatar from '@/components/ui/Avatar.vue'
 
@@ -14,215 +30,181 @@ const { t } = useI18n()
 const route = useRoute()
 const router = useRouter()
 const auth = useAuthStore()
-
-const profileOpen = ref(false)
-const profileRef = ref(null)
-onClickOutside(profileRef, () => (profileOpen.value = false))
-
-async function onLogout() {
-  await auth.logout()
-  router.push({ name: 'login' })
-}
-
 const chat = useChatStore()
 const { items: notificationItems, unreadCount, markRead, markAllRead } = useNotifications()
 
-const notifOpen = ref(false)
-const notifRef = ref(null)
-onClickOutside(notifRef, () => (notifOpen.value = false))
-
-const typeMeta = {
-  TASK_ASSIGNED: { icon: 'check-square' },
-  TASK_DEADLINE_APPROACHING: { icon: 'clock' },
-  TASK_OVERDUE: { icon: 'alert-triangle' },
-  COURSE_ASSIGNED: { icon: 'graduation-cap' },
-  COURSE_DEADLINE_APPROACHING: { icon: 'clock' },
-  COURSE_EXPIRED: { icon: 'alert-circle' },
-  NEWS_PUBLISHED: { icon: 'newspaper' },
+function routeExists(path) {
+  const resolved = router.resolve(path)
+  return resolved.matched.length > 0 && resolved.name !== 'not-found'
 }
 
-const severityStyle = {
-  INFO: 'bg-info-subtle text-info',
-  WARNING: 'bg-warning-subtle text-warning',
-  CRITICAL: 'bg-danger-subtle text-danger',
+function allowed(item) {
+  return (!item.permission || auth.hasPermission(item.permission)) && routeExists(item.path)
 }
 
-function iconFor(n) {
-  return typeMeta[n.type]?.icon ?? 'bell'
-}
-
-function timeAgo(dateString) {
-  const seconds = Math.floor((Date.now() - new Date(dateString).getTime()) / 1000)
-  if (seconds < 60) return t('notifications.justNow')
-  const minutes = Math.floor(seconds / 60)
-  if (minutes < 60) return `${minutes}m`
-  const hours = Math.floor(minutes / 60)
-  if (hours < 24) return `${hours}h`
-  return `${Math.floor(hours / 24)}d`
-}
-
-const navigation = computed(() => workspaceNav.filter((i) => !i.permission || auth.hasPermission(i.permission)))
+const primary = computed(() => portalPrimaryNav.filter(allowed))
+const groups = computed(() =>
+  portalMenuGroups.map((group) => ({ ...group, items: group.items.filter(allowed) })).filter((g) => g.items.length),
+)
 
 function isActive(path) {
   return path === '/' ? route.path === '/' : route.path.startsWith(path)
 }
+
+// "···" is active when the current page lives only inside it, so the bar
+// always shows where the person is.
+const moreActive = computed(
+  () => !primary.value.some((i) => isActive(i.path)) && groups.value.some((g) => g.items.some((i) => isActive(i.path))),
+)
+
+const moreOpen = ref(false)
+const moreRef = ref(null)
+onClickOutside(moreRef, () => (moreOpen.value = false))
+
+const notificationsOpen = ref(false)
+const chatOpen = ref(false)
+const profileOpen = ref(false)
+
+const canEnterAdmin = computed(() => auth.isSuperAdmin)
 </script>
 
 <template>
-  <header class="flex h-16 shrink-0 items-center justify-between gap-4 bg-primary px-6 w-full text-primary-foreground shadow-sm">
-    <div class="flex items-center gap-6 lg:w-1/4">
-      <router-link to="/" class="text-[32px] font-black tracking-tighter uppercase text-white hover:opacity-90 transition-opacity">
-        ISHONCH
-      </router-link>
-    </div>
+  <header class="flex h-16 shrink-0 items-center bg-primary text-primary-foreground">
+    <!-- Wordmark: flush to the edge, the way a logo sits on the reference -->
+    <router-link
+      to="/"
+      class="flex h-16 shrink-0 items-center pl-3 pr-6 text-[34px] font-black uppercase leading-none tracking-tighter text-white transition-opacity hover:opacity-90"
+    >
+      {{ t('portal.brand') }}
+    </router-link>
 
-    <!-- Main Navigation -->
-    <nav class="hidden flex-1 justify-center gap-6 lg:flex">
+    <!-- Main navigation: centred, active link underlined on the bar's bottom edge -->
+    <nav ref="moreRef" class="relative hidden h-16 flex-1 items-center justify-center gap-1 lg:flex" :aria-label="t('a11y.mainNav')">
       <router-link
-        v-for="item in navigation.slice(0, 5)"
+        v-for="item in primary"
         :key="item.name"
         :to="item.path"
-        class="text-small font-medium text-white/80 transition-default hover:text-white"
-        :class="{ 'text-white font-bold border-b-2 border-white pb-1': isActive(item.path) }"
+        class="relative flex h-16 items-center px-3.5 text-[14px] transition-default"
+        :class="isActive(item.path) ? 'font-semibold text-white' : 'text-white/80 hover:text-white'"
       >
         {{ t(item.labelKey) }}
+        <span
+          class="absolute inset-x-3.5 bottom-0 h-0.5 rounded-t-full bg-white transition-default"
+          :class="isActive(item.path) ? 'opacity-100' : 'opacity-0'"
+        />
       </router-link>
-      <!-- "..." dropdown for the rest of items -->
-      <div v-if="navigation.length > 5" class="relative group flex items-center">
-        <button class="text-white/80 hover:text-white transition-default font-bold tracking-widest pb-1">...</button>
-        <div class="absolute top-full left-1/2 -translate-x-1/2 mt-0 hidden w-48 flex-col rounded-md bg-surface border border-border shadow-md py-1 group-hover:flex z-50">
-          <router-link
-            v-for="item in navigation.slice(5)"
-            :key="item.name"
-            :to="item.path"
-            class="px-4 py-2 text-small text-ink hover:bg-surface-2 transition-default"
-            :class="{ 'font-semibold text-primary': isActive(item.path) }"
-          >
-            {{ t(item.labelKey) }}
-          </router-link>
-        </div>
+
+      <div class="relative flex h-16 items-center">
+        <button
+          type="button"
+          class="flex h-8 w-8 items-center justify-center rounded-full transition-default"
+          :class="moreOpen || moreActive ? 'bg-white/20 text-white' : 'text-white/80 hover:bg-white/10 hover:text-white'"
+          :aria-label="t('portal.nav.more')"
+          :aria-expanded="moreOpen"
+          @click="moreOpen = !moreOpen"
+          @keydown.escape="moreOpen = false"
+        >
+          <Icon name="more-horizontal" size="18" />
+        </button>
+        <span
+          class="absolute inset-x-1 bottom-0 h-0.5 rounded-t-full bg-white"
+          :class="moreActive ? 'opacity-100' : 'opacity-0'"
+        />
       </div>
+
+      <!-- Anchored to the nav, not the button: an 880px panel centred on a
+           button near the bar's right third would run off the viewport. -->
+      <Transition
+          enter-active-class="transition-default"
+          enter-from-class="opacity-0 -translate-y-1"
+          leave-active-class="transition-default"
+          leave-to-class="opacity-0 -translate-y-1"
+        >
+          <div
+            v-if="moreOpen"
+            class="absolute left-1/2 top-full z-50 mt-2 w-[880px] max-w-[calc(100vw-2rem)] -translate-x-1/2 rounded-2xl bg-surface p-10 text-left text-ink shadow-xl"
+            @keydown.escape="moreOpen = false"
+          >
+            <div class="grid grid-cols-3 gap-10">
+              <div v-for="group in groups" :key="group.labelKey">
+                <p class="mb-2 px-3 text-[16px] font-semibold text-ink">{{ t(group.labelKey) }}</p>
+                <ul>
+                  <li v-for="item in group.items" :key="item.name">
+                    <router-link
+                      :to="item.path"
+                      class="block rounded-lg px-3 py-2.5 text-[14px] transition-default hover:bg-surface-2"
+                      :class="isActive(item.path) ? 'bg-surface-2 text-ink' : 'text-ink-muted hover:text-ink'"
+                      @click="moreOpen = false"
+                    >
+                      {{ t(item.labelKey) }}
+                    </router-link>
+                  </li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </Transition>
     </nav>
 
-    <!-- Right Side Icons -->
-    <div class="flex items-center gap-3 lg:w-1/4 justify-end">
-      
-      <!-- Gift -->
-      <button class="flex h-9 w-9 items-center justify-center rounded-full bg-white/20 text-white transition-default hover:bg-white/30">
-        <Icon name="gift" size="18" />
-      </button>
-
-      <!-- Search -->
-      <button class="flex h-9 w-9 items-center justify-center rounded-full bg-white/20 text-white transition-default hover:bg-white/30">
-        <Icon name="search" size="18" />
-      </button>
-
-      <!-- Chat -->
-      <router-link
-        to="/chat"
-        class="relative flex h-9 w-9 items-center justify-center rounded-full bg-white/20 text-white transition-default hover:bg-white/30"
+    <!-- Right cluster: five 32px circles, 12px apart -->
+    <div class="ml-auto flex items-center gap-3 pr-4">
+      <button
+        type="button"
+        class="relative flex h-8 w-8 items-center justify-center rounded-full bg-white/20 text-white transition-default hover:bg-white/30"
+        :aria-label="t('portal.topbar.messages')"
+        @click="chatOpen = true"
       >
-        <Icon name="message-square" size="18" />
-        <span v-if="chat.unreadTotal > 0" class="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-danger text-[10px] font-bold text-white border border-primary">
-          {{ chat.unreadTotal > 9 ? '9+' : chat.unreadTotal }}
+        <Icon name="message-square" size="17" />
+        <span
+          v-if="chat.unreadTotal > 0"
+          class="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full border border-primary bg-white px-1 text-[10px] font-bold text-primary"
+        >
+          {{ chat.unreadTotal > 99 ? '99+' : chat.unreadTotal }}
         </span>
+      </button>
+
+      <button
+        type="button"
+        class="relative flex h-8 w-8 items-center justify-center rounded-full bg-white/20 text-white transition-default hover:bg-white/30"
+        :aria-label="t('portal.topbar.notifications')"
+        @click="notificationsOpen = true"
+      >
+        <Icon name="bell" size="17" />
+        <span
+          v-if="unreadCount > 0"
+          class="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full border border-primary bg-white px-1 text-[10px] font-bold text-primary"
+        >
+          {{ unreadCount > 99 ? '99+' : unreadCount }}
+        </span>
+      </button>
+
+      <router-link
+        v-if="canEnterAdmin"
+        :to="{ name: 'admin-dashboard' }"
+        class="flex h-8 w-8 items-center justify-center rounded-full bg-white/20 text-white transition-default hover:bg-white/30"
+        :aria-label="t('portal.profile.adminPortal')"
+      >
+        <Icon name="grid" size="17" />
       </router-link>
 
-      <!-- Notifications -->
-      <div ref="notifRef" class="relative">
-        <button
-          type="button"
-          class="relative flex h-9 w-9 items-center justify-center rounded-full bg-white/20 text-white transition-default hover:bg-white/30"
-          :aria-expanded="notifOpen"
-          @click="notifOpen = !notifOpen"
-        >
-          <Icon name="bell" size="18" />
-          <span v-if="unreadCount > 0" class="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-danger text-[10px] font-bold text-white border border-primary">
-            {{ unreadCount > 9 ? '9+' : unreadCount }}
-          </span>
-        </button>
-        
-        <Transition enter-active-class="transition-default" enter-from-class="opacity-0 scale-95" leave-active-class="transition-default" leave-to-class="opacity-0 scale-95">
-          <div v-if="notifOpen" class="absolute right-0 z-50 mt-2 w-80 rounded-lg border border-border bg-surface shadow-lg text-ink text-left overflow-hidden flex flex-col max-h-[400px]">
-            <div class="px-4 py-3 flex items-center justify-between border-b border-border bg-surface-2">
-              <span class="font-bold text-small">{{ t('notifications.title') }}</span>
-              <button v-if="unreadCount > 0" class="text-caption font-medium text-primary hover:underline" @click="markAllRead">
-                {{ t('notifications.markAllRead') }}
-              </button>
-            </div>
-            
-            <div class="flex-1 overflow-y-auto">
-              <div v-if="notificationItems.length === 0" class="py-8 text-center text-small text-ink-muted flex flex-col items-center">
-                <Icon name="bell" size="24" class="mb-2 opacity-50" />
-                {{ t('notifications.empty') }}
-              </div>
-              
-              <div
-                v-for="item in notificationItems.slice(0, 5)"
-                :key="item.id"
-                class="flex cursor-pointer items-start gap-3 p-3 transition-default hover:bg-surface-2 border-b border-border/40 last:border-0"
-                @click="markRead(item)"
-              >
-                <span class="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full" :class="severityStyle[item.severity]">
-                  <Icon :name="iconFor(item)" size="14" />
-                </span>
-                <div class="min-w-0 flex-1">
-                  <p class="text-small text-ink leading-tight" :class="!item.read ? 'font-medium' : ''">{{ item.title }}</p>
-                  <p class="mt-1 text-caption text-ink-faint">{{ timeAgo(item.createdAt) }}</p>
-                </div>
-                <span v-if="!item.read" class="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-primary" />
-              </div>
-            </div>
-            
-            <router-link to="/notifications" class="block w-full border-t border-border bg-surface-2 py-2 text-center text-small font-medium text-primary hover:bg-surface-hover transition-default" @click="notifOpen = false">
-              {{ t('common.viewAll') }}
-            </router-link>
-          </div>
-        </Transition>
-      </div>
-
-      <!-- Apps grid -->
-      <button class="flex h-9 w-9 items-center justify-center rounded-full bg-white/20 text-white transition-default hover:bg-white/30">
-        <Icon name="grid" size="18" />
+      <button
+        type="button"
+        class="flex h-8 w-8 items-center justify-center rounded-full border-2 border-transparent transition-default hover:border-white/60"
+        :aria-label="t('portal.topbar.profile')"
+        @click="profileOpen = true"
+      >
+        <Avatar :name="auth.user?.fullName ?? ''" :src="auth.user?.avatar ?? ''" size="sm" class="h-8 w-8" />
       </button>
-
-      <!-- Profile -->
-      <div ref="profileRef" class="relative ml-1">
-        <button
-          type="button"
-          class="flex items-center justify-center rounded-full border-2 border-transparent transition-default hover:border-white/50"
-          :aria-expanded="profileOpen"
-          @click="profileOpen = !profileOpen"
-        >
-          <Avatar :name="auth.user?.fullName ?? ''" size="sm" class="rounded-full h-9 w-9" />
-        </button>
-        <Transition enter-active-class="transition-default" enter-from-class="opacity-0 scale-95" leave-active-class="transition-default" leave-to-class="opacity-0 scale-95">
-          <div v-if="profileOpen" class="absolute right-0 z-50 mt-2 w-56 rounded border border-border bg-surface p-1 shadow-sm text-ink text-left">
-            <div class="px-3 py-2.5">
-              <p class="truncate text-small font-semibold">{{ auth.user?.fullName }}</p>
-              <p class="truncate text-caption text-ink-muted mt-0.5">{{ auth.user?.email }}</p>
-            </div>
-            <div class="my-1 border-t border-border" />
-            <router-link
-              v-if="auth.isSuperAdmin"
-              :to="{ name: 'admin-dashboard' }"
-              class="flex items-center gap-2 rounded px-3 py-2 text-small transition-default hover:bg-surface-2"
-              @click="profileOpen = false"
-            >
-              <Icon name="shield" size="15" />
-              {{ t('settings.adminPanel.open') }}
-            </router-link>
-            <router-link to="/settings" class="flex items-center gap-2 rounded px-3 py-2 text-small transition-default hover:bg-surface-2" @click="profileOpen = false">
-              <Icon name="settings" size="15" />
-              {{ t('nav.settings') }}
-            </router-link>
-            <button type="button" class="flex w-full items-center gap-2 rounded px-3 py-2 text-small text-danger transition-default hover:bg-danger/10 mt-1" @click="onLogout">
-              <Icon name="log-out" size="15" />
-              {{ t('auth.logout') }}
-            </button>
-          </div>
-        </Transition>
-      </div>
     </div>
+
+    <NotificationsDrawer
+      v-model="notificationsOpen"
+      :items="notificationItems"
+      :unread-count="unreadCount"
+      :mark-read="markRead"
+      :mark-all-read="markAllRead"
+    />
+    <ChatDrawer v-model="chatOpen" />
+    <ProfileDrawer v-model="profileOpen" />
   </header>
 </template>

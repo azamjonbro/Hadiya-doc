@@ -43,7 +43,7 @@ function pickLocale(code) {
     <div class="flex min-w-0 items-center gap-6">
       <div class="flex items-center gap-2.5">
         <router-link to="/bos" class="text-[32px] font-black tracking-tighter uppercase text-white hover:opacity-90 transition-opacity">
-          ISHONCH
+          {{ t('portal.brand') }}
         </router-link>
         <span class="text-primary text-caption bg-white px-2 py-0.5 rounded-full ml-2 font-bold hidden sm:block">ADMIN</span>
       </div>

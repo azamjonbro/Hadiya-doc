@@ -24,14 +24,62 @@ export const workspaceNav = [
   { name: 'chat', path: '/chat', icon: 'message-square', labelKey: 'nav.chat' },
 ]
 
+// The portal's top bar (docs/v4/06-learner-portal-reference.md §0, §12).
+// Five links sit in the bar itself; everything else lives behind "···" in
+// three named columns, the way iSpring groups it, so an employee with
+// twelve pages does not get twelve tabs. `permission` hides a link the
+// person could not use — an empty page reads as a broken feature.
+export const portalPrimaryNav = [
+  { name: 'courses', path: '/courses', labelKey: 'portal.nav.myCourses' },
+  { name: 'news', path: '/news', labelKey: 'nav.news' },
+  { name: 'catalog', path: '/catalog', labelKey: 'portal.nav.catalog' },
+  { name: 'development-plan', path: '/development-plan', labelKey: 'devplan.mine', permission: 'devplan:read:own' },
+  { name: 'kb', path: '/kb', labelKey: 'portal.nav.kb' },
+]
+
+export const portalMenuGroups = [
+  {
+    labelKey: 'portal.nav.groupLearning',
+    items: [
+      { name: 'courses', path: '/courses', labelKey: 'portal.nav.myCourses' },
+      { name: 'events', path: '/events', labelKey: 'nav.events', permission: 'event:read' },
+      { name: 'catalog', path: '/catalog', labelKey: 'portal.nav.catalog' },
+      { name: 'kb', path: '/kb', labelKey: 'portal.nav.kb' },
+      { name: 'ojt', path: '/ojt', labelKey: 'ojt.title', permission: 'ojt:observe' },
+      { name: 'grading', path: '/grading', labelKey: 'portal.nav.grading', permission: 'quiz:grade' },
+      { name: 'paths', path: '/paths', labelKey: 'nav.paths', permission: 'path:read' },
+      { name: 'tasks', path: '/tasks', labelKey: 'nav.tasks', permission: 'task:read:own' },
+      { name: 'calendar', path: '/calendar', labelKey: 'nav.calendar' },
+    ],
+  },
+  {
+    labelKey: 'portal.nav.groupCompany',
+    items: [
+      { name: 'news', path: '/news', labelKey: 'nav.news' },
+      { name: 'chat', path: '/chat', labelKey: 'nav.chat' },
+      { name: 'leaderboard', path: '/leaderboard', labelKey: 'nav.leaderboard' },
+    ],
+  },
+  {
+    labelKey: 'portal.nav.groupDevelopment',
+    items: [
+      { name: 'development-plan', path: '/development-plan', labelKey: 'devplan.mine', permission: 'devplan:read:own' },
+      { name: 'competencies', path: '/competencies', labelKey: 'competency.mine' },
+      { name: 'reviews', path: '/reviews', labelKey: 'review360.mine', permission: 'review360:respond' },
+      { name: 'certificates', path: '/certificates', labelKey: 'nav.certificates' },
+    ],
+  },
+]
+
 export const systemNav = [
   { name: 'notifications', path: '/notifications', icon: 'bell', labelKey: 'nav.notifications' },
   { name: 'settings', path: '/settings', icon: 'settings', labelKey: 'nav.settings' },
 ]
 
+// Short labels: five of them share 400px.
 export const bottomNav = [
-  { name: 'dashboard', path: '/', icon: 'home', labelKey: 'nav.dashboard' },
-  { name: 'courses', path: '/courses', icon: 'book-open', labelKey: 'nav.courses' },
-  { name: 'tasks', path: '/tasks', icon: 'check-square', labelKey: 'nav.tasks' },
-  { name: 'news', path: '/news', icon: 'newspaper', labelKey: 'nav.news' },
+  { name: 'dashboard', path: '/', icon: 'home', labelKey: 'portal.nav.short.home' },
+  { name: 'courses', path: '/courses', icon: 'book-open', labelKey: 'portal.nav.short.courses' },
+  { name: 'catalog', path: '/catalog', icon: 'grid', labelKey: 'portal.nav.short.catalog' },
+  { name: 'news', path: '/news', icon: 'newspaper', labelKey: 'portal.nav.short.news' },
 ]

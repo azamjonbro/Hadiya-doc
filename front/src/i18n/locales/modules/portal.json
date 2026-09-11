@@ -1,0 +1,224 @@
+{
+  "uz": {
+    "portal": {
+      "brand": "HADIYA",
+      "nav": {
+        "myCourses": "Mening kurslarim",
+        "catalog": "Kurslar katalogi",
+        "kb": "Bilimlar bazasi",
+        "company": "Kompaniya",
+        "more": "Yana",
+        "groupLearning": "Ta'lim",
+        "groupCompany": "Kompaniya",
+        "groupDevelopment": "Rivojlanish",
+        "grading": "Vazifalarni tekshirish",
+        "myProfile": "Mening profilim",
+        "short": {
+          "home": "Bosh",
+          "courses": "Kurslar",
+          "catalog": "Katalog",
+          "news": "Yangiliklar"
+        }
+      },
+      "topbar": {
+        "birthdays": "Tug'ilgan kunlar",
+        "messages": "Xabarlar",
+        "notifications": "Bildirishnomalar",
+        "apps": "Ilovalar",
+        "profile": "Profil"
+      },
+      "notifications": {
+        "empty": "Bildirishnomalar yo'q — barchasi o'qilgan",
+        "settings": "Bildirishnoma sozlamalari"
+      },
+      "chat": {
+        "search": "Chatni qidirish…",
+        "new": "Yangi suhbat",
+        "noMessages": "Xabarlar yo'q",
+        "pick": "Kimga yozmoqchi ekaningizni tanlang yoki",
+        "pickLink": "yangi suhbat oching",
+        "openAll": "Chatni ochish"
+      },
+      "profile": {
+        "points": "ball olindi",
+        "badges": "beydj olindi",
+        "certificates": "sertifikat olindi",
+        "adminPortal": "Admin portaliga o'tish",
+        "achievements": "Yutuqlar",
+        "settings": "Profil sozlamalari",
+        "history": "O'qish tarixi",
+        "logout": "Hisobdan chiqish"
+      },
+      "search": "Qidiruv…",
+      "courses": {
+        "assigned": "Tayinlangan",
+        "completed": "Tugallangan",
+        "typeCourse": "Kurs",
+        "typePath": "O'quv trayektoriyasi",
+        "overdueSince": "Muddati o'tgan: {date}",
+        "completedViewed": "Tugallangan (100% ko'rilgan)",
+        "notStarted": "Boshlanmagan",
+        "continue": "O'qishni davom ettirish",
+        "pathProgress": "{done} / {total} kurs o'tildi",
+        "noCompleted": "Tugallangan kurslar hali yo'q"
+      },
+      "catalog": {
+        "intro": "Qiziqqan kurslaringizni tanlang, o'zingizga qo'shing va biz bilan birga rivojlaning.",
+        "courseCount": "{count} ta kurs",
+        "uncategorized": "Boshqa kurslar",
+        "allCategories": "Barcha kategoriyalar",
+        "empty": "Katalogda hali kurs yo'q",
+        "enroll": "Qo'shilish",
+        "enrolled": "Qo'shilgan"
+      }
+    }
+  },
+  "ru": {
+    "portal": {
+      "brand": "HADIYA",
+      "nav": {
+        "myCourses": "Мои курсы",
+        "catalog": "Каталог курсов",
+        "kb": "База знаний",
+        "company": "Компания",
+        "more": "Ещё",
+        "groupLearning": "Обучение",
+        "groupCompany": "Компания",
+        "groupDevelopment": "Развитие",
+        "grading": "Проверка заданий",
+        "myProfile": "Мой профиль",
+        "short": {
+          "home": "Главная",
+          "courses": "Курсы",
+          "catalog": "Каталог",
+          "news": "Новости"
+        }
+      },
+      "topbar": {
+        "birthdays": "Дни рождения",
+        "messages": "Сообщения",
+        "notifications": "Уведомления",
+        "apps": "Приложения",
+        "profile": "Профиль"
+      },
+      "notifications": {
+        "empty": "Уведомлений нет — всё прочитано",
+        "settings": "Настройки уведомлений"
+      },
+      "chat": {
+        "search": "Поиск чата…",
+        "new": "Новый диалог",
+        "noMessages": "Нет сообщений",
+        "pick": "Выберите, кому хотите написать, или",
+        "pickLink": "создайте новый диалог",
+        "openAll": "Открыть чат"
+      },
+      "profile": {
+        "points": "баллов получено",
+        "badges": "бейджей заработано",
+        "certificates": "сертификатов получено",
+        "adminPortal": "Перейти в портал администратора",
+        "achievements": "Достижения",
+        "settings": "Настройки профиля",
+        "history": "История обучения",
+        "logout": "Выйти из аккаунта"
+      },
+      "search": "Поиск…",
+      "courses": {
+        "assigned": "Назначенные",
+        "completed": "Завершённые",
+        "typeCourse": "Курс",
+        "typePath": "Траектория обучения",
+        "overdueSince": "Просрочено с {date}",
+        "completedViewed": "Завершён (100% просмотрено)",
+        "notStarted": "Не начато",
+        "continue": "Продолжить изучение",
+        "pathProgress": "{done} из {total} курсов пройдено",
+        "noCompleted": "Завершённых курсов пока нет"
+      },
+      "catalog": {
+        "intro": "Выбирайте курсы, которые вам интересны, добавляйте к себе и развивайтесь вместе с нами.",
+        "courseCount": "{count} курс(ов)",
+        "uncategorized": "Другие курсы",
+        "allCategories": "Все категории",
+        "empty": "В каталоге пока нет курсов",
+        "enroll": "Записаться",
+        "enrolled": "Вы записаны"
+      }
+    }
+  },
+  "en": {
+    "portal": {
+      "brand": "HADIYA",
+      "nav": {
+        "myCourses": "My courses",
+        "catalog": "Course catalog",
+        "kb": "Knowledge base",
+        "company": "Company",
+        "more": "More",
+        "groupLearning": "Learning",
+        "groupCompany": "Company",
+        "groupDevelopment": "Development",
+        "grading": "Assignment review",
+        "myProfile": "My profile",
+        "short": {
+          "home": "Home",
+          "courses": "Courses",
+          "catalog": "Catalog",
+          "news": "News"
+        }
+      },
+      "topbar": {
+        "birthdays": "Birthdays",
+        "messages": "Messages",
+        "notifications": "Notifications",
+        "apps": "Apps",
+        "profile": "Profile"
+      },
+      "notifications": {
+        "empty": "No notifications — you are all caught up",
+        "settings": "Notification settings"
+      },
+      "chat": {
+        "search": "Search chats…",
+        "new": "New conversation",
+        "noMessages": "No messages",
+        "pick": "Pick who to write to, or",
+        "pickLink": "start a new conversation",
+        "openAll": "Open chat"
+      },
+      "profile": {
+        "points": "points earned",
+        "badges": "badges earned",
+        "certificates": "certificates earned",
+        "adminPortal": "Go to the admin portal",
+        "achievements": "Achievements",
+        "settings": "Profile settings",
+        "history": "Learning history",
+        "logout": "Sign out"
+      },
+      "search": "Search…",
+      "courses": {
+        "assigned": "Assigned",
+        "completed": "Completed",
+        "typeCourse": "Course",
+        "typePath": "Learning path",
+        "overdueSince": "Overdue since {date}",
+        "completedViewed": "Completed (100% viewed)",
+        "notStarted": "Not started",
+        "continue": "Continue learning",
+        "pathProgress": "{done} of {total} courses done",
+        "noCompleted": "No completed courses yet"
+      },
+      "catalog": {
+        "intro": "Pick the courses that interest you, add them to your list and grow with us.",
+        "courseCount": "{count} courses",
+        "uncategorized": "Other courses",
+        "allCategories": "All categories",
+        "empty": "The catalog has no courses yet",
+        "enroll": "Enroll",
+        "enrolled": "Enrolled"
+      }
+    }
+  }
+}
