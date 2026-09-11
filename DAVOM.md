@@ -179,16 +179,16 @@ oldin hisobotdagi raqamlar kutilganidek ekaniga ishonch hosil qil.
 
 ### iSpring parity — hozirgi raqam
 
-2026-09-10 da matritsa satrlaridan **qayta hisoblandi** (skript bilan, qo'lda
-emas). Ilgari bu yerda turgan 36,3 raqami BLOK 0 davriga tegishli edi:
+2026-09-11 da (BLOK 13 dan keyin) matritsa satrlaridan **qayta hisoblandi**
+(skript bilan, qo'lda emas). Ilgari bu yerda turgan 36,3 raqami BLOK 0 davriga tegishli edi:
 satrlar BLOK 1–8 davomida yangilangan, jamlanma esa yangilanmagan.
 
 | Metrika | Qiymat |
 |---|:--:|
-| Vaznsiz (336 capability) | **60,5** |
-| FULL / OURS+ | **118 / 48** |
-| PARTIAL / NONE / VERIFY | **59 / 91 / 21** |
-| **Gap** | **≈40%** |
+| Vaznsiz (336 capability) | **64,3** |
+| FULL / OURS+ | **139 / 48** |
+| PARTIAL / NONE / VERIFY | **65 / 68 / 16** |
+| **Gap** | **≈36%** |
 
 Vaznlangan raqam qayta hisoblanmaydi — vazn jadvali repozitoriyda yo'q
 (`docs/v4/01-executive-summary.md` dagi metodologiya eslatmasi).

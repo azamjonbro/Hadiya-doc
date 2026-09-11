@@ -63,15 +63,19 @@ sarlavhadagi umumiy raqam 2026-09-08 dan qimirlamagan — ya'ni yuqoridagi
 matritsaning **hozirgi satrlaridan** qayta
 hisoblanadi — oxirgi hisob 12.3 (oflayn sinxronizatsiya, AT-35) dan keyin:
 
-| Metrika | 2026-09-08 (BLOK 0) | Hozir (BLOK 1–11) |
-|---|:--:|:--:|
-| Vaznsiz (336 capability) | 36,3 | **60,5** |
-| FULL | — | **128** |
-| OURS+ | — | **48** |
-| PARTIAL | — | **60** |
-| NONE | — | **82** |
-| VERIFY | — | **17** |
-| **PARITY GAP** (vaznsiz) | ≈64% | **≈40%** |
+| Metrika | 2026-09-08 (BLOK 0) | BLOK 1–11 | 2026-09-11 (BLOK 1–13) |
+|---|:--:|:--:|:--:|
+| Vaznsiz (336 capability) | 36,3 | 60,5 | **64,3** |
+| FULL | — | 128 | **139** |
+| OURS+ | — | 48 | **48** |
+| PARTIAL | — | 60 | **65** |
+| NONE | — | 82 | **68** |
+| VERIFY | — | 17 | **16** |
+| **PARITY GAP** (vaznsiz) | ≈64% | ≈40% | **≈36%** |
+
+BLOK 13 hissasi (kompetensiya matritsasi, 360°, OJT, rivojlanish rejasi)
+NONE ustunini 82 dan 68 ga tushirdi; ustunlar `03-parity-matrix.md`
+satrlaridan skript bilan qayta sanaldi (Status ustuni, 336 satr).
 
 Hisoblanadigan capability soni 337 dan **336** ga tushdi: SAML 11.4 da
 **N/A** ga o'tdi — `07-scores-dependencies.md` da u REMOVE deb belgilangan
