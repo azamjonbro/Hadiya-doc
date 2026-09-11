@@ -419,6 +419,7 @@ onMounted(() => {
     <p v-if="errorMessage" class="mt-4 text-small text-danger">{{ errorMessage }}</p>
 
     <DataTable
+      settings-key="users"
       v-model:selected="selected"
       class="mt-4"
       :columns="columns"

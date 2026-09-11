@@ -724,6 +724,7 @@ onUnmounted(() => {
 
         <div class="max-h-[26rem] overflow-y-auto">
           <DataTable
+            settings-key="report-preview"
             :columns="previewColumns"
             :rows="preview.rows"
             empty-icon="file-text"

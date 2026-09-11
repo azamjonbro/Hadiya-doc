@@ -2625,7 +2625,19 @@
       "overdue": "Overdue",
       "average": "Average progress",
       "completedAt": "Completed on"
-    }
+    },
+    "autosave": {
+      "saving": "Saving…",
+      "saved": "All changes saved",
+      "pending": "Unsaved changes",
+      "failed": "Could not save — try again",
+      "draftFound": "Unsaved changes found ({time}). Restore them?",
+      "restore": "Restore",
+      "discard": "Discard"
+    },
+    "leaveTitle": "Unsaved changes",
+    "leaveMessage": "The changes could not be saved. Leave anyway? A copy stays in this browser.",
+    "leaveAnyway": "Leave"
   },
   "calendar": {
     "title": "Calendar",
@@ -3194,5 +3206,8 @@
       "fullscreen": "Fullscreen",
       "thisPanel": "Show this list"
     }
+  },
+  "table": {
+    "columns": "Columns"
   }
 }

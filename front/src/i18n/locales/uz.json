@@ -2625,7 +2625,19 @@
       "overdue": "Muddati o'tgan",
       "average": "O'rtacha progress",
       "completedAt": "Tugatilgan sana"
-    }
+    },
+    "autosave": {
+      "saving": "Saqlanmoqda…",
+      "saved": "Barcha o‘zgarishlar saqlandi",
+      "pending": "Saqlanmagan o‘zgarishlar",
+      "failed": "Saqlab bo‘lmadi — qayta urinib ko‘ring",
+      "draftFound": "Saqlanmagan o‘zgarishlar topildi ({time}). Tiklansinmi?",
+      "restore": "Tiklash",
+      "discard": "Bekor qilish"
+    },
+    "leaveTitle": "Saqlanmagan o‘zgarishlar",
+    "leaveMessage": "O‘zgarishlarni saqlab bo‘lmadi. Baribir chiqib ketasizmi? Nusxa shu brauzerda saqlanib qoladi.",
+    "leaveAnyway": "Chiqib ketish"
   },
   "calendar": {
     "title": "Kalendar",
@@ -3194,5 +3206,8 @@
       "fullscreen": "Butun ekran",
       "thisPanel": "Shu ro'yxatni ko'rsatish"
     }
+  },
+  "table": {
+    "columns": "Ustunlar"
   }
 }
