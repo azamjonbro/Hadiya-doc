@@ -36,6 +36,24 @@ const ASYNC_FORMAT = 'xlsx'
 const types = ref([])
 const typesError = ref('')
 
+// Rasn 15–16's groups. A type the server offers that is not named here
+// still shows, under "extra" — a new report must never vanish.
+const TYPE_GROUPS = {
+  learners: ['employee-progress', 'department-progress', 'group-progress', 'onboarding-progress'],
+  courses: ['course-progress', 'video-analytics', 'quiz-results', 'question-difficulty', 'homework-submissions', 'path-progress', 'enrollment-audit', 'overdue-assignments'],
+  events: ['event-attendance'],
+  extra: [],
+}
+const groupedTypes = computed(() => {
+  const placed = new Set(Object.values(TYPE_GROUPS).flat())
+  return Object.entries(TYPE_GROUPS)
+    .map(([key, list]) => ({
+      key,
+      types: key === 'extra' ? types.value.filter((type) => !placed.has(type)) : list.filter((type) => types.value.includes(type)),
+    }))
+    .filter((group) => group.types.length)
+})
+
 const typeIcon = {
   'employee-progress': 'users',
   'course-progress': 'graduation-cap',
@@ -449,89 +467,81 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div class="mx-auto w-full max-w-[1440px] px-6 lg:px-8 py-8">
+  <!-- Rasn 15–16: the reports are a grouped list — a small grey group
+       label, then white rows with the report's icon in a pale circle;
+       on the right, a card. Ours holds the filters every download and
+       preview uses, then the queued exports and the schedules. -->
+  <div class="mx-auto w-full max-w-[1440px] px-6 py-6 lg:px-8">
     <h1 class="text-[24px] font-semibold text-ink">{{ t('reports.title') }}</h1>
-    <p class="mt-1 text-body text-ink-muted">{{ t('reports.subtitle') }}</p>
-
-    <FilterBar
-      v-model="filters"
-      class="mt-6 rounded-lg border border-border bg-surface p-4"
-      align="end"
-      :fields="filterFields"
-      :clear-label="t('reports.filters.clear')"
-    />
 
     <p v-if="typesError" class="mt-4 text-small text-danger">{{ typesError }}</p>
 
-    <div class="mt-6 space-y-3">
-      <AppCard v-for="type in types" :key="type" class="space-y-3">
-        <div class="flex flex-wrap items-center justify-between gap-3">
-          <div class="flex items-center gap-3">
-            <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-primary-subtle text-primary">
-              <Icon :name="typeIcon[type] ?? 'file-text'" size="17" />
-            </span>
-            <div>
-              <p class="text-small font-semibold text-ink">{{ typeLabel(type) }}</p>
-              <p
-                v-if="errors[`${type}:csv`] || errors[`${type}:xlsx`] || errors[`${type}:pdf`]"
-                class="mt-0.5 text-caption text-danger"
+    <div class="mt-5 grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1fr)_380px]">
+      <div class="space-y-7">
+        <section v-for="group in groupedTypes" :key="group.key">
+          <p class="mb-2 text-[12px] font-semibold uppercase tracking-widest text-ink-faint">{{ t(`reports.groups.${group.key}`) }}</p>
+          <div class="divide-y divide-border overflow-hidden rounded-xl border border-border bg-surface">
+            <div v-for="type in group.types" :key="type" class="group">
+              <div class="flex min-h-[72px] items-center gap-4 px-5 py-3 transition-default hover:bg-surface-2">
+                <button type="button" class="flex min-w-0 flex-1 items-center gap-4 text-left" @click="openPreview(type)">
+                  <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-surface-2 text-ink-muted">
+                    <Icon :name="typeIcon[type] ?? 'file-text'" size="18" />
+                  </span>
+                  <span class="min-w-0">
+                    <span class="block truncate text-[15px] text-ink">{{ typeLabel(type) }}</span>
+                    <span v-if="errors[`${type}:csv`] || errors[`${type}:xlsx`] || errors[`${type}:pdf`]" class="block text-caption text-danger">
+                      {{ errors[`${type}:csv`] || errors[`${type}:xlsx`] || errors[`${type}:pdf`] }}
+                    </span>
+                    <span v-else-if="lastExport[type] && lastExport[type].totalRows !== null && !lastExport[type].truncated" class="block text-caption text-ink-faint">
+                      {{ t('reports.exports.complete', { total: formatCount(lastExport[type].totalRows) }) }}
+                    </span>
+                  </span>
+                </button>
+                <div class="flex shrink-0 items-center gap-1 opacity-0 transition-default focus-within:opacity-100 group-hover:opacity-100">
+                  <AppButton
+                    v-for="format in FORMATS"
+                    :key="format"
+                    variant="ghost"
+                    size="sm"
+                    icon="download"
+                    :loading="pending[`${type}:${format}`]"
+                    @click="onDownload(type, format)"
+                  >
+                    {{ format.toUpperCase() }}
+                  </AppButton>
+                </div>
+                <Icon name="chevron-right" size="16" class="shrink-0 text-ink-faint" />
+              </div>
+              <!-- The cut, said out loud. This is the whole reason the
+                   server sends the row counts back: without it the file
+                   that just landed in Downloads looks like the complete
+                   answer. -->
+              <div
+                v-if="lastExport[type]?.truncated"
+                class="flex flex-wrap items-center gap-x-3 gap-y-2 border-t border-warning/30 bg-warning-subtle/40 px-5 py-2.5"
               >
-                {{ errors[`${type}:csv`] || errors[`${type}:xlsx`] || errors[`${type}:pdf`] }}
-              </p>
+                <Icon name="alert-triangle" size="15" class="shrink-0 text-warning" />
+                <p class="min-w-0 flex-1 text-caption text-ink">
+                  {{ t('reports.exports.truncated', { exported: formatCount(lastExport[type].exportedRows), total: formatCount(lastExport[type].totalRows) }) }}
+                </p>
+                <AppButton size="sm" :loading="queueing[type]" @click="queueFullExport(type)">{{ t('reports.exports.queueFull') }}</AppButton>
+              </div>
             </div>
           </div>
-          <div class="flex flex-wrap gap-2">
-            <AppButton variant="ghost" size="sm" icon="eye" @click="openPreview(type)">
-              {{ t('reports.preview.open') }}
-            </AppButton>
-            <AppButton
-              v-for="format in FORMATS"
-              :key="format"
-              variant="outline"
-              size="sm"
-              icon="download"
-              :loading="pending[`${type}:${format}`]"
-              @click="onDownload(type, format)"
-            >
-              {{ format.toUpperCase() }}
-            </AppButton>
-          </div>
-        </div>
+        </section>
+      </div>
 
-        <!-- The cut, said out loud. This is the whole reason the server sends
-             the row counts back: without it the file that just landed in
-             Downloads looks like the complete answer. -->
-        <div
-          v-if="lastExport[type]?.truncated"
-          class="flex flex-wrap items-center gap-x-3 gap-y-2 rounded-md border border-warning/40 bg-warning-subtle/40 px-3 py-2.5"
-        >
-          <Icon name="alert-triangle" size="15" class="shrink-0 text-warning" />
-          <p class="min-w-0 flex-1 text-caption text-ink">
-            {{
-              t('reports.exports.truncated', {
-                exported: formatCount(lastExport[type].exportedRows),
-                total: formatCount(lastExport[type].totalRows),
-              })
-            }}
-          </p>
-          <AppButton size="sm" :loading="queueing[type]" @click="queueFullExport(type)">
-            {{ t('reports.exports.queueFull') }}
-          </AppButton>
+      <div class="space-y-4">
+        <div class="rounded-xl border border-border bg-surface p-5">
+          <p class="text-[16px] font-semibold text-ink">{{ t('common.filter') }}</p>
+          <p class="mt-1 text-caption text-ink-muted">{{ t('reports.subtitle') }}</p>
+          <FilterBar v-model="filters" class="mt-4" align="end" :fields="filterFields" :clear-label="t('reports.filters.clear')" />
         </div>
-
-        <p
-          v-else-if="lastExport[type] && lastExport[type].totalRows !== null"
-          class="text-caption text-ink-faint"
-        >
-          {{ t('reports.exports.complete', { total: formatCount(lastExport[type].totalRows) }) }}
-        </p>
-      </AppCard>
-    </div>
 
     <!-- Queued exports. Only rendered once there is something to show: an
          empty panel on every visit would be noise for the many admins who
          never hit the cap. -->
-    <section v-if="jobs.length" class="mt-8">
+    <section v-if="jobs.length" class="rounded-xl border border-border bg-surface p-5">
       <h2 class="text-small font-semibold text-ink">{{ t('reports.exports.title') }}</h2>
       <p class="mt-1 text-caption text-ink-faint">{{ t('reports.exports.hint') }}</p>
 
@@ -565,7 +575,7 @@ onUnmounted(() => {
     </section>
 
     <!-- Reports that build themselves on a timetable. -->
-    <section v-if="canSchedule" class="mt-8">
+    <section v-if="canSchedule" class="rounded-xl border border-border bg-surface p-5">
       <div class="flex flex-wrap items-center justify-between gap-2">
         <div>
           <h2 class="text-small font-semibold text-ink">{{ t('reports.schedules.title') }}</h2>
@@ -578,7 +588,7 @@ onUnmounted(() => {
 
       <div v-if="schedules.length" class="mt-3 space-y-2">
         <AppCard v-for="schedule in schedules" :key="schedule.id" padding="sm" class="flex flex-wrap items-center gap-3">
-          <div class="min-w-0 flex-1">
+          <div class="min-w-[180px] flex-1 basis-full">
             <p class="truncate text-small font-medium text-ink">{{ schedule.name }}</p>
             <p class="text-caption text-ink-faint">
               {{ typeLabel(schedule.type) }} · {{ schedule.format.toUpperCase() }} · {{ cadenceSummary(schedule) }}
@@ -614,6 +624,9 @@ onUnmounted(() => {
         {{ t('reports.schedules.empty') }}
       </p>
     </section>
+
+      </div>
+    </div>
 
     <Modal v-model="scheduleModal" :title="t('reports.schedules.add')" size="lg">
       <form class="space-y-4" @submit.prevent="saveSchedule">

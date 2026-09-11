@@ -719,7 +719,15 @@
       "departmentTargets": "Departments (comma-separated, empty = everyone)",
       "roleTargets": "Roles (empty = everyone)",
       "expiryAt": "Expiry date"
-    }
+    },
+    "columns": {
+      "thumb": "Thumbnail",
+      "title": "Title",
+      "published": "Published",
+      "audience": "Who sees",
+      "readers": "Readers"
+    },
+    "yesterday": "yesterday"
   },
   "tasks": {
     "title": "Tasks",
@@ -843,7 +851,11 @@
       "NO_SHOW": "Did not come",
       "CANCELLED": "Cancelled"
     },
-    "loadFailed": "Could not load the event"
+    "loadFailed": "Could not load the event",
+    "views": {
+      "month": "Month",
+      "list": "List"
+    }
   },
   "eventTypes": {
     "MEETING": "Meeting",
@@ -869,11 +881,12 @@
   "settings": {
     "title": "Settings",
     "tabs": {
-      "profile": "Profile",
-      "activity": "Activity",
-      "notifications": "Notifications",
-      "preferences": "Preferences",
-      "security": "Security"
+      "basic": "Basic",
+      "design": "Design",
+      "features": "Features",
+      "basicHint": "Account details, language and security settings.",
+      "designHint": "How the portal looks: theme and brand.",
+      "featuresHint": "Platform features: attention policy, AI, integrations."
     },
     "sections": {
       "profile": "Profile",
@@ -1369,6 +1382,12 @@
         "weekly": "every {day} at {at}",
         "monthly": "on day {day} at {at}"
       }
+    },
+    "groups": {
+      "learners": "By learners",
+      "courses": "By courses",
+      "events": "By events",
+      "extra": "More"
     }
   },
   "audit": {

@@ -22,7 +22,7 @@ export const newsEngagementRepository = {
     const [likes, comments, mine] = await Promise.all([
       countBy(NewsReaction, newsIds),
       countBy(NewsComment, newsIds, { deletedAt: null }),
-      newsIds.length ? NewsReaction.find({ newsId: { $in: newsIds }, userId }).select('newsId').lean() : [],
+      newsIds.length && userId ? NewsReaction.find({ newsId: { $in: newsIds }, userId }).select('newsId').lean() : [],
     ])
     const liked = new Set(mine.map((row) => String(row.newsId)))
     return Object.fromEntries(

@@ -719,7 +719,15 @@
       "departmentTargets": "Bo'limlar (vergul bilan, bo'sh = hammaga)",
       "roleTargets": "Rollar (bo'sh = hammaga)",
       "expiryAt": "Amal qilish muddati"
-    }
+    },
+    "columns": {
+      "thumb": "Miniatyura",
+      "title": "Sarlavha",
+      "published": "Chop etilgan",
+      "audience": "Kim ko'radi",
+      "readers": "O'qiganlar"
+    },
+    "yesterday": "kecha"
   },
   "tasks": {
     "title": "Vazifalar",
@@ -843,7 +851,11 @@
       "NO_SHOW": "Kelmadi",
       "CANCELLED": "Bekor qildi"
     },
-    "loadFailed": "Tadbirni yuklab bo'lmadi"
+    "loadFailed": "Tadbirni yuklab bo'lmadi",
+    "views": {
+      "month": "Oy",
+      "list": "Ro'yxat"
+    }
   },
   "eventTypes": {
     "MEETING": "Uchrashuv",
@@ -869,11 +881,12 @@
   "settings": {
     "title": "Sozlamalar",
     "tabs": {
-      "profile": "Profil",
-      "activity": "Faollik",
-      "notifications": "Bildirishnomalar",
-      "preferences": "Ko'rinish",
-      "security": "Xavfsizlik"
+      "basic": "Asosiy",
+      "design": "Dizayn",
+      "features": "Funksiyalar",
+      "basicHint": "Bu yerda hisob ma'lumotlari, til va xavfsizlik sozlamalari.",
+      "designHint": "Portalning ko'rinishi: mavzu va brend.",
+      "featuresHint": "Platforma imkoniyatlari: diqqat siyosati, AI, integratsiyalar."
     },
     "sections": {
       "profile": "Profil",
@@ -1369,6 +1382,12 @@
         "weekly": "har {day}, {at}",
         "monthly": "har oyning {day}-kuni, {at}"
       }
+    },
+    "groups": {
+      "learners": "O'quvchilar bo'yicha",
+      "courses": "Kurslar bo'yicha",
+      "events": "Tadbirlar bo'yicha",
+      "extra": "Qo'shimcha"
     }
   },
   "audit": {
