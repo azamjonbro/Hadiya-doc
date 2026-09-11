@@ -2,7 +2,7 @@
 
 > Bu fayl **yangi sessiyaga tashlash uchun tayyor prompt**. Butun matnni
 > ko'chiring, yoki shunchaki `DAVOM.md` ni o'qib boshlashni ayting.
-> Oxirgi yangilanish: **2026-09-10**.
+> Oxirgi yangilanish: **2026-09-11**.
 >
 > Boshlashdan oldin `git log` va `git status` ni o'qi: shu kuni **parallel
 > sessiya filiallar (branches) ustida ishlagan**, uning tugallanmagan ishi
@@ -81,7 +81,27 @@ provisioning, claim → rol/bo'lim), 11.5 `Idempotency-Key`, 11.6 TOTP 2FA
 (RFC 6238, shifrlangan sir, zaxira kodlar) + qurilmalar/sessiyalar
 sahifasi.
 
-**Hozir BLOK 12 (Mobil va accessibility):** 12.1 (PWA) bajarildi — ilova
+**BLOK 13 (Kengaytirilgan baholash) tugadi** (13.1–13.4): kompetensiya
+matritsasi, 360° (baholovchilar `managerId` dan, N≥3 muhr), OJT
+(muzlatilgan checklist, hukmlar 12.3 oflayn navbatida) va rivojlanish
+rejasi (progress hosila, CPE `PointsLedger` da). **Ochiq bandlar
+faqat 1.8 (to'xtatilgan) va INF-1…INF-4 (infratuzilma, koddan
+tashqarida).** BLOK 14 doimiy.
+
+**UI qayta dizayn (2026-09-11, `676be84`):** xodim sahifalarida to'liq
+kenglikdagi hero banner, admin panelda `text-[28px] font-bold`
+sarlavha, Tabs `pill` varianti, topbar'da chat + bildirishnoma
+dropdown, brend **ISHONCH** va **yashil** primary. Yashil (76 183 38)
+oq matn bilan 2.59:1 — AA emas; shuning uchun yorug' mavzuda primary
+**52 124 26** (5.2:1), qorong'i mavzuda yorqin yashil ustida qora yozuv.
+Rang tanlashdan oldin `npm --prefix front test` (a11yContrast) ni
+yugurting. Kurslar sahifasi hero'sida **Unsplash rasmi** hotlink
+qilingan — tashqi bog'liqlik, oflaynda faqat gradient qoladi.
+Sahifalarni sinash uchun headless Chrome + CDP crawler ishlagan
+(haqiqiy login formasi, 47 marshrut, konsol xatolari + 4xx + gorizontal
+skroll) — yangi sahifa qo'shilganda shunday tekshiring.
+
+**BLOK 12 (Mobil va accessibility) — tafsilot:** 12.1 (PWA) bajarildi — ilova
 o'rnatiladi va **internetsiz ochiladi**; API **ataylab keshlanmaydi**
 (keshlangan kurs ro'yxati — noto'g'ri ro'yxat, keshlangan
 autentifikatsiyalangan javob esa umumiy kompyuterda keyingi odamga
@@ -214,8 +234,8 @@ BLOK 8  Hisobot, analitika             ✅
 BLOK 9  Kontent va authoring           ← **BLOK 9 to'liq tugadi** (9.1–9.6); keyingisi 9.5
 BLOK 10 AI                             ✅
 BLOK 11 Korxona                        ← tugadi
-BLOK 12 Mobil va accessibility         ← 12.1–12.3, 12.5 bajarildi
-BLOK 13 Kengaytirilgan baholash
+BLOK 12 Mobil va accessibility         ✅ (12.1–12.5)
+BLOK 13 Kengaytirilgan baholash        ✅ (13.1–13.4, 2026-09-11)
 BLOK 14 Regressiya himoyasi (doimiy)
 ```
 

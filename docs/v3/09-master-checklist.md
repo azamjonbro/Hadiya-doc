@@ -3397,12 +3397,58 @@
 
 ## BLOK 13 — Kengaytirilgan baholash (5 hafta)
 
-- [ ] **13.1** `models/competency.model.js`, `userCompetency.model.js`
-- [ ] **13.2** 360° — `reviewTemplate`, `reviewCycle`, `reviewAssignment`,
+- [x] **13.1** `models/competency.model.js`, `userCompetency.model.js`
+  Talab lavozim / bo'lim / filial bo'yicha (`competency.service.js`),
+  bir nechtasi mos kelsa **eng qattig'i** g'olib; moslik registrga
+  bog'liq emas (bitta lavozim ikkita talab bo'lib ketmasin). Bo'shliq
+  arifmetikasi: haqiqiy talabga nisbatan baholanmagan — `MISSING`,
+  pastroq — kamchilik miqdori, teng yoki yuqori — 0 (hech qachon manfiy
+  emas); 0 ham pog'ona («baholangan, yo'q» ≠ «baholanmagan»). Amal
+  muddati baholash paytida muhlatdan muhrlanadi, o'tgan sertifikat
+  «bor» hisoblanmaydi. Tarix: eng yangisi birinchi, orqasidagisi —
+  oldingi daraja. `test/competencies.test.js`.
+- [x] **13.2** 360° — `reviewTemplate`, `reviewCycle`, `reviewAssignment`,
   `reviewResponse`; baholovchilar `managerId` dan avtomatik; anonimlik N≥3
-- [ ] **13.3** OJT — `ojtChecklist`, `ojtSession`, `ojtObservation`, mobil forma
-- [ ] **13.4** Development plan — `developmentPlan`, `planReview`;
+  Baholovchilar `managerId` dan: rahbar, `managerId` bir xil bo'lganlar
+  (tengdoshlar), `managerId` = subyekt bo'lganlar (qo'l ostidagilar),
+  **boshqa hech kim**. Ishga tushirish aynan shu so'rovnomalarni
+  moddiylashtiradi; har baholovchi **bir marta** xabar oladi (necha kishi
+  haqida so'ralganidan qat'i nazar). Anonimlik: `anonymityThreshold`
+  standart 3, guruh ostonaga yetmaguncha **muhrlangan** — nafaqat
+  izohlar, guruh javoblaridan chiqadigan **hech bir raqam** ko'rinmaydi,
+  «boshqalar» o'rtachasi faqat ochilgan guruhlardan; SELF istisno. Javob
+  guruhni saqlaydi, baholovchini emas; topshirilgani tahrirlanmaydi,
+  yopilgan sikl kech javobni rad etadi; yopilganda daraja
+  `userCompetency` ga `REVIEW360` manbasi bilan yoziladi.
+  `test/review360.test.js` (2 kishilik guruh muhrlangan, 3 kishilik
+  ochilgan — alohida test).
+- [x] **13.3** OJT — `ojtChecklist`, `ojtSession`, `ojtObservation`, mobil forma
+  Sessiya checklistning **muzlatilgan nusxasi** bilan rejalashtiriladi —
+  keyin checklist tahrirlansa versiya oshadi, tugagan sessiya
+  o'zgarmaydi; ishlatilgan checklist o'chirilmaydi. Ball: kuzatilmagan
+  band kasrdan tashqarida (yiqilish emas), majburiy band yiqilsa
+  sessiya yiqiladi, bo'sh sessiya 0 (NaN emas, o'tish emas). Bir bandga
+  ikkinchi hukm avvalgisini **almashtiradi** — shuning uchun mobil forma
+  (`OjtObservationView`) hukmlarni 12.3 oflayn navbatiga qo'yadi va
+  qayta yuborish ikki marta sanamaydi; tugatish/imzo/bekor qilish
+  navbatga tushmaydi (qaror — signal bilan). Imzo o'tgan bandlar
+  darajasini matritsaga yozadi, auditlanadi, ikki marta bo'lmaydi;
+  subyekt scope'idan tashqaridagi kuzatuvchi **hech narsa yozilmasdan**
+  rad etiladi. `test/ojt.test.js`.
+- [x] **13.4** Development plan — `developmentPlan`, `planReview`;
   `PointsLedger` CPE uchun qayta ishlatiladi
+  Progressni hech kim qo'lda yozmaydi: kurs maqsadi kurs yozuvidan,
+  kompetensiya maqsadi baholangan darajadan keladi — foiz kiritish
+  `GOAL_PROGRESS_DERIVED` bilan **rad etiladi** (jimgina e'tiborsiz
+  qoldirilmaydi); faqat `CUSTOM` maqsadni xodimning o'zi suradi. Reja
+  vaznli yig'iladi, tashlab yuborilgan maqsadlar chiqariladi. Tasdiq
+  (`planReview`) auditlanadi, bir nashr ikki marta tasdiqlanmaydi,
+  keyingi tahrir **yangi nashr** ochadi. CPE: tasdiq erishilgan kurs
+  maqsadini mavjud `PointsLedger` ga **bir marta** yozadi — idempotentlik
+  qo'riqchisi maqsaddagi `cpeCreditedAt`, kurssiz maqsad
+  `CPE_NEEDS_COURSE`. Bo'shliq → maqsad taklifi kompetensiya servisidan
+  olinadi (nusxasidan emas). `test/developmentPlan.test.js`.
+  · **Blok bo'yicha:** to'rt fayl 97 test, hammasi o'tadi (2026-09-11).
 
 ---
 
