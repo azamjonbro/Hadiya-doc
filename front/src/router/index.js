@@ -283,6 +283,25 @@ export const router = createRouter({
           component: () => import('@/admin/views/DevelopmentPlansView.vue'),
           meta: { permission: 'devplan:manage', titleKey: 'devplan.adminTitle' },
         },
+        // Rasn 12–14: the same list pinned to drafts, the templates, the types.
+        {
+          path: 'development-plans/drafts',
+          name: 'admin-development-plan-drafts',
+          component: () => import('@/admin/views/DevelopmentPlansView.vue'),
+          meta: { permission: 'devplan:manage', titleKey: 'devplan.drafts.title', draftsOnly: true },
+        },
+        {
+          path: 'development-plans/templates',
+          name: 'admin-development-plan-templates',
+          component: () => import('@/admin/views/PlanTemplatesView.vue'),
+          meta: { permission: 'devplan:manage', titleKey: 'devplan.templates.title' },
+        },
+        {
+          path: 'development-plans/types',
+          name: 'admin-development-plan-types',
+          component: () => import('@/admin/views/PlanTypesView.vue'),
+          meta: { permission: 'devplan:manage', titleKey: 'devplan.types.title' },
+        },
         {
           path: 'compliance',
           name: 'admin-compliance',

@@ -1,4 +1,5 @@
 import { developmentPlanService } from '../services/developmentPlans/developmentPlan.service.js'
+import { planTemplateService } from '../services/developmentPlans/planTemplate.service.js'
 import { asyncHandler } from '../utils/asyncHandler.js'
 import { sendSuccess } from '../utils/apiResponse.js'
 
@@ -61,5 +62,37 @@ export const developmentPlanController = {
 
   accrue: asyncHandler(async (req, res) => {
     sendSuccess(res, await developmentPlanService.accrue(req.user, req.params.id), 'CPE credits accrued')
+  }),
+
+  // ----- types and templates (rasn 12–14) -----
+  listTypes: asyncHandler(async (_req, res) => {
+    sendSuccess(res, await planTemplateService.listTypes())
+  }),
+  createType: asyncHandler(async (req, res) => {
+    sendSuccess(res, await planTemplateService.createType(req.user, req.body), 'Plan type created', 201)
+  }),
+  updateType: asyncHandler(async (req, res) => {
+    sendSuccess(res, await planTemplateService.updateType(req.user, req.params.id, req.body), 'Plan type updated')
+  }),
+  removeType: asyncHandler(async (req, res) => {
+    sendSuccess(res, await planTemplateService.removeType(req.user, req.params.id), 'Plan type deleted')
+  }),
+  listTemplates: asyncHandler(async (_req, res) => {
+    sendSuccess(res, await planTemplateService.listTemplates())
+  }),
+  getTemplate: asyncHandler(async (req, res) => {
+    sendSuccess(res, await planTemplateService.getTemplate(req.params.id))
+  }),
+  createTemplate: asyncHandler(async (req, res) => {
+    sendSuccess(res, await planTemplateService.createTemplate(req.user, req.body), 'Plan template created', 201)
+  }),
+  updateTemplate: asyncHandler(async (req, res) => {
+    sendSuccess(res, await planTemplateService.updateTemplate(req.user, req.params.id, req.body), 'Plan template updated')
+  }),
+  removeTemplate: asyncHandler(async (req, res) => {
+    sendSuccess(res, await planTemplateService.removeTemplate(req.user, req.params.id), 'Plan template deleted')
+  }),
+  assignTemplate: asyncHandler(async (req, res) => {
+    sendSuccess(res, await planTemplateService.assign(req.user, req.params.id, req.body), 'Plans created', 201)
   }),
 }

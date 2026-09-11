@@ -41,7 +41,12 @@ export const adminSections = [
     icon: 'trending-up',
     path: '/bos/development-plans',
     labelKey: 'admin.section.development',
-    children: [{ name: 'development-plans', path: '/bos/development-plans', labelKey: 'devplan.adminTitle', permission: 'devplan:manage' }],
+    children: [
+      { name: 'development-plans', path: '/bos/development-plans', labelKey: 'devplan.adminTitle', permission: 'devplan:manage' },
+      { name: 'development-plan-drafts', path: '/bos/development-plans/drafts', labelKey: 'devplan.drafts.title', permission: 'devplan:manage' },
+      { name: 'development-plan-templates', path: '/bos/development-plans/templates', labelKey: 'devplan.templates.title', permission: 'devplan:manage' },
+      { name: 'development-plan-types', path: '/bos/development-plans/types', labelKey: 'devplan.types.title', permission: 'devplan:manage' },
+    ],
   },
   {
     key: 'reports',

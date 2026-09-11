@@ -14,6 +14,11 @@ import {
   reviewSchema,
   listPlansQuerySchema,
   dueQuerySchema,
+  createPlanTypeSchema,
+  updatePlanTypeSchema,
+  createPlanTemplateSchema,
+  updatePlanTemplateSchema,
+  assignTemplateSchema,
 } from '../../validators/developmentPlan.validator.js'
 
 export const developmentPlansRouter = Router()
@@ -37,6 +42,20 @@ developmentPlansRouter.get(
   validateQuery(listPlansQuerySchema),
   developmentPlanController.list
 )
+
+// Plan types and templates (rasn 12–14). Literal segments, before '/:id'.
+// devplan:manage for all of it: a template is a plan waiting for a name.
+const manage = requirePermission(PERMISSIONS.DEVPLAN_MANAGE)
+developmentPlansRouter.get('/types', manage, developmentPlanController.listTypes)
+developmentPlansRouter.post('/types', manage, validateBody(createPlanTypeSchema), developmentPlanController.createType)
+developmentPlansRouter.patch('/types/:id', manage, validateBody(updatePlanTypeSchema), developmentPlanController.updateType)
+developmentPlansRouter.delete('/types/:id', manage, developmentPlanController.removeType)
+developmentPlansRouter.get('/templates', manage, developmentPlanController.listTemplates)
+developmentPlansRouter.post('/templates', manage, validateBody(createPlanTemplateSchema), developmentPlanController.createTemplate)
+developmentPlansRouter.get('/templates/:id', manage, developmentPlanController.getTemplate)
+developmentPlansRouter.patch('/templates/:id', manage, validateBody(updatePlanTemplateSchema), developmentPlanController.updateTemplate)
+developmentPlansRouter.delete('/templates/:id', manage, developmentPlanController.removeTemplate)
+developmentPlansRouter.post('/templates/:id/assign', manage, validateBody(assignTemplateSchema), developmentPlanController.assignTemplate)
 
 // Plans whose period is nearly over — whoever chases reviews reads this.
 developmentPlansRouter.get(

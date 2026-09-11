@@ -25,6 +25,7 @@
  */
 import { computed, onMounted, ref, useId, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
+import { useRoute } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { developmentPlansApi } from '@/services/developmentPlans'
 import { competenciesApi } from '@/services/competencies'
@@ -48,7 +49,11 @@ import ProgressRing from '@/components/ui/ProgressRing.vue'
 import UserPicker from '@/components/ui/UserPicker.vue'
 
 const { t, locale } = useI18n()
+const route = useRoute()
 const auth = useAuthStore()
+// Rasn 12: the Drafts page is this page pinned to DRAFT, without the
+// status strip.
+const draftsOnly = computed(() => route.meta.draftsOnly === true)
 const toast = useToast()
 const confirm = useConfirm()
 
@@ -66,7 +71,7 @@ const limit = 25
 const listLoading = ref(true)
 const filterUserId = ref('')
 const filterUserName = ref('')
-const filterStatus = ref('')
+const filterStatus = ref(route.meta.draftsOnly ? 'DRAFT' : '')
 
 const dueRows = ref([])
 const dueWithin = ref('14')
@@ -628,8 +633,8 @@ onMounted(() => {
   <div class="px-6 py-8">
     <div class="flex flex-wrap items-center justify-between gap-3">
       <div>
-        <h1 class="text-[24px] font-semibold text-ink">{{ t('devplan.adminTitle') }}</h1>
-        <p class="mt-1 text-small text-ink-muted">{{ t('devplan.adminSubtitle') }}</p>
+        <h1 class="text-[24px] font-semibold text-ink">{{ draftsOnly ? t('devplan.drafts.title') : t('devplan.adminTitle') }}</h1>
+        <p class="mt-1 text-small text-ink-muted">{{ draftsOnly ? t('devplan.drafts.hint') : t('devplan.adminSubtitle') }}</p>
       </div>
       <AppButton v-if="canManage" icon="plus" @click="openNewPlan">{{ t('devplan.newPlan') }}</AppButton>
     </div>
@@ -637,7 +642,7 @@ onMounted(() => {
     <!-- Rasn 11: the status strip — each tile is a filter; the count on
          the lit one is the server's total for it. The "due soon" view
          keeps its own tile at the end. -->
-    <div class="mt-5 rounded-xl border border-border p-2">
+    <div v-if="!draftsOnly" class="mt-5 rounded-xl border border-border p-2">
       <div class="grid grid-cols-2 gap-2 md:grid-cols-3 xl:grid-cols-6">
         <button
           v-for="tile in statusTiles"
@@ -665,6 +670,7 @@ onMounted(() => {
           @clear="filterUserName = ''"
         />
         <AppSelect
+          v-if="!draftsOnly"
           v-model="filterStatus"
           class="w-48"
           :label="t('devplan.planStatus')"
