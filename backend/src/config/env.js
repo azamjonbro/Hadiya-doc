@@ -38,6 +38,12 @@ const envSchema = z.object({
   // is simply never attached to POST /auth/refresh, so every session dies
   // at the access token's TTL and can never be restored.
   COOKIE_SAMESITE: z.enum(['strict', 'lax', 'none']).default('strict'),
+  // What a refresh with an already-rotated token means. `strict` treats it
+  // as theft and signs the account out everywhere; `grace` forgives it for
+  // a minute (two tabs reloading, a request racing the Set-Cookie) and
+  // hands back the live session; `off` never revokes the family — only
+  // while a deployment is being tested.
+  REFRESH_REUSE_DETECTION: z.enum(['strict', 'grace', 'off']).default('grace'),
 
   SUPERADMIN_EMAIL: z.string().email('SUPERADMIN_EMAIL must be a valid email'),
   // Optional rather than required so an install that predates the JSHSHIR

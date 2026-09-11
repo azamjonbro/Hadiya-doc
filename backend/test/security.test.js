@@ -32,6 +32,7 @@ import { CourseAssignment } from '../src/models/courseAssignment.model.js'
 import { Session } from '../src/models/session.model.js'
 import { News } from '../src/models/news.model.js'
 import { hashPassword } from '../src/utils/hash.js'
+import { hashOpaqueToken } from '../src/utils/tokens.js'
 
 const BASE_URL = process.env.TEST_BASE_URL ?? 'http://localhost:4000/api/v1'
 const TEST_PASSWORD = 'SecTest123!'
@@ -485,7 +486,7 @@ describe('Session security', () => {
     assert.equal(res.status, 403)
   })
 
-  test('reusing a rotated-out refresh token is detected and revokes the whole session family', async () => {
+  test('reusing a rotated-out refresh token: forgiven inside the grace window, theft outside it', async () => {
     const loginRes = await fetch(`${BASE_URL}/auth/login`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -501,24 +502,42 @@ describe('Session security', () => {
       headers: { Cookie: originalCookieHeader, 'x-csrf-token': csrfToken },
     })
     assert.equal(refresh1.status, 200)
-    const newJar = parseCookies(refresh1.headers.getSetCookie())
 
-    // Reuse of the now-rotated-out original token — treated as theft.
+    // The same token again, straight away — two tabs reloading. Under the
+    // default `grace` mode (and `off`) this is served from the live end of
+    // the chain rather than treated as theft.
     const reuse = await fetch(`${BASE_URL}/auth/refresh`, {
       method: 'POST',
       headers: { Cookie: originalCookieHeader, 'x-csrf-token': csrfToken },
     })
-    assert.equal(reuse.status, 401)
-    const reuseBody = await reuse.json()
-    assert.equal(reuseBody.code, 'REFRESH_REUSE_DETECTED')
+    const mode = env.REFRESH_REUSE_DETECTION
+    if (mode === 'strict') {
+      assert.equal(reuse.status, 401)
+      assert.equal((await reuse.json()).code, 'REFRESH_REUSE_DETECTED')
+      return
+    }
+    assert.equal(reuse.status, 200, 'a reload race is not theft')
+    const latestJar = parseCookies(reuse.headers.getSetCookie())
 
-    // The legitimately-rotated token is now dead too — reuse revokes the
-    // entire family, not just the stolen token.
-    const afterFamilyRevoke = await fetch(`${BASE_URL}/auth/refresh`, {
-      method: 'POST',
-      headers: { Cookie: cookieHeader(newJar), 'x-csrf-token': newJar.csrf_token },
-    })
-    assert.equal(afterFamilyRevoke.status, 401)
+    if (mode === 'grace') {
+      // Backdate the rotation past the window: now it is theft, and the
+      // whole family goes — the live token included.
+      await Session.collection.updateOne(
+        { refreshTokenHash: hashOpaqueToken(originalJar.refresh_token) },
+        { $set: { updatedAt: new Date(Date.now() - 5 * 60 * 1000) } }
+      )
+      const late = await fetch(`${BASE_URL}/auth/refresh`, {
+        method: 'POST',
+        headers: { Cookie: originalCookieHeader, 'x-csrf-token': csrfToken },
+      })
+      assert.equal(late.status, 401)
+      assert.equal((await late.json()).code, 'REFRESH_REUSE_DETECTED')
+      const afterFamilyRevoke = await fetch(`${BASE_URL}/auth/refresh`, {
+        method: 'POST',
+        headers: { Cookie: cookieHeader(latestJar), 'x-csrf-token': latestJar.csrf_token },
+      })
+      assert.equal(afterFamilyRevoke.status, 401)
+    }
   })
 })
 

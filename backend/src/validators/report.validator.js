@@ -10,6 +10,7 @@ export const reportExportQuerySchema = z.object({
   role: z.string().optional(),
   userId: objectId.optional(),
   courseId: objectId.optional(),
+  pathId: objectId.optional(),
   dateFrom: z.coerce.date().optional(),
   dateTo: z.coerce.date().optional(),
 })
@@ -46,6 +47,8 @@ export const scheduledReportBodySchema = z.object({
       role: z.string().optional(),
       userId: objectId.optional(),
       courseId: objectId.optional(),
+      pathId: objectId.optional(),
+  pathId: objectId.optional(),
       dateFrom: z.coerce.date().optional(),
       dateTo: z.coerce.date().optional(),
     })

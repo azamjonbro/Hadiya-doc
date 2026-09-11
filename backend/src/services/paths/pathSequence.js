@@ -19,6 +19,8 @@ import { PERMISSIONS } from '@lms/shared'
  *     the URL, which is exactly what AT-26 tests.
  */
 
+const DAY_MS = 24 * 60 * 60 * 1000
+
 function canManagePaths(actor) {
   return Boolean(actor.permissions?.includes(PERMISSIONS.COURSE_CREATE))
 }
@@ -36,10 +38,11 @@ export function orderedItems(path) {
  * graded. Keeping the lock rule ignorant of *how* an item is completed is
  * what lets Blok 6 add event items without touching this.
  */
-export function computeItemLocks(path, completedRefIds) {
+export function computeItemLocks(path, completedRefIds, { startAt = null, now = new Date() } = {}) {
   const done = new Set([...completedRefIds].map(String))
   const locks = {}
   let blocker = null
+  const byDays = path.orderMode === 'BY_DAYS'
 
   for (const item of orderedItems(path)) {
     const id = String(item.refId)
@@ -48,11 +51,16 @@ export function computeItemLocks(path, completedRefIds) {
     // Explicit prerequisites are checked whether or not the path is
     // sequential: they are a statement about this item, not about order.
     const missingPrerequisite = (item.prerequisiteIds ?? []).map(String).find((refId) => !done.has(refId))
+    // BY_DAYS: "Kun 10" opens ten days after the enrolment started. With
+    // no enrolment (an administrator previewing) nothing is time-locked.
+    const opensAt = byDays && startAt && item.startDay ? new Date(new Date(startAt).getTime() + item.startDay * DAY_MS) : null
 
     if (missingPrerequisite) {
       locks[id] = { locked: true, blockedBy: missingPrerequisite }
     } else if (path.sequential && blocker && !completed) {
       locks[id] = { locked: true, blockedBy: blocker }
+    } else if (opensAt && opensAt > now && !completed) {
+      locks[id] = { locked: true, blockedBy: null, opensAt }
     } else {
       locks[id] = { locked: false, blockedBy: null }
     }
@@ -123,8 +131,9 @@ export async function assertPathItemUnlocked(actor, courseId) {
   const paths = await LearningPath.find({
     _id: { $in: enrollments.map((enrollment) => enrollment.pathId) },
     deletedAt: null,
-    sequential: true,
+    $or: [{ sequential: true }, { orderMode: 'BY_DAYS' }],
   }).lean()
+  const enrollmentByPath = new Map(enrollments.map((row) => [String(row.pathId), row]))
 
   for (const path of paths) {
     const item = orderedItems(path).find(
@@ -133,7 +142,11 @@ export async function assertPathItemUnlocked(actor, courseId) {
     if (!item) continue
 
     const completed = await completedRefIdsFor(actor.id, path)
-    const state = computeItemLocks(path, completed)[String(courseId)]
+    const startAt = enrollmentByPath.get(String(path._id))?.startAt ?? null
+    const state = computeItemLocks(path, completed, { startAt })[String(courseId)]
+    if (state?.locked && state.opensAt) {
+      throw ApiError.forbidden('Bu kurs hali ochilmagan', 'PATH_ITEM_NOT_YET_OPEN')
+    }
     if (state?.locked) {
       throw ApiError.forbidden(
         'Bu kurs oldingi bosqich tugagach ochiladi',

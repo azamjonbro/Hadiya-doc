@@ -43,6 +43,22 @@
 | 25 | Yangilik muharriri to'liq ekranda: muqova / yorliq / kichik sarlavha chiplari, 40px sarlavha, "Sozlash va nashr" paneli; `subtitle` maydoni |
 | hammasi | "AI o'quv yordamchisi" yon yorlig'i (kurs tanlab chat) va "?" tugmasi (KB, API hujjati, ⌘K) |
 
+## Trayektoriya konstruktori (2026-09-12, 4 ta skrinshot)
+
+`/bos/paths/:id` — sarlavha kartasi (nom, «O'quv trayektoriyasi», «Ko'rish») va 7 tabli karta:
+
+| Tab | Bizda |
+|---|---|
+| Struktura | Bosqichlar vertikal chiziqda, har kursda «Kun N» pill (faqat «Kunlar bo'yicha» rejimida), muqova, «Muddatsiz / N kun» ro'yxati, «···» menyu, har bosqichda «+ Qo'shish»; «Kurslarni o'tish tartibi»: Kunlar bo'yicha · Ketma-ket · Erkin (`orderMode`; `sequential` undan kelib chiqadi) |
+| Asosiy | Nom (hisoblagich), tavsif, o'qish vaqti, miniatyura, muqova, kurator (avatar · nom · email · almashtirish · o'chirish), teglar (Enter), ko'rish havolasi + nusxalash; pastda Nashr (holat, tur) |
+| Bildirishnomalar | Tayinlash xabari (mavzu/matn, `%TITLE% %DUE_DATE% %LINK%`), muddat oldidan eslatma (N kun), muddatdan keyin eslatma (bir nechta N, har biri bir marta), tugatganda administratorlarga (kurator + yaratuvchi) |
+| Kirishni boshqarish | Avto-tayinlash qoidalari (`/enrollment-rules`, `grant.pathIds`; saqlangach darhol ishga tushadi), «Katalogga qo'shish» (`inCatalog`; eski hujjatlar katalogda hisoblanadi), standart muddat (`defaultDeadlineDays`) |
+| Yakunlash | Sertifikat shabloni, amal qilish muddati, yakunlash sharti |
+| Tayinlashlar | Yozilganlar jadvali + «Tayinlash» (xodim, muddat, majburiy) |
+| Hisobotlar | Plitkalar (tayinlangan · jarayonda · tugatgan · muddati o'tgan · o'rtacha), jadval, XLSX/CSV (`path-progress`, `pathId`) |
+
+Server: `PATH_DEADLINE_APPROACHING`, `PATH_OVERDUE`, `PATH_COMPLETED_ADMIN` shablonlari (`migrate:templates`), `pathReminders.js` 15 daqiqalik sweep'da; «Kunlar bo'yicha» rejimida kurs `startDay` kunidan oldin qulf (`PATH_ITEM_NOT_YET_OPEN`), kurs muddati `deadlineDays`.
+
 ## Ataylab qolgan farqlar
 
 - Rasm 7 foydalanuvchi formasi ikki ustunli (maydonlar bir xil, joylashuv boshqacha).

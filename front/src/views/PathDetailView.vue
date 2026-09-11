@@ -154,6 +154,9 @@ onMounted(load)
             </p>
             <p class="mt-0.5 text-caption text-ink-faint">
               <template v-if="item.missing">{{ t('paths.missingHint') }}</template>
+              <template v-else-if="item.locked && item.opensAt">
+                {{ t('paths.opensOn', { date: new Date(item.opensAt).toLocaleDateString() }) }}
+              </template>
               <template v-else-if="item.locked && blockedTitle(item)">
                 {{ t('paths.blockedBy', { title: blockedTitle(item) }) }}
               </template>

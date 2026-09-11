@@ -5,6 +5,7 @@ import { notificationService } from '../services/notifications/notification.serv
 import { logger } from '../config/logger.js'
 import { formatNotificationDate, daysUntil } from '../utils/notificationFormat.js'
 import { eventService } from '../services/events/event.service.js'
+import { sendPathDeadlineReminders } from '../services/paths/pathReminders.js'
 
 const DEADLINE_WARNING_WINDOW_MS = 24 * 60 * 60 * 1000
 
@@ -129,7 +130,16 @@ export async function runDeadlineChecks() {
     return { reminders: 0 }
   })
 
+  // Path reminders are per path, not per sweep: each builder sets its own
+  // "N days before" and "N days after" (rasm: Bildirishnomalar).
+  const paths = await sendPathDeadlineReminders({ now }).catch((error) => {
+    logger.warn('Path reminder sweep failed', { error: error.message })
+    return { before: 0, after: 0 }
+  })
+
   const counts = {
+    pathBefore: paths.before,
+    pathAfter: paths.after,
     approaching: approaching.length,
     expired: expired.length,
     approachingTasks: approachingTasks.length,

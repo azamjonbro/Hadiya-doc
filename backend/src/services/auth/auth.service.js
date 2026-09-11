@@ -52,6 +52,9 @@ export function toPublicUser(user, role) {
   }
 }
 
+// How long a rotated refresh token is still forgiven under `grace`.
+const REFRESH_REUSE_GRACE_MS = 60 * 1000
+
 export async function issueSession(user, meta, replacesSessionId = null) {
   // Asked before the session is written, or the row we are about to create
   // would itself be the "already seen" evidence.
@@ -226,27 +229,43 @@ export const authService = {
 
     if (!session) throw ApiError.unauthorized('Invalid refresh token', 'INVALID_REFRESH_TOKEN')
 
+    let live = session
     if (session.revoked) {
-      // Reuse of an already-rotated token — treat as theft and kill the whole session family.
-      await sessionRepository.revokeAllForUser(session.userId)
-      logger.warn('Refresh token reuse detected — session family revoked', {
-        userId: session.userId.toString(),
-      })
-      throw ApiError.unauthorized('Session invalidated, please log in again', 'REFRESH_REUSE_DETECTED')
+      // Reuse of an already-rotated token. In the browser this is almost
+      // always two tabs reloading at once, or a request that left before
+      // the new cookie arrived — the same device, twice. So the token is
+      // forgiven inside a short window (or always, with detection off) and
+      // the request is served from the live end of the rotation chain.
+      // Outside that window it is treated as theft: the whole family goes.
+      const mode = env.REFRESH_REUSE_DETECTION
+      const rotatedAgoMs = Date.now() - new Date(session.updatedAt ?? 0).getTime()
+      const forgiven = mode === 'off' || (mode === 'grace' && rotatedAgoMs <= REFRESH_REUSE_GRACE_MS)
+      const replacement = forgiven ? await sessionRepository.findLiveReplacement(session) : null
+      if (!replacement) {
+        if (mode !== 'off') await sessionRepository.revokeAllForUser(session.userId)
+        logger.warn('Refresh token reuse detected', {
+          userId: session.userId.toString(),
+          mode,
+          rotatedAgoMs,
+          familyRevoked: mode !== 'off',
+        })
+        throw ApiError.unauthorized('Session invalidated, please log in again', 'REFRESH_REUSE_DETECTED')
+      }
+      live = replacement
     }
 
-    if (session.expiresAt < new Date()) {
+    if (live.expiresAt < new Date()) {
       throw ApiError.unauthorized('Refresh token expired', 'REFRESH_EXPIRED')
     }
 
-    const user = await userRepository.findById(session.userId)
+    const user = await userRepository.findById(live.userId)
     if (!user || !user.isActive) {
       throw ApiError.unauthorized('Account no longer active', 'ACCOUNT_INACTIVE')
     }
 
     const role = await roleRepository.findById(user.roleId)
     const accessToken = generateAccessToken(user, role)
-    const { refreshToken: newRefreshToken } = await issueSession(user, meta, session._id)
+    const { refreshToken: newRefreshToken } = await issueSession(user, meta, live._id)
 
     return { accessToken, refreshToken: newRefreshToken, user: toPublicUser(user, role) }
   },

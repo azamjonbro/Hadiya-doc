@@ -1,6 +1,7 @@
 import { LearningPath } from '../../models/learningPath.model.js'
 import { PathEnrollment } from '../../models/pathEnrollment.model.js'
 import { Course } from '../../models/course.model.js'
+import { User } from '../../models/user.model.js'
 import { auditLogRepository } from '../../repositories/auditLog.repository.js'
 import { isVisibleToActor } from '../access/visibility.js'
 import { slugify } from '../../utils/slugify.js'
@@ -24,6 +25,34 @@ async function uniqueSlugFor(title) {
   return slug
 }
 
+/** Written before the flag existed → still in the catalogue (see the model). */
+export function isInCatalog(path) {
+  return path.inCatalog !== false
+}
+
+function publicNotifications(n = {}) {
+  return {
+    assign: { enabled: n.assign?.enabled !== false, subject: n.assign?.subject ?? '', text: n.assign?.text ?? '' },
+    beforeDeadline: { enabled: Boolean(n.beforeDeadline?.enabled), days: n.beforeDeadline?.days ?? 3 },
+    afterDeadline: { enabled: Boolean(n.afterDeadline?.enabled), days: n.afterDeadline?.days?.length ? n.afterDeadline.days : [1] },
+    completionToAdmins: Boolean(n.completionToAdmins),
+  }
+}
+
+function publicItem(item) {
+  return {
+    id: String(item._id),
+    type: item.type,
+    refId: String(item.refId),
+    order: item.order ?? 0,
+    required: item.required !== false,
+    prerequisiteIds: (item.prerequisiteIds ?? []).map(String),
+    sectionId: item.sectionId ? String(item.sectionId) : null,
+    startDay: item.startDay ?? 0,
+    deadlineDays: item.deadlineDays ?? 0,
+  }
+}
+
 function toPublicPath(path) {
   return {
     id: String(path._id),
@@ -31,9 +60,17 @@ function toPublicPath(path) {
     slug: path.slug,
     description: path.description ?? '',
     cover: path.cover ?? '',
+    thumbnail: path.thumbnail ?? '',
+    curatorId: path.curatorId ? String(path.curatorId) : null,
+    tags: path.tags ?? [],
+    learningTimeMinutes: path.learningTimeMinutes ?? 0,
     kind: path.kind,
     status: path.status,
     sequential: path.sequential,
+    orderMode: path.orderMode ?? (path.sequential === false ? 'FREE' : 'SEQUENTIAL'),
+    inCatalog: isInCatalog(path),
+    defaultDeadlineDays: path.defaultDeadlineDays ?? 0,
+    notifications: publicNotifications(path.notifications),
     itemCount: (path.items ?? []).length,
     requiredCount: (path.items ?? []).filter((item) => item.required !== false).length,
     targetRoles: path.targetRoles ?? [],
@@ -41,14 +78,7 @@ function toPublicPath(path) {
     department: path.department ?? '',
     certificateTemplateId: path.certificateTemplateId ? String(path.certificateTemplateId) : null,
     validityDays: path.validityDays ?? 0,
-    items: orderedItems(path).map((item) => ({
-      id: String(item._id),
-      type: item.type,
-      refId: String(item.refId),
-      order: item.order ?? 0,
-      required: item.required !== false,
-      prerequisiteIds: (item.prerequisiteIds ?? []).map(String),
-    })),
+    items: orderedItems(path).map(publicItem),
     sections: (path.sections ?? []).map((section) => ({
       id: String(section._id),
       title: section.title,
@@ -57,6 +87,19 @@ function toPublicPath(path) {
     })),
     updatedAt: path.updatedAt,
   }
+}
+
+// `sequential` is what the lock code reads; `orderMode` is what the
+// builder sets. One follows the other so they cannot disagree. Stage ids
+// minted by the builder become the subdocument ids, so an item saved in
+// the same request can already point at its stage.
+function withSequential(payload) {
+  const next = { ...payload }
+  if (next.orderMode) next.sequential = next.orderMode === 'SEQUENTIAL'
+  if (next.sections) {
+    next.sections = next.sections.map(({ id, ...section }) => (id ? { ...section, _id: id } : section))
+  }
+  return next
 }
 
 export const pathService = {
@@ -86,6 +129,9 @@ export const pathService = {
     for (const path of paths) {
       const enrollment = enrollmentByPath.get(String(path._id))
       if (!canManage(actor)) {
+        // Off the catalogue means assigned-only: the path exists for the
+        // people put on it and for nobody else's browsing.
+        if (!enrollment && !isInCatalog(path)) continue
         const visible = await isVisibleToActor(actor, path, { isAssigned: async () => Boolean(enrollment) })
         if (!visible) continue
       }
@@ -129,13 +175,15 @@ export const pathService = {
     const courseById = new Map(courses.map((course) => [String(course._id), course]))
 
     const completed = enrollment ? await completedRefIdsFor(actor.id, path) : []
-    const locks = computeItemLocks(path, completed)
+    const locks = computeItemLocks(path, completed, { startAt: enrollment?.startAt ?? null })
     const summary = summarizeEnrollment(path, completed)
     const done = new Set(completed.map(String))
+    const curator = path.curatorId ? await User.findById(path.curatorId, { fullName: 1, email: 1, avatar: 1 }).lean() : null
 
     return {
       ...toPublicPath(path),
       ...summary,
+      curator: curator ? { id: String(curator._id), fullName: curator.fullName, email: curator.email ?? '', avatar: curator.avatar ?? '' } : null,
       enrollment: enrollment
         ? {
             status: enrollment.status,
@@ -148,11 +196,7 @@ export const pathService = {
         const refId = String(item.refId)
         const course = courseById.get(refId)
         return {
-          id: String(item._id),
-          type: item.type,
-          refId,
-          order: item.order ?? 0,
-          required: item.required !== false,
+          ...publicItem(item),
           // A course deleted out from under a path is reported rather than
           // dropped: an administrator has to be able to see the hole.
           title: course?.title ?? null,
@@ -162,6 +206,7 @@ export const pathService = {
           completed: done.has(refId),
           locked: Boolean(locks[refId]?.locked),
           blockedBy: locks[refId]?.blockedBy ?? null,
+          opensAt: locks[refId]?.opensAt ?? null,
         }
       }),
     }
@@ -173,8 +218,8 @@ export const pathService = {
     if (!path) throw ApiError.notFound('Path not found')
     const visible = await isVisibleToActor(actor, path, { isAssigned: async () => false })
     // Targeting is the gate: a path aimed at another department is not
-    // something to opt into.
-    if (!visible) throw ApiError.forbidden('This path is not open to you', 'PATH_NOT_AVAILABLE')
+    // something to opt into — and neither is one kept off the catalogue.
+    if (!visible || !isInCatalog(path)) throw ApiError.forbidden('This path is not open to you', 'PATH_NOT_AVAILABLE')
 
     await pathEnrollmentService.enroll(actor, actor.id, pathId, { mandatory: false })
     return this.getById(actor, pathId)
@@ -189,7 +234,7 @@ export const pathService = {
 
   async create(actor, payload) {
     const path = await LearningPath.create({
-      ...payload,
+      ...withSequential(payload),
       slug: await uniqueSlugFor(payload.title),
       createdBy: actor.id,
     })
@@ -206,7 +251,7 @@ export const pathService = {
   async update(actor, id, payload) {
     const path = await LearningPath.findOneAndUpdate(
       { _id: id, deletedAt: null },
-      { $set: { ...payload, updatedBy: actor.id } },
+      { $set: { ...withSequential(payload), updatedBy: actor.id } },
       { new: true, runValidators: true }
     )
     if (!path) throw ApiError.notFound('Path not found')
