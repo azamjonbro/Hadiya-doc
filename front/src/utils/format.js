@@ -55,3 +55,14 @@ export function toDateInputValue(value) {
   if (!value) return ''
   return String(value).slice(0, 10)
 }
+
+// hh:mm:ss, the way a learning-history table lists time spent (portal §11):
+// a fixed-width figure lines up in a column where "4 daqiqa" and
+// "1 soat 12 daqiqa" would not.
+export function formatHms(seconds) {
+  const total = Math.max(0, Math.round(seconds ?? 0))
+  const h = Math.floor(total / 3600)
+  const m = Math.floor((total % 3600) / 60)
+  const s = total % 60
+  return [h, m, s].map((n) => String(n).padStart(2, '0')).join(':')
+}

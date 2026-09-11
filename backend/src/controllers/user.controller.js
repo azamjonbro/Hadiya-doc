@@ -1,6 +1,7 @@
 import { userService } from '../services/users/user.service.js'
 import { courseAssignmentService } from '../services/courses/courseAssignment.service.js'
 import { learningStatsService } from '../services/analytics/learningStats.service.js'
+import { learningHistoryService } from '../services/analytics/learningHistory.service.js'
 import { employeeInsightsService } from '../services/analytics/employeeInsights.service.js'
 import { userRepository } from '../repositories/user.repository.js'
 import { roleRepository } from '../repositories/role.repository.js'
@@ -109,6 +110,10 @@ export const userController = {
 
   getLearningStats: asyncHandler(async (req, res) => {
     sendSuccess(res, await learningStatsService.getForUser(req.params.id))
+  }),
+
+  getLearningHistory: asyncHandler(async (req, res) => {
+    sendSuccess(res, await learningHistoryService.getForUser(req.params.id, req.validatedQuery))
   }),
 
   getPerformance: asyncHandler(async (req, res) => {

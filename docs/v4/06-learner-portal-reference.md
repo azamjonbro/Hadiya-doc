@@ -217,7 +217,12 @@ Drawer fon: oq, chap tomonda soya, orqada qora/30% overlay.
   Tugallanmagan qizil · Boshlanmagan) | Ko'rilgan % | Ballar "– (80 %)" |
   Sarflangan vaqt hh:mm:ss. Qator 36px.
 
-Backend'da bunday jamlanma endpoint yo'q → keyingi bosqich.
+**Bajarildi (2026-09-11):** `GET /users/:id/learning-history` (o'zi yoki
+`user:read`), `learningHistory.service.js` — qatorlar `collectCourseItems`
+dan, ya'ni tugatish qoidasi bilan bir manbadan; sahifa
+`LearningHistoryView.vue`, qatorlar bosilganda ochiladi. Vaqt faqat
+video + SCORM soniyalaridan — hujjat va matn darsi vaqt o'lchamaydi,
+shuning uchun jadval ostida shu izoh turadi.
 
 ## 12. `···` menyusi — rasm 46
 

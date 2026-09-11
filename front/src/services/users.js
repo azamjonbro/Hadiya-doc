@@ -15,6 +15,11 @@ export const usersApi = {
   updateLocale(locale) {
     return http.put('/users/me/locale', { locale }).then((r) => r.data.data)
   },
+  // Portal §11: one row per course with its items under it. Keyed by id
+  // rather than `me` because the same endpoint serves the employee page.
+  learningHistory(userId, params) {
+    return http.get(`/users/${userId}/learning-history`, { params }).then((r) => r.data.data)
+  },
 
   // Bulk import, in two steps. The dry run parses and validates; the commit
   // works from what the dry run stored, so what is created is exactly what

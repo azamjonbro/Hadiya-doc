@@ -114,6 +114,11 @@ export const activityQuerySchema = z.object({
   days: z.coerce.number().int().min(7).max(365).optional().default(30),
 })
 
+export const learningHistoryQuerySchema = z.object({
+  page: z.coerce.number().int().min(1).optional().default(1),
+  limit: z.coerce.number().int().min(1).max(100).optional().default(25),
+})
+
 export const listUsersQuerySchema = z.object({
   search: z.string().optional(),
   role: z.string().optional(),

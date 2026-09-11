@@ -9,6 +9,10 @@ export const materialProgressRepository = {
     return MaterialProgress.find({ userId, courseId })
   },
 
+  listByUser(userId) {
+    return MaterialProgress.find({ userId })
+  },
+
   // Course-wide, for the admin's per-employee view.
   listByCourse(courseId) {
     return MaterialProgress.find({ courseId })

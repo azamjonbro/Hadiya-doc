@@ -103,6 +103,27 @@
         "nothingFound": "Hech narsa topilmadi",
         "tryOtherSearch": "Qidiruvni o'zgartirib ko'ring",
         "clearFilters": "Filtrlarni tozalash"
+      },
+      "history": {
+        "title": "O'qish tarixi",
+        "intro": "Siz o'tgan kurslar va ulardagi materiallar — sana, holat, ko'rilgan ulush, ball va sarflangan vaqt.",
+        "date": "Sana / vaqt",
+        "materials": "Materiallar",
+        "status": "Holat",
+        "viewed": "Ko'rilgan",
+        "score": "Ballar",
+        "time": "Sarflangan vaqt",
+        "statuses": {
+          "NOT_STARTED": "Boshlanmagan",
+          "IN_PROGRESS": "Jarayonda",
+          "COMPLETED": "Tugallangan",
+          "FAILED": "Tugallanmagan"
+        },
+        "emptyTitle": "Tarix hali bo'sh",
+        "emptyBody": "Birinchi kursni boshlaganingizdan so'ng bu yerda ko'rinadi.",
+        "noItems": "Kursda hali material yo'q",
+        "loadError": "O'qish tarixini yuklab bo'lmadi",
+        "timeNote": "Vaqt faqat video va SCORM materiallari bo'yicha hisoblanadi; hujjat va matn darslari vaqtni o'lchamaydi."
       }
     }
   },
@@ -210,6 +231,27 @@
         "nothingFound": "Ничего не найдено",
         "tryOtherSearch": "Попробуйте изменить поиск",
         "clearFilters": "Сбросить фильтры"
+      },
+      "history": {
+        "title": "История обучения",
+        "intro": "Пройденные вами курсы и их материалы — дата, статус, доля просмотра, баллы и затраченное время.",
+        "date": "Дата / время",
+        "materials": "Материалы",
+        "status": "Статус",
+        "viewed": "Просмотрено",
+        "score": "Баллы",
+        "time": "Затрачено времени",
+        "statuses": {
+          "NOT_STARTED": "Не начато",
+          "IN_PROGRESS": "В процессе",
+          "COMPLETED": "Завершено",
+          "FAILED": "Не завершено"
+        },
+        "emptyTitle": "История пока пуста",
+        "emptyBody": "Появится здесь, как только вы начнёте первый курс.",
+        "noItems": "В курсе пока нет материалов",
+        "loadError": "Не удалось загрузить историю обучения",
+        "timeNote": "Время считается только по видео и SCORM-материалам; документы и текстовые уроки время не измеряют."
       }
     }
   },
@@ -317,6 +359,27 @@
         "nothingFound": "Nothing found",
         "tryOtherSearch": "Try a different search",
         "clearFilters": "Clear filters"
+      },
+      "history": {
+        "title": "Learning history",
+        "intro": "The courses you have taken and their materials — date, status, share viewed, score and time spent.",
+        "date": "Date / time",
+        "materials": "Materials",
+        "status": "Status",
+        "viewed": "Viewed",
+        "score": "Score",
+        "time": "Time spent",
+        "statuses": {
+          "NOT_STARTED": "Not started",
+          "IN_PROGRESS": "In progress",
+          "COMPLETED": "Completed",
+          "FAILED": "Not completed"
+        },
+        "emptyTitle": "Nothing here yet",
+        "emptyBody": "It fills in once you start your first course.",
+        "noItems": "The course has no materials yet",
+        "loadError": "Could not load the learning history",
+        "timeNote": "Time is measured for videos and SCORM packages only; documents and text lessons do not track it."
       }
     }
   }

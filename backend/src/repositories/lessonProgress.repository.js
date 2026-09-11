@@ -9,6 +9,10 @@ export const lessonProgressRepository = {
     return LessonProgress.find({ userId, courseId })
   },
 
+  listByUser(userId) {
+    return LessonProgress.find({ userId })
+  },
+
   // Course-wide, for the admin's per-employee view.
   listByCourse(courseId) {
     return LessonProgress.find({ courseId })

@@ -60,6 +60,7 @@ async function logout() {
 const menu = [
   { key: 'achievements', icon: 'award', to: '/leaderboard' },
   { key: 'settings', icon: 'settings', to: '/settings' },
+  { key: 'history', icon: 'clock', to: '/profile/history' },
 ]
 </script>
 
