@@ -2540,7 +2540,8 @@
       "courseOrStage": "Course / Stage",
       "deadline": "Deadline",
       "add": "Add",
-      "addStage": "Add stage"
+      "addStage": "Add stage",
+      "emptyHint": "Press “Add” to create stages and put courses on the path."
     },
     "basic": {
       "hint": "The basic properties of the learning path.",

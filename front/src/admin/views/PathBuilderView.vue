@@ -594,18 +594,21 @@ onMounted(async () => {
             <span class="text-right pr-12">{{ t('pathBuilder.structure.deadline') }}</span>
           </div>
 
-          <EmptyState
-            v-if="!path.items.length && !stages.length"
-            class="py-10"
-            icon="layers"
-            :title="t('pathBuilder.noSteps')"
-            :description="t('pathBuilder.noStepsHint')"
-          >
-            <div class="mt-4 flex justify-center gap-2">
-              <AppButton variant="secondary" icon="plus" @click="openPicker(null)">{{ t('pathBuilder.structure.add') }}</AppButton>
-              <AppButton variant="secondary" icon="plus" @click="addStage">{{ t('pathBuilder.structure.addStage') }}</AppButton>
+          <!-- Empty: one green "+ Qo'shish" in the middle (rasm 12.28), which
+               offers a course or a stage. -->
+          <div v-if="!path.items.length && !stages.length" class="flex flex-col items-center py-20 text-center">
+            <span class="flex h-24 w-24 items-center justify-center rounded-full bg-surface-2 text-ink-faint">
+              <Icon name="refresh" size="40" />
+            </span>
+            <p class="mt-8 max-w-[300px] text-[14px] leading-relaxed text-ink-muted">{{ t('pathBuilder.structure.emptyHint') }}</p>
+            <div class="relative mt-6" @click.stop>
+              <AppButton icon="plus" @click="menuFor = menuFor === 'empty' ? '' : 'empty'">{{ t('pathBuilder.structure.add') }}</AppButton>
+              <div v-if="menuFor === 'empty'" class="absolute left-1/2 z-20 mt-1 w-52 -translate-x-1/2 rounded-md border border-border bg-surface py-1 text-left text-[13px] shadow-md">
+                <button type="button" class="flex w-full items-center gap-2 px-3 py-2 hover:bg-surface-2" @click="menuFor = ''; openPicker(null)"><Icon name="book-open" size="14" /> {{ t('pathBuilder.addCourses') }}</button>
+                <button type="button" class="flex w-full items-center gap-2 px-3 py-2 hover:bg-surface-2" @click="menuFor = ''; addStage()"><Icon name="layers" size="14" /> {{ t('pathBuilder.structure.addStage') }}</button>
+              </div>
             </div>
-          </EmptyState>
+          </div>
 
           <div v-else class="relative mt-2">
             <!-- The dotted timeline behind the stage markers -->
