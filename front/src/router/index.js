@@ -42,6 +42,7 @@ export const router = createRouter({
       children: [
         { path: '', name: 'dashboard', component: () => import('@/views/HomeView.vue'), meta: { titleKey: 'nav.dashboard' } },
         { path: 'courses', name: 'courses-list', component: () => import('@/views/CoursesView.vue'), meta: { titleKey: 'nav.courses' } },
+        { path: 'catalog', name: 'catalog', component: () => import('@/views/CatalogView.vue'), meta: { titleKey: 'portal.nav.catalog' } },
         // `offline: true` — this page can be drawn from what the learner
         // saved (12.2), so it stays reachable with no network. Only pages
         // that can honestly render from IndexedDB carry it.

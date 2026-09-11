@@ -1,6 +1,7 @@
 <script setup>
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
+import { useRoute } from 'vue-router'
 import { useConfirm } from '@/composables/useConfirm'
 import { useAuthStore } from '@/stores/auth'
 import { useChatStore } from '@/stores/chat'
@@ -24,6 +25,7 @@ import { markdownToPlainText } from '@/utils/markdown'
 import { apiErrorText } from '@/utils/apiError'
 
 const { t, locale } = useI18n()
+const route = useRoute()
 const auth = useAuthStore()
 const chat = useChatStore()
 const toast = useToast()
@@ -112,6 +114,13 @@ async function load() {
     if (!chat.initialized) await chat.init(auth.accessToken, auth.user?.id)
     else await chat.loadConversations()
     await chat.loadContacts()
+    // `?c=<id>` is how the top bar's messages drawer hands over a chosen
+    // conversation: the drawer lists, this page talks.
+    const wanted = route.query.c
+    if (wanted) {
+      const conversation = chat.conversations.find((c) => c.id === wanted)
+      if (conversation) await openConversation(conversation)
+    }
   } catch (error) {
     errorMessage.value = apiErrorText(error)
   } finally {
