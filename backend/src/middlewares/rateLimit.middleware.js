@@ -45,9 +45,13 @@ const SELF_LIMITED_PREFIXES = [
   '/api/v1/analytics', // analyticsIngestRateLimiter: 200 / 5min
 ]
 
+// 1200, not 300: an admin page makes five to ten calls, and a quarter
+// hour of ordinary clicking through the panel tripped the old cap (found
+// crawling the admin as one person on 2026-09-11) — a limiter that stops
+// the operator is not protecting anything.
 export const baseRateLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  limit: 300,
+  limit: 1200,
   skip: (req) => SELF_LIMITED_PREFIXES.some((prefix) => req.path.startsWith(prefix)),
   standardHeaders: true,
   legacyHeaders: false,

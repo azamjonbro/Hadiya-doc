@@ -66,14 +66,18 @@ const LEVELS = ['BEGINNER', 'INTERMEDIATE', 'ADVANCED']
 // Admins see every course regardless of branch (visibility scoping applies to
 // employees only), so this is a plain facet: "show me what Toshkent runs".
 const branchOptions = ref([])
-usersApi
-  .branches()
-  .then((names) => {
-    branchOptions.value = names
-  })
-  .catch(() => {
-    branchOptions.value = []
-  })
+// The branch list is a user:read endpoint; an author without it keeps
+// the other filters and skips the request rather than collecting a 403.
+if (auth.hasPermission('user:read')) {
+  usersApi
+    .branches()
+    .then((names) => {
+      branchOptions.value = names
+    })
+    .catch(() => {
+      branchOptions.value = []
+    })
+}
 
 const hasActiveFilters = computed(() =>
   Boolean(filters.search || filters.status || filters.branch || filters.categoryId || filters.level || filters.tag)

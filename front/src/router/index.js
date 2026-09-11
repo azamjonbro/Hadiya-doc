@@ -460,7 +460,17 @@ router.beforeEach(async (to) => {
   // session is fenced away from. Send them to their team's instead of
   // letting the page load and fail.
   if (to.name === 'admin-dashboard' && auth.isScoped) {
-    return { name: 'admin-team-dashboard' }
+    // Their team's dashboard when they may see one; otherwise the first
+    // admin page their permissions open (an author lands on the library,
+    // not on a 403).
+    if (auth.hasPermission('analytics:view:all')) return { name: 'admin-team-dashboard' }
+    const { adminSections } = await import('@/admin/layouts/nav.js')
+    for (const section of adminSections) {
+      const pages = section.children ?? [section]
+      const page = pages.find((p) => p.path.startsWith('/bos/') && (!p.permission || auth.hasPermission(p.permission)))
+      if (page) return { path: page.path }
+    }
+    return { name: 'forbidden' }
   }
 
   if (to.meta.permission && !auth.hasPermission(to.meta.permission)) {

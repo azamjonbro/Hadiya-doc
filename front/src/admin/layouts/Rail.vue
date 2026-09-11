@@ -19,6 +19,9 @@ const auth = useAuthStore()
 const allowed = (item) => !item.permission || auth.hasPermission(item.permission)
 const sections = computed(() =>
   adminSections.filter((section) => {
+    // The dashboard is a company-wide read; a scoped account without
+    // analytics gets no home icon rather than one that answers 403.
+    if (section.key === 'home' && auth.isScoped && !auth.hasPermission('analytics:view:all')) return false
     if (!allowed(section)) return false
     if (!section.children) return true
     return section.children.some(allowed)
