@@ -1,16 +1,21 @@
 <script setup>
-import { computed, onMounted, ref } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { newsApi } from '@/services/news'
-import AppCard from '@/components/ui/AppCard.vue'
 import AppButton from '@/components/ui/AppButton.vue'
-import Badge from '@/components/ui/Badge.vue'
 import Skeleton from '@/components/ui/Skeleton.vue'
 import EmptyState from '@/components/ui/EmptyState.vue'
 import Icon from '@/components/ui/Icon.vue'
+import SearchField from '@/components/portal/SearchField.vue'
 import { apiErrorText } from '@/utils/apiError'
 
+/**
+ * News (reference §3): no hero, a 700px column. A slider of the latest
+ * covered articles on top, then the list — first item on a white card,
+ * the rest separated by rules — each with a one-line excerpt and the
+ * reader count the feed now carries.
+ */
 const { t, locale } = useI18n()
 const router = useRouter()
 
@@ -18,14 +23,55 @@ const items = ref([])
 const nextCursor = ref(null)
 const loading = ref(true)
 const errorMessage = ref('')
+const search = ref('')
 
-function readingMinutes(content) {
-  const words = content?.trim().split(/\s+/).length ?? 0
-  return Math.max(1, Math.round(words / 180))
+// Slides: the newest articles that have a cover, at most five. Articles
+// without a picture stay in the list only — a text-only slide is a grey box.
+const slides = computed(() => items.value.filter((item) => item.cover).slice(0, 5))
+const slide = ref(0)
+let timer = null
+
+function startTimer() {
+  stopTimer()
+  if (slides.value.length > 1) timer = setInterval(() => next(), 6000)
+}
+function stopTimer() {
+  if (timer) clearInterval(timer)
+  timer = null
+}
+function next() {
+  slide.value = (slide.value + 1) % slides.value.length
+}
+function goTo(index) {
+  slide.value = index
+  startTimer()
+}
+watch(slides, () => {
+  slide.value = 0
+  startTimer()
+})
+
+const filtered = computed(() => {
+  const q = search.value.trim().toLowerCase()
+  if (!q) return items.value
+  return items.value.filter((item) => item.title.toLowerCase().includes(q) || item.content?.toLowerCase().includes(q))
+})
+
+function excerpt(content) {
+  const text = (content ?? '').replace(/[#*_>`\[\]]/g, ' ').replace(/\s+/g, ' ').trim()
+  return text.length > 140 ? `${text.slice(0, 140)}…` : text
 }
 
-const featured = computed(() => items.value[0] ?? null)
-const rest = computed(() => items.value.slice(1))
+function relativeDate(value) {
+  const days = Math.floor((Date.now() - new Date(value).getTime()) / 86400000)
+  if (days <= 0) return t('portal.news.today')
+  if (days < 30) return t('portal.news.daysAgo', { n: days })
+  return new Date(value).toLocaleDateString(locale.value, { day: 'numeric', month: 'long', year: 'numeric' })
+}
+
+function open(item) {
+  router.push(`/news/${item.id}`)
+}
 
 async function load() {
   loading.value = true
@@ -43,9 +89,8 @@ async function load() {
 
 async function loadMore() {
   // Wrapped rather than left bare: an unhandled rejection here used to
-  // take the whole handler down silently. No toast — this runs on every
-  // keystroke or scroll, and a banner per failed attempt is worse than
-  // the empty list the reader already sees.
+  // take the whole handler down silently. No toast — the empty end of the
+  // list is all the reader needs to see.
   try {
     if (!nextCursor.value) return
     const result = await newsApi.feed({ cursor: nextCursor.value })
@@ -57,100 +102,89 @@ async function loadMore() {
 }
 
 onMounted(load)
+onBeforeUnmount(stopTimer)
 </script>
 
 <template>
-
-  <div class="min-h-screen bg-bg pb-12">
-    <!-- Full Width Hero Banner -->
-    <div class="relative w-full bg-primary flex flex-col justify-center items-center py-24 px-6">
-      <div class="absolute inset-0 bg-gradient-to-r from-primary via-primary-hover to-primary"></div>
-      <div class="absolute inset-0 opacity-10 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxwYXRoIGQ9Ik0zNiAzNHYtNGgtMnY0aC00djJoNHY0aDJ2LTRoNHYtMmgtNHptMC0zMFYwaC0ydjRoLTR2Mmg0djRoMnYtNGg0VjRoLTR6TTYuNiAyNy41MmwxLjc2LTMuMy0xLjc2LTMuM0g0LjRsLTEuNzYgMy4zIDEuNzYgMy4zaDIuMnptMjMuNi0xMy4yTDI4LjQ0IDExbDEuNzYtMy4zSDMyLjRsMS43NiAzLjMtMS43NiAzLjNoLTIuMnptMjMuNi0xMy4yTDUyLjA0LS4ybDEuNzYtMy4zSDU2bDEuNzYgMy4zLTEuNzYgMy4zaC0yLjJ6IiBmaWxsPSIjZmZmZmZmIiBmaWxsLW9wYWNpdHk9IjAuMSIvPjwvZz48L3N2Zz4=')]"></div>
-      <h1 class="relative z-10 text-3xl md:text-5xl font-bold text-white tracking-widest uppercase text-center drop-shadow-md">
-        Bosh direktorning<br/>Murojaati
-      </h1>
-    </div>
-
-    <!-- Search Band -->
-    <div class="bg-surface border-b border-border shadow-sm">
-      <div class="mx-auto max-w-[1440px] px-6 lg:px-8 flex flex-col sm:flex-row sm:items-center justify-between gap-4 py-4">
-        <h2 class="text-h2 text-ink">{{ t('news.title') }}</h2>
-        <div class="flex items-center gap-2">
-          <div class="flex items-center gap-2 rounded-lg border border-border bg-surface-2 px-3 py-2 text-ink-faint focus-within:border-primary/50 focus-within:bg-surface focus-within:shadow-sm w-full sm:w-64 transition-default">
-            <Icon name="search" size="16" />
-            <input type="text" :placeholder="t('users.filters.search')" class="w-full bg-transparent text-small text-ink placeholder:text-ink-muted focus:outline-none" />
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <div class="mx-auto w-full max-w-[1440px] px-6 lg:px-8 pt-8">
+  <div class="min-h-screen bg-surface-2 pb-16">
+    <div class="mx-auto w-full max-w-[700px] px-4 pt-6">
       <p v-if="errorMessage" class="mb-4 text-small text-danger">{{ errorMessage }}</p>
 
       <template v-if="loading">
-        <Skeleton class="h-96 w-full rounded-xl" />
-        <div class="mt-8 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          <Skeleton v-for="i in 6" :key="i" class="h-64 w-full rounded-xl" />
-        </div>
+        <Skeleton class="h-[220px] w-full rounded-xl" />
+        <Skeleton class="mt-8 h-8 w-40" />
+        <Skeleton v-for="i in 4" :key="i" class="mt-4 h-24 w-full rounded-xl" />
       </template>
 
       <template v-else-if="items.length">
-      <!-- Featured -->
-      <AppCard padding="none" hover class="mt-6 cursor-pointer overflow-hidden border border-border shadow-sm" @click="router.push(`/news/${featured.id}`)">
-        <div class="flex flex-col lg:flex-row">
+        <!-- Slider -->
+        <div
+          v-if="slides.length"
+          class="relative h-[220px] w-full cursor-pointer overflow-hidden rounded-xl bg-slate-800 shadow-sm"
+          @mouseenter="stopTimer"
+          @mouseleave="startTimer"
+          @click="open(slides[slide])"
+        >
           <div
-            class="flex h-56 shrink-0 items-center justify-center bg-surface-2 border-r border-border lg:h-auto lg:w-1/2"
-            :style="featured.cover ? `background-image:url(${featured.cover});background-size:cover;background-position:center` : ''"
-          >
-            <Icon v-if="!featured.cover" name="newspaper" size="48" class="text-ink-faint" />
+            v-for="(item, index) in slides"
+            :key="item.id"
+            class="absolute inset-0 bg-cover bg-center transition-opacity duration-500"
+            :class="index === slide ? 'opacity-100' : 'opacity-0'"
+            :style="{ backgroundImage: `linear-gradient(180deg, rgba(0,0,0,.05) 30%, rgba(0,0,0,.65)), url(${item.cover})` }"
+            aria-hidden="true"
+          />
+          <div class="absolute inset-x-0 bottom-0 flex flex-col items-start gap-3 p-6 pb-9">
+            <h2 class="line-clamp-2 text-[22px] font-semibold leading-tight text-white drop-shadow">{{ slides[slide].title }}</h2>
+            <span class="rounded-md bg-white px-3 py-1.5 text-[13px] font-medium text-ink">{{ t('common.viewDetails') }}</span>
           </div>
-          <div class="flex flex-1 flex-col justify-center p-7 lg:p-10">
-            <div class="mb-4">
-              <Badge variant="primary">{{ t('news.featured') }}</Badge>
-            </div>
-            <h2 class="text-[28px] font-bold text-ink leading-tight">{{ featured.title }}</h2>
-            <div class="mt-5 flex items-center gap-2 text-small font-medium text-ink-muted">
-              <span><Icon name="calendar" size="14" class="inline mr-1" />{{ new Date(featured.publishAt).toLocaleDateString(locale, { day: 'numeric', month: 'long', year: 'numeric' }) }}</span>
-              <span>·</span>
-              <span><Icon name="clock" size="14" class="inline mr-1" />{{ readingMinutes(featured.content) }} {{ t('common.minRead') }}</span>
-            </div>
-            <AppButton class="mt-6 self-start" icon="arrow-right" icon-position="right">{{ t('common.viewDetails') }}</AppButton>
+          <div v-if="slides.length > 1" class="absolute inset-x-0 bottom-3 flex justify-center gap-1.5">
+            <button
+              v-for="(item, index) in slides"
+              :key="item.id"
+              type="button"
+              class="h-1.5 rounded-full transition-all"
+              :class="index === slide ? 'w-5 bg-white' : 'w-1.5 bg-white/50 hover:bg-white/80'"
+              :aria-label="item.title"
+              @click.stop="goTo(index)"
+            />
           </div>
         </div>
-      </AppCard>
 
-      <!-- Latest grid -->
-      <section class="mt-10 border-t border-border pt-8">
-        <h2 class="mb-5 text-h2 text-ink">{{ t('news.latest') }}</h2>
-        <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            <AppCard
-              v-for="item in rest"
-              :key="item.id"
-              padding="none"
-              hover
-              class="flex cursor-pointer flex-col overflow-hidden border border-border shadow-sm rounded-xl hover:shadow-md hover:-translate-y-1 transition-all duration-300"
-              @click="router.push(`/news/${item.id}`)"
-            >
-              <div
-                class="flex h-48 items-center justify-center bg-surface-2 border-b border-border text-ink-faint"
-                :style="item.cover ? `background-image:url(${item.cover});background-size:cover;background-position:center` : ''"
-              >
-                <Icon v-if="!item.cover" name="newspaper" size="32" />
-              </div>
-              <div class="flex flex-1 flex-col p-6">
-                <h3 class="line-clamp-2 text-small font-semibold text-ink leading-snug">{{ item.title }}</h3>
-                <div class="mt-auto pt-4 flex items-center gap-1.5 text-caption font-medium text-ink-muted">
-                  <span>{{ new Date(item.publishAt).toLocaleDateString(locale) }}</span>
-                  <span>·</span>
-                  <span>{{ readingMinutes(item.content) }} {{ t('common.minRead') }}</span>
-                </div>
-              </div>
-            </AppCard>
-          </div>
-        </section>
+        <!-- Title row -->
+        <div class="mt-8 flex flex-wrap items-center justify-between gap-3">
+          <h1 class="text-[28px] font-semibold text-ink">{{ t('news.title') }}</h1>
+          <SearchField v-model="search" width="w-[220px]" />
+        </div>
 
-        <div v-if="nextCursor" class="mt-10 flex justify-center">
-          <AppButton variant="outline" size="lg" @click="loadMore">{{ t('common.loadMore') }}</AppButton>
+        <!-- List -->
+        <div class="mt-4">
+          <article
+            v-for="(item, index) in filtered"
+            :key="item.id"
+            class="flex cursor-pointer gap-4"
+            :class="index === 0 ? 'rounded-xl bg-surface p-6 shadow-[0_1px_3px_rgba(0,0,0,.08)]' : 'border-b border-border px-1 py-5 last:border-b-0'"
+            @click="open(item)"
+          >
+            <div class="min-w-0 flex-1">
+              <h3 class="text-[18px] font-semibold leading-snug text-ink">{{ item.title }}</h3>
+              <p class="mt-1.5 line-clamp-2 text-[13px] leading-relaxed text-ink-muted">{{ excerpt(item.content) }}</p>
+              <div class="mt-3 flex items-center gap-4 text-[13px] text-ink-muted">
+                <span class="inline-flex items-center gap-1.5"><Icon name="eye" size="16" />{{ item.views ?? 0 }}</span>
+                <span>{{ relativeDate(item.publishAt) }}</span>
+              </div>
+            </div>
+            <div
+              v-if="item.cover"
+              class="hidden h-[68px] w-[120px] shrink-0 rounded-md bg-cover bg-center sm:block"
+              :style="{ backgroundImage: `url(${item.cover})` }"
+              aria-hidden="true"
+            />
+          </article>
+          <p v-if="!filtered.length" class="py-10 text-center text-small text-ink-muted">{{ t('news.empty') }}</p>
+        </div>
+
+        <div v-if="nextCursor && !search" class="mt-8 flex justify-center">
+          <AppButton variant="outline" @click="loadMore">{{ t('common.loadMore') }}</AppButton>
         </div>
       </template>
 

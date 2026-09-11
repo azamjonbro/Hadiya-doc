@@ -8,6 +8,10 @@ export const gamificationController = {
     sendSuccess(res, await pointsService.getSummary(req.user.id))
   }),
 
+  getMyPoints: asyncHandler(async (req, res) => {
+    sendSuccess(res, await pointsService.getHistory(req.user.id))
+  }),
+
   getLeaderboard: asyncHandler(async (req, res) => {
     sendSuccess(res, await pointsService.getLeaderboard(req.user, req.validatedQuery))
   }),

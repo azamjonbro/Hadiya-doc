@@ -1,5 +1,5 @@
 <script setup>
-import { onMounted, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { coursesApi } from '@/services/courses'
@@ -8,6 +8,9 @@ import { assessmentsApi } from '@/services/assessments'
 import { materialsApi } from '@/services/materials'
 import { lessonsApi } from '@/services/lessons'
 import { scormApi } from '@/services/scorm'
+import { chatApi } from '@/services/chat'
+import { courseReviewsApi } from '@/services/courseReviews'
+import { courseQuestionsApi } from '@/services/courseQuestions'
 // AI o'quv yordamchisi vaqtincha o'chirilgan — pastdagi shablonga qarang.
 // import AiChatPanel from '@/components/AiChatPanel.vue'
 import MaterialViewer from '@/components/MaterialViewer.vue'
@@ -15,12 +18,11 @@ import ReviewsPanel from '@/components/ReviewsPanel.vue'
 import QAPanel from '@/components/QAPanel.vue'
 import AppCard from '@/components/ui/AppCard.vue'
 import AppButton from '@/components/ui/AppButton.vue'
-import Badge from '@/components/ui/Badge.vue'
-import ProgressBar from '@/components/ui/ProgressBar.vue'
+import Avatar from '@/components/ui/Avatar.vue'
 import Skeleton from '@/components/ui/Skeleton.vue'
 import EmptyState from '@/components/ui/EmptyState.vue'
 import Icon from '@/components/ui/Icon.vue'
-import Tabs from '@/components/ui/Tabs.vue'
+import PillTabs from '@/components/portal/PillTabs.vue'
 import { apiErrorText } from '@/utils/apiError'
 import { loadPdfjs } from '@/utils/pdfjs'
 import OfflineCourseButton from '@/components/offline/OfflineCourseButton.vue'
@@ -61,12 +63,58 @@ async function loadProgress() {
     // Keep the last figure on screen rather than blanking the bar.
   }
 }
-const activeTab = ref('content')
-const tabs = [
+// Four tabs (reference §13): contents, about, reviews, Q&A. The counts in
+// brackets come from one small request each — the panels load their own
+// lists when opened, this is only the number on the tab.
+const activeTab = ref(route.query.tab === 'about' || route.query.tab === 'reviews' || route.query.tab === 'qa' ? route.query.tab : 'content')
+const reviewCount = ref(null)
+const questionCount = ref(null)
+const tabs = computed(() => [
   { value: 'content', label: t('courses.curriculum') },
-  { value: 'reviews', label: t('reviews.title') },
-  { value: 'qa', label: t('qa.title') },
-]
+  { value: 'about', label: t('portal.course.about') },
+  { value: 'reviews', label: t('reviews.title'), count: reviewCount.value ?? undefined },
+  { value: 'qa', label: t('qa.title'), count: questionCount.value ?? undefined },
+])
+
+async function loadCounts() {
+  const id = String(route.params.id)
+  const [reviews, questions] = await Promise.all([
+    courseReviewsApi.list(id, { limit: 1 }).catch(() => null),
+    courseQuestionsApi.list(id, { limit: 50 }).catch(() => null),
+  ])
+  if (reviews) reviewCount.value = reviews.count ?? 0
+  if (questions) questionCount.value = questions.items?.length ?? 0
+}
+
+// "Kurator": the first listed author, or the course's creator. Writing to
+// them opens (or reuses) the direct chat and lands on it.
+const curator = computed(() => course.value?.curators?.[0] ?? null)
+const contacting = ref(false)
+async function contactCurator() {
+  if (!curator.value || contacting.value) return
+  contacting.value = true
+  try {
+    const conversation = await chatApi.openDirect(curator.value.id)
+    router.push({ path: '/chat', query: { c: conversation.id } })
+  } catch (error) {
+    errorMessage.value = apiErrorText(error)
+  } finally {
+    contacting.value = false
+  }
+}
+
+// Everything the curriculum holds, for the "N materials" line on the
+// about tab — the same sum the module rows show, added up.
+const totalItems = computed(() => topics.value.reduce((sum, topic) => sum + topicItemCount(topic.id), 0))
+
+// Status word in the hero's corner, from the same progress payload the
+// bar uses: not started, in progress, or completed.
+const statusLabel = computed(() => {
+  if (!progress.value) return ''
+  if (progress.value.completed) return t('portal.courses.completed')
+  if ((progress.value.completionPercent ?? 0) > 0 || (progress.value.completedItems ?? 0) > 0) return t('portal.course.inProgress')
+  return t('portal.courses.notStarted')
+})
 
 function formatDuration(seconds) {
   if (!seconds) return ''
@@ -203,7 +251,7 @@ async function load() {
       topics.value.map((topic, i) => [topic.id, (scormLists[i] ?? []).filter((p) => p.processingStatus === 'READY')])
     )
     openTopics.value = new Set(topics.value.slice(0, 1).map((tp) => tp.id))
-    await loadProgress()
+    await Promise.all([loadProgress(), loadCounts()])
   } catch (error) {
     // Offline (12.2): if this course was saved deliberately, draw it from
     // there. Only what was saved appears — no videos, no tests — because
@@ -240,7 +288,7 @@ onMounted(load)
 
 <template>
 
-  <div class="min-h-screen bg-bg pb-12">
+  <div class="min-h-screen bg-surface-2 pb-12">
     <template v-if="loading">
       <div class="mx-auto max-w-6xl px-6 py-8">
         <Skeleton class="h-64 w-full rounded-xl" />
@@ -258,67 +306,107 @@ onMounted(load)
     </div>
 
     <template v-else-if="course">
-      <!-- Full Width Hero Banner -->
-      <div class="relative h-[320px] w-full bg-surface-2 flex items-end">
-        <img v-if="course.cover" :src="course.cover" class="absolute inset-0 w-full h-full object-cover" alt="" />
-        <div v-else class="absolute inset-0 bg-gradient-to-br from-primary/80 to-info/80"></div>
-        <div class="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent"></div>
-        
-        <div class="relative z-10 w-full mx-auto max-w-[1440px] px-6 lg:px-8 pb-8">
-          <button type="button" class="flex items-center gap-1.5 text-small font-medium text-white/70 transition-default hover:text-white mb-6" @click="router.push('/courses')">
-            <Icon name="chevron-left" size="16" />
-            {{ t('courses.title') }}
-          </button>
-          
-          <div class="flex items-center gap-2 mb-3">
-            <Badge variant="primary" class="bg-primary/20 text-white border-primary/30 backdrop-blur-sm">{{ t('courses.title') }}</Badge>
-            <span v-if="fromOffline" class="flex items-center gap-1 text-caption text-warning bg-warning/20 px-2 py-0.5 rounded backdrop-blur-sm">
-              <Icon name="alert-triangle" size="12" />
-              {{ t('offline.readingSavedCourse') }}
+      <!-- Hero 220px (reference §13): photo under a dark wash, back link,
+           the kind of thing, the title, status in the corner, a thin
+           progress line along the bottom. -->
+      <div class="relative h-[220px] w-full overflow-hidden bg-slate-800">
+        <img v-if="course.cover" :src="course.cover" class="absolute inset-0 h-full w-full object-cover" alt="" />
+        <div v-else class="absolute inset-0 bg-gradient-to-br from-primary to-slate-700"></div>
+        <div class="absolute inset-0" :class="course.cover ? 'bg-black/55' : 'bg-black/25'"></div>
+
+        <div class="relative z-10 mx-auto flex h-full w-full max-w-[1340px] flex-col px-4 pb-6 pt-4">
+          <div class="flex items-center justify-between gap-3">
+            <button type="button" class="flex items-center gap-1 text-[12px] text-white/80 transition-default hover:text-white" @click="router.push('/courses')">
+              <Icon name="chevron-left" size="14" />
+              {{ t('portal.course.backToMine') }}
+            </button>
+            <div class="flex items-center gap-2">
+              <OfflineCourseButton :course-id="String(route.params.id)" class="!border-white/20 !bg-white/10 !text-white hover:!bg-white/20" />
+              <button
+                v-if="curator"
+                type="button"
+                class="flex h-8 items-center gap-1.5 rounded-md bg-white/15 px-3 text-[12px] font-medium text-white transition-default hover:bg-white/25 disabled:opacity-60"
+                :disabled="contacting"
+                @click="contactCurator"
+              >
+                <Icon name="message-square" size="14" />
+                {{ t('portal.course.contactCurator') }}
+              </button>
+            </div>
+          </div>
+
+          <div class="mt-auto">
+            <p class="flex items-center gap-1.5 text-[12px] text-white/80">
+              <Icon name="book-open" size="14" />
+              {{ t('portal.courses.typeCourse') }}
+              <span v-if="fromOffline" class="ml-2 flex items-center gap-1 rounded bg-warning/30 px-2 py-0.5 text-caption text-white">
+                <Icon name="alert-triangle" size="12" />
+                {{ t('offline.readingSavedCourse') }}
+              </span>
+            </p>
+            <div class="mt-1 flex flex-wrap items-end justify-between gap-3">
+              <h1 class="text-[30px] font-semibold leading-tight text-white">{{ course.title }}</h1>
+              <span v-if="statusLabel" class="text-[13px] font-medium text-white/90">{{ statusLabel }}</span>
+            </div>
+          </div>
+        </div>
+
+        <div v-if="progress" class="absolute inset-x-0 bottom-0 h-1 bg-white/30" aria-hidden="true">
+          <div class="h-full bg-white transition-all" :style="{ width: `${progress.completionPercent ?? 0}%` }"></div>
+        </div>
+      </div>
+
+      <!-- White tab strip, 56px -->
+      <div class="w-full bg-surface shadow-[0_1px_2px_rgba(0,0,0,0.06)]">
+        <div class="mx-auto flex min-h-[56px] w-full max-w-[1340px] flex-wrap items-center justify-between gap-3 px-4 py-2">
+          <PillTabs v-model="activeTab" :tabs="tabs" />
+          <AppButton v-if="activeTab === 'content'" size="sm" icon="play" icon-position="left" :disabled="!continueVideo()" @click="onContinue">
+            {{ t('courses.continue') }}
+          </AppButton>
+        </div>
+      </div>
+
+      <!-- Content, 1340px on grey -->
+      <div class="mx-auto mt-8 w-full max-w-[1340px] px-4">
+        <!-- About -->
+        <AppCard v-if="activeTab === 'about'" class="max-w-[880px]">
+          <div class="flex flex-wrap items-center justify-between gap-2">
+            <h2 class="text-[16px] font-semibold text-ink">{{ t('portal.course.description') }}</h2>
+            <span class="flex items-center gap-1.5 text-[13px] text-ink-muted">
+              <Icon name="book-open" size="14" />
+              {{ t('portal.course.materialCount', { count: totalItems }) }}
             </span>
           </div>
-          
-          <div class="flex flex-col lg:flex-row lg:items-end justify-between gap-6">
-            <div class="flex-1 max-w-3xl">
-              <h1 class="text-4xl font-bold text-white leading-tight drop-shadow-md">{{ course.title }}</h1>
-              <p v-if="course.description" class="mt-3 text-body text-white/80 line-clamp-2 drop-shadow">{{ course.description }}</p>
-              
-              <div class="mt-5 flex items-center gap-6 text-small text-white/70">
-                <span class="flex items-center gap-1.5"><Icon name="layers" size="16" />{{ topics.length }} {{ t('courses.modules') }}</span>
-                <span class="flex items-center gap-1.5"><Icon name="video" size="16" />{{ totalVideos() }} {{ t('courses.videos') }}</span>
+          <p v-if="course.description" class="mt-3 whitespace-pre-line text-[14px] leading-relaxed text-ink">{{ course.description }}</p>
+          <p v-else class="mt-3 text-[14px] text-ink-faint">{{ t('portal.course.noDescription') }}</p>
+
+          <div v-if="curator" class="mt-6 border-t border-border pt-5">
+            <h3 class="text-[16px] font-semibold text-ink">{{ t('portal.course.curator') }}</h3>
+            <div class="mt-3 flex items-center gap-3">
+              <Avatar :src="curator.avatar" :name="curator.fullName" size="sm" />
+              <div class="min-w-0">
+                <p class="text-[14px] font-semibold text-ink">{{ curator.fullName }}</p>
+                <p class="text-[13px] text-ink-muted">
+                  {{ t('portal.course.curatorHint') }}
+                  <button type="button" class="text-info hover:underline" :disabled="contacting" @click="contactCurator">
+                    {{ t('portal.course.contactCurator') }}
+                  </button>
+                </p>
               </div>
             </div>
-            
-            <div class="flex items-center gap-3 shrink-0">
-              <OfflineCourseButton :course-id="String(route.params.id)" class="!bg-white/10 !text-white hover:!bg-white/20 !border-white/20 backdrop-blur-sm" />
-              <AppButton size="lg" icon="play" icon-position="left" variant="primary" :disabled="!continueVideo()" @click="onContinue" class="shadow-lg shadow-primary/30">
-                {{ t('courses.continue') }}
-              </AppButton>
-            </div>
           </div>
-        </div>
-      </div>
+        </AppCard>
 
-      <!-- White Tabs Band -->
-      <div class="bg-surface border-b border-border shadow-sm">
-        <div class="mx-auto max-w-[1440px] px-6 lg:px-8 flex items-center justify-between">
-          <Tabs v-model="activeTab" :tabs="tabs" class="-mb-px" />
-          
-          <!-- Progress Mini Widget -->
-          <div v-if="progress" class="hidden md:flex items-center gap-4 py-3">
-            <div class="flex flex-col items-end">
-              <span class="text-caption font-semibold text-ink">{{ progress.completionPercent ?? 0 }}% {{ t('videos.completed') }}</span>
-              <span class="text-[11px] text-ink-faint">{{ progress.completedItems }}/{{ progress.totalItems }}</span>
-            </div>
-            <div class="w-32">
-              <ProgressBar :value="progress.completionPercent ?? 0" size="sm" :variant="progress.completed ? 'success' : 'primary'" />
-            </div>
-          </div>
+        <!-- Reviews / Q&A: their own panels, 540px column as on the reference -->
+        <div v-else-if="activeTab === 'reviews'" class="max-w-[720px]">
+          <ReviewsPanel :course-id="String(route.params.id)" />
         </div>
-      </div>
+        <div v-else-if="activeTab === 'qa'" class="max-w-[720px]">
+          <QAPanel :course-id="String(route.params.id)" />
+        </div>
 
-      <!-- Content Area -->
-      <div class="mx-auto max-w-[1440px] px-6 lg:px-8 mt-8 grid grid-cols-1 lg:grid-cols-4 gap-8">
+        <!-- Contents -->
+        <div v-else class="grid grid-cols-1 gap-8 lg:grid-cols-4">
         <!-- Left: Curriculum -->
         <div class="lg:col-span-3">
           <div class="space-y-4">
@@ -514,9 +602,14 @@ onMounted(load)
           </div>
         </div>
 
-        <!-- Right Side: Sidebar Widgets (could be populated later) -->
-        <div class="hidden lg:block space-y-6">
-           <!-- Reserve space for sidebar widgets, e.g., Instructor info, Course materials overview, etc. -->
+        <!-- Right: progress summary -->
+        <div class="hidden space-y-4 lg:block">
+          <AppCard v-if="progress">
+            <p class="text-[13px] text-ink-muted">{{ t('videos.completed') }}</p>
+            <p class="mt-1 text-[28px] font-semibold text-ink">{{ progress.completionPercent ?? 0 }}%</p>
+            <p class="text-[12px] text-ink-faint">{{ progress.completedItems }}/{{ progress.totalItems }}</p>
+          </AppCard>
+        </div>
         </div>
       </div>
     </template>

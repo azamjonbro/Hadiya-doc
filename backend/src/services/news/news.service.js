@@ -1,5 +1,6 @@
 import { PERMISSIONS } from '@lms/shared'
 import { newsRepository } from '../../repositories/news.repository.js'
+import { newsViewRepository } from '../../repositories/newsView.repository.js'
 import { userRepository } from '../../repositories/user.repository.js'
 import { roleRepository } from '../../repositories/role.repository.js'
 import { auditLogRepository } from '../../repositories/auditLog.repository.js'
@@ -100,8 +101,11 @@ export const newsService = {
     })
     const hasMore = rows.length > query.limit
     const items = hasMore ? rows.slice(0, -1) : rows
+    // Reader count rides along with the feed (portal §3 shows it under
+    // each item); a separate request per card would be one per row.
+    const views = await newsViewRepository.countByNews(items.map((row) => row._id))
     return {
-      items: items.map(toPublicNews),
+      items: items.map((row) => ({ ...toPublicNews(row), views: views[String(row._id)] ?? 0 })),
       nextCursor: hasMore ? items[items.length - 1]._id.toString() : null,
     }
   },
