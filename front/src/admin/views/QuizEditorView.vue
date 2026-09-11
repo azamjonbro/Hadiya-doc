@@ -211,7 +211,7 @@ onMounted(load)
     <template v-else-if="quiz">
       <div class="mt-4 flex flex-wrap items-start justify-between gap-4">
         <div class="min-w-0">
-          <h1 class="text-[28px] font-bold text-ink">{{ quiz.title }}</h1>
+          <h1 class="text-[24px] font-semibold text-ink">{{ quiz.title }}</h1>
           <div class="mt-1.5 flex flex-wrap items-center gap-2">
             <Badge :variant="quiz.status === 'PUBLISHED' ? 'success' : 'neutral'" size="sm">
               {{ t(`quizEditor.status.${quiz.status}`) }}

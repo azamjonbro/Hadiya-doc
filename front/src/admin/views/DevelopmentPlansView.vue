@@ -610,7 +610,7 @@ onMounted(() => {
   <div class="px-6 py-8">
     <div class="flex flex-wrap items-center justify-between gap-3">
       <div>
-        <h1 class="text-[28px] font-bold text-ink">{{ t('devplan.adminTitle') }}</h1>
+        <h1 class="text-[24px] font-semibold text-ink">{{ t('devplan.adminTitle') }}</h1>
         <p class="mt-1 text-small text-ink-muted">{{ t('devplan.adminSubtitle') }}</p>
       </div>
       <AppButton v-if="canManage" icon="plus" @click="openNewPlan">{{ t('devplan.newPlan') }}</AppButton>

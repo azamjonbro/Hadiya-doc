@@ -292,7 +292,7 @@ onMounted(() => {
 <template>
   <div class="mx-auto max-w-[1400px] px-6 py-8">
     <div class="flex items-center justify-between">
-      <h1 class="text-[28px] font-bold text-ink">{{ t('tasks.title') }}</h1>
+      <h1 class="text-[24px] font-semibold text-ink">{{ t('tasks.title') }}</h1>
       <AppButton v-if="auth.hasPermission('task:create')" icon="plus" @click="showCreateModal = true">{{ t('tasks.newTask') }}</AppButton>
     </div>
 

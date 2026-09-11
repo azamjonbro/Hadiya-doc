@@ -150,7 +150,7 @@ async function onPublish(status) {
       {{ t('courses.title') }}
     </button>
 
-    <h1 class="mt-4 text-[28px] font-bold text-ink">{{ t('courseBuilder.title') }}</h1>
+    <h1 class="mt-4 text-[24px] font-semibold text-ink">{{ t('courseBuilder.title') }}</h1>
 
     <!-- Stepper -->
     <div class="mt-6 flex items-center">

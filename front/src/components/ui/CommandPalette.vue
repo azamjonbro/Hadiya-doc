@@ -121,8 +121,13 @@ function onKeydown(event) {
 // whatever the person was on when it closes.
 useFocusTrap(panel, { isActive: () => open.value, onEscape: hide, initialFocus: () => input.value })
 
-onMounted(() => window.addEventListener('keydown', onKeydown))
+// The admin bar's search field opens the palette too — one search.
+onMounted(() => {
+  window.addEventListener('keydown', onKeydown)
+  window.addEventListener('lms:search', show)
+})
 onUnmounted(() => {
+  window.removeEventListener('lms:search', show)
   window.removeEventListener('keydown', onKeydown)
   clearTimeout(timer)
 })

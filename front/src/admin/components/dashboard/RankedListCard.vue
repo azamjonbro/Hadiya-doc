@@ -12,7 +12,7 @@ const maxValue = computed(() => Math.max(1, ...props.items.map((i) => Number(i.v
 </script>
 
 <template>
-  <div class="rounded-lg border border-border bg-surface p-4">
+  <div class="rounded-2xl bg-surface p-5 shadow-sm">
     <h3 class="text-sm font-semibold text-ink">{{ title }}</h3>
 
     <p v-if="items.length === 0" class="mt-4 text-sm text-ink-faint">{{ emptyText }}</p>

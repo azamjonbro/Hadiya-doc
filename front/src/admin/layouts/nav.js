@@ -1,72 +1,105 @@
-export const workspaceNav = [{ name: 'dashboard', path: '/bos', icon: 'home', labelKey: 'nav.dashboard' }]
-
-export const managementNav = [
-  { name: 'team', path: '/bos/team', icon: 'users', labelKey: 'team.title', permission: 'analytics:view:all' },
-  { name: 'users', path: '/bos/users', icon: 'users', labelKey: 'nav.employees', permission: 'user:read' },
-  { name: 'branches', path: '/bos/branches', icon: 'building', labelKey: 'nav.branches', permission: 'user:read' },
-  { name: 'groups', path: '/bos/groups', icon: 'layers', labelKey: 'nav.groups', permission: 'user:read' },
-  { name: 'courses', path: '/bos/courses', icon: 'book-open', labelKey: 'admin.nav.courses', permission: 'course:read' },
+// The admin shell (rasn/ 2026-09-11, iSpring's admin): a narrow icon rail
+// on the left, one icon per section, and a second column naming the pages
+// of the current section. A section with one page has no second column —
+// the page takes the width. `permission` hides what the person could not
+// open; a section whose every page is hidden disappears with them.
+export const adminSections = [
+  { key: 'home', icon: 'home', path: '/bos', labelKey: 'nav.dashboard' },
   {
-    name: 'leaderboard',
-    path: '/bos/leaderboard',
-    icon: 'award',
-    labelKey: 'nav.leaderboard',
-    permission: 'analytics:view:all',
+    key: 'materials',
+    icon: 'book-open',
+    path: '/bos/courses',
+    labelKey: 'admin.section.materials',
+    children: [
+      { name: 'courses', path: '/bos/courses', labelKey: 'admin.section.library', permission: 'course:read' },
+      { name: 'paths', path: '/bos/paths', labelKey: 'paths.adminTitle', permission: 'path:manage' },
+      { name: 'question-banks', path: '/bos/question-banks', labelKey: 'questions.title', permission: 'quiz:configure' },
+      { name: 'tasks', path: '/bos/tasks', labelKey: 'nav.tasks', permission: 'task:create' },
+      { name: 'media', path: '/bos/media', labelKey: 'media.title', permission: 'course:update' },
+      { name: 'ai', path: '/bos/ai', labelKey: 'ai.title', permission: 'course:create' },
+      { name: 'certificates', path: '/bos/certificates', labelKey: 'nav.certificates', permission: 'certificate:template:manage' },
+      { name: 'trash', path: '/bos/trash', labelKey: 'nav.trash', permission: 'course:delete' },
+    ],
   },
-  { name: 'news', path: '/bos/news', icon: 'newspaper', labelKey: 'nav.news', permission: 'news:read' },
-  { name: 'media', path: '/bos/media', icon: 'image', labelKey: 'media.title', permission: 'course:update' },
-  { name: 'ai', path: '/bos/ai', icon: 'flame', labelKey: 'ai.title', permission: 'course:create' },
-  { name: 'tasks', path: '/bos/tasks', icon: 'check-square', labelKey: 'nav.tasks', permission: 'task:create' },
-  { name: 'reports', path: '/bos/reports', icon: 'bar-chart', labelKey: 'nav.reports', permission: 'report:export' },
-  { name: 'chat', path: '/bos/chat', icon: 'message-square', labelKey: 'nav.chat', permission: 'chat:support' },
-  { name: 'compliance', path: '/bos/compliance', icon: 'shield', labelKey: 'compliance.title', permission: 'course:assign' },
-  // BLOK 13 — what a person can do, as opposed to what they were assigned.
-  { name: 'competencies', path: '/bos/competencies', icon: 'star', labelKey: 'competency.title', permission: 'competency:manage' },
+  { key: 'events', icon: 'calendar', path: '/bos/events', labelKey: 'events.adminTitle', permission: 'event:create' },
   {
-    name: 'competency-matrix',
-    path: '/bos/competencies/matrix',
-    icon: 'grid',
-    labelKey: 'competency.matrix',
-    permission: 'competency:assess',
+    key: 'users',
+    icon: 'users',
+    path: '/bos/users',
+    labelKey: 'admin.section.users',
+    children: [
+      { name: 'users', path: '/bos/users', labelKey: 'nav.employees', permission: 'user:read' },
+      { name: 'roles', path: '/bos/roles', labelKey: 'roles.title', permission: 'role:manage' },
+      { name: 'branches', path: '/bos/branches', labelKey: 'nav.branches', permission: 'user:read' },
+      { name: 'groups', path: '/bos/groups', labelKey: 'nav.groups', permission: 'user:read' },
+      { name: 'team', path: '/bos/team', labelKey: 'team.title', permission: 'analytics:view:all' },
+      { name: 'compliance', path: '/bos/compliance', labelKey: 'compliance.title', permission: 'course:assign' },
+    ],
   },
-  { name: 'review360', path: '/bos/review360', icon: 'refresh', labelKey: 'review360.title', permission: 'review360:manage' },
-  { name: 'ojt', path: '/bos/ojt', icon: 'briefcase', labelKey: 'ojt.adminTitle', permission: 'ojt:manage' },
   {
-    name: 'development-plans',
-    path: '/bos/development-plans',
+    key: 'development',
     icon: 'trending-up',
-    labelKey: 'devplan.adminTitle',
-    permission: 'devplan:manage',
-  },
-  { name: 'grading', path: '/bos/grading', icon: 'check-check', labelKey: 'grading.title', permission: 'quiz:grade' },
-  { name: 'events', path: '/bos/events', icon: 'calendar', labelKey: 'events.adminTitle', permission: 'event:create' },
-  {
-    name: 'paths',
-    path: '/bos/paths',
-    icon: 'layers',
-    labelKey: 'paths.adminTitle',
-    permission: 'path:manage',
+    path: '/bos/development-plans',
+    labelKey: 'admin.section.development',
+    children: [
+      { name: 'development-plans', path: '/bos/development-plans', labelKey: 'devplan.adminTitle', permission: 'devplan:manage' },
+      { name: 'competencies', path: '/bos/competencies', labelKey: 'competency.title', permission: 'competency:manage' },
+      { name: 'competency-matrix', path: '/bos/competencies/matrix', labelKey: 'competency.matrix', permission: 'competency:assess' },
+    ],
   },
   {
-    name: 'question-banks',
-    path: '/bos/question-banks',
-    icon: 'check-square',
-    labelKey: 'questions.title',
-    permission: 'quiz:configure',
+    key: 'reports',
+    icon: 'bar-chart',
+    path: '/bos/reports',
+    labelKey: 'nav.reports',
+    children: [
+      { name: 'reports', path: '/bos/reports', labelKey: 'nav.reports', permission: 'report:export' },
+      { name: 'leaderboard', path: '/bos/leaderboard', labelKey: 'nav.leaderboard', permission: 'analytics:view:all' },
+      { name: 'audit-logs', path: '/bos/audit-logs', labelKey: 'nav.auditLog', permission: 'audit:read' },
+    ],
+  },
+  // The knowledge base is one shell for everyone (portal §5); the admin
+  // reaches it through the rail like iSpring does.
+  { key: 'kb', icon: 'info', path: '/kb', labelKey: 'portal.nav.kb' },
+  { key: 'grading', icon: 'message-square', path: '/bos/grading', labelKey: 'grading.title', permission: 'quiz:grade' },
+  { key: 'ojt', icon: 'check-square', path: '/bos/ojt', labelKey: 'ojt.adminTitle', permission: 'ojt:manage' },
+  { key: 'review360', icon: 'refresh', path: '/bos/review360', labelKey: 'review360.title', permission: 'review360:manage' },
+  {
+    key: 'news',
+    icon: 'newspaper',
+    path: '/bos/news',
+    labelKey: 'admin.section.news',
+    children: [
+      { name: 'news', path: '/bos/news', labelKey: 'nav.news', permission: 'news:read' },
+      { name: 'chat', path: '/bos/chat', labelKey: 'nav.chat', permission: 'chat:support' },
+    ],
   },
   {
-    name: 'certificates',
-    path: '/bos/certificates',
-    icon: 'award',
-    labelKey: 'nav.certificates',
-    permission: 'certificate:template:manage',
+    key: 'settings',
+    icon: 'settings',
+    path: '/bos/settings',
+    labelKey: 'nav.settings',
+    children: [
+      { name: 'settings', path: '/bos/settings', labelKey: 'nav.settings' },
+      { name: 'notifications', path: '/bos/notifications', labelKey: 'nav.notifications' },
+    ],
   },
-  { name: 'roles', path: '/bos/roles', icon: 'lock', labelKey: 'roles.title', permission: 'role:manage' },
-  { name: 'audit-logs', path: '/bos/audit-logs', icon: 'shield', labelKey: 'nav.auditLog', permission: 'audit:read' },
-  { name: 'trash', path: '/bos/trash', icon: 'trash', labelKey: 'nav.trash', permission: 'course:delete' },
 ]
 
-export const systemNav = [
-  { name: 'notifications', path: '/bos/notifications', icon: 'bell', labelKey: 'nav.notifications' },
-  { name: 'settings', path: '/bos/settings', icon: 'settings', labelKey: 'nav.settings' },
-]
+// Which section a path belongs to — the longest matching prefix wins, so
+// /bos/competencies/matrix lands in "development", not in "home".
+export function sectionFor(path) {
+  let best = null
+  let bestLength = -1
+  for (const section of adminSections) {
+    const paths = [section.path, ...(section.children ?? []).map((c) => c.path)]
+    for (const p of paths) {
+      const matches = p === '/bos' ? path === '/bos' : path === p || path.startsWith(`${p}/`)
+      if (matches && p.length > bestLength) {
+        best = section
+        bestLength = p.length
+      }
+    }
+  }
+  return best ?? adminSections[0]
+}

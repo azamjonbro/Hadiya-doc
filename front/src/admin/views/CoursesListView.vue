@@ -166,7 +166,7 @@ onMounted(load)
   <div class="mx-auto w-full max-w-[1440px] px-6 lg:px-8 py-8">
     <div class="flex flex-wrap items-center justify-between gap-3 pb-4 border-b border-border mb-6">
       <div>
-        <h1 class="text-[28px] font-bold text-ink">{{ t('courses.title') }}</h1>
+        <h1 class="text-[24px] font-semibold text-ink">{{ t('courses.title') }}</h1>
       </div>
       <AppButton v-if="auth.hasPermission('course:create')" icon="plus" @click="router.push('/bos/courses/new')">{{ t('courses.newCourse') }}</AppButton>
     </div>

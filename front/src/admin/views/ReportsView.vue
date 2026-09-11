@@ -450,7 +450,7 @@ onUnmounted(() => {
 
 <template>
   <div class="mx-auto w-full max-w-[1440px] px-6 lg:px-8 py-8">
-    <h1 class="text-[28px] font-bold text-ink">{{ t('reports.title') }}</h1>
+    <h1 class="text-[24px] font-semibold text-ink">{{ t('reports.title') }}</h1>
     <p class="mt-1 text-body text-ink-muted">{{ t('reports.subtitle') }}</p>
 
     <FilterBar

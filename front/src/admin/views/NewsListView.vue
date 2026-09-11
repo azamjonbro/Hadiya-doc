@@ -99,7 +99,7 @@ onMounted(loadFirstPage)
 <template>
   <div class="mx-auto w-full max-w-[1440px] px-6 lg:px-8 py-8">
     <div class="flex items-center justify-between">
-      <h1 class="text-[28px] font-bold text-ink">{{ t('news.title') }}</h1>
+      <h1 class="text-[24px] font-semibold text-ink">{{ t('news.title') }}</h1>
       <AppButton v-if="auth.hasPermission('news:create')" icon="plus" @click="showCreateModal = true">{{ t('news.newArticle') }}</AppButton>
     </div>
 

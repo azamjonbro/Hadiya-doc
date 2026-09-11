@@ -1236,6 +1236,13 @@
     },
     "notifications": {
       "empty": "No notifications"
+    },
+    "section": {
+      "materials": "Learning materials",
+      "library": "Course library",
+      "users": "User management",
+      "development": "Development plans",
+      "news": "News feed"
     }
   },
   "reports": {

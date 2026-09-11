@@ -250,7 +250,7 @@ onMounted(async () => {
   <div class="px-6 py-8">
     <div class="flex flex-wrap items-center justify-between gap-3">
       <div>
-        <h1 class="text-[28px] font-bold text-ink">{{ t('questions.title') }}</h1>
+        <h1 class="text-[24px] font-semibold text-ink">{{ t('questions.title') }}</h1>
         <p class="mt-1 text-small text-ink-muted">{{ t('questions.subtitle') }}</p>
       </div>
       <AppButton icon="plus" @click="openBankModal">{{ t('questions.newBank') }}</AppButton>

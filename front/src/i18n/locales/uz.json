@@ -1236,6 +1236,13 @@
     },
     "notifications": {
       "empty": "Bildirishnomalar yo'q"
+    },
+    "section": {
+      "materials": "O'quv materiallari",
+      "library": "Kurslar kutubxonasi",
+      "users": "Foydalanuvchilarni boshqarish",
+      "development": "Rivojlanish rejalari",
+      "news": "Yangiliklar lentasi"
     }
   },
   "reports": {

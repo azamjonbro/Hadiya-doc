@@ -126,7 +126,7 @@ export const router = createRouter({
       // and nobody else — see the guard.
       meta: { admin: true },
       children: [
-        { path: '', name: 'admin-dashboard', component: () => import('@/admin/views/HomeView.vue'), meta: { titleKey: 'nav.dashboard' } },
+        { path: '', name: 'admin-dashboard', component: () => import('@/admin/views/HomeView.vue'), meta: { titleKey: 'nav.dashboard', plain: true } },
         {
           path: 'users',
           name: 'admin-users-list',
