@@ -2541,7 +2541,9 @@
       "deadline": "Deadline",
       "add": "Add",
       "addStage": "Add stage",
-      "emptyHint": "Press “Add” to create stages and put courses on the path."
+      "emptyHint": "Press “Add” to create stages and put courses on the path.",
+      "stage": "Stage",
+      "course": "Course"
     },
     "basic": {
       "hint": "The basic properties of the learning path.",

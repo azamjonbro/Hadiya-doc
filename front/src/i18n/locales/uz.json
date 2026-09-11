@@ -2541,7 +2541,9 @@
       "deadline": "Bajarish muddati",
       "add": "Qo'shish",
       "addStage": "Bosqich qo'shish",
-      "emptyHint": "Bosqichlar yaratish va trayektoriyaga kurslar qo'shish uchun «Qo'shish» tugmasini bosing."
+      "emptyHint": "Bosqichlar yaratish va trayektoriyaga kurslar qo'shish uchun «Qo'shish» tugmasini bosing.",
+      "stage": "Bosqich",
+      "course": "Kurs"
     },
     "basic": {
       "hint": "Bu yerda o'quv trayektoriyasining asosiy xususiyatlarini sozlash mumkin.",
