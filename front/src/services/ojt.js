@@ -43,6 +43,19 @@ export const ojtApi = {
   observationPath(sessionId, itemId) {
     return `/ojt/sessions/${sessionId}/observations/${itemId}`
   },
+  // Rating scales for checklist items (rasm: «Оценочные шкалы»).
+  scales() {
+    return http.get('/ojt/scales').then((r) => r.data.data.items)
+  },
+  createScale(payload) {
+    return http.post('/ojt/scales', payload).then((r) => r.data.data.scale)
+  },
+  updateScale(id, payload) {
+    return http.patch(`/ojt/scales/${id}`, payload).then((r) => r.data.data.scale)
+  },
+  removeScale(id) {
+    return http.delete(`/ojt/scales/${id}`).then((r) => r.data.data)
+  },
   recordObservation(sessionId, itemId, payload) {
     return http.put(this.observationPath(sessionId, itemId), payload).then((r) => r.data.data)
   },

@@ -124,7 +124,53 @@
       "notObserverHint": "Bu seansning kuzatuvchisi siz emassiz — faqat o’qish mumkin",
       "closedHint": "Seans yopiq — javoblarni o’zgartirib bo’lmaydi",
       "backToSessions": "Seanslarga qaytish",
-      "sessionsTitle": "O'quv sessiyalari"
+      "sessionsTitle": "O'quv sessiyalari",
+      "wizard": {
+        "participants": "Ishtirokchilar",
+        "checklistStep": "Kuzatuv varag‘i",
+        "when": "Sana / vaqt",
+        "you": "(Siz)",
+        "pickEmployee": "Xodimni tanlash",
+        "changeEmployee": "Boshqasini tanlash",
+        "pickObserver": "Kuzatuvchini tanlash",
+        "next": "Keyingi",
+        "back": "Orqaga",
+        "create": "Rejalashtirish",
+        "employee": "Xodim",
+        "observerLabel": "Kuzatuvchi",
+        "checklistHint": "Xodim nimani qilib ko‘rsatishi kerak — faol standartlardan birini tanlang.",
+        "whenHint": "Kuzatuv qachon o‘tkaziladi. Sana keyin o‘zgartirilishi mumkin."
+      },
+      "columns": {
+        "employee": "Xodim",
+        "observer": "Kuzatuvchi"
+      },
+      "subtitleHint": "Bu yerda ish joyida o‘qitishni rejalashtirasiz va o‘tkazasiz.",
+      "timeRange": "{from} — {to}",
+      "scales": {
+        "title": "Baholash shkalalari",
+        "hint": "Har bir vazifa uchun kerakli darajalar soni va har daraja uchun ball bilan shkala yarating.",
+        "new": "Yangi shkala",
+        "edit": "Shkalani tahrirlash",
+        "name": "Nomi",
+        "description": "Tavsif",
+        "levels": "Darajalar",
+        "level": "Daraja",
+        "points": "Ball",
+        "passes": "O‘tdi deb hisoblanadi",
+        "addLevel": "Daraja qo‘shish",
+        "yesNo": "Ha / Yo‘q (standart)",
+        "scale": "Shkala",
+        "locked": "O‘rnatilgan — o‘zgartirib bo‘lmaydi",
+        "empty": "Hozircha shkala yo‘q",
+        "saved": "Shkala saqlandi",
+        "deleted": "Shkala o‘chirildi",
+        "deleteTitle": "Shkalani o‘chirish",
+        "deleteMessage": "«{name}» o‘chirilsinmi? Ishlatilayotgan shkalani o‘chirib bo‘lmaydi.",
+        "levelsHint": "Kamida ikkita daraja. Eng yuqori ball — bandning to‘liq vazni.",
+        "nameRequired": "Nomini kiriting",
+        "levelRequired": "Har bir daraja nomlangan bo‘lishi kerak"
+      }
     }
   },
   "ru": {
@@ -252,7 +298,53 @@
       "notObserverHint": "Вы не наблюдатель этой сессии — только чтение",
       "closedHint": "Сессия закрыта — оценки изменить нельзя",
       "backToSessions": "К списку сессий",
-      "sessionsTitle": "Обучающие сессии"
+      "sessionsTitle": "Обучающие сессии",
+      "wizard": {
+        "participants": "Участники",
+        "checklistStep": "Лист наблюдения",
+        "when": "Дата/Время",
+        "you": "(Вы)",
+        "pickEmployee": "Выбрать сотрудника",
+        "changeEmployee": "Выбрать другого",
+        "pickObserver": "Выбрать наблюдателя",
+        "next": "Далее",
+        "back": "Назад",
+        "create": "Запланировать",
+        "employee": "Сотрудник",
+        "observerLabel": "Наблюдатель",
+        "checklistHint": "Что сотрудник должен показать — выберите один из активных стандартов.",
+        "whenHint": "Когда пройдёт наблюдение. Дату можно изменить позже."
+      },
+      "columns": {
+        "employee": "Сотрудник",
+        "observer": "Наблюдатель"
+      },
+      "subtitleHint": "Здесь вы можете запланировать и провести обучение на рабочем месте.",
+      "timeRange": "{from} — {to}",
+      "scales": {
+        "title": "Оценочные шкалы",
+        "hint": "Здесь можно создать оценочные шкалы под каждую задачу с нужным вам количеством уровней и баллами за уровень.",
+        "new": "Новая шкала",
+        "edit": "Изменить шкалу",
+        "name": "Название",
+        "description": "Описание",
+        "levels": "Уровни",
+        "level": "Уровень",
+        "points": "Баллы",
+        "passes": "Считается зачётом",
+        "addLevel": "Добавить уровень",
+        "yesNo": "Да / Нет (по умолчанию)",
+        "scale": "Шкала",
+        "locked": "Встроенная — нельзя изменить",
+        "empty": "Шкал пока нет",
+        "saved": "Шкала сохранена",
+        "deleted": "Шкала удалена",
+        "deleteTitle": "Удалить шкалу",
+        "deleteMessage": "Удалить «{name}»? Используемую шкалу удалить нельзя.",
+        "levelsHint": "Минимум два уровня. Максимальный балл — полный вес пункта.",
+        "nameRequired": "Введите название",
+        "levelRequired": "У каждого уровня должно быть название"
+      }
     }
   },
   "en": {
@@ -380,7 +472,53 @@
       "notObserverHint": "You are not the observer on this session — read only",
       "closedHint": "This session is closed — the verdicts cannot be changed",
       "backToSessions": "Back to sessions",
-      "sessionsTitle": "Training sessions"
+      "sessionsTitle": "Training sessions",
+      "wizard": {
+        "participants": "Participants",
+        "checklistStep": "Observation sheet",
+        "when": "Date / time",
+        "you": "(you)",
+        "pickEmployee": "Pick an employee",
+        "changeEmployee": "Pick another",
+        "pickObserver": "Pick an observer",
+        "next": "Next",
+        "back": "Back",
+        "create": "Schedule",
+        "employee": "Employee",
+        "observerLabel": "Observer",
+        "checklistHint": "What the employee has to demonstrate — pick one of the active standards.",
+        "whenHint": "When the observation takes place. The date can be changed later."
+      },
+      "columns": {
+        "employee": "Employee",
+        "observer": "Observer"
+      },
+      "subtitleHint": "Plan and run on-the-job training here.",
+      "timeRange": "{from} — {to}",
+      "scales": {
+        "title": "Rating scales",
+        "hint": "Create a scale for each kind of task, with as many levels and points per level as you need.",
+        "new": "New scale",
+        "edit": "Edit scale",
+        "name": "Name",
+        "description": "Description",
+        "levels": "Levels",
+        "level": "Level",
+        "points": "Points",
+        "passes": "Counts as a pass",
+        "addLevel": "Add level",
+        "yesNo": "Yes / No (default)",
+        "scale": "Scale",
+        "locked": "Built-in — cannot be changed",
+        "empty": "No scales yet",
+        "saved": "Scale saved",
+        "deleted": "Scale deleted",
+        "deleteTitle": "Delete scale",
+        "deleteMessage": "Delete “{name}”? A scale in use cannot be deleted.",
+        "levelsHint": "At least two levels. The top score is the item's full weight.",
+        "nameRequired": "Enter a name",
+        "levelRequired": "Every level needs a name"
+      }
     }
   }
 }

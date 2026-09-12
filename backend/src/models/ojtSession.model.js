@@ -36,6 +36,22 @@ const sessionItemSchema = new Schema(
     // the observer's form and the session list can be drawn with one read:
     // the phone on the shop floor is the worst place to pay for a join.
     result: { type: String, enum: ['PASS', 'FAIL', 'NOT_OBSERVED', null], default: null },
+
+    // The scale the item is judged on, copied like the wording is: a scale
+    // edited after the fact must not re-score a signed session. `level` is
+    // the index the observer picked; `points` what it was worth then.
+    scale: {
+      type: new Schema(
+        {
+          name: { type: String, default: '' },
+          levels: { type: [{ label: String, points: Number, passes: Boolean }], default: [] },
+        },
+        { _id: false }
+      ),
+      default: null,
+    },
+    level: { type: Number, min: 0, default: null },
+    points: { type: Number, min: 0, default: null },
   },
   { _id: false }
 )

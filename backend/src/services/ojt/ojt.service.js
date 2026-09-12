@@ -2,6 +2,7 @@ import { PERMISSIONS } from '@lms/shared'
 import { OjtChecklist } from '../../models/ojtChecklist.model.js'
 import { OjtSession } from '../../models/ojtSession.model.js'
 import { OjtObservation } from '../../models/ojtObservation.model.js'
+import { OjtScale, YES_NO_SCALE } from '../../models/ojtScale.model.js'
 import { Competency } from '../../models/competency.model.js'
 import { User } from '../../models/user.model.js'
 import { auditLogRepository } from '../../repositories/auditLog.repository.js'
@@ -31,21 +32,46 @@ const canObserve = (actor) => Boolean(actor?.permissions?.includes(PERMISSIONS.O
 
 const sameId = (a, b) => Boolean(a) && Boolean(b) && String(a) === String(b)
 
-/** Item fields the checklist owns, in the shape a session stores them. */
-function snapshotItems(checklist) {
+/**
+ * Item fields the checklist owns, in the shape a session stores them —
+ * with the item's rating scale copied in, so a scale edited later cannot
+ * re-score this session (an item naming no scale is judged yes/no).
+ */
+async function snapshotItems(checklist) {
+  const scaleIds = [...new Set((checklist.items ?? []).map((item) => item.scaleId).filter(Boolean).map(String))]
+  const scales = scaleIds.length ? await OjtScale.find({ _id: { $in: scaleIds } }).lean() : []
+  const scaleById = new Map(scales.map((scale) => [String(scale._id), scale]))
   return [...(checklist.items ?? [])]
     .sort((a, b) => (a.order ?? 0) - (b.order ?? 0))
-    .map((item) => ({
-      itemId: item._id,
-      title: item.title,
-      criteria: item.criteria ?? '',
-      order: item.order ?? 0,
-      required: item.required !== false,
-      weight: item.weight ?? 1,
-      competencyId: item.competencyId ?? null,
-      competencyLevel: item.competencyLevel ?? null,
-      result: null,
-    }))
+    .map((item) => {
+      const scale = item.scaleId ? scaleById.get(String(item.scaleId)) : null
+      return {
+        itemId: item._id,
+        title: item.title,
+        criteria: item.criteria ?? '',
+        order: item.order ?? 0,
+        required: item.required !== false,
+        weight: item.weight ?? 1,
+        competencyId: item.competencyId ?? null,
+        competencyLevel: item.competencyLevel ?? null,
+        scale: scale
+          ? { name: scale.name, levels: scale.levels.map((l) => ({ label: l.label, points: l.points ?? 0, passes: Boolean(l.passes) })) }
+          : null,
+        level: null,
+        points: null,
+        result: null,
+      }
+    })
+}
+
+/** The share of an item's weight a chosen level earns: points / best level. */
+function earnedShare(item) {
+  if (item.result === 'PASS' && !item.scale) return 1
+  if (item.result === 'FAIL' && !item.scale) return 0
+  const levels = item.scale?.levels ?? []
+  const max = Math.max(0, ...levels.map((l) => l.points ?? 0))
+  if (!max || item.level === null || item.level === undefined) return item.result === 'PASS' ? 1 : 0
+  return Math.max(0, Math.min(1, (levels[item.level]?.points ?? 0) / max))
 }
 
 /**
@@ -66,13 +92,12 @@ export function computeScore(items = [], passThresholdPercent = 80) {
 
   for (const item of items) {
     const weight = item.weight ?? 1
-    if (item.result === 'PASS') {
-      passed += 1
+    if (item.result === 'PASS' || item.result === 'FAIL') {
+      if (item.result === 'PASS') passed += 1
+      else failed += 1
       assessedWeight += weight
-      earnedWeight += weight
-    } else if (item.result === 'FAIL') {
-      failed += 1
-      assessedWeight += weight
+      // Yes/no earns all or nothing; a scale earns the level's share.
+      earnedWeight += weight * earnedShare(item)
     } else if (item.result === 'NOT_OBSERVED') {
       notObserved += 1
     }
@@ -111,12 +136,14 @@ function toPublicChecklist(checklist) {
         weight: item.weight ?? 1,
         competencyId: item.competencyId ? String(item.competencyId) : null,
         competencyLevel: item.competencyLevel ?? null,
+        scaleId: item.scaleId ? String(item.scaleId) : null,
       })),
     updatedAt: checklist.updatedAt,
   }
 }
 
 const nameOf = (value) => (value && typeof value === 'object' ? (value.fullName ?? '') : '')
+const fieldOf = (value, field) => (value && typeof value === 'object' ? (value[field] ?? '') : '')
 const idOf = (value) => (value && typeof value === 'object' && value._id ? String(value._id) : value ? String(value) : null)
 
 function toPublicSession(session, { withItems = true } = {}) {
@@ -129,8 +156,12 @@ function toPublicSession(session, { withItems = true } = {}) {
     passThresholdPercent: session.passThresholdPercent ?? 80,
     traineeId: idOf(session.traineeId),
     traineeName: nameOf(session.traineeId),
+    traineeDepartment: fieldOf(session.traineeId, 'department'),
+    traineeAvatar: fieldOf(session.traineeId, 'avatar'),
     observerId: idOf(session.observerId),
     observerName: nameOf(session.observerId),
+    observerDepartment: fieldOf(session.observerId, 'department'),
+    observerAvatar: fieldOf(session.observerId, 'avatar'),
     location: session.location ?? '',
     status: session.status,
     scheduledAt: session.scheduledAt,
@@ -160,6 +191,9 @@ function toPublicSession(session, { withItems = true } = {}) {
             weight: item.weight ?? 1,
             competencyId: item.competencyId ? String(item.competencyId) : null,
             competencyLevel: item.competencyLevel ?? null,
+            scale: item.scale ?? null,
+            level: item.level ?? null,
+            points: item.points ?? null,
             result: item.result ?? null,
           })),
         }
@@ -333,7 +367,7 @@ export const ojtService = {
       managerId: trainee.managerId ?? null,
       location,
       scheduledAt: scheduledAt ?? new Date(),
-      items: snapshotItems(checklist),
+      items: await snapshotItems(checklist),
       createdBy: actor.id,
     })
     return toPublicSession(session.toObject())
@@ -380,8 +414,8 @@ export const ojtService = {
     const [total, rows] = await Promise.all([
       OjtSession.countDocuments(filter),
       OjtSession.find(filter)
-        .populate('traineeId', 'fullName position department')
-        .populate('observerId', 'fullName')
+        .populate('traineeId', 'fullName position department avatar')
+        .populate('observerId', 'fullName department avatar')
         .sort({ scheduledAt: -1 })
         .skip((page - 1) * limit)
         .limit(limit)
@@ -395,8 +429,8 @@ export const ojtService = {
 
   async getSession(actor, id, { scopedUserIds = null } = {}) {
     const session = await OjtSession.findById(id)
-      .populate('traineeId', 'fullName position department')
-      .populate('observerId', 'fullName')
+      .populate('traineeId', 'fullName position department avatar')
+      .populate('observerId', 'fullName department avatar')
       .lean()
     if (!session) throw ApiError.notFound('Session not found', 'OJT_SESSION_NOT_FOUND')
     await this.assertVisible(actor, session, scopedUserIds)
@@ -435,7 +469,7 @@ export const ojtService = {
     // re-copying the checklist is right.
     const checklist = await OjtChecklist.findById(session.checklistId).lean()
     if (checklist && (checklist.version ?? 1) !== session.checklistVersion) {
-      session.items = snapshotItems(checklist)
+      session.items = await snapshotItems(checklist)
       session.checklistVersion = checklist.version ?? 1
       session.checklistName = checklist.name
       session.passThresholdPercent = checklist.passThresholdPercent ?? 80
@@ -447,7 +481,7 @@ export const ojtService = {
     return toPublicSession(session.toObject())
   },
 
-  async recordObservation(actor, sessionId, itemId, { result, note = '', recordedAt = null } = {}) {
+  async recordObservation(actor, sessionId, itemId, { result, level, note = '', recordedAt = null } = {}) {
     const session = await OjtSession.findById(sessionId)
     if (!session) throw ApiError.notFound('Session not found', 'OJT_SESSION_NOT_FOUND')
     assertObserver(actor, session)
@@ -460,6 +494,19 @@ export const ojtService = {
       session.status = 'IN_PROGRESS'
       session.startedAt = recordedAt ?? new Date()
     }
+    // On a scale the observer picks a level; the verdict follows from it
+    // (a level flagged `passes` is a PASS). NOT_OBSERVED clears the level.
+    if (level !== undefined && level !== null && item.scale?.levels?.length) {
+      const chosen = item.scale.levels[level]
+      if (!chosen) throw ApiError.badRequest('No such level on this scale', 'OJT_LEVEL_UNKNOWN')
+      item.level = level
+      item.points = chosen.points ?? 0
+      result = chosen.passes ? 'PASS' : 'FAIL'
+    } else if (result === 'NOT_OBSERVED' || !item.scale?.levels?.length) {
+      item.level = null
+      item.points = null
+    }
+    if (!result) throw ApiError.badRequest('A verdict or a level is required', 'OJT_RESULT_REQUIRED')
     item.result = result
 
     // Upsert on (sessionId, itemId): changing your mind overwrites the
@@ -481,7 +528,7 @@ export const ojtService = {
 
     await session.save()
     const live = computeScore(session.items, session.passThresholdPercent)
-    return { sessionId: String(sessionId), itemId: String(itemId), result, note, ...live }
+    return { sessionId: String(sessionId), itemId: String(itemId), result, level: item.level ?? null, points: item.points ?? null, note, ...live }
   },
 
   /**
@@ -639,6 +686,58 @@ export const ojtService = {
     return toPublicSession(session.toObject())
   },
 
+  // ---------------------------------------------------------------- scales
+  async listScales() {
+    await ensureDefaultScale()
+    const rows = await OjtScale.find().sort({ isSystem: -1, name: 1 }).lean()
+    return rows.map(toPublicScale)
+  },
+
+  async createScale(actor, payload) {
+    const scale = await OjtScale.create({ ...payload, createdBy: actor.id })
+    return toPublicScale(scale.toObject())
+  },
+
+  async updateScale(actor, id, payload) {
+    const scale = await OjtScale.findById(id)
+    if (!scale) throw ApiError.notFound('Scale not found', 'OJT_SCALE_NOT_FOUND')
+    if (scale.isSystem) throw ApiError.badRequest('The built-in scale cannot be edited', 'OJT_SCALE_LOCKED')
+    Object.assign(scale, payload)
+    await scale.save()
+    return toPublicScale(scale.toObject())
+  },
+
+  // Refused while a live checklist item still names it: the item would
+  // fall back to yes/no silently, which is a change nobody asked for. An
+  // archived checklist does not hold it — and finished sessions carry
+  // their own copy of the levels, so nothing signed is touched.
+  async removeScale(actor, id) {
+    const scale = await OjtScale.findById(id)
+    if (!scale) throw ApiError.notFound('Scale not found', 'OJT_SCALE_NOT_FOUND')
+    if (scale.isSystem) throw ApiError.badRequest('The built-in scale cannot be deleted', 'OJT_SCALE_LOCKED')
+    const inUse = await OjtChecklist.countDocuments({ 'items.scaleId': scale._id, status: { $ne: 'ARCHIVED' } })
+    if (inUse > 0) throw ApiError.conflict(`${inUse} checklist(s) still use this scale`, 'OJT_SCALE_IN_USE', { count: inUse })
+    await scale.deleteOne()
+    return { id }
+  },
+
   canManage,
   canObserve,
+}
+
+function toPublicScale(scale) {
+  return {
+    id: String(scale._id),
+    name: scale.name,
+    description: scale.description ?? '',
+    levels: (scale.levels ?? []).map((l) => ({ label: l.label, points: l.points ?? 0, passes: Boolean(l.passes) })),
+    isSystem: Boolean(scale.isSystem),
+    updatedAt: scale.updatedAt,
+  }
+}
+
+/** The locked Yes/No row, created on first sight so the list is never empty. */
+async function ensureDefaultScale() {
+  const exists = await OjtScale.exists({ isSystem: true })
+  if (!exists) await OjtScale.create({ ...YES_NO_SCALE, isSystem: true })
 }

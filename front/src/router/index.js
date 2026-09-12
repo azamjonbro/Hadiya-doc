@@ -278,6 +278,12 @@ export const router = createRouter({
           meta: { permission: 'ojt:manage', titleKey: 'ojt.title' },
         },
         {
+          path: 'ojt/scales',
+          name: 'admin-ojt-scales',
+          component: () => import('@/admin/views/OjtScalesView.vue'),
+          meta: { permission: 'ojt:manage', titleKey: 'ojt.scales.title' },
+        },
+        {
           path: 'development-plans',
           name: 'admin-development-plans',
           component: () => import('@/admin/views/DevelopmentPlansView.vue'),

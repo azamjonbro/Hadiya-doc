@@ -80,6 +80,7 @@ export const adminSections = [
     children: [
       { name: 'ojt-sessions', path: '/bos/ojt/sessions', labelKey: 'ojt.sessionsTitle', permission: 'ojt:manage' },
       { name: 'ojt', path: '/bos/ojt', labelKey: 'ojt.adminTitle', permission: 'ojt:manage' },
+      { name: 'ojt-scales', path: '/bos/ojt/scales', labelKey: 'ojt.scales.title', permission: 'ojt:manage' },
     ],
   },
   // Rasn 23: "staff appraisal" holds the 360° sessions and the
