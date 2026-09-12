@@ -1,23 +1,28 @@
 <script setup>
 /**
  * Every field of an employee record, in one place, because there are two forms
- * that must agree on them: "new user" in the list view and the settings tab on
- * a profile. When they were two copies of the same markup, a field added to one
- * quietly went missing from the other.
+ * that must agree on them: "new user" in the list view and the personal-info
+ * tab on a profile. When they were two copies of the same markup, a field
+ * added to one quietly went missing from the other.
  *
  * The parent owns `form` and this mutates it in place — the object is the
- * parent's `reactive`, and threading fifteen fields through v-model would say
+ * parent's `reactive`, and threading twenty fields through v-model would say
  * nothing extra. Password, course assignment and the active switch stay with
  * the parents: those genuinely differ between creating and editing.
+ *
+ * Laid out as the reference draws it: label on the left, one field per row,
+ * the personal block, then the job block (see FieldRow).
  */
 import { computed, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { GENDERS, isJshshir, isPassportSeries } from '@lms/shared'
+import { GENDERS, isJshshir } from '@lms/shared'
 import AppInput from '@/components/ui/AppInput.vue'
 import AppDatePicker from '@/components/ui/AppDatePicker.vue'
 import AppSelect from '@/components/ui/AppSelect.vue'
 import BranchSelect from '@/components/ui/BranchSelect.vue'
 import ManagedSelect from '@/components/ui/ManagedSelect.vue'
+import UserPicker from '@/components/ui/UserPicker.vue'
+import FieldRow from './FieldRow.vue'
 
 const props = defineProps({
   form: { type: Object, required: true },
@@ -28,6 +33,8 @@ const props = defineProps({
   canManageRoles: { type: Boolean, default: false },
   canManageLists: { type: Boolean, default: false },
   disabled: { type: Boolean, default: false },
+  // The person being edited, so they cannot be made their own manager.
+  selfId: { type: String, default: '' },
 })
 
 const emit = defineEmits(['validity'])
@@ -41,17 +48,8 @@ const { ORG_LIST_TYPES } = props.directory
 const jshshirError = computed(() =>
   props.form.jshshir && !isJshshir(props.form.jshshir) ? t('users.fields.jshshirInvalid') : ''
 )
-const passportSeriesError = computed(() =>
-  props.form.passportSeries && !isPassportSeries(props.form.passportSeries)
-    ? t('users.fields.passportSeriesInvalid')
-    : ''
-)
 
-watch(
-  [jshshirError, passportSeriesError],
-  ([a, b]) => emit('validity', !a && !b),
-  { immediate: true }
-)
+watch(jshshirError, (error) => emit('validity', !error), { immediate: true })
 
 // Nobody was born tomorrow — and capping it also stops the year grid from
 // offering a decade that cannot contain a birthday.
@@ -79,107 +77,148 @@ function entryCreate(type) {
 function entryRemove(type) {
   return props.canManageLists ? (option) => props.directory.removeEntry(type, option.id) : null
 }
+
+function onManagerPicked(user) {
+  if (user.id === props.selfId) return
+  props.form.managerId = user.id
+  props.form.managerName = user.fullName
+}
+function onManagerCleared() {
+  props.form.managerId = ''
+  props.form.managerName = ''
+}
 </script>
 
 <template>
-  <p class="sm:col-span-2 text-caption font-semibold uppercase tracking-widest text-ink-faint">
-    {{ t('users.sections.personal') }}
-  </p>
+  <div class="space-y-4">
+    <FieldRow :label="t('users.fields.lastName')" required>
+      <AppInput v-model="form.lastName" required :disabled="disabled" :aria-label="t('users.fields.lastName')" />
+    </FieldRow>
+    <FieldRow :label="t('users.fields.firstName')" required>
+      <AppInput v-model="form.firstName" required :disabled="disabled" :aria-label="t('users.fields.firstName')" />
+    </FieldRow>
+    <FieldRow :label="t('users.fields.patronymic')">
+      <AppInput v-model="form.patronymic" :disabled="disabled" :aria-label="t('users.fields.patronymic')" />
+    </FieldRow>
+    <FieldRow :label="t('users.fields.jshshir')" required>
+      <AppInput
+        v-model="form.jshshir"
+        required
+        :disabled="disabled"
+        :aria-label="t('users.fields.jshshir')"
+        :hint="t('users.fields.jshshirHint')"
+        :error="jshshirError"
+      />
+    </FieldRow>
+    <FieldRow :label="t('users.fields.emailOptional')">
+      <AppInput v-model="form.email" type="email" :disabled="disabled" :aria-label="t('users.fields.emailOptional')" />
+    </FieldRow>
+    <FieldRow :label="t('users.fields.phone')">
+      <AppInput v-model="form.phone" :disabled="disabled" :aria-label="t('users.fields.phone')" :hint="t('users.fields.phoneHint')" />
+    </FieldRow>
+    <FieldRow :label="t('users.fields.position')">
+      <ManagedSelect
+        v-model="form.position"
+        :disabled="disabled"
+        :aria-label="t('users.fields.position')"
+        :placeholder="t('common.select')"
+        :options="directory.optionsFor(ORG_LIST_TYPES.POSITION)"
+        :create-entry="entryCreate(ORG_LIST_TYPES.POSITION)"
+        :remove-entry="entryRemove(ORG_LIST_TYPES.POSITION)"
+      />
+    </FieldRow>
+    <FieldRow :label="t('users.fields.country')">
+      <ManagedSelect
+        v-model="form.country"
+        :disabled="disabled"
+        :aria-label="t('users.fields.country')"
+        :placeholder="t('common.select')"
+        :options="directory.optionsFor(ORG_LIST_TYPES.COUNTRY)"
+        :create-entry="entryCreate(ORG_LIST_TYPES.COUNTRY)"
+        :remove-entry="entryRemove(ORG_LIST_TYPES.COUNTRY)"
+      />
+    </FieldRow>
+    <FieldRow :label="t('users.fields.birthDate')">
+      <AppDatePicker v-model="form.birthDate" :disabled="disabled" :max="today" :aria-label="t('users.fields.birthDate')" />
+    </FieldRow>
+    <FieldRow :label="t('users.fields.gender')">
+      <AppSelect
+        v-model="form.gender"
+        :disabled="disabled"
+        :aria-label="t('users.fields.gender')"
+        :placeholder="t('users.fields.genderUnset')"
+        :options="genderOptions"
+      />
+    </FieldRow>
+    <FieldRow :label="t('users.fields.address')">
+      <AppInput v-model="form.address" :disabled="disabled" :aria-label="t('users.fields.address')" />
+    </FieldRow>
+    <FieldRow :label="t('users.fields.hireDate')">
+      <AppDatePicker v-model="form.hireDate" :disabled="disabled" :aria-label="t('users.fields.hireDate')" />
+    </FieldRow>
+    <FieldRow :label="t('users.fields.terminationDate')">
+      <AppDatePicker
+        v-model="form.terminationDate"
+        :disabled="disabled"
+        :min="form.hireDate"
+        :aria-label="t('users.fields.terminationDate')"
+        :hint="terminationHint"
+      />
+    </FieldRow>
 
-  <AppInput v-model="form.lastName" required :disabled="disabled" :label="t('users.fields.lastName')" />
-  <AppInput v-model="form.firstName" required :disabled="disabled" :label="t('users.fields.firstName')" />
+    <div class="my-2 border-t border-border sm:max-w-[624px]" />
 
-  <AppInput
-    v-model="form.jshshir"
-    required
-    :disabled="disabled"
-    :label="t('users.fields.jshshir')"
-    :hint="t('users.fields.jshshirHint')"
-    :error="jshshirError"
-  />
-  <AppInput
-    v-model="form.passportSeries"
-    :disabled="disabled"
-    :label="t('users.fields.passportSeries')"
-    :hint="t('users.fields.passportSeriesHint')"
-    :error="passportSeriesError"
-  />
-
-  <AppSelect
-    v-model="form.gender"
-    :disabled="disabled"
-    :label="t('users.fields.gender')"
-    :placeholder="t('users.fields.genderUnset')"
-    :options="genderOptions"
-  />
-  <AppDatePicker v-model="form.birthDate" :disabled="disabled" :max="today" :label="t('users.fields.birthDate')" />
-
-  <AppInput v-model="form.email" type="email" :disabled="disabled" :label="t('users.fields.emailOptional')" />
-  <AppInput v-model="form.phone" :disabled="disabled" :label="t('users.fields.phone')" />
-
-  <ManagedSelect
-    :disabled="disabled"
-    v-model="form.country"
-    :label="t('users.fields.country')"
-    :options="directory.optionsFor(ORG_LIST_TYPES.COUNTRY)"
-    :create-entry="entryCreate(ORG_LIST_TYPES.COUNTRY)"
-    :remove-entry="entryRemove(ORG_LIST_TYPES.COUNTRY)"
-  />
-  <AppInput v-model="form.address" :disabled="disabled" :label="t('users.fields.address')" />
-
-  <p class="sm:col-span-2 mt-2 text-caption font-semibold uppercase tracking-widest text-ink-faint">
-    {{ t('users.sections.employment') }}
-  </p>
-
-  <ManagedSelect
-    :disabled="disabled"
-    v-model="form.roleName"
-    :label="t('users.role')"
-    :options="directory.roleOptions.value"
-    :create-entry="roleCreate"
-    :remove-entry="roleRemove"
-  />
-  <ManagedSelect
-    :disabled="disabled"
-    v-model="form.position"
-    :label="t('users.fields.position')"
-    :options="directory.optionsFor(ORG_LIST_TYPES.POSITION)"
-    :create-entry="entryCreate(ORG_LIST_TYPES.POSITION)"
-    :remove-entry="entryRemove(ORG_LIST_TYPES.POSITION)"
-  />
-
-  <BranchSelect
-    v-model="form.branch"
-    :options="branchOptions"
-    allow-create
-    :disabled="disabled"
-    :label="t('users.fields.branch')"
-  />
-  <ManagedSelect
-    :disabled="disabled"
-    v-model="form.department"
-    :label="t('users.fields.department')"
-    :options="directory.optionsFor(ORG_LIST_TYPES.DEPARTMENT)"
-    :create-entry="entryCreate(ORG_LIST_TYPES.DEPARTMENT)"
-    :remove-entry="entryRemove(ORG_LIST_TYPES.DEPARTMENT)"
-  />
-
-  <ManagedSelect
-    :disabled="disabled"
-    v-model="form.subdivision"
-    :label="t('users.fields.subdivision')"
-    :options="directory.optionsFor(ORG_LIST_TYPES.SUBDIVISION)"
-    :create-entry="entryCreate(ORG_LIST_TYPES.SUBDIVISION)"
-    :remove-entry="entryRemove(ORG_LIST_TYPES.SUBDIVISION)"
-  />
-  <div class="hidden sm:block" />
-
-  <AppDatePicker v-model="form.hireDate" :disabled="disabled" :label="t('users.fields.hireDate')" />
-  <AppDatePicker
-    v-model="form.terminationDate"
-    :disabled="disabled"
-    :min="form.hireDate"
-    :label="t('users.fields.terminationDate')"
-    :hint="terminationHint"
-  />
+    <FieldRow :label="t('users.fields.branch')">
+      <BranchSelect
+        v-model="form.branch"
+        :options="branchOptions"
+        allow-create
+        :disabled="disabled"
+        :aria-label="t('users.fields.branch')"
+      />
+    </FieldRow>
+    <FieldRow :label="t('users.fields.department')" required>
+      <ManagedSelect
+        v-model="form.department"
+        :disabled="disabled"
+        :aria-label="t('users.fields.department')"
+        :placeholder="t('common.select')"
+        :options="directory.optionsFor(ORG_LIST_TYPES.DEPARTMENT)"
+        :create-entry="entryCreate(ORG_LIST_TYPES.DEPARTMENT)"
+        :remove-entry="entryRemove(ORG_LIST_TYPES.DEPARTMENT)"
+      />
+    </FieldRow>
+    <FieldRow :label="t('users.fields.subdivision')">
+      <ManagedSelect
+        v-model="form.subdivision"
+        :disabled="disabled"
+        :aria-label="t('users.fields.subdivision')"
+        :placeholder="t('common.select')"
+        :options="directory.optionsFor(ORG_LIST_TYPES.SUBDIVISION)"
+        :create-entry="entryCreate(ORG_LIST_TYPES.SUBDIVISION)"
+        :remove-entry="entryRemove(ORG_LIST_TYPES.SUBDIVISION)"
+      />
+    </FieldRow>
+    <FieldRow :label="t('users.fields.manager')">
+      <UserPicker
+        :model-value="form.managerId"
+        :display-name="form.managerName"
+        :placeholder="t('users.fields.managerPlaceholder')"
+        :disabled="disabled"
+        @select="onManagerPicked"
+        @clear="onManagerCleared"
+      />
+      <p class="mt-1.5 text-small text-ink-faint">{{ t('users.fields.managerHint') }}</p>
+    </FieldRow>
+    <FieldRow :label="t('users.role')" required>
+      <ManagedSelect
+        v-model="form.roleName"
+        :disabled="disabled"
+        :aria-label="t('users.role')"
+        :options="directory.roleOptions.value"
+        :create-entry="roleCreate"
+        :remove-entry="roleRemove"
+      />
+    </FieldRow>
+  </div>
 </template>

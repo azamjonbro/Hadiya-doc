@@ -1,4 +1,4 @@
-import { isJshshir, isPassportSeries, normalizeJshshir, normalizePassportSeries } from '@lms/shared'
+import { isJshshir, normalizeJshshir } from '@lms/shared'
 import { User } from '../models/user.model.js'
 import { Role } from '../models/role.model.js'
 import { containsRegex } from '../utils/escapeRegex.js'
@@ -16,10 +16,10 @@ function activeScopeFilter({ department, position, memberIds, excludeIds } = {})
 }
 
 export const userRepository = {
-  // One login box, three accepted handles: JSHSHIR, passport series, or email.
-  // The candidate fields are narrowed by shape first, so `12345678901234` is
-  // only ever looked up as a JSHSHIR — matching every field against every
-  // input would let one employee's passport series shadow another's email.
+  // One login box, two accepted handles: JSHSHIR or email. The candidate
+  // fields are narrowed by shape first, so `12345678901234` is only ever
+  // looked up as a JSHSHIR — matching every field against every input would
+  // let one employee's handle shadow another's.
   // Email stays a valid handle so accounts created before JSHSHIR existed —
   // the seeded SUPERADMIN above all — can still sign in.
   findByIdentifier(identifier) {
@@ -27,7 +27,6 @@ export const userRepository = {
     const or = []
 
     if (isJshshir(raw)) or.push({ jshshir: normalizeJshshir(raw) })
-    if (isPassportSeries(raw)) or.push({ passportSeries: normalizePassportSeries(raw) })
     if (raw.includes('@')) or.push({ email: raw.toLowerCase() })
 
     // Nothing that could match any column — skip the query rather than send
@@ -118,7 +117,6 @@ export const userRepository = {
       filter.$or = [
         { fullName: regex },
         { jshshir: regex },
-        { passportSeries: regex },
         { email: regex },
         { department: regex },
         { position: regex },
@@ -226,7 +224,7 @@ export const userRepository = {
     const filter = {}
     if (search) {
       const regex = containsRegex(search)
-      filter.$or = [{ fullName: regex }, { jshshir: regex }, { passportSeries: regex }, { email: regex }]
+      filter.$or = [{ fullName: regex }, { jshshir: regex }, { email: regex }]
     }
     if (roleId) filter.roleId = roleId
     if (branch) filter.branch = branch
@@ -286,6 +284,14 @@ export const userRepository = {
     return User.updateMany({ _id: { $in: ids } }, { $set: { isActive } })
   },
 
+  setManyDepartment(ids, department) {
+    return User.updateMany({ _id: { $in: ids } }, { $set: { department } })
+  },
+
+  setManyDismissed(ids, terminationDate) {
+    return User.updateMany({ _id: { $in: ids } }, { $set: { terminationDate, isActive: false } })
+  },
+
   async registerFailedLogin(userId, { maxAttempts, lockMinutes }) {
     const user = await User.findById(userId)
     if (!user) return null
@@ -300,7 +306,10 @@ export const userRepository = {
   },
 
   async resetFailedLogins(userId) {
-    await User.updateOne({ _id: userId }, { $set: { failedLoginAttempts: 0, lockedUntil: null } })
+    await User.updateOne(
+      { _id: userId },
+      { $set: { failedLoginAttempts: 0, lockedUntil: null, lastLoginAt: new Date() } }
+    )
   },
 
   async setPasswordResetToken(userId, tokenHash, expiresAt) {

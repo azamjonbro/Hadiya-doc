@@ -2,8 +2,9 @@
 import { ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useNotifications } from '@/composables/useNotifications'
+import { formatRelative } from '@/utils/chatFormat'
 
-const { t } = useI18n()
+const { t, locale } = useI18n()
 const { items, unreadCount, markRead, markAllRead } = useNotifications()
 const isOpen = ref(false)
 
@@ -13,15 +14,7 @@ function severityDotClass(severity) {
   return 'bg-info'
 }
 
-function timeAgo(dateString) {
-  const seconds = Math.floor((Date.now() - new Date(dateString).getTime()) / 1000)
-  if (seconds < 60) return t('notifications.justNow')
-  const minutes = Math.floor(seconds / 60)
-  if (minutes < 60) return `${minutes}m`
-  const hours = Math.floor(minutes / 60)
-  if (hours < 24) return `${hours}h`
-  return `${Math.floor(hours / 24)}d`
-}
+const timeAgo = (dateString) => formatRelative(dateString, locale.value, t)
 </script>
 
 <template>

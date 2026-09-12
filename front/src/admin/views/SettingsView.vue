@@ -1,6 +1,7 @@
 <script setup>
 import { computed, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
+import { roleLabel } from '@/utils/roleLabel'
 import { useAuthStore } from '@/stores/auth'
 import { useThemeStore } from '@/stores/theme'
 import { setLocale, availableLocales } from '@/i18n'
@@ -14,7 +15,7 @@ import ApiKeysCard from '@/admin/components/ApiKeysCard.vue'
 import WebhooksCard from '@/admin/components/WebhooksCard.vue'
 import SsoSettingsCard from '@/admin/components/SsoSettingsCard.vue'
 
-const { t, locale } = useI18n()
+const { t, te, locale } = useI18n()
 const auth = useAuthStore()
 const theme = useThemeStore()
 
@@ -62,7 +63,7 @@ const tab = ref('basic')
           <span class="text-ink-muted">Email</span>
           <span class="text-ink">{{ auth.user?.email || '—' }}</span>
           <span class="text-ink-muted">{{ t('users.role') }}</span>
-          <span class="text-ink">{{ auth.user?.role }}</span>
+          <span class="text-ink">{{ roleLabel(auth.user?.role, { t, te }) }}</span>
           <span class="text-ink-muted">{{ t('settings.sections.language') }}</span>
           <div class="max-w-xs"><AppSelect :model-value="locale" :options="languageOptions" @update:model-value="onLocaleChange" /></div>
         </div>

@@ -1,6 +1,7 @@
 <script setup>
 import { computed, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
+import { roleLabel } from '@/utils/roleLabel'
 import { chatApi } from '@/services/chat'
 import Modal from '@/components/ui/Modal.vue'
 import AppButton from '@/components/ui/AppButton.vue'
@@ -20,7 +21,7 @@ const props = defineProps({
 
 const emit = defineEmits(['update:modelValue', 'create'])
 
-const { t } = useI18n()
+const { t, te } = useI18n()
 
 const title = ref('')
 const search = ref('')
@@ -155,7 +156,7 @@ function submit() {
             <span class="min-w-0 flex-1">
               <span class="block truncate text-small font-medium text-ink">{{ person.fullName }}</span>
               <span class="block truncate text-caption text-ink-faint">
-                {{ [person.position, person.department].filter(Boolean).join(' · ') || person.role }}
+                {{ [person.position, person.department].filter(Boolean).join(' · ') || roleLabel(person.role, { t, te }) }}
               </span>
             </span>
             <Icon

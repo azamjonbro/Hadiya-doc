@@ -2,6 +2,7 @@
 import { computed, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
+import { roleLabel } from '@/utils/roleLabel'
 import { useAuthStore } from '@/stores/auth'
 import { gamificationApi } from '@/services/gamification'
 import { certificatesApi } from '@/services/certificates'
@@ -147,7 +148,7 @@ onMounted(load)
             </div>
             <div class="pb-1">
               <h1 class="text-[24px] font-semibold leading-tight text-ink">{{ auth.user?.fullName }}</h1>
-              <p class="text-[13px] text-ink-muted">{{ auth.user?.position || auth.user?.department || auth.user?.role }}</p>
+              <p class="text-[13px] text-ink-muted">{{ auth.user?.position || auth.user?.department || roleLabel(auth.user?.role, { t, te }) }}</p>
             </div>
           </div>
           <dl class="flex items-start gap-12 pb-1">

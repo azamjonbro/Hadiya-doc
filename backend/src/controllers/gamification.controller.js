@@ -16,6 +16,18 @@ export const gamificationController = {
     sendSuccess(res, await pointsService.getLeaderboard(req.user, req.validatedQuery))
   }),
 
+  userPoints: asyncHandler(async (req, res) => {
+    const [summary, history] = await Promise.all([
+      pointsService.getSummary(req.params.userId),
+      pointsService.getHistory(req.params.userId),
+    ])
+    sendSuccess(res, { summary, ...history })
+  }),
+
+  userBadges: asyncHandler(async (req, res) => {
+    sendSuccess(res, await badgeService.listFor(req.params.userId))
+  }),
+
   // What this person holds, newest first.
   myBadges: asyncHandler(async (req, res) => {
     sendSuccess(res, await badgeService.listFor(req.user.id))

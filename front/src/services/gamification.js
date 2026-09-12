@@ -14,6 +14,14 @@ export const gamificationApi = {
   getBadgeCatalog() {
     return http.get('/gamification/badges/catalog').then((r) => r.data.data)
   },
+  // Somebody else's, for the achievements tab on their profile.
+  userPoints(userId) {
+    return http.get(`/gamification/users/${userId}/points`).then((r) => r.data.data)
+  },
+  userBadges(userId) {
+    return http.get(`/gamification/users/${userId}/badges`).then((r) => r.data.data)
+  },
+
   // The endpoint returns { period, totalRanked, rows } — this view only
   // renders the ranking itself.
   getLeaderboard() {

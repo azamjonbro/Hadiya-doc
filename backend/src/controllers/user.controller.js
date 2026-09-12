@@ -1,4 +1,5 @@
 import { userService } from '../services/users/user.service.js'
+import { userDeletionService } from '../services/users/userDeletion.service.js'
 import { courseAssignmentService } from '../services/courses/courseAssignment.service.js'
 import { learningStatsService } from '../services/analytics/learningStats.service.js'
 import { learningHistoryService } from '../services/analytics/learningHistory.service.js'
@@ -26,9 +27,9 @@ export const userController = {
       id: user._id.toString(),
       firstName: user.firstName ?? '',
       lastName: user.lastName ?? '',
+      patronymic: user.patronymic ?? '',
       fullName: user.fullName,
       jshshir: user.jshshir,
-      passportSeries: user.passportSeries ?? '',
       email: user.email ?? '',
       phone: user.phone,
       department: user.department,
@@ -93,6 +94,22 @@ export const userController = {
 
   bulkMessage: asyncHandler(async (req, res) => {
     sendSuccess(res, await userService.bulkMessage(req.user, req.body), 'Messages sent')
+  }),
+
+  bulkDepartment: asyncHandler(async (req, res) => {
+    sendSuccess(res, await userService.bulkDepartment(req.user, req.body.userIds, req.body.department), 'Department changed')
+  }),
+
+  bulkDismiss: asyncHandler(async (req, res) => {
+    sendSuccess(res, await userService.bulkDismiss(req.user, req.body.userIds), 'Users dismissed')
+  }),
+
+  bulkDelete: asyncHandler(async (req, res) => {
+    sendSuccess(res, await userDeletionService.bulkDelete(req.user, req.body.userIds), 'Users deleted')
+  }),
+
+  permanentlyDelete: asyncHandler(async (req, res) => {
+    sendSuccess(res, await userDeletionService.permanentlyDelete(req.user, req.params.id), 'User deleted')
   }),
 
   bulkDeactivate: asyncHandler(async (req, res) => {

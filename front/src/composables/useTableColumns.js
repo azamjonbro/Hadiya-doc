@@ -8,28 +8,39 @@ import { computed, ref, unref } from 'vue'
  * plain array); `visible` is what the table should render. The choice is
  * kept in localStorage under `table-columns:<key>`, per table. The first
  * column is locked: a table with nothing in it is not a table. A column
- * added by a later deploy shows up at the end, ticked, rather than being
- * hidden by a setting saved before it existed.
+ * with `hidden: true` starts unticked (the long tail of an employee record
+ * — rasm 1.09 offers twenty, shows five). What is stored is only what the
+ * person changed, in either direction, so a column added by a later deploy
+ * comes up with its own default rather than with whatever a setting saved
+ * before it existed happens to say.
  */
 export function useTableColumns(key, columns) {
   const storageKey = `table-columns:${key}`
   const order = ref([])
+  // Columns the person turned off, and columns they turned on — anything
+  // in neither follows the column's own default.
   const hidden = ref(new Set())
+  const shown = ref(new Set())
 
   function load() {
     try {
       const saved = JSON.parse(localStorage.getItem(storageKey) || 'null')
       order.value = Array.isArray(saved?.order) ? saved.order : []
       hidden.value = new Set(Array.isArray(saved?.hidden) ? saved.hidden : [])
+      shown.value = new Set(Array.isArray(saved?.shown) ? saved.shown : [])
     } catch {
       order.value = []
       hidden.value = new Set()
+      shown.value = new Set()
     }
   }
 
   function persist() {
     try {
-      localStorage.setItem(storageKey, JSON.stringify({ order: order.value, hidden: [...hidden.value] }))
+      localStorage.setItem(
+        storageKey,
+        JSON.stringify({ order: order.value, hidden: [...hidden.value], shown: [...shown.value] })
+      )
     } catch {
       // A blocked store just means the choice lasts for this page.
     }
@@ -49,17 +60,33 @@ export function useTableColumns(key, columns) {
     return [...merged.filter((col) => col.key === lockedKey.value), ...merged.filter((col) => col.key !== lockedKey.value)]
   })
 
-  const visible = computed(() => ordered.value.filter((col) => col.key === lockedKey.value || !hidden.value.has(col.key)))
+  function isShownCol(col) {
+    if (col.key === lockedKey.value) return true
+    if (hidden.value.has(col.key)) return false
+    if (shown.value.has(col.key)) return true
+    return !col.hidden
+  }
+
+  const visible = computed(() => ordered.value.filter(isShownCol))
 
   function isShown(k) {
-    return k === lockedKey.value || !hidden.value.has(k)
+    const col = all.value.find((c) => c.key === k)
+    return col ? isShownCol(col) : false
   }
 
   function toggle(k) {
     if (k === lockedKey.value) return
-    const next = new Set(hidden.value)
-    next.has(k) ? next.delete(k) : next.add(k)
-    hidden.value = next
+    const nextHidden = new Set(hidden.value)
+    const nextShown = new Set(shown.value)
+    if (isShown(k)) {
+      nextShown.delete(k)
+      nextHidden.add(k)
+    } else {
+      nextHidden.delete(k)
+      nextShown.add(k)
+    }
+    hidden.value = nextHidden
+    shown.value = nextShown
     persist()
   }
 

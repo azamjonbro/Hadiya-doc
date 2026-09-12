@@ -33,6 +33,8 @@ export const certificateTemplateCreateSchema = z.object({
 export const certificateTemplateUpdateSchema = certificateTemplateCreateSchema.partial()
 
 export const certificateListQuerySchema = z.object({
+  // One person's certificates, for the tab on their profile.
+  userId: objectId.optional(),
   status: z.enum(['VALID', 'EXPIRED', 'REVOKED']).optional(),
   search: z.string().trim().max(120).optional().default(''),
   limit: z.coerce.number().int().min(1).max(100).optional().default(50),

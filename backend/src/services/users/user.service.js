@@ -8,6 +8,7 @@ import {
 import { userRepository } from '../../repositories/user.repository.js'
 import { courseRepository } from '../../repositories/course.repository.js'
 import { roleRepository } from '../../repositories/role.repository.js'
+import { groupRepository } from '../../repositories/group.repository.js'
 import { auditLogRepository } from '../../repositories/auditLog.repository.js'
 import { hashPassword } from '../../utils/hash.js'
 import { ApiError } from '../../utils/ApiError.js'
@@ -27,15 +28,15 @@ const EMPLOYEE_TIER_ROLES = [ROLES.EMPLOYEE, ROLES.CALL_OPERATOR, ROLES.SELLER]
 function toPublicUser(user, role) {
   return {
     id: user._id.toString(),
-    // Both halves and the composed whole: forms edit the halves, every list
+    // The parts and the composed whole: forms edit the parts, every list
     // and header in the app renders fullName.
     firstName: user.firstName ?? '',
     lastName: user.lastName ?? '',
+    patronymic: user.patronymic ?? '',
     fullName: user.fullName,
     jshshir: user.jshshir,
     // Normalised to '' for the clients: the field is absent on documents where
     // it was never filled in, and a v-model bound to `undefined` warns.
-    passportSeries: user.passportSeries ?? '',
     email: user.email ?? '',
     phone: user.phone,
     branch: user.branch ?? '',
@@ -54,26 +55,56 @@ function toPublicUser(user, role) {
     avatar: user.avatar,
     isActive: user.isActive,
     role: role?.name ?? null,
+    managerId: user.managerId ? user.managerId.toString() : null,
+    lastLoginAt: user.lastLoginAt ?? null,
     createdAt: user.createdAt,
     updatedAt: user.updatedAt,
   }
 }
 
-// Three unique fields can now collide, and "Username or email already in use"
+// Two unique fields can collide, and "Username or email already in use"
 // sent an admin hunting through the wrong one. Mongo names the offending index
 // in the error, so say which value is taken.
 const DUPLICATE_FIELD_MESSAGES = {
   jshshir: 'This JSHSHIR is already registered to another employee',
-  passportSeries: 'This passport series is already registered to another employee',
   email: 'This email is already registered to another employee',
 }
 
 function duplicateIdentityError(error) {
   const field = Object.keys(error.keyPattern ?? {}).find((key) => key in DUPLICATE_FIELD_MESSAGES)
   return ApiError.conflict(
-    DUPLICATE_FIELD_MESSAGES[field] ?? 'JSHSHIR, passport series or email already in use',
+    DUPLICATE_FIELD_MESSAGES[field] ?? 'JSHSHIR or email already in use',
     'USER_ALREADY_EXISTS'
   )
+}
+
+/**
+ * The employee table and the profile show the manager by name and the groups
+ * the person is in. Both are looked up per page rather than per row, and
+ * neither is stored on the user: the manager's name changes with the
+ * manager, and group membership is the group's cache to keep.
+ */
+async function decorate(items) {
+  const managerIds = [...new Set(items.map((u) => u.managerId).filter(Boolean))]
+  const userIds = items.map((u) => u.id)
+  const [managers, groups] = await Promise.all([
+    managerIds.length ? userRepository.findByIds(managerIds) : [],
+    userIds.length ? groupRepository.namesByMembers(userIds) : [],
+  ])
+  const managerName = new Map(managers.map((m) => [m._id.toString(), m.fullName]))
+  const groupsOf = new Map()
+  for (const group of groups) {
+    for (const memberId of group.memberIds ?? []) {
+      const key = memberId.toString()
+      if (!groupsOf.has(key)) groupsOf.set(key, [])
+      groupsOf.get(key).push(group.name)
+    }
+  }
+  return items.map((u) => ({
+    ...u,
+    managerName: u.managerId ? (managerName.get(u.managerId) ?? '') : '',
+    groups: groupsOf.get(u.id) ?? [],
+  }))
 }
 
 async function resolveRole(roleName) {
@@ -288,11 +319,12 @@ export const userService = {
     const serialize = (rows) => rows.map((u) => toPublicUser(u, roleById.get(u.roleId.toString())))
 
     // Numbered pagination: the client needs a total to render "page 3 of 7",
-    // so this mode pays for a count query that cursor mode does not.
+    // so this mode pays for a count query that cursor mode does not. It is
+    // also the admin table, the one place that shows managers and groups.
     if (query.page) {
       const [rows, total] = await Promise.all([userRepository.listPage(params), userRepository.count(params)])
       return {
-        items: serialize(rows),
+        items: await decorate(serialize(rows)),
         page: query.page,
         limit: query.limit,
         total,
@@ -370,7 +402,8 @@ export const userService = {
     if (!user) throw ApiError.notFound('User not found')
     await assertManagerCanView(actor, user.department, user._id)
     const role = await roleRepository.findById(user.roleId)
-    return toPublicUser(user, role)
+    const [decorated] = await decorate([toPublicUser(user, role)])
+    return decorated
   },
 
   async create(actor, payload) {
@@ -383,11 +416,11 @@ export const userService = {
       user = await userRepository.create({
         firstName: payload.firstName,
         lastName: payload.lastName,
-        fullName: composeFullName(payload.firstName, payload.lastName),
+        patronymic: payload.patronymic ?? '',
+        fullName: composeFullName(payload.firstName, payload.lastName, payload.patronymic),
         jshshir: payload.jshshir,
         // Left off the document entirely when blank — see user.model.js on why
         // these must be absent rather than '' or null.
-        passportSeries: payload.passportSeries || undefined,
         email: payload.email || undefined,
         phone: payload.phone ?? '',
         passwordHash,
@@ -497,15 +530,17 @@ export const userService = {
     await assertManagerCanManage(actor, role, payload.department ?? existing.department)
 
     const updateData = {}
-    // The halves are what an admin edits; fullName is recomposed from whichever
+    // The parts are what an admin edits; fullName is recomposed from whichever
     // of them the request carried, falling back to what is already stored, so a
     // request that changes only the surname still leaves a consistent whole.
     if (payload.firstName !== undefined) updateData.firstName = payload.firstName
     if (payload.lastName !== undefined) updateData.lastName = payload.lastName
-    if (payload.firstName !== undefined || payload.lastName !== undefined) {
+    if (payload.patronymic !== undefined) updateData.patronymic = payload.patronymic
+    if (payload.firstName !== undefined || payload.lastName !== undefined || payload.patronymic !== undefined) {
       updateData.fullName = composeFullName(
         payload.firstName ?? existing.firstName,
-        payload.lastName ?? existing.lastName
+        payload.lastName ?? existing.lastName,
+        payload.patronymic ?? existing.patronymic
       )
     }
     if (payload.phone !== undefined) updateData.phone = payload.phone
@@ -543,7 +578,7 @@ export const userService = {
     // not write '' — a blank string is indexed by the partial unique index and
     // the next employee cleared the same way would collide with this one.
     const unsetData = {}
-    for (const field of ['passportSeries', 'email', 'employeeNumber']) {
+    for (const field of ['email', 'employeeNumber']) {
       if (payload[field] === undefined) continue
       if (payload[field]) updateData[field] = payload[field]
       else unsetData[field] = ''
@@ -657,6 +692,52 @@ export const userService = {
       skipped: skipped.map((row) => ({ id: row.id, code: row.code })),
       failed,
     }
+  },
+
+  /**
+   * Move a page of people to another department at once. Same fence as
+   * the single edit: a manager can only move people they already manage,
+   * and only within their own department — which makes the operation a
+   * no-op for them, so it is refused outright.
+   */
+  async bulkDepartment(actor, userIds, department) {
+    const { requested, eligible, failed } = await partitionBulkTargets(actor, userIds)
+    const ids = eligible.map((user) => user._id.toString())
+    if (ids.length) await userRepository.setManyDepartment(ids, department)
+    for (const id of ids) {
+      await auditLogRepository.record({
+        actor: actor.id,
+        action: 'USER_UPDATED',
+        entity: 'User',
+        entityId: id,
+        metadata: { bulk: true, department },
+      })
+      await queueUserEvaluation(id).catch(() => {})
+    }
+    return { requested, updated: ids.length, updatedIds: ids, failed }
+  },
+
+  /**
+   * "Dismiss": a leaving date of today, which archives the account the
+   * same way the form's termination date does — off, and out of the
+   * active lists, but with the history kept.
+   */
+  async bulkDismiss(actor, userIds) {
+    const { requested, eligible, failed, skipped } = await partitionBulkTargets(actor, userIds, {
+      requireActive: true,
+    })
+    const ids = eligible.map((user) => user._id.toString())
+    if (ids.length) await userRepository.setManyDismissed(ids, new Date())
+    for (const id of ids) {
+      await auditLogRepository.record({
+        actor: actor.id,
+        action: 'USER_DEACTIVATED',
+        entity: 'User',
+        entityId: id,
+        metadata: { bulk: true, dismissed: true },
+      })
+    }
+    return { requested, dismissed: ids.length, dismissedIds: ids, skipped: skipped.map((row) => ({ id: row.id, code: row.code })), failed }
   },
 
   async deactivate(actor, id) {

@@ -1,9 +1,9 @@
 <script setup>
 import { computed, onMounted, reactive, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { useConfirm } from '@/composables/useConfirm'
+import { roleLabel } from '@/utils/roleLabel'
 import { useRoute, useRouter } from 'vue-router'
-import { ROLES, normalizeJshshir, normalizePassportSeries } from '@lms/shared'
+import { ROLES, normalizeJshshir } from '@lms/shared'
 import { useAuthStore } from '@/stores/auth'
 import { usersApi } from '@/services/users'
 import { useOrgDirectory } from '@/composables/useOrgDirectory'
@@ -21,14 +21,14 @@ import Pagination from '@/components/ui/Pagination.vue'
 import DataTable from '@/components/ui/DataTable.vue'
 import FilterBar from '@/components/ui/FilterBar.vue'
 import UserBulkActionsBar from '@/admin/components/users/UserBulkActionsBar.vue'
-import BulkMessageModal from '@/admin/components/users/BulkMessageModal.vue'
+import UserActionsHost from '@/admin/components/users/UserActionsHost.vue'
 import BulkGroupCreateModal from '@/admin/components/users/BulkGroupCreateModal.vue'
 import BulkGroupMembersModal from '@/admin/components/users/BulkGroupMembersModal.vue'
 import UserImportWizard from '@/admin/components/users/UserImportWizard.vue'
 import { apiErrorText } from '@/utils/apiError'
+import { formatDate, formatDateTime } from '@/utils/format'
 
-const { t, locale } = useI18n()
-const confirm = useConfirm()
+const { t, te, locale } = useI18n()
 const auth = useAuthStore()
 const router = useRouter()
 const route = useRoute()
@@ -86,14 +86,38 @@ const filterFields = computed(() => [
 ])
 
 // Rasn 6's columns: name (with the id under it), status as an icon,
-// department with the branch as its path, progress, role.
+// department with the branch as its path, progress, role — shown by
+// default. Everything else on the record is offered under the ⚙ (rasm
+// 1.09's list: id, groups, added, last login, the name parts, login,
+// contacts, position, country, birth date, gender, address, dates), hidden
+// until somebody ticks it.
 const columns = computed(() => [
   { key: 'fullName', label: t('users.fields.fullName'), skeletonWidth: 'w-40' },
+  { key: 'id', label: 'ID', hidden: true, cellClass: 'font-mono text-caption text-ink-faint' },
   { key: 'status', label: t('users.status'), skeletonWidth: 'w-6', width: 'w-20' },
   { key: 'department', label: t('users.fields.department') },
+  { key: 'groups', label: t('users.columns.groups'), hidden: true },
   { key: 'progress', label: t('users.columns.progress'), skeletonWidth: 'w-16', width: 'w-40' },
   { key: 'role', label: t('users.role'), skeletonWidth: 'w-20', width: 'w-36' },
+  { key: 'createdAt', label: t('users.columns.createdAt'), hidden: true },
+  { key: 'lastLoginAt', label: t('users.columns.lastLoginAt'), hidden: true },
+  { key: 'firstName', label: t('users.fields.firstName'), hidden: true },
+  { key: 'lastName', label: t('users.fields.lastName'), hidden: true },
+  { key: 'patronymic', label: t('users.fields.patronymic'), hidden: true },
+  { key: 'jshshir', label: t('users.fields.jshshir'), hidden: true, cellClass: 'font-mono' },
+  { key: 'email', label: t('users.fields.email'), hidden: true },
+  { key: 'phone', label: t('users.fields.phone'), hidden: true },
+  { key: 'position', label: t('users.fields.position'), hidden: true },
+  { key: 'managerName', label: t('users.fields.manager'), hidden: true },
+  { key: 'country', label: t('users.fields.country'), hidden: true },
+  { key: 'birthDate', label: t('users.fields.birthDate'), hidden: true },
+  { key: 'gender', label: t('users.fields.gender'), hidden: true },
+  { key: 'address', label: t('users.fields.address'), hidden: true },
+  { key: 'hireDate', label: t('users.columns.hireDate'), hidden: true },
+  { key: 'terminationDate', label: t('users.columns.terminationDate'), hidden: true },
 ])
+
+const genderLabel = (value) => (value ? t(value === 'MALE' ? 'users.fields.genderMale' : 'users.fields.genderFemale') : '')
 const filtersOpen = ref(false)
 const PAGE_SIZE = 15
 
@@ -117,8 +141,10 @@ const createError = ref('')
 const BLANK_USER = {
   firstName: '',
   lastName: '',
+  patronymic: '',
   jshshir: '',
-  passportSeries: '',
+  managerId: '',
+  managerName: '',
   email: '',
   phone: '',
   roleName: ROLES.EMPLOYEE,
@@ -189,7 +215,15 @@ const canBulkMessage = computed(() => auth.hasPermission('user:read'))
 const canManageGroups = computed(() => auth.hasPermission('course:assign'))
 const canDeactivate = computed(() => auth.hasPermission('user:delete'))
 
-const showBulkMessage = ref(false)
+// The modals and confirmations behind every action live in one host
+// component (shared with the profile's ⋯); the bar only names the action.
+const actionsHost = ref(null)
+function onBulkAction(action) {
+  if (action === 'group-create') showGroupCreate.value = true
+  else if (action === 'group-remove') openGroupMembers('remove')
+  else actionsHost.value?.open(action)
+}
+
 const showGroupCreate = ref(false)
 const showGroupMembers = ref(false)
 const groupMembersMode = ref('add')
@@ -275,10 +309,10 @@ async function onCreateSubmit() {
   try {
     // Normalised here as well as on the server, so the value the admin sees in
     // the table is the one they typed minus the spaces they read it out with.
+    const { managerName: _name, ...rest } = createForm
     const created = await usersApi.create({
-      ...createForm,
+      ...rest,
       jshshir: normalizeJshshir(createForm.jshshir),
-      passportSeries: normalizePassportSeries(createForm.passportSeries),
     })
     showCreateModal.value = false
     // Optional, skippable follow-up — face enrollment is never required to
@@ -297,47 +331,14 @@ async function onCreateSubmit() {
   }
 }
 
-async function bulkDeactivate() {
-  const ids = [...selected.value]
-  if (!ids.length) return
-
-  const confirmed = await confirm.ask({
-    title: t('users.bulk.deactivateTitle'),
-    message: t('confirm.deactivateUsers', { count: ids.length }),
-    confirmLabel: t('users.deactivate'),
-  })
-  if (!confirmed) return
-
-  bulkBusy.value = true
-  try {
-    // One request, not one per row: the server checks every id, switches the
-    // eligible ones off in a single write, and answers with what it did — so
-    // a selection containing somebody this admin may not touch no longer
-    // half-applies and no longer needs the browser to reconcile N promises.
-    const result = await usersApi.bulkDeactivate(ids)
-
-    if (result.deactivated > 0) toast.success(t('users.bulkDeactivated', { count: result.deactivated }))
-    if (result.skipped?.length) toast.info(t('users.bulk.alreadyInactive', { count: result.skipped.length }))
-    if (result.failed?.length) toast.warning(t('users.bulk.deactivateFailed', { count: result.failed.length }))
-    if (!result.deactivated && !result.skipped?.length) toast.error(t('users.bulk.nothingDone'))
-
-    // Stay where the user was working. If a status filter emptied the last
-    // page, step back rather than showing a blank table. `load()` clears the
-    // selection on its way through.
-    await load()
-    if (items.value.length === 0 && page.value > 1) await goToPage(page.value - 1)
-  } catch (error) {
-    toast.error(apiErrorText(error))
-  } finally {
-    bulkBusy.value = false
-  }
-}
-
-// Messaging and group membership change nothing this table renders, so they
-// only drop the ticks — reloading would cost a page fetch to redraw the same
-// rows. The selection goes either way: it has been acted on.
-function onBulkFinished() {
+// Every action has been acted on, so the selection goes; the rows are
+// reloaded because most of them (block, dismiss, delete, department) change
+// what the table shows. If that emptied the last page, step back rather
+// than showing a blank table.
+async function onBulkFinished() {
   clearSelection()
+  await load()
+  if (items.value.length === 0 && page.value > 1) await goToPage(page.value - 1)
 }
 
 onMounted(() => {
@@ -402,15 +403,14 @@ onMounted(() => {
       <div v-if="selected.size > 0" class="mt-4">
         <UserBulkActionsBar
           :count="selected.size"
-          :busy="bulkBusy"
+          :busy="bulkBusy || Boolean(actionsHost?.busy)"
           :can-message="canBulkMessage"
+          :can-assign="auth.hasPermission('course:assign')"
           :can-manage-groups="canManageGroups"
+          :can-update="auth.hasPermission('user:update')"
           :can-deactivate="canDeactivate"
-          @message="showBulkMessage = true"
-          @group-create="showGroupCreate = true"
-          @group-add="openGroupMembers('add')"
-          @group-remove="openGroupMembers('remove')"
-          @deactivate="bulkDeactivate"
+          :can-delete="auth.isSuperAdmin"
+          @action="onBulkAction"
           @clear="clearSelection"
         />
       </div>
@@ -443,7 +443,7 @@ onMounted(() => {
       </template>
 
       <template #cell-role="{ row }">
-        <Badge variant="neutral" size="sm">{{ row.role }}</Badge>
+        <Badge variant="neutral" size="sm">{{ roleLabel(row.role, { t, te }) }}</Badge>
       </template>
 
       <template #cell-department="{ row }">
@@ -457,6 +457,16 @@ onMounted(() => {
           <span class="text-caption text-ink-faint">{{ userProgress(row.id) }}%</span>
         </div>
       </template>
+
+      <template #cell-groups="{ row }">
+        <span class="text-ink">{{ row.groups?.length ? row.groups.join(', ') : '—' }}</span>
+      </template>
+      <template #cell-createdAt="{ row }">{{ formatDate(row.createdAt, locale) }}</template>
+      <template #cell-lastLoginAt="{ row }">{{ row.lastLoginAt ? formatDateTime(row.lastLoginAt, locale) : '—' }}</template>
+      <template #cell-birthDate="{ row }">{{ row.birthDate ? formatDate(row.birthDate, locale) : '—' }}</template>
+      <template #cell-hireDate="{ row }">{{ row.hireDate ? formatDate(row.hireDate, locale) : '—' }}</template>
+      <template #cell-terminationDate="{ row }">{{ row.terminationDate ? formatDate(row.terminationDate, locale) : '—' }}</template>
+      <template #cell-gender="{ row }">{{ genderLabel(row.gender) || '—' }}</template>
 
       <template #cell-status="{ row }">
         <!-- Rasn 6: an active account shows nothing; a switched-off one an
@@ -487,7 +497,8 @@ onMounted(() => {
             <p class="text-[15px] text-ink">{{ t('users.sections.personal') }}</p>
             <AppButton type="submit" :loading="createSubmitting">{{ createSubmitting ? t('users.creating') : t('common.save') }}</AppButton>
           </div>
-          <div class="mt-6 grid max-w-[900px] grid-cols-1 gap-4 sm:grid-cols-2">
+          <!-- One field per row, label on the left — the reference form (rasm) -->
+          <div class="mt-6 space-y-4">
             <EmployeeFormFields
               :form="createForm"
               :directory="directory"
@@ -497,15 +508,16 @@ onMounted(() => {
               @validity="fieldsValid = $event"
             />
 
-            <p class="mt-2 text-caption font-semibold uppercase tracking-widest text-ink-faint sm:col-span-2">
-              {{ t('users.sections.access') }}
-            </p>
-            <div class="sm:col-span-2">
-              <GeneratedPasswordField v-model="createForm.password" required :label="t('users.fields.password')" />
+            <div class="my-2 border-t border-border sm:max-w-[624px]" />
+
+            <div class="grid grid-cols-1 gap-y-1 sm:grid-cols-[200px_minmax(0,400px)] sm:items-start sm:gap-x-6">
+              <span class="text-small text-ink-muted sm:pt-2.5"><span class="text-danger" aria-hidden="true">* </span>{{ t('users.fields.password') }}</span>
+              <GeneratedPasswordField v-model="createForm.password" required :aria-label="t('users.fields.password')" />
             </div>
 
-            <div class="sm:col-span-2">
-              <p class="mb-1.5 text-small font-medium text-ink">{{ t('users.fields.assignCourses') }}</p>
+            <div class="grid grid-cols-1 gap-y-1 sm:grid-cols-[200px_minmax(0,400px)] sm:items-start sm:gap-x-6">
+              <span class="text-small text-ink-muted sm:pt-1">{{ t('users.fields.assignCourses') }}</span>
+              <div>
               <div v-if="assignableCourses.length" class="max-h-40 space-y-1.5 overflow-y-auto rounded-md border border-border-strong p-3">
                 <label v-for="course in assignableCourses" :key="course.id" class="flex items-center gap-2 text-small text-ink">
                   <input
@@ -518,15 +530,16 @@ onMounted(() => {
                 </label>
               </div>
               <p v-else class="text-small text-ink-faint">{{ t('courses.empty') }}</p>
+              </div>
             </div>
 
-            <p v-if="createError" class="text-small text-danger sm:col-span-2">{{ createError }}</p>
+            <p v-if="createError" class="text-small text-danger">{{ createError }}</p>
           </div>
         </form>
       </div>
     </div>
 
-    <BulkMessageModal v-model="showBulkMessage" :users="selectedUsers" @sent="onBulkFinished" />
+    <UserActionsHost ref="actionsHost" :users="selectedUsers" @done="onBulkFinished" />
     <BulkGroupCreateModal v-model="showGroupCreate" :users="selectedUsers" @created="onBulkFinished" />
     <BulkGroupMembersModal
       v-model="showGroupMembers"

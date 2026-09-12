@@ -1,6 +1,7 @@
 <script setup>
 import { computed, onMounted, onUnmounted, reactive, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
+import { roleLabel } from '@/utils/roleLabel'
 import { ROLES } from '@lms/shared'
 import { reportsApi } from '@/services/reports'
 import { coursesApi } from '@/services/courses'
@@ -20,7 +21,7 @@ import { useConfirm } from '@/composables/useConfirm'
 import { useToast } from '@/composables/useToast'
 import { apiErrorText } from '@/utils/apiError'
 
-const { t, locale } = useI18n()
+const { t, te, locale } = useI18n()
 const toast = useToast()
 const auth = useAuthStore()
 const confirm = useConfirm()
@@ -90,7 +91,7 @@ const errors = reactive({})
 // they believe is complete.
 const lastExport = reactive({})
 
-const roleOptions = Object.values(ROLES).map((r) => ({ value: r, label: r }))
+const roleOptions = Object.values(ROLES).map((r) => ({ value: r, label: roleLabel(r, { t, te }) }))
 const courseOptions = ref([])
 
 const filters = reactive({ role: '', courseId: '', userId: '', userLabel: '', dateFrom: '', dateTo: '' })

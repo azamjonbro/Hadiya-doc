@@ -29,6 +29,7 @@
 import { computed, nextTick, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue'
 import { onBeforeRouteLeave, useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
+import { roleLabel } from '@/utils/roleLabel'
 import { pathsApi } from '@/services/paths'
 import { coursesApi } from '@/services/courses'
 import { certificatesApi } from '@/services/certificates'
@@ -55,7 +56,7 @@ import Icon from '@/components/ui/Icon.vue'
 import ImageUploadField from '@/components/ui/ImageUploadField.vue'
 import UserPicker from '@/components/ui/UserPicker.vue'
 
-const { t } = useI18n()
+const { t, te } = useI18n()
 const route = useRoute()
 const router = useRouter()
 const toast = useToast()
@@ -1324,7 +1325,7 @@ onBeforeUnmount(() => {
               :class="ruleForm[key].includes(value) ? 'border-primary bg-primary-subtle text-primary' : 'border-border text-ink-muted hover:text-ink'"
               @click="toggleIn(ruleForm[key], value)"
             >
-              {{ value }}
+              {{ key === 'roles' ? roleLabel(value, { t, te }) : value }}
             </button>
           </div>
         </div>

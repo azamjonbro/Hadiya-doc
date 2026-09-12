@@ -1,6 +1,7 @@
 <script setup>
 import { computed, onMounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
+import { roleLabel, permissionLabel, moduleLabel } from '@/utils/roleLabel'
 import { rolesApi } from '@/services/roles'
 import { useToast } from '@/composables/useToast'
 import { useConfirm } from '@/composables/useConfirm'
@@ -13,7 +14,7 @@ import Badge from '@/components/ui/Badge.vue'
 import Icon from '@/components/ui/Icon.vue'
 import Skeleton from '@/components/ui/Skeleton.vue'
 
-const { t } = useI18n()
+const { t, te } = useI18n()
 const toast = useToast()
 const confirm = useConfirm()
 
@@ -128,7 +129,7 @@ async function createRole() {
 async function removeRole(role) {
   const ok = await confirm({
     title: t('roles.confirmDeleteTitle'),
-    message: t('roles.confirmDelete', { name: role.name }),
+    message: t('roles.confirmDelete', { name: roleLabel(role.name, { t, te }) }),
     confirmLabel: t('common.delete'),
     danger: true,
   })
@@ -200,7 +201,8 @@ onMounted(load)
           <tr class="h-14 border-b border-border transition-default hover:bg-surface-2" :class="draft?.id === role.id ? 'bg-surface-2' : ''">
             <td class="pl-3 pr-2">
               <span class="flex items-center gap-2 text-ink">
-                {{ role.name }}
+                {{ roleLabel(role.name, { t, te }) }}
+                <span v-if="roleLabel(role.name, { t, te }) !== role.name" class="ml-1.5 font-mono text-caption font-normal text-ink-faint">{{ role.name }}</span>
                 <!-- Locked rather than hidden. Someone wondering why they
                      cannot edit SUPERADMIN deserves the answer next to it. -->
                 <Icon v-if="role.isSystem" name="lock" size="13" class="text-ink-faint" :title="t('roles.builtIn')" />
@@ -232,11 +234,11 @@ onMounted(load)
               <div class="mt-5 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
                 <div v-for="group in catalogue" :key="group.module">
                   <button type="button" class="mb-2 text-caption font-semibold uppercase tracking-wide text-ink-muted transition-default hover:text-ink" @click="toggleModule(group)">
-                    {{ group.module }}
+                    {{ moduleLabel(group.module, { t, te }) }}
                   </button>
                   <label v-for="permission in group.permissions" :key="permission.key" class="flex cursor-pointer items-start gap-2 py-1">
                     <input type="checkbox" class="mt-0.5 h-4 w-4 cursor-pointer accent-primary" :checked="draft.permissions.has(permission.key)" @change="toggle(permission.key)" />
-                    <span class="text-small text-ink">{{ permission.key }}</span>
+                    <span class="text-small text-ink" :title="permission.key">{{ permissionLabel(permission.key, { t, te }) }}</span>
                   </label>
                 </div>
               </div>

@@ -13,6 +13,7 @@ function relativeDayFactory(t, locale) {
 import { onMounted, reactive, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
+import { roleLabel } from '@/utils/roleLabel'
 import { ROLES } from '@lms/shared'
 import { useAuthStore } from '@/stores/auth'
 import { newsApi } from '@/services/news'
@@ -28,7 +29,7 @@ import EmptyState from '@/components/ui/EmptyState.vue'
 import Icon from '@/components/ui/Icon.vue'
 import { apiErrorText } from '@/utils/apiError'
 
-const { t, locale } = useI18n()
+const { t, te, locale } = useI18n()
 const relativeDay = relativeDayFactory(t, locale)
 const auth = useAuthStore()
 const router = useRouter()
@@ -203,7 +204,7 @@ onMounted(loadFirstPage)
                   :checked="createForm.roleTargets.includes(role)"
                   @change="toggleCreateRole(role)"
                 />
-                {{ role }}
+                {{ roleLabel(role, { t, te }) }}
               </label>
             </div>
           </div>

@@ -2,6 +2,7 @@
 import { onMounted, reactive, ref, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
+import { roleLabel } from '@/utils/roleLabel'
 import { useConfirm } from '@/composables/useConfirm'
 import { ROLES } from '@lms/shared'
 import { useAuthStore } from '@/stores/auth'
@@ -23,7 +24,7 @@ import EmptyState from '@/components/ui/EmptyState.vue'
 import Icon from '@/components/ui/Icon.vue'
 import { apiErrorText } from '@/utils/apiError'
 
-const { t } = useI18n()
+const { t, te } = useI18n()
 const confirm = useConfirm()
 const route = useRoute()
 const router = useRouter()
@@ -279,7 +280,7 @@ onMounted(load)
                   :disabled="!auth.hasPermission('course:update')"
                   @change="toggleRole(role)"
                 />
-                {{ role }}
+                {{ roleLabel(role, { t, te }) }}
               </label>
             </div>
           </div>

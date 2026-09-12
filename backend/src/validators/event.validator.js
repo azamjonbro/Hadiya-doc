@@ -66,6 +66,10 @@ export const markAttendanceSchema = z.object({
     .max(500),
 })
 
+export const registerManySchema = z.object({
+  userIds: z.array(objectId).min(1).max(500),
+})
+
 export const cancelRegistrationSchema = z.object({
   // Set only when an organiser removes somebody else; absent means the
   // caller is cancelling their own place.
