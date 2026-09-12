@@ -167,6 +167,7 @@ function deliver({ subject, html, text }) {
   if (!mailer) return
   mailer
     .sendMail({ from: env.MAIL_FROM, to: recipient(), subject, text, html })
+    .then(() => logger.info('Error alert sent', { to: recipient(), subject }))
     .catch((error) => logger.warn('Error alert mail failed', { error: error.message }))
 }
 
