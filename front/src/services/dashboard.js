@@ -10,4 +10,9 @@ export const dashboardApi = {
   team() {
     return http.get('/dashboard/team').then((r) => r.data.data)
   },
+  // What is waiting on somebody right now (questions, homework, new hires,
+  // new material, comments). Live, unlike get().
+  inbox() {
+    return http.get('/dashboard/inbox').then((r) => r.data.data)
+  },
 }

@@ -215,6 +215,50 @@
     "error": "Could not load dashboard data",
     "stale": "Showing cached data — live refresh unavailable",
     "generatedAt": "Updated",
+    "inbox": {
+          "questions": {
+                "title": "New course questions",
+                "subtitle": "awaiting an answer"
+          },
+          "grading": {
+                "title": "Ungraded homework",
+                "subtitle": "awaiting review",
+                "mine": "Mine",
+                "all": "All",
+                "open": "Go to grading",
+                "colTitle": "Title",
+                "colUser": "User",
+                "empty": "Nothing to grade yet"
+          },
+          "employees": {
+                "title": "New employees",
+                "subtitle": "{count} need attention",
+                "open": "Review",
+                "colEmployee": "Employee",
+                "colFields": "Fields filled",
+                "colStatus": "Status",
+                "fields": "{filled} of {total}",
+                "empty": "No new employees in the last 30 days",
+                "status": {
+                      "onboarding": "Onboarding",
+                      "onboarded": "Onboarded",
+                      "noProgram": "No programme",
+                      "inactive": "Inactive"
+                }
+          },
+          "material": {
+                "title": "New material",
+                "subtitle": "added by authors this week",
+                "empty": "No activity"
+          },
+          "comments": {
+                "title": "News comments",
+                "subtitle": "{count} new comments this week",
+                "open": "All comments",
+                "count": "{count} comments",
+                "goto": "To comments"
+          }
+    },
     "attention": {
       "title": "Attention required",
       "allClear": "Nothing needs attention right now — training is on track.",
