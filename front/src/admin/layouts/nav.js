@@ -92,8 +92,9 @@ export const adminSections = [
     labelKey: 'admin.section.appraisal',
     children: [
       { name: 'review360', path: '/bos/review360', labelKey: 'review360.sessions', permission: 'review360:manage' },
-      { name: 'competency-matrix', path: '/bos/competencies/matrix', labelKey: 'competency.profiles', permission: 'competency:assess' },
+      { name: 'competency-profiles', path: '/bos/competencies/profiles', labelKey: 'competency.profiles', permission: 'competency:manage' },
       { name: 'competencies', path: '/bos/competencies', labelKey: 'competency.title', permission: 'competency:manage' },
+      { name: 'competency-matrix', path: '/bos/competencies/matrix', labelKey: 'competency.matrix', permission: 'competency:assess' },
     ],
   },
   {

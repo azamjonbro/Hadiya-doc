@@ -7,6 +7,10 @@ import { scopeToManagedUsers } from '../../middlewares/scopeToManagedUsers.middl
 import { competencyController } from '../../controllers/competency.controller.js'
 import {
   createCompetencySchema,
+  createProfileSchema,
+  updateProfileSchema,
+  createFolderSchema,
+  updateFolderSchema,
   updateCompetencySchema,
   assessSchema,
   matrixQuerySchema,
@@ -17,9 +21,24 @@ export const competenciesRouter = Router()
 
 competenciesRouter.use(authenticate)
 
-// 'mine' and 'matrix' are declared before '/:id' so neither is ever read as
-// a competency id.
+// 'mine', 'matrix', 'profiles' and 'folders' are declared before '/:id' so
+// none is ever read as a competency id.
 competenciesRouter.get('/mine', competencyController.mine)
+
+// Profiles (rasm: «Профили компетенций») and the folders the catalogue is
+// filed under — read by anybody who assesses, written by the catalogue's
+// managers.
+const READ = requireAnyPermission(PERMISSIONS.COMPETENCY_ASSESS, PERMISSIONS.COMPETENCY_MANAGE)
+const WRITE = requirePermission(PERMISSIONS.COMPETENCY_MANAGE)
+competenciesRouter.get('/profiles', READ, competencyController.listProfiles)
+competenciesRouter.post('/profiles', WRITE, validateBody(createProfileSchema), competencyController.createProfile)
+competenciesRouter.get('/profiles/:id', READ, competencyController.getProfile)
+competenciesRouter.patch('/profiles/:id', WRITE, validateBody(updateProfileSchema), competencyController.updateProfile)
+competenciesRouter.delete('/profiles/:id', WRITE, competencyController.removeProfile)
+competenciesRouter.get('/folders', READ, competencyController.listFolders)
+competenciesRouter.post('/folders', WRITE, validateBody(createFolderSchema), competencyController.createFolder)
+competenciesRouter.patch('/folders/:id', WRITE, validateBody(updateFolderSchema), competencyController.updateFolder)
+competenciesRouter.delete('/folders/:id', WRITE, competencyController.removeFolder)
 
 competenciesRouter.get(
   '/matrix',

@@ -75,6 +75,30 @@ export const updateCompetencySchema = z
     { message: 'A requirement cannot ask for a level the scale does not have', path: ['requirements'] }
   )
 
+const profileShape = {
+  name: z.string().trim().min(1).max(160),
+  description: z.string().trim().max(2000).optional(),
+  positions: z.array(z.string().trim().min(1).max(120)).max(100).optional(),
+  items: z
+    .array(z.object({ competencyId: objectId, level: z.coerce.number().int().min(1).max(10) }))
+    .max(200)
+    .optional(),
+}
+export const createProfileSchema = z.object(profileShape)
+export const updateProfileSchema = z
+  .object(Object.fromEntries(Object.entries(profileShape).map(([key, schema]) => [key, schema.optional()])))
+  .refine((data) => Object.keys(data).length > 0, { message: 'No fields to update' })
+
+const folderShape = {
+  name: z.string().trim().min(1).max(120),
+  description: z.string().trim().max(1000).optional(),
+  order: z.coerce.number().int().min(0).max(10000).optional(),
+}
+export const createFolderSchema = z.object(folderShape)
+export const updateFolderSchema = z
+  .object(Object.fromEntries(Object.entries(folderShape).map(([key, schema]) => [key, schema.optional()])))
+  .refine((data) => Object.keys(data).length > 0, { message: 'No fields to update' })
+
 export const assessSchema = z.object({
   userId: objectId,
   competencyId: objectId,

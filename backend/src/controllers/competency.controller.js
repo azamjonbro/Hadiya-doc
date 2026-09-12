@@ -18,6 +18,16 @@ function assertReadable(req, userId) {
 }
 
 export const competencyController = {
+  listProfiles: asyncHandler(async (req, res) => sendSuccess(res, { items: await competencyService.listProfiles() })),
+  getProfile: asyncHandler(async (req, res) => sendSuccess(res, { profile: await competencyService.getProfile(req.params.id) })),
+  createProfile: asyncHandler(async (req, res) => sendSuccess(res, { profile: await competencyService.createProfile(req.user, req.body) }, 'Profile created', 201)),
+  updateProfile: asyncHandler(async (req, res) => sendSuccess(res, { profile: await competencyService.updateProfile(req.user, req.params.id, req.body) }, 'Profile updated')),
+  removeProfile: asyncHandler(async (req, res) => sendSuccess(res, await competencyService.removeProfile(req.user, req.params.id), 'Profile deleted')),
+  listFolders: asyncHandler(async (req, res) => sendSuccess(res, { items: await competencyService.listFolders() })),
+  createFolder: asyncHandler(async (req, res) => sendSuccess(res, { folder: await competencyService.createFolder(req.user, req.body) }, 'Folder created', 201)),
+  updateFolder: asyncHandler(async (req, res) => sendSuccess(res, { folder: await competencyService.updateFolder(req.user, req.params.id, req.body) }, 'Folder updated')),
+  removeFolder: asyncHandler(async (req, res) => sendSuccess(res, await competencyService.removeFolder(req.user, req.params.id), 'Folder deleted')),
+
   list: asyncHandler(async (req, res) => {
     const items = await competencyService.list(req.user, req.validatedQuery ?? {})
     sendSuccess(res, { items })

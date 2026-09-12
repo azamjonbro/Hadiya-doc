@@ -239,6 +239,12 @@ export const router = createRouter({
           meta: { permission: 'competency:manage', titleKey: 'competency.title' },
         },
         {
+          path: 'competencies/profiles',
+          name: 'admin-competency-profiles',
+          component: () => import('@/admin/views/CompetencyProfilesView.vue'),
+          meta: { permission: 'competency:manage', titleKey: 'competency.profiles' },
+        },
+        {
           path: 'competencies/matrix',
           name: 'admin-competency-matrix',
           component: () => import('@/admin/views/CompetencyMatrixView.vue'),
