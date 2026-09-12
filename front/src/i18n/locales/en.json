@@ -1013,7 +1013,8 @@
       "coverFormat": "JPG, PNG. Recommended 1920×160 (login: 1920×1080).",
       "nav": "User portal navigation menu",
       "navHint": "Put the most important sections in quick access — they are always visible. The rest move to the extra menu.",
-      "startPage": "Start page"
+      "startPage": "Start page",
+      "addSections": "Add sections: {count}/{max}"
     }
   },
   "reviews": {

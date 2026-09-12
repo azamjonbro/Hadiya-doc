@@ -1013,7 +1013,8 @@
       "coverFormat": "JPG, PNG. Tavsiya: 1920×160 (kirish sahifasi uchun 1920×1080).",
       "nav": "Foydalanuvchi portali menyusi",
       "navHint": "Eng muhim bo‘limlarni tepaga chiqaring — ular doim ko‘rinadi. Qolganlari qo‘shimcha menyuga o‘tadi.",
-      "startPage": "Boshlang‘ich sahifa"
+      "startPage": "Boshlang‘ich sahifa",
+      "addSections": "Bo‘limlar qo‘shish: {count}/{max}"
     }
   },
   "reviews": {

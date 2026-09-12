@@ -13,7 +13,7 @@ import { platformSettingsApi } from '@/services/platformSettings'
 import { useBrandingStore } from '@/stores/branding'
 import { useToast } from '@/composables/useToast'
 import { apiErrorText } from '@/utils/apiError'
-import { portalPrimaryNav } from '@/layouts/nav'
+import { portalPrimaryNav, portalSections, PORTAL_NAV_MAX } from '@/layouts/nav'
 import AppButton from '@/components/ui/AppButton.vue'
 import AppInput from '@/components/ui/AppInput.vue'
 import ImageUploadField from '@/components/ui/ImageUploadField.vue'
@@ -44,17 +44,29 @@ const form = reactive({
 const PRESETS = ['#347c1a', '#4cb726', '#2563eb', '#4f46e5', '#0d9488', '#d97706', '#dc2626', '#0f172a']
 
 const navRows = computed(() => form.portalNav)
+// Nothing arranged yet → the built-in five; otherwise exactly what was
+// saved (a section may have been taken out on purpose).
 function ensureNav() {
-  const known = new Map(form.portalNav.map((row) => [row.name, row]))
-  form.portalNav = portalPrimaryNav.map((item) => known.get(item.name) ?? { name: item.name, enabled: true })
-  // Sections arranged earlier keep their order; new ones append.
-  const order = new Map(form.portalNav.map((row, i) => [row.name, i]))
-  const saved = new Map([...known.keys()].map((name, i) => [name, i]))
-  form.portalNav.sort((a, b) => (saved.get(a.name) ?? 100 + order.get(a.name)) - (saved.get(b.name) ?? 100 + order.get(b.name)))
+  const valid = new Set(portalSections.map((i) => i.name))
+  form.portalNav = form.portalNav.filter((row) => valid.has(row.name))
+  if (!form.portalNav.length) form.portalNav = portalPrimaryNav.map((item) => ({ name: item.name, enabled: true }))
 }
 function labelOf(name) {
-  const item = portalPrimaryNav.find((i) => i.name === name)
+  const item = portalSections.find((i) => i.name === name)
   return item ? t(item.labelKey) : name
+}
+const adding = ref(false)
+const available = computed(() => portalSections.filter((item) => !form.portalNav.some((row) => row.name === item.name)))
+const canAdd = computed(() => form.portalNav.length < PORTAL_NAV_MAX && available.value.length > 0)
+function addSection(name) {
+  adding.value = false
+  if (!name || !canAdd.value) return
+  form.portalNav = [...form.portalNav, { name, enabled: true }]
+}
+function removeSection(index) {
+  if (form.portalNav.length <= 1) return
+  const [gone] = form.portalNav.splice(index, 1)
+  if (form.startPage === gone.name) form.startPage = ''
 }
 function move(index, delta) {
   const target = index + delta
@@ -223,6 +235,37 @@ onMounted(load)
                 @click="form.startPage = form.startPage === row.name ? '' : row.name"
               >
                 {{ t('settings.design.startPage') }}
+              </button>
+              <button
+                type="button"
+                class="flex h-7 w-7 items-center justify-center rounded-md text-ink-faint transition-default hover:text-danger disabled:opacity-30"
+                :disabled="navRows.length <= 1"
+                :aria-label="t('common.delete')"
+                @click="removeSection(index)"
+              >
+                <Icon name="close" size="13" />
+              </button>
+            </li>
+            <li class="px-3 py-2.5">
+              <select
+                v-if="adding"
+                class="h-9 w-full rounded-md border border-border-strong bg-surface px-2 text-small text-ink outline-none"
+                autofocus
+                @change="addSection($event.target.value)"
+                @blur="adding = false"
+              >
+                <option value="">{{ t('common.select') }}</option>
+                <option v-for="item in available" :key="item.name" :value="item.name">{{ t(item.labelKey) }}</option>
+              </select>
+              <button
+                v-else
+                type="button"
+                class="flex w-full items-center justify-center gap-2 rounded-md border border-dashed border-border-strong py-2 text-small transition-default"
+                :class="canAdd ? 'text-primary hover:bg-primary-subtle' : 'cursor-not-allowed text-ink-faint'"
+                :disabled="!canAdd"
+                @click="adding = true"
+              >
+                <Icon name="plus" size="14" /> {{ t('settings.design.addSections', { count: navRows.length, max: PORTAL_NAV_MAX }) }}
               </button>
             </li>
           </ul>

@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia'
 import { http } from '@/services/http'
-import { portalPrimaryNav } from '@/layouts/nav'
+import { portalPrimaryNav, portalSections } from '@/layouts/nav'
 
 /**
  * What the administrator set on Settings → Design (rasm): the brand's
@@ -39,11 +39,11 @@ export const useBrandingStore = defineStore('branding', {
     /** The portal's top-bar links as arranged, or the built-in five. */
     primaryNav: (state) => {
       if (!state.portalNav?.length) return portalPrimaryNav
-      const byName = new Map(portalPrimaryNav.map((item) => [item.name, item]))
+      const byName = new Map(portalSections.map((item) => [item.name, item]))
       const arranged = state.portalNav.filter((row) => row.enabled !== false && byName.has(row.name)).map((row) => byName.get(row.name))
       return arranged.length ? arranged : portalPrimaryNav
     },
-    startPath: (state) => portalPrimaryNav.find((item) => item.name === state.startPage)?.path ?? '',
+    startPath: (state) => portalSections.find((item) => item.name === state.startPage)?.path ?? '',
   },
   actions: {
     async load() {
