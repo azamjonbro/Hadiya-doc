@@ -262,7 +262,13 @@ async function load() {
     items.value = result.items
     total.value = result.total
     totalPages.value = result.totalPages
-    loadProgressForVisibleUsers(result.items)
+    // The list carries each row's progress; only an older API without it
+    // still needs the per-row reads.
+    if (result.items.some((u) => u.progress)) {
+      progressByUserId.value = Object.fromEntries(result.items.map((u) => [u.id, u.progress ?? { completed: 0, total: 0 }]))
+    } else {
+      loadProgressForVisibleUsers(result.items)
+    }
   } catch (error) {
     errorMessage.value = apiErrorText(error)
   } finally {

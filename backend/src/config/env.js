@@ -249,6 +249,15 @@ const envSchema = z.object({
   // is worse than finding it out at boot.
   MAIL_FROM: z.string().optional().default(''),
 
+  // Error alerts by mail: every API failure, browser crash and job that
+  // gave up, to one address (the superadmin's unless set), deduplicated
+  // and capped — see services/alerts/errorAlert.service.js. Needs SMTP.
+  ERROR_ALERT_ENABLED: booleanFlag(true),
+  ERROR_ALERT_EMAIL: z.string().email().optional().or(z.literal('')).default(''),
+  // 'all' also mails refused actions (403, 409, 400 validation…), not
+  // only server errors — the "works for me, not for my colleague" cases.
+  ERROR_ALERT_LEVEL: z.enum(['server', 'all']).default('all'),
+
   // Error tracking (Sentry or a self-hosted GlitchTip — same ingest API).
   // Empty = disabled, which is the default: no DSN, no outbound calls.
   SENTRY_DSN: z.string().optional().default(''),

@@ -5,6 +5,7 @@ import { router } from './router'
 import { i18n } from './i18n'
 import { bindAuthStore, bindRouter } from './services/http'
 import { useBrandingStore } from './stores/branding'
+import { reportClientError, describeInstance } from './utils/errorReporter'
 import { useAuthStore } from './stores/auth'
 import { useToast } from './composables/useToast'
 import { apiErrorText } from './utils/apiError'
@@ -50,7 +51,15 @@ function reportUnhandled(app) {
   app.config.errorHandler = (error, instance, info) => {
     console.error('[vue]', info, error)
     toast.error(describe(error))
+    reportClientError({ error, kind: 'vue', component: describeInstance(instance), info })
   }
+
+  // A script error outside Vue and outside a promise — the rarest, and the
+  // one nothing else would catch.
+  window.addEventListener('error', (event) => {
+    if (!event.error) return
+    reportClientError({ error: event.error, kind: 'window', info: `${event.filename ?? ''}:${event.lineno ?? ''}` })
+  })
 
   window.addEventListener('unhandledrejection', (event) => {
     // A cancelled request is a typeahead being retyped, not a failure.
@@ -74,6 +83,7 @@ function reportUnhandled(app) {
     }
     console.error('[unhandled]', event.reason)
     toast.error(describe(event.reason))
+    reportClientError({ error: event.reason, kind: event.reason?.config ? 'request' : 'promise' })
   })
 }
 

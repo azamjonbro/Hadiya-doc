@@ -6,10 +6,12 @@ import {
   isMandatoryNotificationType,
   resolveNotificationPrefs,
 } from '@lms/shared'
+import mongoose from 'mongoose'
 import { userRepository } from '../../repositories/user.repository.js'
 import { courseRepository } from '../../repositories/course.repository.js'
 import { roleRepository } from '../../repositories/role.repository.js'
 import { groupRepository } from '../../repositories/group.repository.js'
+import { CourseAssignment } from '../../models/courseAssignment.model.js'
 import { auditLogRepository } from '../../repositories/auditLog.repository.js'
 import { hashPassword } from '../../utils/hash.js'
 import { ApiError } from '../../utils/ApiError.js'
@@ -89,10 +91,20 @@ function duplicateIdentityError(error) {
 async function decorate(items) {
   const managerIds = [...new Set(items.map((u) => u.managerId).filter(Boolean))]
   const userIds = items.map((u) => u.id)
-  const [managers, groups] = await Promise.all([
+  const [managers, groups, progressRows] = await Promise.all([
     managerIds.length ? userRepository.findByIds(managerIds) : [],
     userIds.length ? groupRepository.namesByMembers(userIds) : [],
+    // The table's progress column, in one query for the page rather than
+    // one request per row from the browser (which on a slow link made the
+    // list look broken for fifteen seconds).
+    userIds.length
+      ? CourseAssignment.aggregate([
+          { $match: { userId: { $in: items.map((u) => new mongoose.Types.ObjectId(u.id)) }, status: { $ne: 'CANCELLED' } } },
+          { $group: { _id: '$userId', total: { $sum: 1 }, completed: { $sum: { $cond: [{ $eq: ['$status', 'COMPLETED'] }, 1, 0] } } } },
+        ])
+      : [],
   ])
+  const progressOf = new Map(progressRows.map((row) => [String(row._id), { total: row.total, completed: row.completed }]))
   const managerName = new Map(managers.map((m) => [m._id.toString(), m.fullName]))
   const groupsOf = new Map()
   for (const group of groups) {
@@ -106,6 +118,7 @@ async function decorate(items) {
     ...u,
     managerName: u.managerId ? (managerName.get(u.managerId) ?? '') : '',
     groups: groupsOf.get(u.id) ?? [],
+    progress: progressOf.get(u.id) ?? { total: 0, completed: 0 },
   }))
 }
 
