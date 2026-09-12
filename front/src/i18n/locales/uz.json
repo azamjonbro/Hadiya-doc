@@ -216,48 +216,48 @@
     "stale": "Keshlangan ma'lumotlar ko'rsatilmoqda — jonli yangilash mavjud emas",
     "generatedAt": "Yangilangan",
     "inbox": {
-          "questions": {
-                "title": "Kurslarga yangi savollar",
-                "subtitle": "javob kutmoqda"
-          },
-          "grading": {
-                "title": "Tekshirilmagan topshiriqlar",
-                "subtitle": "tekshirishni kutmoqda",
-                "mine": "Meniki",
-                "all": "Hammasi",
-                "open": "Topshiriqlarni tekshirish",
-                "colTitle": "Nomi",
-                "colUser": "Foydalanuvchi",
-                "empty": "Hozircha tekshiriladigan topshiriq yo'q"
-          },
-          "employees": {
-                "title": "Yangi xodimlar",
-                "subtitle": "{count} nafar e'tibor talab qiladi",
-                "open": "Tekshirish",
-                "colEmployee": "Xodim",
-                "colFields": "To'ldirilgan maydonlar",
-                "colStatus": "Holat",
-                "fields": "{filled} / {total}",
-                "empty": "Oxirgi 30 kunda yangi xodim qo'shilmagan",
-                "status": {
-                      "onboarding": "Adaptatsiyada",
-                      "onboarded": "Adaptatsiya tugadi",
-                      "noProgram": "Dasturga qo'shilmagan",
-                      "inactive": "Faol emas"
-                }
-          },
-          "material": {
-                "title": "Yangi material",
-                "subtitle": "mualliflar bir hafta ichida qo'shgan",
-                "empty": "Faollik yo'q"
-          },
-          "comments": {
-                "title": "Yangiliklarga izohlar",
-                "subtitle": "bir haftada {count} ta yangi izoh",
-                "open": "Barcha izohlarga",
-                "count": "{count} ta izoh",
-                "goto": "Izohlarga"
-          }
+      "questions": {
+        "title": "Kurslarga yangi savollar",
+        "subtitle": "javob kutmoqda"
+      },
+      "grading": {
+        "title": "Tekshirilmagan topshiriqlar",
+        "subtitle": "tekshirishni kutmoqda",
+        "mine": "Meniki",
+        "all": "Hammasi",
+        "open": "Topshiriqlarni tekshirish",
+        "colTitle": "Nomi",
+        "colUser": "Foydalanuvchi",
+        "empty": "Hozircha tekshiriladigan topshiriq yo'q"
+      },
+      "employees": {
+        "title": "Yangi xodimlar",
+        "subtitle": "{count} nafar e'tibor talab qiladi",
+        "open": "Tekshirish",
+        "colEmployee": "Xodim",
+        "colFields": "To'ldirilgan maydonlar",
+        "colStatus": "Holat",
+        "fields": "{filled} / {total}",
+        "empty": "Oxirgi 30 kunda yangi xodim qo'shilmagan",
+        "status": {
+          "onboarding": "Adaptatsiyada",
+          "onboarded": "Adaptatsiya tugadi",
+          "noProgram": "Dasturga qo'shilmagan",
+          "inactive": "Faol emas"
+        }
+      },
+      "material": {
+        "title": "Yangi material",
+        "subtitle": "mualliflar bir hafta ichida qo'shgan",
+        "empty": "Faollik yo'q"
+      },
+      "comments": {
+        "title": "Yangiliklarga izohlar",
+        "subtitle": "bir haftada {count} ta yangi izoh",
+        "open": "Barcha izohlarga",
+        "count": "{count} ta izoh",
+        "goto": "Izohlarga"
+      }
     },
     "attention": {
       "title": "Diqqat talab qiladi",
@@ -310,7 +310,8 @@
       "team": "Mening jamoam",
       "blocked": "Bu dashboard butun kompaniyani qamraydi, siz esa o'z bo'limingiz bilan cheklangansiz. O'z jamoangiz ko'rsatkichlari alohida sahifada.",
       "goToTeam": "Jamoa dashboardiga o'tish"
-    }
+    },
+    "home": "Bosh sahifa"
   },
   "courses": {
     "title": "Kurslar",

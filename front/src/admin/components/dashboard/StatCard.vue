@@ -29,19 +29,18 @@ const toneClasses = {
     :is="to ? RouterLink : 'div'"
     v-if="size === 'kpi'"
     :to="to ?? undefined"
-    class="flex items-center gap-4 rounded-2xl bg-surface px-6 py-6 shadow-sm"
+    class="flex items-center gap-5 rounded-2xl bg-surface px-7 py-7 shadow-sm"
     :class="to && 'transition-default hover:shadow-md hover:bg-surface-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary'"
   >
     <span v-if="icon" class="flex h-12 w-12 shrink-0 items-center justify-center rounded-full" :class="toneClasses[tone]">
       <Icon :name="icon" size="20" />
     </span>
     <div class="min-w-0">
-      <p class="text-[24px] font-semibold leading-none text-ink">
+      <p class="text-[26px] font-semibold leading-none text-ink">
         {{ value }}<span v-if="suffix" class="text-[16px] font-normal text-ink-muted">{{ suffix }}</span>
       </p>
-      <p class="mt-1.5 truncate text-[13px] text-ink-muted">{{ label }}</p>
+      <p class="mt-2 truncate text-[15px] text-ink-muted">{{ label }}</p>
     </div>
-    <Icon v-if="to" name="chevron-right" size="18" class="ml-auto shrink-0 text-ink-faint" />
   </component>
 
   <div v-else class="rounded-lg border border-border bg-surface p-3.5">
