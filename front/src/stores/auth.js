@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia'
 import { http, csrfHeader, setCsrfToken, clearCsrfToken } from '@/services/http'
 import { faceApi } from '@/services/face'
+import { useBrandingStore } from './branding'
 import { useChatStore } from './chat'
 
 // Who may open the admin area at all.
@@ -108,7 +109,7 @@ export const useAuthStore = defineStore('auth', {
     isScoped: (state) => (state.user?.scope ?? 'SELF') !== 'ALL',
     // Gate for the few irreversible actions that stay with SUPERADMIN even
     // when the matching permission has been granted more widely.
-    isSuperAdmin: (state) => state.user?.role === 'SUPERADMIN',
+    isSuperAdmin: (state) => state.user?.role === 'SUPERADMIN' || (state.user?.roles ?? []).includes('SUPERADMIN'),
   },
 
   actions: {
@@ -123,6 +124,8 @@ export const useAuthStore = defineStore('auth', {
       setCsrfToken(csrfToken)
       rememberForOffline(user)
       useChatStore().init(accessToken, user.id)
+      // The branch's own look, if the administrator gave it one.
+      useBrandingStore().load(user.branch ?? '')
     },
 
     clearSession() {
@@ -132,6 +135,7 @@ export const useAuthStore = defineStore('auth', {
       clearCsrfToken()
       forgetOffline()
       useChatStore().reset()
+      useBrandingStore().load()
     },
 
     // Two possible outcomes: a normal session, or a face-verification

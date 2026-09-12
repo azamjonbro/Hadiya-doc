@@ -3,6 +3,19 @@ import { asyncHandler } from '../utils/asyncHandler.js'
 import { sendSuccess } from '../utils/apiResponse.js'
 
 export const ojtController = {
+  listScales: asyncHandler(async (req, res) => {
+    sendSuccess(res, { items: await ojtService.listScales() })
+  }),
+  createScale: asyncHandler(async (req, res) => {
+    sendSuccess(res, { scale: await ojtService.createScale(req.user, req.body) }, 'Scale created', 201)
+  }),
+  updateScale: asyncHandler(async (req, res) => {
+    sendSuccess(res, { scale: await ojtService.updateScale(req.user, req.params.id, req.body) }, 'Scale updated')
+  }),
+  removeScale: asyncHandler(async (req, res) => {
+    sendSuccess(res, await ojtService.removeScale(req.user, req.params.id), 'Scale deleted')
+  }),
+
   listChecklists: asyncHandler(async (req, res) => {
     const items = await ojtService.listChecklists(req.user, req.validatedQuery ?? {})
     sendSuccess(res, { items })

@@ -5,8 +5,16 @@ export const branchesApi = {
   overview() {
     return http.get('/branches').then((r) => r.data.data)
   },
-  create(name) {
-    return http.post('/branches', { name }).then((r) => r.data.data)
+  // The org chart: company → branches → departments → subdivisions, each
+  // with code, head and headcount (rasm «Подразделения»).
+  tree() {
+    return http.get('/branches/tree').then((r) => r.data.data)
+  },
+  create(name, extra = {}) {
+    return http.post('/branches', { name, ...extra }).then((r) => r.data.data)
+  },
+  update(id, payload) {
+    return http.patch(`/branches/${id}`, payload).then((r) => r.data.data)
   },
   // Moves every tagged employee and course to the new name; the response says
   // how many of each were touched.

@@ -25,6 +25,16 @@ const brandingSchema = new Schema(
     primaryColor: { type: String, default: '' },
     loginBackgroundUrl: { type: String, default: '' },
     supportEmail: { type: String, default: '' },
+    // Covers of the portal's pages (rasm «Фоны и обложки»); empty falls
+    // back to the image the deployment ships.
+    coursesCoverUrl: { type: String, default: '' },
+    catalogCoverUrl: { type: String, default: '' },
+    profileCoverUrl: { type: String, default: '' },
+    // The portal's top bar, as the administrator arranged it (rasm
+    // «Навигационное меню»): which sections, in what order, and which one
+    // opens first. Empty means the built-in order.
+    portalNav: { type: [{ name: String, enabled: { type: Boolean, default: true } }], default: [] },
+    startPage: { type: String, default: '' },
   },
   { _id: false }
 )

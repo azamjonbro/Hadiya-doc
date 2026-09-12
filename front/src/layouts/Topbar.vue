@@ -19,7 +19,8 @@ import { onClickOutside } from '@/composables/onClickOutside'
 import { useAuthStore } from '@/stores/auth'
 import { useChatStore } from '@/stores/chat'
 import { useNotifications } from '@/composables/useNotifications'
-import { portalPrimaryNav, portalMenuGroups } from './nav'
+import { portalMenuGroups } from './nav'
+import { useBrandingStore } from '@/stores/branding'
 import NotificationsDrawer from './NotificationsDrawer.vue'
 import BirthdaysDrawer from './BirthdaysDrawer.vue'
 import ChatDrawer from './ChatDrawer.vue'
@@ -43,7 +44,8 @@ function allowed(item) {
   return (!item.permission || auth.hasPermission(item.permission)) && routeExists(item.path)
 }
 
-const primary = computed(() => portalPrimaryNav.filter(allowed))
+const branding = useBrandingStore()
+const primary = computed(() => branding.primaryNav.filter(allowed))
 const groups = computed(() =>
   portalMenuGroups.map((group) => ({ ...group, items: group.items.filter(allowed) })).filter((g) => g.items.length),
 )
@@ -77,7 +79,8 @@ const canEnterAdmin = computed(() => auth.isSuperAdmin)
       to="/"
       class="flex h-16 shrink-0 items-center pl-3 pr-6 text-[34px] font-black uppercase leading-none tracking-tighter text-white transition-opacity hover:opacity-90"
     >
-      {{ t('portal.brand') }}
+      <img v-if="branding.logoUrl" :src="branding.logoUrl" :alt="branding.appName || t('portal.brand')" class="h-9 max-w-[180px] object-contain" />
+      <template v-else>{{ branding.appName || t('portal.brand') }}</template>
     </router-link>
 
     <!-- Main navigation: centred, active link underlined on the bar's bottom edge -->

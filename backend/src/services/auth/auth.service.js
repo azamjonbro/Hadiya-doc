@@ -35,15 +35,16 @@ export function toPublicUser(user, role) {
     id: user._id.toString(),
     firstName: user.firstName ?? '',
     lastName: user.lastName ?? '',
+    patronymic: user.patronymic ?? '',
     fullName: user.fullName,
     jshshir: user.jshshir,
-    passportSeries: user.passportSeries ?? '',
     email: user.email ?? '',
     branch: user.branch ?? '',
     department: user.department,
     position: user.position,
     avatar: user.avatar,
     role: role.name,
+    roles: role.names ?? [role.name],
     permissions: role.permissions,
     // The SPA's router reads this before /users/me has answered: without
     // it a SUPERADMIN reloading /bos was bounced to the team dashboard as
@@ -139,7 +140,7 @@ export async function establishSession(user, meta) {
   const pendingFaceVerification = await issueFaceChallengeIfRequired(user)
   if (pendingFaceVerification) return pendingFaceVerification
 
-  const role = await roleRepository.findById(user.roleId)
+  const role = await roleRepository.effectiveFor(user)
   const accessToken = generateAccessToken(user, role)
   const { refreshToken } = await issueSession(user, meta)
   return { accessToken, refreshToken, user: toPublicUser(user, role) }
@@ -263,7 +264,7 @@ export const authService = {
       throw ApiError.unauthorized('Account no longer active', 'ACCOUNT_INACTIVE')
     }
 
-    const role = await roleRepository.findById(user.roleId)
+    const role = await roleRepository.effectiveFor(user)
     const accessToken = generateAccessToken(user, role)
     const { refreshToken: newRefreshToken } = await issueSession(user, meta, live._id)
 

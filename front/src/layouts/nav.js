@@ -72,6 +72,16 @@ export const portalMenuGroups = [
   },
 ]
 
+// Every section the administrator may put in the top bar (Settings →
+// Design): the five defaults plus everything behind "···", deduplicated.
+export const portalSections = [
+  ...portalPrimaryNav,
+  ...portalMenuGroups.flatMap((group) => group.items),
+  { name: 'dashboard', path: '/', labelKey: 'nav.dashboard' },
+].filter((item, index, all) => all.findIndex((other) => other.name === item.name) === index)
+
+export const PORTAL_NAV_MAX = 6
+
 export const systemNav = [
   { name: 'notifications', path: '/notifications', icon: 'bell', labelKey: 'nav.notifications' },
   { name: 'settings', path: '/settings', icon: 'settings', labelKey: 'nav.settings' },

@@ -7,12 +7,18 @@ export const branchController = {
     sendSuccess(res, await branchService.overview())
   }),
 
+  tree: asyncHandler(async (req, res) => {
+    sendSuccess(res, await branchService.tree())
+  }),
+
   create: asyncHandler(async (req, res) => {
-    sendSuccess(res, await branchService.create(req.user, req.body.name), 'Branch created', 201)
+    const { name, code, headId } = req.body
+    sendSuccess(res, await branchService.create(req.user, name, { code, headId }), 'Branch created', 201)
   }),
 
   rename: asyncHandler(async (req, res) => {
-    sendSuccess(res, await branchService.rename(req.user, req.params.id, req.body.name), 'Branch renamed')
+    const { name, code, headId } = req.body
+    sendSuccess(res, await branchService.rename(req.user, req.params.id, name, { code, headId }), 'Branch renamed')
   }),
 
   // `?force=1` means the caller has already been told what is attached and

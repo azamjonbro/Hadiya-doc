@@ -24,7 +24,12 @@ export const roleService = {
   async list() {
     const [roles, counts] = await Promise.all([
       Role.find().sort({ name: 1 }).lean(),
-      User.aggregate([{ $group: { _id: '$roleId', users: { $sum: 1 } } }]),
+      // Somebody wearing a role as their second hat still holds it.
+      User.aggregate([
+        { $project: { ids: { $setUnion: [['$roleId'], { $ifNull: ['$roleIds', []] }] } } },
+        { $unwind: '$ids' },
+        { $group: { _id: '$ids', users: { $sum: 1 } } },
+      ]),
     ])
 
     const usersByRoleId = new Map(counts.map((row) => [String(row._id), row.users]))
@@ -135,7 +140,7 @@ export const roleService = {
       },
     })
 
-    const users = await User.countDocuments({ roleId: role._id })
+    const users = await User.countDocuments({ $or: [{ roleId: role._id }, { roleIds: role._id }] })
     return {
       id: role._id.toString(),
       name: role.name,
@@ -157,7 +162,7 @@ export const roleService = {
       throw ApiError.badRequest('Built-in roles cannot be deleted', 'SYSTEM_ROLE_PROTECTED')
     }
 
-    const users = await User.countDocuments({ roleId: role._id })
+    const users = await User.countDocuments({ $or: [{ roleId: role._id }, { roleIds: role._id }] })
     if (users > 0) {
       throw ApiError.conflict(
         `${users} employee${users === 1 ? '' : 's'} still hold this role — move them to another one first`,

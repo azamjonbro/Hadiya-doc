@@ -10,6 +10,7 @@ import {
   calendarQuerySchema,
   markAttendanceSchema,
   cancelRegistrationSchema,
+  registerManySchema,
 } from '../../validators/event.validator.js'
 import { idempotent } from '../../middlewares/idempotency.middleware.js'
 
@@ -38,8 +39,15 @@ eventsRouter.post(
   eventController.cancelRegistration
 )
 
-// The attendance sheet belongs to whoever runs the event.
+// The attendance sheet belongs to whoever runs the event — as does signing
+// people up for it from the employee list.
 eventsRouter.get('/:id/registrations', requirePermission(PERMISSIONS.EVENT_CREATE), eventController.registrations)
+eventsRouter.post(
+  '/:id/registrations',
+  requirePermission(PERMISSIONS.EVENT_CREATE),
+  validateBody(registerManySchema),
+  eventController.registerMany
+)
 eventsRouter.post(
   '/:id/attendance',
   requirePermission(PERMISSIONS.EVENT_CREATE),

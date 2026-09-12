@@ -88,6 +88,20 @@ export const usersApi = {
   bulkDeactivate(userIds) {
     return http.post('/users/bulk/deactivate', { userIds }).then((r) => r.data.data)
   },
+  bulkDepartment(userIds, department) {
+    return http.post('/users/bulk/department', { userIds, department }).then((r) => r.data.data)
+  },
+  // A leaving date of today — archived, history kept.
+  bulkDismiss(userIds) {
+    return http.post('/users/bulk/dismiss', { userIds }).then((r) => r.data.data)
+  },
+  // Gone for good, with everything that was theirs alone. SUPERADMIN only.
+  bulkDelete(userIds) {
+    return http.post('/users/bulk/delete', { userIds }).then((r) => r.data.data)
+  },
+  deletePermanently(id) {
+    return http.delete(`/users/${id}/permanent`).then((r) => r.data.data)
+  },
   getCourses(id) {
     return http.get(`/users/${id}/courses`).then((r) => r.data.data)
   },

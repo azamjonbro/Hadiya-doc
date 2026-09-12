@@ -21,6 +21,10 @@ export const eventsApi = {
   register(id) {
     return http.post(`/events/${id}/register`).then((r) => r.data.data)
   },
+  // The organiser signing other people up.
+  registerMany(id, userIds) {
+    return http.post(`/events/${id}/registrations`, { userIds }).then((r) => r.data.data)
+  },
   cancelRegistration(id, userId) {
     return http.post(`/events/${id}/cancel-registration`, userId ? { userId } : {}).then((r) => r.data.data)
   },

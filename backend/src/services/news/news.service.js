@@ -92,9 +92,26 @@ export const newsService = {
       newsViewRepository.countByNews(ids),
       newsEngagementRepository.summarize(ids, null),
     ])
+    // "244 / 9091": how many could have read it. One count per distinct
+    // target set — most articles are untargeted and share the company total.
+    const audienceOf = new Map()
+    const audienceFor = async (row) => {
+      const key = JSON.stringify([row.departmentTargets ?? [], row.roleTargets ?? []])
+      if (!audienceOf.has(key)) {
+        const people = await userRepository.listActiveByNewsTargets({ departments: row.departmentTargets ?? [], roleNames: row.roleTargets ?? [] })
+        audienceOf.set(key, people.length)
+      }
+      return audienceOf.get(key)
+    }
+    const audiences = await Promise.all(items.map(audienceFor))
+    const authorIds = [...new Set(items.map((row) => row.createdBy && String(row.createdBy)).filter(Boolean))]
+    const authors = authorIds.length ? await userRepository.findByIds(authorIds) : []
+    const authorName = new Map(authors.map((u) => [String(u._id), u.fullName]))
     return {
-      items: items.map((row) => ({
+      items: items.map((row, index) => ({
         ...toPublicNews(row),
+        audience: audiences[index],
+        authorName: authorName.get(String(row.createdBy)) ?? '',
         views: views[String(row._id)] ?? 0,
         likes: engagement[String(row._id)]?.likes ?? 0,
         comments: engagement[String(row._id)]?.comments ?? 0,

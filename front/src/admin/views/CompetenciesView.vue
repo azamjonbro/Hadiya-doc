@@ -29,6 +29,11 @@ const toast = useToast()
 const confirm = useConfirm()
 
 const items = ref([])
+const folders = ref([])
+const openFolders = ref(new Set())
+const folderModalOpen = ref(false)
+const folderDraft = ref({ id: '', name: '', description: '' })
+const menuFor = ref('')
 const loading = ref(true)
 const saving = ref(false)
 const search = ref('')
@@ -55,7 +60,95 @@ function emptyDraft() {
   }
 }
 
-const categories = computed(() => [...new Set(items.value.map((item) => item.category).filter(Boolean))].sort())
+const categories = computed(() => [...new Set([...folders.value.map((f) => f.name), ...items.value.map((item) => item.category).filter(Boolean)])].sort())
+
+// The tree (rasm): folders first, each with its competencies, then the
+// competencies filed under nothing. Searching flattens it — a match inside
+// a closed folder is still a match — so folders open while a term is typed.
+const tree = computed(() => {
+  const rows = filtered.value
+  const byFolder = new Map()
+  for (const item of rows) {
+    const key = item.category || ''
+    if (!byFolder.has(key)) byFolder.set(key, [])
+    byFolder.get(key).push(item)
+  }
+  const named = folders.value.map((folder) => ({ ...folder, items: byFolder.get(folder.name) ?? [] }))
+  const known = new Set(folders.value.map((f) => f.name))
+  const implied = [...byFolder.keys()].filter((k) => k && !known.has(k)).map((name) => ({ id: name, name, description: '', items: byFolder.get(name) }))
+  return { folders: [...named, ...implied], loose: byFolder.get('') ?? [] }
+})
+const searching = computed(() => search.value.trim().length > 0 || Boolean(category.value))
+function isOpen(folder) {
+  return searching.value || openFolders.value.has(folder.name)
+}
+function toggleFolder(folder) {
+  const next = new Set(openFolders.value)
+  next.has(folder.name) ? next.delete(folder.name) : next.add(folder.name)
+  openFolders.value = next
+}
+
+async function loadFolders() {
+  try {
+    folders.value = await competenciesApi.folders()
+  } catch {
+    folders.value = []
+  }
+}
+function openNewFolder() {
+  folderDraft.value = { id: '', name: '', description: '' }
+  folderModalOpen.value = true
+}
+function openEditFolder(folder) {
+  folderDraft.value = { id: folder.id, name: folder.name, description: folder.description ?? '' }
+  folderModalOpen.value = true
+  menuFor.value = ''
+}
+async function saveFolder() {
+  const d = folderDraft.value
+  if (!d.name.trim()) return toast.error(t('competency.folders.nameRequired'))
+  saving.value = true
+  try {
+    const payload = { name: d.name.trim(), description: d.description.trim() }
+    // A folder implied by an old category (id === its name) is created for real on first save.
+    if (d.id && folders.value.some((f) => f.id === d.id && f.id !== f.name)) await competenciesApi.updateFolder(d.id, payload)
+    else await competenciesApi.createFolder(payload)
+    folderModalOpen.value = false
+    toast.success(t('competency.folders.saved'))
+    await Promise.all([loadFolders(), load()])
+  } catch (error) {
+    toast.error(apiErrorText(error, t('competency.saveError')))
+  } finally {
+    saving.value = false
+  }
+}
+async function removeFolder(folder) {
+  menuFor.value = ''
+  const ok = await confirm.ask({ title: t('competency.folders.deleteTitle'), message: t('competency.folders.deleteMessage', { name: folder.name }) })
+  if (!ok) return
+  try {
+    if (folder.id !== folder.name) await competenciesApi.removeFolder(folder.id)
+    toast.success(t('competency.folders.deleted'))
+    await Promise.all([loadFolders(), load()])
+  } catch (error) {
+    toast.error(apiErrorText(error, t('competency.saveError')))
+  }
+}
+// "Move to folder": the ⋯ on a competency offers the folders; picking one
+// re-files it in one request.
+async function moveTo(item, folderName) {
+  menuFor.value = ''
+  try {
+    await competenciesApi.update(item.id, { category: folderName })
+    await load()
+  } catch (error) {
+    toast.error(apiErrorText(error, t('competency.saveError')))
+  }
+}
+function openNewIn(folder) {
+  openNew()
+  draft.value.category = folder.name
+}
 
 const filtered = computed(() => {
   const term = search.value.trim().toLowerCase()
@@ -203,7 +296,10 @@ async function remove(item) {
   }
 }
 
-onMounted(load)
+onMounted(() => {
+  load()
+  loadFolders()
+})
 </script>
 
 <template>
@@ -213,7 +309,18 @@ onMounted(load)
         <h1 class="text-[24px] font-semibold text-ink">{{ t('competency.title') }}</h1>
         <p class="mt-1 text-small text-ink-muted">{{ t('competency.subtitle') }}</p>
       </div>
-      <AppButton icon="plus" @click="openNew">{{ t('competency.new') }}</AppButton>
+      <div class="flex items-center gap-2">
+        <button
+          type="button"
+          class="flex h-10 w-10 items-center justify-center rounded-md border border-border-strong text-ink-muted transition-default hover:bg-surface-2 hover:text-ink"
+          :title="t('competency.folders.new')"
+          :aria-label="t('competency.folders.new')"
+          @click="openNewFolder"
+        >
+          <Icon name="layers" size="18" />
+        </button>
+        <AppButton icon="plus" @click="openNew">{{ t('competency.new') }}</AppButton>
+      </div>
     </div>
 
     <div class="mt-5 flex flex-wrap items-center gap-3">
@@ -245,63 +352,93 @@ onMounted(load)
     </div>
 
     <EmptyState
-      v-else-if="!filtered.length"
+      v-else-if="!filtered.length && !tree.folders.length"
       class="mt-6"
       icon="layers"
       :title="t('competency.empty')"
       :description="t('competency.emptyHint')"
     />
 
-    <div v-else class="mt-4 space-y-3">
-      <AppCard v-for="item in filtered" :key="item.id" class="flex flex-wrap items-start justify-between gap-4 p-4">
-        <div class="min-w-0 flex-1">
-          <div class="flex flex-wrap items-center gap-2">
-            <span class="rounded bg-surface-2 px-1.5 py-0.5 text-caption text-ink-muted">{{ item.code }}</span>
-            <p class="truncate font-medium text-ink">{{ item.name }}</p>
-            <Badge v-if="item.category" variant="info" size="sm">{{ item.category }}</Badge>
-            <Badge v-if="item.status === 'ARCHIVED'" variant="neutral" size="sm">
-              {{ t('competency.status.ARCHIVED') }}
-            </Badge>
-          </div>
-
-          <p v-if="item.description" class="mt-1 line-clamp-2 text-small text-ink-muted">{{ item.description }}</p>
-
-          <div class="mt-2 flex flex-wrap items-center gap-1.5">
-            <span
-              v-for="level in item.levels"
-              :key="level.value"
-              class="rounded-full bg-surface-2 px-2 py-0.5 text-caption text-ink-muted"
-            >
-              {{ level.value }} · {{ level.label }}
+    <!-- The tree (rasm): a folder row opens to its competencies; a
+         competency row carries the ladder and, on hover, its actions. -->
+    <div v-else class="mt-4">
+      <div class="grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)_120px] gap-3 border-b border-border px-3 pb-2 text-[12px] font-medium text-ink-muted">
+        <span>{{ t('competency.name') }}</span>
+        <span>{{ t('competency.description') }}</span>
+        <span />
+      </div>
+      <div class="divide-y divide-border">
+        <template v-for="folder in tree.folders" :key="folder.id">
+          <div class="group/row grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)_120px] items-center gap-3 px-3 py-3 transition-default hover:bg-surface-2">
+            <button type="button" class="flex min-w-0 items-center gap-2 text-left" @click="toggleFolder(folder)">
+              <Icon :name="isOpen(folder) ? 'chevron-down' : 'chevron-right'" size="14" class="shrink-0 text-ink-faint" />
+              <Icon name="layers" size="18" class="shrink-0 text-ink-faint" />
+              <span class="truncate text-[14px] text-ink">{{ folder.name }}</span>
+              <span class="text-caption text-ink-faint">{{ folder.items.length }}</span>
+            </button>
+            <span class="truncate text-small text-ink-muted">{{ folder.description || '—' }}</span>
+            <span class="relative flex items-center justify-end gap-0.5 opacity-0 transition-default group-hover/row:opacity-100 focus-within:opacity-100" :class="menuFor === 'f:' + folder.id ? 'opacity-100' : ''">
+              <button type="button" class="flex h-8 w-8 items-center justify-center rounded-md text-ink-muted hover:bg-surface-hover hover:text-ink" :aria-label="t('competency.folders.addHere')" @click="openNewIn(folder)"><Icon name="plus" size="15" /></button>
+              <button type="button" class="flex h-8 w-8 items-center justify-center rounded-md text-ink-muted hover:bg-surface-hover hover:text-ink" :aria-label="t('common.edit')" @click="openEditFolder(folder)"><Icon name="pencil" size="15" /></button>
+              <button type="button" class="flex h-8 w-8 items-center justify-center rounded-md text-ink-muted hover:bg-surface-hover hover:text-danger" :aria-label="t('common.delete')" @click="removeFolder(folder)"><Icon name="trash" size="15" /></button>
             </span>
           </div>
-
-          <p class="mt-2 text-caption text-ink-faint">
-            <template v-if="item.requirements.length">
-              <span v-for="requirement in item.requirements" :key="requirement.id" class="mr-3">
-                <Icon name="users" size="11" class="mr-1 inline" />
-                {{ t(`competency.scope.${requirement.scope}`) }}: {{ requirement.value }} →
-                {{ t('competency.level') }} {{ requirement.level }}
+          <template v-if="isOpen(folder)">
+            <div v-for="item in folder.items" :key="item.id" class="group/row grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)_120px] items-center gap-3 py-3 pl-12 pr-3 transition-default hover:bg-surface-2">
+              <button type="button" class="flex min-w-0 items-center gap-2 text-left" @click="openEdit(item)">
+                <Icon name="award" size="17" class="shrink-0 text-ink-faint" />
+                <span class="truncate text-[14px] text-ink">{{ item.name }}</span>
+                <span class="rounded bg-surface-2 px-1.5 py-0.5 text-caption text-ink-faint">{{ item.code }}</span>
+                <Badge v-if="item.status === 'ARCHIVED'" variant="neutral" size="sm">{{ t('competency.status.ARCHIVED') }}</Badge>
+              </button>
+              <span class="truncate text-small text-ink-muted">{{ item.description || '—' }}</span>
+              <span class="relative flex items-center justify-end gap-0.5 opacity-0 transition-default group-hover/row:opacity-100 focus-within:opacity-100" :class="menuFor === item.id ? 'opacity-100' : ''">
+                <button type="button" class="flex h-8 w-8 items-center justify-center rounded-md text-ink-muted hover:bg-surface-hover hover:text-ink" :aria-label="t('competency.edit')" @click="openEdit(item)"><Icon name="pencil" size="15" /></button>
+                <button type="button" class="flex h-8 w-8 items-center justify-center rounded-md text-ink-muted hover:bg-surface-hover hover:text-ink" :aria-label="t('competency.folders.move')" @click="menuFor = menuFor === item.id ? '' : item.id"><Icon name="more-horizontal" size="15" /></button>
+                <div v-if="menuFor === item.id" class="absolute right-0 top-9 z-20 w-56 rounded-md border border-border bg-surface py-1 text-[13px] shadow-md">
+                  <p class="px-3 py-1.5 text-caption font-semibold uppercase tracking-wide text-ink-faint">{{ t('competency.folders.move') }}</p>
+                  <button v-for="name in categories.filter((n) => n !== item.category)" :key="name" type="button" class="flex w-full items-center gap-2 px-3 py-1.5 text-left hover:bg-surface-2" @click="moveTo(item, name)"><Icon name="layers" size="13" class="text-ink-faint" /> {{ name }}</button>
+                  <button v-if="item.category" type="button" class="flex w-full items-center gap-2 px-3 py-1.5 text-left hover:bg-surface-2" @click="moveTo(item, '')"><Icon name="arrow-left" size="13" class="text-ink-faint" /> {{ t('competency.folders.root') }}</button>
+                  <div class="my-1 border-t border-border" />
+                  <button type="button" class="flex w-full items-center gap-2 px-3 py-1.5 text-left text-danger hover:bg-surface-2" @click="menuFor = ''; remove(item)"><Icon name="trash" size="13" /> {{ t('common.delete') }}</button>
+                </div>
               </span>
-            </template>
-            <template v-else>{{ t('competency.noRequirements') }}</template>
-            ·
-            {{
-              item.validityDays
-                ? t('competency.validityDays') + ': ' + item.validityDays
-                : t('competency.neverExpires')
-            }}
-          </p>
-        </div>
+            </div>
+          </template>
+        </template>
 
-        <div class="flex shrink-0 gap-2">
-          <AppButton variant="secondary" size="sm" icon="edit" @click="openEdit(item)">
-            {{ t('competency.edit') }}
-          </AppButton>
-          <AppButton variant="ghost" size="sm" icon="trash" @click="remove(item)" />
+        <div v-for="item in tree.loose" :key="item.id" class="group/row grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)_120px] items-center gap-3 px-3 py-3 transition-default hover:bg-surface-2">
+          <button type="button" class="flex min-w-0 items-center gap-2 pl-5 text-left" @click="openEdit(item)">
+            <Icon name="award" size="17" class="shrink-0 text-ink-faint" />
+            <span class="truncate text-[14px] text-ink">{{ item.name }}</span>
+            <span class="rounded bg-surface-2 px-1.5 py-0.5 text-caption text-ink-faint">{{ item.code }}</span>
+            <Badge v-if="item.status === 'ARCHIVED'" variant="neutral" size="sm">{{ t('competency.status.ARCHIVED') }}</Badge>
+          </button>
+          <span class="truncate text-small text-ink-muted">{{ item.description || '—' }}</span>
+          <span class="relative flex items-center justify-end gap-0.5 opacity-0 transition-default group-hover/row:opacity-100 focus-within:opacity-100" :class="menuFor === item.id ? 'opacity-100' : ''">
+            <button type="button" class="flex h-8 w-8 items-center justify-center rounded-md text-ink-muted hover:bg-surface-hover hover:text-ink" :aria-label="t('competency.edit')" @click="openEdit(item)"><Icon name="pencil" size="15" /></button>
+            <button type="button" class="flex h-8 w-8 items-center justify-center rounded-md text-ink-muted hover:bg-surface-hover hover:text-ink" :aria-label="t('competency.folders.move')" @click="menuFor = menuFor === item.id ? '' : item.id"><Icon name="more-horizontal" size="15" /></button>
+            <div v-if="menuFor === item.id" class="absolute right-0 top-9 z-20 w-56 rounded-md border border-border bg-surface py-1 text-[13px] shadow-md">
+              <p class="px-3 py-1.5 text-caption font-semibold uppercase tracking-wide text-ink-faint">{{ t('competency.folders.move') }}</p>
+              <button v-for="name in categories" :key="name" type="button" class="flex w-full items-center gap-2 px-3 py-1.5 text-left hover:bg-surface-2" @click="moveTo(item, name)"><Icon name="layers" size="13" class="text-ink-faint" /> {{ name }}</button>
+              <div class="my-1 border-t border-border" />
+              <button type="button" class="flex w-full items-center gap-2 px-3 py-1.5 text-left text-danger hover:bg-surface-2" @click="menuFor = ''; remove(item)"><Icon name="trash" size="13" /> {{ t('common.delete') }}</button>
+            </div>
+          </span>
         </div>
-      </AppCard>
+      </div>
     </div>
+
+    <Modal v-model="folderModalOpen" size="sm" :title="folderDraft.id ? t('competency.folders.edit') : t('competency.folders.new')">
+      <div class="space-y-4">
+        <AppInput v-model="folderDraft.name" :label="t('competency.folders.name')" required />
+        <AppInput v-model="folderDraft.description" :label="t('competency.description')" />
+      </div>
+      <template #footer>
+        <AppButton variant="secondary" @click="folderModalOpen = false">{{ t('common.cancel') }}</AppButton>
+        <AppButton :loading="saving" @click="saveFolder">{{ t('common.save') }}</AppButton>
+      </template>
+    </Modal>
 
     <Modal v-model="modalOpen" size="lg" :title="editingId ? t('competency.edit') : t('competency.new')">
       <div class="space-y-4">
@@ -319,7 +456,7 @@ onMounted(load)
         <AppInput v-model="draft.description" :label="t('competency.description')" />
 
         <div class="grid gap-3 sm:grid-cols-3">
-          <AppInput v-model="draft.category" :label="t('competency.category')" :hint="t('competency.categoryHint')" />
+          <AppSelect v-model="draft.category" :label="t('competency.folders.folder')" :placeholder="t('competency.folders.root')" :options="categories.map((entry) => ({ value: entry, label: entry }))" />
           <AppInput
             v-model="draft.validityDays"
             type="number"

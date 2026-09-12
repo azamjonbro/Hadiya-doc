@@ -15,6 +15,7 @@ import {
   learningHistoryQuerySchema,
   bulkMessageSchema,
   bulkUserIdsSchema,
+  bulkDepartmentSchema,
   notificationPrefsSchema,
   updateLocaleSchema,
   importCommitSchema,
@@ -97,10 +98,30 @@ usersRouter.post(
   validateBody(bulkUserIdsSchema),
   userController.bulkDeactivate
 )
+usersRouter.post(
+  '/bulk/department',
+  requirePermission(PERMISSIONS.USER_UPDATE),
+  validateBody(bulkDepartmentSchema),
+  userController.bulkDepartment
+)
+usersRouter.post(
+  '/bulk/dismiss',
+  requirePermission(PERMISSIONS.USER_DELETE),
+  validateBody(bulkUserIdsSchema),
+  userController.bulkDismiss
+)
+// Gone for good — the service additionally insists on SUPERADMIN.
+usersRouter.post(
+  '/bulk/delete',
+  requirePermission(PERMISSIONS.USER_DELETE),
+  validateBody(bulkUserIdsSchema),
+  userController.bulkDelete
+)
 
 usersRouter.get('/:id', requirePermission(PERMISSIONS.USER_READ), userController.getById)
 usersRouter.patch('/:id', requirePermission(PERMISSIONS.USER_UPDATE), validateBody(updateUserSchema), userController.update)
 usersRouter.delete('/:id', requirePermission(PERMISSIONS.USER_DELETE), userController.deactivate)
+usersRouter.delete('/:id/permanent', requirePermission(PERMISSIONS.USER_DELETE), userController.permanentlyDelete)
 usersRouter.get('/:id/courses', requireSelfOrPermission('id', PERMISSIONS.USER_READ), userController.getCourses)
 usersRouter.get(
   '/:id/learning-stats',

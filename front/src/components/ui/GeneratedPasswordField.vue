@@ -15,6 +15,9 @@ const props = defineProps({
   label: { type: String, default: '' },
   required: { type: Boolean, default: false },
   disabled: { type: Boolean, default: false },
+  // For a field whose label sits outside the component (a label-left form
+  // row); the control still has to say what it is.
+  ariaLabel: { type: String, default: '' },
 })
 
 const emit = defineEmits(['update:modelValue'])
@@ -49,6 +52,7 @@ async function copy() {
         :model-value="modelValue"
         :type="revealed ? 'text' : 'password'"
         :label="label"
+        :aria-label="ariaLabel"
         :required="required"
         :disabled="disabled"
         autocomplete="new-password"

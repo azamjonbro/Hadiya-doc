@@ -42,7 +42,7 @@
     "groupManagement": "Boshqaruv",
     "groups": "Guruhlar",
     "trash": "Karzinka",
-    "branches": "Filiallar",
+    "branches": "Bo‘linmalar",
     "auditLog": "Audit jurnali",
     "certificates": "Sertifikatlar",
     "paths": "Yo‘nalishlar",
@@ -99,19 +99,20 @@
     "moveDown": "Pastga",
     "create": "Yaratish",
     "total": "Jami",
-    "back": "Orqaga"
+    "back": "Orqaga",
+    "select": "Tanlang"
   },
   "auth": {
     "login": {
       "title": "Xush kelibsiz",
       "subtitle": "O'quvni davom ettirish va jamoa yangiliklaridan xabardor bo'lish uchun tizimga kiring.",
-      "identifier": "JSHSHIR, passport seriyasi yoki email",
+      "identifier": "JSHSHIR yoki email",
       "password": "Parol",
       "rememberMe": "Meni eslab qol",
       "forgotPassword": "Parolni unutdingizmi?",
       "submit": "Kirish",
       "submitting": "Kirilmoqda...",
-      "error": "JSHSHIR/passport/email yoki parol noto'g'ri",
+      "error": "JSHSHIR/email yoki parol noto'g'ri",
       "rateLimited": "Juda ko'p urinish. Iltimos, bir necha daqiqadan so'ng qayta urinib ko'ring.",
       "accountLocked": "Hisob vaqtincha bloklandi. Bir necha daqiqadan so'ng qayta urinib ko'ring.",
       "networkError": "Serverga ulanib bo'lmadi. Internet aloqangizni tekshiring.",
@@ -726,7 +727,11 @@
       "title": "Sarlavha",
       "published": "Chop etilgan",
       "audience": "Kim ko'radi",
-      "readers": "O'qiganlar"
+      "readers": "O'qiganlar",
+      "likes": "Yoqtirishlar",
+      "comments": "Izohlar",
+      "author": "Muallif",
+      "readersHint": "O‘qiganlar / ko‘ra oladiganlar"
     },
     "yesterday": "kecha",
     "editor": {
@@ -747,7 +752,8 @@
       "noCandidates": "Muqovali chop etilgan maqola yo'q",
       "pin": "Banner qilish",
       "unpin": "Bannerdan olish"
-    }
+    },
+    "searchTitles": "Sarlavha bo‘yicha qidirish…"
   },
   "tasks": {
     "title": "Vazifalar",
@@ -896,7 +902,9 @@
       "news": "Yangiliklar",
       "system": "Tizim"
     },
-    "markFailed": "Bildirishnomani belgilab bo'lmadi"
+    "markFailed": "Bildirishnomani belgilab bo'lmadi",
+    "unread": "O‘qilmagan",
+    "unreadCount": "{count} ta o‘qilmagan"
   },
   "settings": {
     "title": "Sozlamalar",
@@ -979,6 +987,40 @@
         "ATTENTION_ALERT": "Diqqat pasaydi",
         "PROCTORING_FOREIGN_FACE": "Proctoring ogohlantirishi"
       }
+    },
+    "design": {
+      "hint": "Shaxsiy kabinet va admin panel uchun rang sxemasi va logotipni tanlang, portal sahifalari muqovalarini yuklang.",
+      "openPortal": "Foydalanuvchi portali",
+      "saved": "Dizayn saqlandi",
+      "colorScheme": "Rang sxemasi",
+      "colorHint": "Tayyor sxemalardan birini tanlang yoki o‘zingiznikini yarating.",
+      "defaultColor": "Standart",
+      "customColor": "O‘z rangi",
+      "appName": "Nomi (logotip o‘rnida)",
+      "logo": "Logotip",
+      "logoHint": "Logotip va sayt belgisi (favicon) — brauzer tabida ko‘rinadigan kichik rasm.",
+      "logoFormat": "JPG, PNG, GIF. 250×60 piksel gacha kichraytiriladi.",
+      "favicon": "Favicon",
+      "faviconFormat": "ICO, GIF, PNG, 16×16 piksel gacha.",
+      "covers": "Fonlar va muqovalar",
+      "coversHint": "Foydalanuvchi va admin portali sahifalarining fon va muqovalarini sozlang.",
+      "cover": {
+        "coursesCoverUrl": "«Mening kurslarim» muqovasi",
+        "catalogCoverUrl": "«Katalog» muqovasi",
+        "profileCoverUrl": "Profil muqovasi",
+        "loginBackgroundUrl": "Kirish sahifasi foni"
+      },
+      "coverFormat": "JPG, PNG. Tavsiya: 1920×160 (kirish sahifasi uchun 1920×1080).",
+      "nav": "Foydalanuvchi portali menyusi",
+      "navHint": "Eng muhim bo‘limlarni tepaga chiqaring — ular doim ko‘rinadi. Qolganlari qo‘shimcha menyuga o‘tadi.",
+      "startPage": "Boshlang‘ich sahifa",
+      "addSections": "Bo‘limlar qo‘shish: {count}/{max}",
+      "companyWide": "Butun kompaniya",
+      "branch": "Filial",
+      "branchHint": "«{branch}» filialining portali. Bo‘sh qoldirilgan maydon kompaniya sozlamasini oladi.",
+      "savedBranch": "«{branch}» filiali dizayni saqlandi",
+      "inheritAll": "Kompaniyanikidek",
+      "branchReset": "Filial sozlamalari olib tashlandi"
     }
   },
   "reviews": {
@@ -1528,9 +1570,6 @@
       "assignCourses": "Kurslarni biriktirish",
       "jshshirHint": "Passportdagi 14 xonali raqam",
       "jshshirInvalid": "JSHSHIR aynan 14 ta raqamdan iborat bo'lishi kerak",
-      "passportSeries": "Passport seriya raqami",
-      "passportSeriesHint": "Masalan AA1234567 — ixtiyoriy, u bilan ham kirish mumkin",
-      "passportSeriesInvalid": "Format noto'g'ri. Masalan: AA1234567",
       "emailOptional": "Email (ixtiyoriy)",
       "branch": "Filial",
       "firstName": "Ism",
@@ -1546,7 +1585,12 @@
       "hireDate": "Ishga qabul qilingan sana",
       "terminationDate": "Ishdan ketgan sana",
       "terminationDateHint": "Ixtiyoriy. Kiritilsa, hisob arxivga o'tadi.",
-      "terminationDateArchives": "Bu hisob arxivga tushadi va tizimga kira olmaydi."
+      "terminationDateArchives": "Bu hisob arxivga tushadi va tizimga kira olmaydi.",
+      "patronymic": "Otasining ismi",
+      "phoneHint": "Masalan: +998901234567",
+      "manager": "Rahbar",
+      "managerPlaceholder": "Ism bo‘yicha qidiring",
+      "managerHint": "Kimga hisob beradi — 360° baholash va jamoa hisobotlari shunga qaraydi."
     },
     "filters": {
       "search": "Qidirish...",
@@ -1564,7 +1608,12 @@
       "allCountries": "Barcha davlatlar"
     },
     "columns": {
-      "progress": "Progress"
+      "progress": "Progress",
+      "groups": "Guruhlar",
+      "createdAt": "Qo‘shilgan",
+      "lastLoginAt": "Oxirgi kirish",
+      "hireDate": "Qabul sanasi",
+      "terminationDate": "Ishdan ketgan sana"
     },
     "password": {
       "generate": "Generatsiya",
@@ -1577,6 +1626,62 @@
       "personal": "Shaxsiy ma'lumotlar",
       "employment": "Ish joyi",
       "access": "Tizimga kirish"
+    },
+    "actions": {
+      "partial": "{count} ta xodim uchun bajarilmadi",
+      "course": {
+        "title": "Kurs tayinlash",
+        "hint": "Tanlangan xodimlarga bitta kurs biriktiriladi.",
+        "choose": "Kurs",
+        "submit": "Tayinlash",
+        "empty": "Nashr qilingan kurs yo‘q",
+        "done": "{count} ta xodimga kurs tayinlandi"
+      },
+      "event": {
+        "title": "Tadbirga yozish",
+        "hint": "Yaqinlashib kelayotgan tadbirlardan birini tanlang.",
+        "choose": "Tadbir",
+        "submit": "Yozish",
+        "empty": "Yaqin tadbirlar yo‘q",
+        "done": "{count} ta xodim tadbirga yozildi"
+      },
+      "department": {
+        "title": "Bo‘limni o‘zgartirish",
+        "hint": "Tanlangan xodimlar boshqa bo‘limga o‘tkaziladi.",
+        "choose": "Bo‘lim",
+        "submit": "O‘tkazish",
+        "empty": "Bo‘limlar yo‘q",
+        "done": "{count} ta xodim bo‘limi o‘zgartirildi"
+      },
+      "chat-create": {
+        "title": "Guruh chat yaratish",
+        "hint": "Tanlangan xodimlar chat a’zosi bo‘ladi.",
+        "choose": "Chat nomi",
+        "submit": "Yaratish",
+        "empty": "",
+        "done": "Guruh chat yaratildi"
+      },
+      "chat-add": {
+        "title": "Guruh chatga qo‘shish",
+        "hint": "Mavjud guruh chatni tanlang.",
+        "choose": "Guruh chat",
+        "submit": "Qo‘shish",
+        "empty": "Guruh chatlar yo‘q",
+        "done": "{count} ta xodim chatga qo‘shildi"
+      },
+      "block": "Bloklash",
+      "dismiss": {
+        "title": "Ishdan bo‘shatish",
+        "message": "{count} ta xodim ishdan bo‘shatilgan deb belgilanadi: hisob arxivga o‘tadi, tarix saqlanadi.",
+        "submit": "Bo‘shatish",
+        "done": "{count} ta xodim ishdan bo‘shatildi"
+      },
+      "delete": {
+        "title": "Butunlay o‘chirish",
+        "message": "{count} ta xodim va ularning shaxsiy ma’lumotlari (progress, urinishlar, bildirishnomalar) qaytarib bo‘lmaydigan tarzda o‘chiriladi.",
+        "done": "{count} ta xodim o‘chirildi"
+      },
+      "more": "Boshqa amallar"
     }
   },
   "courseBuilder": {
@@ -1655,11 +1760,19 @@
     "noData": "Ma'lumot yo'q",
     "tabs": {
       "overview": "Umumiy",
-      "courses": "Kurslar",
+      "courses": "Tayinlangan o‘quv",
       "tests": "Testlar",
       "activity": "Faollik",
       "tasks": "Vazifalar",
-      "settings": "Sozlamalar"
+      "settings": "Sozlamalar",
+      "personal": "Shaxsiy ma’lumotlar",
+      "groups": "Guruhlar",
+      "access": "Kirish darajasi",
+      "ojt": "Ish joyida o‘qitish",
+      "competencies": "Kompetensiyalar",
+      "achievements": "Yutuqlar",
+      "certificates": "Sertifikatlar",
+      "plans": "Rivojlanish rejalari"
     },
     "levels": {
       "EXCELLENT": "A'lo",
@@ -1765,7 +1878,107 @@
     },
     "settings": {
       "hint": "Xodim ma'lumotlari, roli va parolini shu yerdan o'zgartiring."
-    }
+    },
+    "status": {
+      "lastLogin": "Oxirgi kirish: {date}",
+      "neverLoggedIn": "Hali tizimga kirmagan",
+      "block": "Bloklash",
+      "unblock": "Faollashtirish"
+    },
+    "password": {
+      "title": "Parolni o‘zgartirish",
+      "hint": "Yangi parol saqlangach kuchga kiradi.",
+      "saveHint": "Yuqoridagi «Saqlash» tugmasini bosing."
+    },
+    "delete": {
+      "title": "Xodimni o‘chirish",
+      "hint": "Xodim va uning shaxsiy ma’lumotlari butunlay o‘chiriladi.",
+      "message": "{name} butunlay o‘chiriladi — progress, urinishlar, bildirishnomalar bilan birga. Qaytarib bo‘lmaydi.",
+      "confirm": "Butunlay o‘chirish",
+      "done": "Xodim o‘chirildi"
+    },
+    "groups": {
+      "hint": "Xodim a’zo bo‘lgan guruhlar.",
+      "empty": "Hech qanday guruhda emas",
+      "add": "Guruhga qo‘shish",
+      "remove": "Guruhdan chiqarish"
+    },
+    "access": {
+      "hint": "Xodimning tizimga kirish darajasini belgilaydigan rol.",
+      "role": "Rol",
+      "showPermissions": "Ruxsatlarni ko‘rsatish",
+      "hidePermissions": "Ruxsatlarni yashirish",
+      "scope": "Ko‘rish doirasi",
+      "addRole": "Rol qo‘shish",
+      "permissionsTitle": "Foydalanuvchining ruxsatlari",
+      "noPermissions": "Ruxsatlar yo‘q"
+    },
+    "training": {
+      "hint": "Xodimga tayinlangan kurslar va ularning holati.",
+      "assign": "Kurs tayinlash",
+      "assigned": "Tayinlangan ({count})",
+      "completed": "Tugatilgan ({count})",
+      "events": "Tadbirlar ({count})",
+      "name": "Nomi",
+      "assignedAt": "Tayinlangan sana",
+      "status": "Holat",
+      "deadline": "Muddat",
+      "kind": "Tayinlash turi",
+      "byAdmin": "Administrator tayinlagan",
+      "byRule": "Qoida bo‘yicha",
+      "progressOf": "{done} / {total} dars tugatilgan",
+      "noEvents": "Tadbirlarga yozilmagan"
+    },
+    "ojt": {
+      "hint": "Xodim ish joyida o‘qitishdan qanday o‘tayotganini shu yerda kuzatasiz.",
+      "empty": "Xodim hali ish joyida o‘qitishdan o‘tmagan",
+      "emptyHint": "Natijalar sessiya o‘tkazilgach paydo bo‘ladi.",
+      "checklist": "Ro‘yxat",
+      "status": "Holat",
+      "date": "Sana",
+      "observer": "Kuzatuvchi",
+      "result": "Natija"
+    },
+    "competencies": {
+      "hint": "Xodim ko‘nikmalari va lavozim bo‘yicha progressini kuzating.",
+      "empty": "Xodim hali baholanmagan",
+      "emptyHint": "Ma’lumot baholash sessiyasidan keyin paydo bo‘ladi.",
+      "competency": "Kompetensiya",
+      "level": "Daraja",
+      "target": "Maqsad",
+      "source": "Manba"
+    },
+    "achievements": {
+      "points": "Ballar ({count})",
+      "badges": "Nishonlar ({count})",
+      "date": "Sana",
+      "earnedFor": "Nima uchun",
+      "pointsCol": "Ballar",
+      "noPoints": "Hali ball to‘planmagan",
+      "noBadges": "Hali nishon yo‘q",
+      "total": "Jami ball",
+      "rank": "Reyting o‘rni"
+    },
+    "certificates": {
+      "hint": "Kurslarni tugatgani uchun berilgan sertifikatlar.",
+      "empty": "Sertifikat yo‘q",
+      "name": "Nomi",
+      "issuedAt": "Berilgan sana",
+      "validUntil": "Amal qilish muddati",
+      "status": "Holat",
+      "serial": "Raqam"
+    },
+    "plans": {
+      "hint": "Xodimga tayinlangan rivojlanish rejalari bo‘yicha progress.",
+      "empty": "Natija yo‘q",
+      "name": "Nomi",
+      "status": "Holat",
+      "progress": "Progress",
+      "start": "Boshlanish",
+      "due": "Tugash",
+      "mentor": "Mentor"
+    },
+    "message": "Xabar yozish"
   },
   "groups": {
     "title": "Guruhlar",
@@ -1903,6 +2116,35 @@
       "code": "Bo'linma kodi",
       "head": "Rahbar",
       "total": "Jami xodimlar"
+    },
+    "tree": {
+      "title": "Bo‘linmalar",
+      "subtitle": "Bo‘linmalarni qo‘shing va o‘qitishni butun bo‘limlarga birdaniga tayinlang.",
+      "name": "Bo‘linma nomi",
+      "code": "Bo‘linma kodi",
+      "head": "Rahbar",
+      "users": "Jami xodimlar",
+      "newUnit": "Yangi bo‘linma",
+      "newBranch": "Yangi filial",
+      "newDepartment": "Yangi bo‘lim",
+      "newSubdivision": "Yangi bo‘linma (ichki)",
+      "createChild": "Ichida bo‘linma yaratish",
+      "viewUsers": "Xodimlarni ko‘rish",
+      "edit": "Bo‘linmani tahrirlash",
+      "kind": {
+        "company": "Kompaniya",
+        "branch": "Filial",
+        "department": "Bo‘lim",
+        "subdivision": "Bo‘linma"
+      },
+      "headPlaceholder": "Ism bo‘yicha qidiring",
+      "noBranch": "Filialsiz bo‘limlar",
+      "saved": "Saqlandi",
+      "deleteTitle": "Bo‘linmani o‘chirish",
+      "deleteMessage": "«{name}» o‘chirilsinmi?",
+      "inUse": "Bu bo‘linmada xodimlar bor — avval ularni boshqa joyga o‘tkazing.",
+      "import": "Import",
+      "portalSettings": "Portal sozlamalari"
     }
   },
   "orgLists": {
@@ -2050,7 +2292,126 @@
       "TEAM": "Tashkiliy tuzilmada o'zidan pastdagi hammani ko'radi — bo'limdan qat'i nazar.",
       "SELF": "Faqat o'z ma'lumotini ko'radi."
     },
-    "permissions": "Ruxsatlar"
+    "permissions": "Ruxsatlar",
+    "names": {
+      "SUPERADMIN": "Superadmin",
+      "ADMIN": "Administrator",
+      "MANAGER": "Rahbar (menejer)",
+      "EMPLOYEE": "Xodim",
+      "CALL_OPERATOR": "Call-markaz operatori",
+      "SELLER": "Sotuvchi",
+      "AUTHOR": "Muallif",
+      "INSTRUCTOR": "Instruktor",
+      "MENTOR": "Mentor"
+    },
+    "modules": {
+      "user": "Xodimlar",
+      "role": "Rollar",
+      "course": "Kurslar",
+      "video": "Videolar",
+      "analytics": "Analitika",
+      "report": "Hisobotlar",
+      "news": "Yangiliklar",
+      "task": "Vazifalar",
+      "event": "Tadbirlar",
+      "notification": "Bildirishnomalar",
+      "ai": "AI",
+      "chat": "Chat",
+      "audit": "Audit",
+      "path": "O‘quv yo‘llari",
+      "question": "Savollar",
+      "quiz": "Testlar",
+      "assignment": "Uy vazifalari",
+      "certificate": "Sertifikatlar",
+      "onboarding": "Onboarding",
+      "kb": "Bilimlar bazasi",
+      "competency": "Kompetensiyalar",
+      "review360": "360° baholash",
+      "ojt": "Ish joyida o‘qitish",
+      "devplan": "Rivojlanish rejalari",
+      "compliance": "Muvofiqlik",
+      "automation": "Avtomatlashtirish",
+      "media": "Media",
+      "settings": "Sozlamalar",
+      "branding": "Brending",
+      "integration": "Integratsiyalar",
+      "proctor": "Proktoring"
+    },
+    "permissionLabels": {
+      "user:create": "Xodim qo‘shish",
+      "user:read": "Xodimlarni ko‘rish",
+      "user:update": "Xodimni tahrirlash",
+      "user:delete": "Xodimni o‘chirish / bloklash",
+      "user:import": "Xodimlarni import qilish",
+      "role:manage": "Rollar va ruxsatlarni boshqarish",
+      "course:create": "Kurs yaratish",
+      "course:read": "Kurslarni ko‘rish",
+      "course:update": "Kursni tahrirlash",
+      "course:delete": "Kursni o‘chirish",
+      "course:assign": "Kurs tayinlash",
+      "course:publish": "Kursni nashr qilish",
+      "video:upload": "Video yuklash",
+      "video:manage": "Videolarni boshqarish",
+      "video:view": "Videolarni ko‘rish",
+      "analytics:view:own": "O‘z analitikasini ko‘rish",
+      "analytics:view:all": "Barcha analitikani ko‘rish",
+      "report:export": "Hisobotni eksport qilish",
+      "report:view": "Hisobotlarni ko‘rish",
+      "report:schedule": "Hisobotlarni jadval bo‘yicha yuborish",
+      "news:create": "Yangilik yaratish",
+      "news:manage": "Yangiliklarni boshqarish",
+      "news:read": "Yangiliklarni o‘qish",
+      "task:create": "Vazifa yaratish",
+      "task:manage:all": "Barcha vazifalarni boshqarish",
+      "task:read:own": "O‘z vazifalarini ko‘rish",
+      "event:create": "Tadbir yaratish",
+      "event:read": "Tadbirlarni ko‘rish",
+      "event:manage": "Tadbirlarni boshqarish",
+      "event:attendance:mark": "Davomatni belgilash",
+      "event:register": "Tadbirga yozilish",
+      "notification:read": "Bildirishnomalarni o‘qish",
+      "ai:chat": "AI chat",
+      "ai:generate": "AI bilan kontent yaratish",
+      "chat:support": "Qo‘llab-quvvatlash chati",
+      "chat:group:manage": "Guruh chatlarini boshqarish",
+      "audit:read": "Audit jurnalini ko‘rish",
+      "path:read": "O‘quv yo‘llarini ko‘rish",
+      "path:manage": "O‘quv yo‘llarini boshqarish",
+      "path:assign": "O‘quv yo‘li tayinlash",
+      "question:manage": "Savollar bankini boshqarish",
+      "quiz:configure": "Testlarni sozlash",
+      "quiz:grade": "Testlarni baholash",
+      "quiz:stats:view": "Test statistikasini ko‘rish",
+      "assignment:manage": "Uy vazifalarini boshqarish",
+      "assignment:submit": "Uy vazifasini topshirish",
+      "assignment:grade": "Uy vazifasini baholash",
+      "certificate:template:manage": "Sertifikat shablonlarini boshqarish",
+      "certificate:issue": "Sertifikat berish",
+      "certificate:revoke": "Sertifikatni bekor qilish",
+      "certificate:read:own": "O‘z sertifikatlarini ko‘rish",
+      "certificate:read:all": "Barcha sertifikatlarni ko‘rish",
+      "onboarding:manage": "Onboardingni boshqarish",
+      "onboarding:view:team": "Jamoa onboardingini ko‘rish",
+      "kb:read": "Bilimlar bazasini o‘qish",
+      "kb:write": "Bilimlar bazasiga yozish",
+      "kb:publish": "Bilimlar bazasida nashr qilish",
+      "competency:manage": "Kompetensiyalarni boshqarish",
+      "competency:assess": "Kompetensiyalarni baholash",
+      "review360:manage": "360° baholashni boshqarish",
+      "review360:respond": "360° so‘rovnomasiga javob berish",
+      "review360:results:view": "360° natijalarini ko‘rish",
+      "ojt:manage": "Ish joyida o‘qitishni boshqarish",
+      "ojt:observe": "Kuzatuv o‘tkazish",
+      "devplan:manage": "Rivojlanish rejalarini boshqarish",
+      "devplan:read:own": "O‘z rejasini ko‘rish",
+      "compliance:view": "Muvofiqlikni ko‘rish",
+      "automation:manage": "Avtomatlashtirishni boshqarish",
+      "media:manage": "Media kutubxonani boshqarish",
+      "settings:manage": "Sozlamalarni boshqarish",
+      "branding:manage": "Brendingni boshqarish",
+      "integration:manage": "Integratsiyalarni boshqarish",
+      "proctor:view": "Proktoring natijalarini ko‘rish"
+    }
   },
   "team": {
     "title": "Mening jamoam",
@@ -2084,7 +2445,7 @@
     "title": "Xodimlarni XLSX dan import qilish",
     "pickHint": "Avval fayl tekshiriladi — hech narsa yozilmaydi. Siz nima bo'lishini ko'rasiz, keyin tasdiqlaysiz.",
     "columnsRequired": "Majburiy ustunlar: JSHSHIR, Ism, Familiya",
-    "columnsOptional": "Ixtiyoriy: Email, Telefon, Passport, Tabel raqami, Rol, Rahbar (JSHSHIR)",
+    "columnsOptional": "Ixtiyoriy: Otasining ismi, Email, Telefon, Tabel raqami, Rol, Rahbar (JSHSHIR)",
     "columnsCurated": "Filial, Bo'lim, Bo'linma va Lavozim ro'yxatlarda mavjud bo'lishi kerak — aks holda xato deb ko'rsatiladi",
     "check": "Tekshirish",
     "willCreate": "Yaratiladi",
@@ -2625,7 +2986,19 @@
       "overdue": "Muddati o'tgan",
       "average": "O'rtacha progress",
       "completedAt": "Tugatilgan sana"
-    }
+    },
+    "autosave": {
+      "saving": "Saqlanmoqda…",
+      "saved": "Barcha o‘zgarishlar saqlandi",
+      "pending": "Saqlanmagan o‘zgarishlar",
+      "failed": "Saqlab bo‘lmadi — qayta urinib ko‘ring",
+      "draftFound": "Saqlanmagan o‘zgarishlar topildi ({time}). Tiklansinmi?",
+      "restore": "Tiklash",
+      "discard": "Bekor qilish"
+    },
+    "leaveTitle": "Saqlanmagan o‘zgarishlar",
+    "leaveMessage": "O‘zgarishlarni saqlab bo‘lmadi. Baribir chiqib ketasizmi? Nusxa shu brauzerda saqlanib qoladi.",
+    "leaveAnyway": "Chiqib ketish"
   },
   "calendar": {
     "title": "Kalendar",
@@ -3194,5 +3567,8 @@
       "fullscreen": "Butun ekran",
       "thisPanel": "Shu ro'yxatni ko'rsatish"
     }
+  },
+  "table": {
+    "columns": "Ustunlar"
   }
 }

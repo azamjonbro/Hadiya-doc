@@ -6,27 +6,13 @@
 export const JSHSHIR_PATTERN = /^\d{14}$/
 export const JSHSHIR_LENGTH = 14
 
-/** Passport series and number, e.g. `AA1234567` — two Latin letters, seven digits. */
-export const PASSPORT_SERIES_PATTERN = /^[A-Z]{2}\d{7}$/
-export const PASSPORT_SERIES_LENGTH = 9
-
 /** Spaces and dashes are how people read these numbers aloud; strip them. */
 export function normalizeJshshir(value) {
   return String(value ?? '').replace(/[\s-]/g, '')
 }
 
-export function normalizePassportSeries(value) {
-  return String(value ?? '')
-    .replace(/[\s-]/g, '')
-    .toUpperCase()
-}
-
 export function isJshshir(value) {
   return JSHSHIR_PATTERN.test(normalizeJshshir(value))
-}
-
-export function isPassportSeries(value) {
-  return PASSPORT_SERIES_PATTERN.test(normalizePassportSeries(value))
 }
 
 /**

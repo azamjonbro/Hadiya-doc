@@ -33,7 +33,13 @@ const reviewCycleSchema = new Schema(
   {
     name: { type: String, required: true, trim: true },
     description: { type: String, default: '' },
-    templateId: { type: Schema.Types.ObjectId, ref: 'ReviewTemplate', required: true },
+    // Chosen when the session is set up, not necessarily when it is
+    // created (rasm: "new session" asks only for a name, a description and
+    // who runs it); launching insists on one.
+    templateId: { type: Schema.Types.ObjectId, ref: 'ReviewTemplate', default: null },
+    // The person running the appraisal — shown in the list, defaults to
+    // whoever created it.
+    managerId: { type: Schema.Types.ObjectId, ref: 'User', default: null },
 
     // Whom the cycle is about. Raters are never listed here — they are
     // derived from `managerId` at launch and materialise as assignments.

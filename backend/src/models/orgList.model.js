@@ -19,6 +19,9 @@ const orgListSchema = new Schema(
     // "Sotuvchi" and "sotuvchi" cannot become two entries that each filter out
     // the other's people. Same reasoning as Branch.nameKey.
     nameKey: { type: String, required: true, lowercase: true, trim: true },
+    // For DEPARTMENT / SUBDIVISION rows: the unit's code and head (rasm).
+    code: { type: String, default: '', trim: true },
+    headId: { type: Schema.Types.ObjectId, ref: 'User', default: null },
     createdBy: { type: Schema.Types.ObjectId, ref: 'User', default: null },
   },
   { timestamps: true }

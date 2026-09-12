@@ -42,7 +42,7 @@
     "groupManagement": "Management",
     "groups": "Groups",
     "trash": "Trash",
-    "branches": "Branches",
+    "branches": "Org units",
     "auditLog": "Audit log",
     "certificates": "Certificates",
     "paths": "Paths",
@@ -99,19 +99,20 @@
     "moveDown": "Move down",
     "create": "Create",
     "total": "Total",
-    "back": "Back"
+    "back": "Back",
+    "select": "Select"
   },
   "auth": {
     "login": {
       "title": "Welcome back",
       "subtitle": "Sign in to continue your training and stay up to date with your team.",
-      "identifier": "JSHSHIR, passport series or email",
+      "identifier": "JSHSHIR or email",
       "password": "Password",
       "rememberMe": "Remember me",
       "forgotPassword": "Forgot password?",
       "submit": "Sign in",
       "submitting": "Signing in...",
-      "error": "Invalid JSHSHIR/passport/email or password",
+      "error": "Invalid JSHSHIR/email or password",
       "rateLimited": "Too many attempts. Please try again in a few minutes.",
       "accountLocked": "Account temporarily locked. Please try again in a few minutes.",
       "networkError": "Could not reach the server. Check your connection.",
@@ -726,7 +727,11 @@
       "title": "Title",
       "published": "Published",
       "audience": "Who sees",
-      "readers": "Readers"
+      "readers": "Readers",
+      "likes": "Likes",
+      "comments": "Comments",
+      "author": "Author",
+      "readersHint": "Read / could see it"
     },
     "yesterday": "yesterday",
     "editor": {
@@ -747,7 +752,8 @@
       "noCandidates": "No published articles with a cover",
       "pin": "Make a banner",
       "unpin": "Unpin"
-    }
+    },
+    "searchTitles": "Search by title…"
   },
   "tasks": {
     "title": "Tasks",
@@ -896,7 +902,9 @@
       "news": "News",
       "system": "System"
     },
-    "markFailed": "Could not mark the notification"
+    "markFailed": "Could not mark the notification",
+    "unread": "Unread",
+    "unreadCount": "{count} unread"
   },
   "settings": {
     "title": "Settings",
@@ -979,6 +987,40 @@
         "ATTENTION_ALERT": "Low attention",
         "PROCTORING_FOREIGN_FACE": "Proctoring alert"
       }
+    },
+    "design": {
+      "hint": "Pick the colour scheme and logo for the portal and the admin panel, and upload the covers of the portal's pages.",
+      "openPortal": "User portal",
+      "saved": "Design saved",
+      "colorScheme": "Colour scheme",
+      "colorHint": "Pick one of the presets or make your own.",
+      "defaultColor": "Default",
+      "customColor": "Custom colour",
+      "appName": "Name (instead of a logo)",
+      "logo": "Logo",
+      "logoHint": "The logo and the favicon — the small image in the browser tab.",
+      "logoFormat": "JPG, PNG, GIF. Scaled down to 250×60 pixels.",
+      "favicon": "Favicon",
+      "faviconFormat": "ICO, GIF, PNG, up to 16×16 pixels.",
+      "covers": "Backgrounds and covers",
+      "coversHint": "Set the backgrounds and covers of the user and admin portals.",
+      "cover": {
+        "coursesCoverUrl": "“My courses” cover",
+        "catalogCoverUrl": "“Catalog” cover",
+        "profileCoverUrl": "Profile cover",
+        "loginBackgroundUrl": "Login page background"
+      },
+      "coverFormat": "JPG, PNG. Recommended 1920×160 (login: 1920×1080).",
+      "nav": "User portal navigation menu",
+      "navHint": "Put the most important sections in quick access — they are always visible. The rest move to the extra menu.",
+      "startPage": "Start page",
+      "addSections": "Add sections: {count}/{max}",
+      "companyWide": "Whole company",
+      "branch": "Branch",
+      "branchHint": "The “{branch}” branch's portal. An empty field inherits the company setting.",
+      "savedBranch": "Design of “{branch}” saved",
+      "inheritAll": "Same as company",
+      "branchReset": "Branch settings removed"
     }
   },
   "reviews": {
@@ -1528,9 +1570,6 @@
       "assignCourses": "Assign courses",
       "jshshirHint": "The 14-digit number from the passport",
       "jshshirInvalid": "JSHSHIR must be exactly 14 digits",
-      "passportSeries": "Passport series",
-      "passportSeriesHint": "For example AA1234567 — optional, also works for signing in",
-      "passportSeriesInvalid": "Invalid format. For example: AA1234567",
       "emailOptional": "Email (optional)",
       "branch": "Branch",
       "firstName": "First name",
@@ -1546,7 +1585,12 @@
       "hireDate": "Hire date",
       "terminationDate": "Termination date",
       "terminationDateHint": "Optional. Setting it archives the account.",
-      "terminationDateArchives": "This account will be archived and can no longer sign in."
+      "terminationDateArchives": "This account will be archived and can no longer sign in.",
+      "patronymic": "Patronymic",
+      "phoneHint": "For example: +998901234567",
+      "manager": "Manager",
+      "managerPlaceholder": "Search by name",
+      "managerHint": "Who this person reports to — 360° reviews and team reports follow it."
     },
     "filters": {
       "search": "Search...",
@@ -1564,7 +1608,12 @@
       "allCountries": "All countries"
     },
     "columns": {
-      "progress": "Progress"
+      "progress": "Progress",
+      "groups": "Groups",
+      "createdAt": "Added",
+      "lastLoginAt": "Last login",
+      "hireDate": "Hire date",
+      "terminationDate": "Termination date"
     },
     "password": {
       "generate": "Generate",
@@ -1577,6 +1626,62 @@
       "personal": "Personal details",
       "employment": "Employment",
       "access": "Access"
+    },
+    "actions": {
+      "partial": "Not done for {count} employees",
+      "course": {
+        "title": "Assign a course",
+        "hint": "One course is assigned to the selected employees.",
+        "choose": "Course",
+        "submit": "Assign",
+        "empty": "No published courses",
+        "done": "Course assigned to {count} employees"
+      },
+      "event": {
+        "title": "Register for an event",
+        "hint": "Pick one of the upcoming events.",
+        "choose": "Event",
+        "submit": "Register",
+        "empty": "No upcoming events",
+        "done": "{count} employees registered"
+      },
+      "department": {
+        "title": "Change department",
+        "hint": "The selected employees move to another department.",
+        "choose": "Department",
+        "submit": "Move",
+        "empty": "No departments",
+        "done": "Department changed for {count} employees"
+      },
+      "chat-create": {
+        "title": "Create a group chat",
+        "hint": "The selected employees become members of the chat.",
+        "choose": "Chat name",
+        "submit": "Create",
+        "empty": "",
+        "done": "Group chat created"
+      },
+      "chat-add": {
+        "title": "Add to a group chat",
+        "hint": "Pick an existing group chat.",
+        "choose": "Group chat",
+        "submit": "Add",
+        "empty": "No group chats",
+        "done": "{count} employees added to the chat"
+      },
+      "block": "Block",
+      "dismiss": {
+        "title": "Dismiss",
+        "message": "{count} employees are marked as dismissed: the account is archived, the history stays.",
+        "submit": "Dismiss",
+        "done": "{count} employees dismissed"
+      },
+      "delete": {
+        "title": "Delete permanently",
+        "message": "{count} employees and their personal data (progress, attempts, notifications) are deleted for good.",
+        "done": "{count} employees deleted"
+      },
+      "more": "More actions"
     }
   },
   "courseBuilder": {
@@ -1655,11 +1760,19 @@
     "noData": "No data",
     "tabs": {
       "overview": "Overview",
-      "courses": "Courses",
+      "courses": "Assigned training",
       "tests": "Tests",
       "activity": "Activity",
       "tasks": "Tasks",
-      "settings": "Settings"
+      "settings": "Settings",
+      "personal": "Personal information",
+      "groups": "Groups",
+      "access": "Access level",
+      "ojt": "On-the-job training",
+      "competencies": "Competencies",
+      "achievements": "Achievements",
+      "certificates": "Certificates",
+      "plans": "Development plans"
     },
     "levels": {
       "EXCELLENT": "Excellent",
@@ -1765,7 +1878,107 @@
     },
     "settings": {
       "hint": "Change the employee's details, role and password here."
-    }
+    },
+    "status": {
+      "lastLogin": "Last login: {date}",
+      "neverLoggedIn": "Has not signed in yet",
+      "block": "Block",
+      "unblock": "Activate"
+    },
+    "password": {
+      "title": "Change password",
+      "hint": "The new password takes effect once saved.",
+      "saveHint": "Press “Save” above."
+    },
+    "delete": {
+      "title": "Delete user",
+      "hint": "The user and their personal data are deleted for good.",
+      "message": "{name} will be deleted permanently — with progress, attempts and notifications. This cannot be undone.",
+      "confirm": "Delete permanently",
+      "done": "User deleted"
+    },
+    "groups": {
+      "hint": "Groups this person is a member of.",
+      "empty": "Not in any group",
+      "add": "Add to a group",
+      "remove": "Remove from group"
+    },
+    "access": {
+      "hint": "The role that sets what this person can reach.",
+      "role": "Role",
+      "showPermissions": "Show permissions",
+      "hidePermissions": "Hide permissions",
+      "scope": "Scope",
+      "addRole": "Add role",
+      "permissionsTitle": "User permissions",
+      "noPermissions": "No permissions"
+    },
+    "training": {
+      "hint": "Courses assigned to this person and how far they are.",
+      "assign": "Assign a course",
+      "assigned": "Assigned ({count})",
+      "completed": "Completed ({count})",
+      "events": "Events ({count})",
+      "name": "Name",
+      "assignedAt": "Assigned on",
+      "status": "Status",
+      "deadline": "Deadline",
+      "kind": "Assignment type",
+      "byAdmin": "Assigned by an administrator",
+      "byRule": "By rule",
+      "progressOf": "{done} of {total} lessons completed",
+      "noEvents": "No event registrations"
+    },
+    "ojt": {
+      "hint": "Follow how this person is doing in on-the-job training.",
+      "empty": "No on-the-job training yet",
+      "emptyHint": "Results appear after a training session.",
+      "checklist": "Checklist",
+      "status": "Status",
+      "date": "Date",
+      "observer": "Observer",
+      "result": "Result"
+    },
+    "competencies": {
+      "hint": "Track skill growth and progress in the current position.",
+      "empty": "Not assessed yet",
+      "emptyHint": "Information appears after an assessment session.",
+      "competency": "Competency",
+      "level": "Level",
+      "target": "Target",
+      "source": "Source"
+    },
+    "achievements": {
+      "points": "Points ({count})",
+      "badges": "Badges ({count})",
+      "date": "Date",
+      "earnedFor": "Earned for",
+      "pointsCol": "Points",
+      "noPoints": "No points yet",
+      "noBadges": "No badges yet",
+      "total": "Total points",
+      "rank": "Rank"
+    },
+    "certificates": {
+      "hint": "Certificates issued for completing courses.",
+      "empty": "No certificates",
+      "name": "Name",
+      "issuedAt": "Issued",
+      "validUntil": "Expires",
+      "status": "Status",
+      "serial": "Number"
+    },
+    "plans": {
+      "hint": "Progress on the development plans assigned to this person.",
+      "empty": "No results",
+      "name": "Name",
+      "status": "Status",
+      "progress": "Progress",
+      "start": "First day",
+      "due": "Completion",
+      "mentor": "Mentor"
+    },
+    "message": "Message"
   },
   "groups": {
     "title": "Groups",
@@ -1903,6 +2116,34 @@
       "code": "Code",
       "head": "Head",
       "total": "Total users"
+    },
+    "tree": {
+      "title": "Org units",
+      "subtitle": "Add units and assign training to whole departments at once.",
+      "name": "Unit name",
+      "code": "Unit code",
+      "head": "Head",
+      "users": "Total users",
+      "newUnit": "New unit",
+      "newBranch": "New branch",
+      "newDepartment": "New department",
+      "newSubdivision": "New subdivision",
+      "createChild": "Create a unit inside",
+      "viewUsers": "View users",
+      "edit": "Edit unit",
+      "kind": {
+        "company": "Company",
+        "branch": "Branch",
+        "department": "Department",
+        "subdivision": "Subdivision"
+      },
+      "headPlaceholder": "Search by name",
+      "saved": "Saved",
+      "deleteTitle": "Delete unit",
+      "deleteMessage": "Delete “{name}”?",
+      "inUse": "People are still in this unit — move them first.",
+      "import": "Import",
+      "portalSettings": "Portal settings"
     }
   },
   "orgLists": {
@@ -2050,7 +2291,126 @@
       "TEAM": "Sees everyone below them in the org chart, whatever department they are in.",
       "SELF": "Sees only their own data."
     },
-    "permissions": "Permissions"
+    "permissions": "Permissions",
+    "names": {
+      "SUPERADMIN": "Superadmin",
+      "ADMIN": "Administrator",
+      "MANAGER": "Manager",
+      "EMPLOYEE": "Employee",
+      "CALL_OPERATOR": "Call-centre operator",
+      "SELLER": "Seller",
+      "AUTHOR": "Author",
+      "INSTRUCTOR": "Instructor",
+      "MENTOR": "Mentor"
+    },
+    "modules": {
+      "user": "Employees",
+      "role": "Roles",
+      "course": "Courses",
+      "video": "Videos",
+      "analytics": "Analytics",
+      "report": "Reports",
+      "news": "News",
+      "task": "Tasks",
+      "event": "Events",
+      "notification": "Notifications",
+      "ai": "AI",
+      "chat": "Chat",
+      "audit": "Audit",
+      "path": "Learning paths",
+      "question": "Questions",
+      "quiz": "Quizzes",
+      "assignment": "Homework",
+      "certificate": "Certificates",
+      "onboarding": "Onboarding",
+      "kb": "Knowledge base",
+      "competency": "Competencies",
+      "review360": "360° review",
+      "ojt": "On-the-job training",
+      "devplan": "Development plans",
+      "compliance": "Compliance",
+      "automation": "Automation",
+      "media": "Media",
+      "settings": "Settings",
+      "branding": "Branding",
+      "integration": "Integrations",
+      "proctor": "Proctoring"
+    },
+    "permissionLabels": {
+      "user:create": "Create employees",
+      "user:read": "View employees",
+      "user:update": "Edit employees",
+      "user:delete": "Delete / block employees",
+      "user:import": "Import employees",
+      "role:manage": "Manage roles and permissions",
+      "course:create": "Create courses",
+      "course:read": "View courses",
+      "course:update": "Edit courses",
+      "course:delete": "Delete courses",
+      "course:assign": "Assign courses",
+      "course:publish": "Publish courses",
+      "video:upload": "Upload videos",
+      "video:manage": "Manage videos",
+      "video:view": "View videos",
+      "analytics:view:own": "View own analytics",
+      "analytics:view:all": "View all analytics",
+      "report:export": "Export reports",
+      "report:view": "View reports",
+      "report:schedule": "Schedule reports",
+      "news:create": "Create news",
+      "news:manage": "Manage news",
+      "news:read": "Read news",
+      "task:create": "Create tasks",
+      "task:manage:all": "Manage all tasks",
+      "task:read:own": "View own tasks",
+      "event:create": "Create events",
+      "event:read": "View events",
+      "event:manage": "Manage events",
+      "event:attendance:mark": "Mark attendance",
+      "event:register": "Register for events",
+      "notification:read": "Read notifications",
+      "ai:chat": "AI chat",
+      "ai:generate": "Generate content with AI",
+      "chat:support": "Support chat",
+      "chat:group:manage": "Manage group chats",
+      "audit:read": "View audit log",
+      "path:read": "View learning paths",
+      "path:manage": "Manage learning paths",
+      "path:assign": "Assign learning paths",
+      "question:manage": "Manage question bank",
+      "quiz:configure": "Configure quizzes",
+      "quiz:grade": "Grade quizzes",
+      "quiz:stats:view": "View quiz statistics",
+      "assignment:manage": "Manage homework",
+      "assignment:submit": "Submit homework",
+      "assignment:grade": "Grade homework",
+      "certificate:template:manage": "Manage certificate templates",
+      "certificate:issue": "Issue certificates",
+      "certificate:revoke": "Revoke certificates",
+      "certificate:read:own": "View own certificates",
+      "certificate:read:all": "View all certificates",
+      "onboarding:manage": "Manage onboarding",
+      "onboarding:view:team": "View team onboarding",
+      "kb:read": "Read knowledge base",
+      "kb:write": "Write knowledge base",
+      "kb:publish": "Publish in knowledge base",
+      "competency:manage": "Manage competencies",
+      "competency:assess": "Assess competencies",
+      "review360:manage": "Manage 360° reviews",
+      "review360:respond": "Respond to 360° reviews",
+      "review360:results:view": "View 360° results",
+      "ojt:manage": "Manage on-the-job training",
+      "ojt:observe": "Observe sessions",
+      "devplan:manage": "Manage development plans",
+      "devplan:read:own": "View own development plan",
+      "compliance:view": "View compliance",
+      "automation:manage": "Manage automation",
+      "media:manage": "Manage media library",
+      "settings:manage": "Manage settings",
+      "branding:manage": "Manage branding",
+      "integration:manage": "Manage integrations",
+      "proctor:view": "View proctoring"
+    }
   },
   "team": {
     "title": "My team",
@@ -2084,7 +2444,7 @@
     "title": "Import employees from a spreadsheet",
     "pickHint": "The file is checked first — nothing is written. You see what would happen, then confirm.",
     "columnsRequired": "Required columns: JSHSHIR, First name, Last name",
-    "columnsOptional": "Optional: Email, Phone, Passport, Employee number, Role, Manager (JSHSHIR)",
+    "columnsOptional": "Optional: Patronymic, Email, Phone, Employee number, Role, Manager (JSHSHIR)",
     "columnsCurated": "Branch, Department, Subdivision and Position must already be on their lists — anything else is reported as an error",
     "check": "Check the file",
     "willCreate": "Will create",
@@ -2625,7 +2985,19 @@
       "overdue": "Overdue",
       "average": "Average progress",
       "completedAt": "Completed on"
-    }
+    },
+    "autosave": {
+      "saving": "Saving…",
+      "saved": "All changes saved",
+      "pending": "Unsaved changes",
+      "failed": "Could not save — try again",
+      "draftFound": "Unsaved changes found ({time}). Restore them?",
+      "restore": "Restore",
+      "discard": "Discard"
+    },
+    "leaveTitle": "Unsaved changes",
+    "leaveMessage": "The changes could not be saved. Leave anyway? A copy stays in this browser.",
+    "leaveAnyway": "Leave"
   },
   "calendar": {
     "title": "Calendar",
@@ -3194,5 +3566,8 @@
       "fullscreen": "Fullscreen",
       "thisPanel": "Show this list"
     }
+  },
+  "table": {
+    "columns": "Columns"
   }
 }

@@ -8,7 +8,11 @@ export const orgListController = {
   }),
 
   create: asyncHandler(async (req, res) => {
-    sendSuccess(res, await orgListService.create(req.user, req.params.type, req.body.name), 'Entry created', 201)
+    sendSuccess(res, await orgListService.create(req.user, req.params.type, req.body.name, { code: req.body.code, headId: req.body.headId }), 'Entry created', 201)
+  }),
+
+  update: asyncHandler(async (req, res) => {
+    sendSuccess(res, await orgListService.update(req.user, req.params.type, req.params.id, req.body), 'Entry updated')
   }),
 
   remove: asyncHandler(async (req, res) => {

@@ -49,8 +49,9 @@ export const certificateController = {
   }),
 
   list: asyncHandler(async (req, res) => {
-    const { status, search, limit, cursor } = req.validatedQuery
+    const { userId, status, search, limit, cursor } = req.validatedQuery
     const { items, nextCursor } = await certificateService.list({
+      userId,
       // null means unscoped; an array is the complete allow-list. Passed
       // straight through so this endpoint cannot show a manager somebody
       // they are not allowed to see people-data for (2.2).

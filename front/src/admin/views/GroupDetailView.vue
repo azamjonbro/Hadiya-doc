@@ -2,6 +2,7 @@
 import { computed, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
+import { roleLabel } from '@/utils/roleLabel'
 import { useConfirm } from '@/composables/useConfirm'
 import { useAuthStore } from '@/stores/auth'
 import { groupsApi } from '@/services/groups'
@@ -20,7 +21,7 @@ import EmptyState from '@/components/ui/EmptyState.vue'
 import Icon from '@/components/ui/Icon.vue'
 import { apiErrorText } from '@/utils/apiError'
 
-const { t } = useI18n()
+const { t, te } = useI18n()
 const confirm = useConfirm()
 const route = useRoute()
 const router = useRouter()
@@ -349,7 +350,7 @@ onMounted(load)
             <Avatar :name="user.fullName" :src="user.avatar" size="xs" />
             <span class="min-w-0 flex-1">
               <span class="block truncate text-small text-ink">{{ user.fullName }}</span>
-              <span class="block truncate text-caption text-ink-faint">{{ user.jshshir }} · {{ user.role }}</span>
+              <span class="block truncate text-caption text-ink-faint">{{ user.jshshir }} · {{ roleLabel(user.role, { t, te }) }}</span>
             </span>
           </label>
         </li>

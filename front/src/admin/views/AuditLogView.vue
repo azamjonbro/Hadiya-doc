@@ -188,6 +188,7 @@ onMounted(() => {
     <p v-if="error" class="mt-4 text-small text-danger">{{ error }}</p>
 
     <DataTable
+      settings-key="audit"
       class="mt-4"
       :columns="columns"
       :rows="items"
