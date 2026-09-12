@@ -224,9 +224,10 @@
       "lowNewsEngagement": "Yangiliklarga qiziqish past ({pct}%)"
     },
     "cards": {
-      "totalEmployees": "Jami xodimlar",
-      "activeEmployees": "Faol xodimlar",
-      "totalCourses": "Kurslar",
+      "totalEmployees": "Foydalanuvchilar",
+      "activeEmployees": "Faol foydalanuvchilar",
+      "totalCourses": "Materiallar",
+      "totalGroups": "Guruhlar",
       "mandatoryCourses": "Majburiy kurslar",
       "completedAssignments": "Tugallangan kurslar",
       "overdueAssignments": "Muddati o'tgan kurslar",

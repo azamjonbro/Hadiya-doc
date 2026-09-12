@@ -224,9 +224,10 @@
       "lowNewsEngagement": "News engagement is low ({pct}%)"
     },
     "cards": {
-      "totalEmployees": "Total Employees",
-      "activeEmployees": "Active Employees",
-      "totalCourses": "Courses",
+      "totalEmployees": "Users",
+      "activeEmployees": "Active users",
+      "totalCourses": "Materials",
+      "totalGroups": "Groups",
       "mandatoryCourses": "Mandatory Courses",
       "completedAssignments": "Completed Courses",
       "overdueAssignments": "Overdue Courses",

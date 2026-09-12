@@ -224,9 +224,10 @@
       "lowNewsEngagement": "Низкая вовлечённость в новости ({pct}%)"
     },
     "cards": {
-      "totalEmployees": "Всего сотрудников",
-      "activeEmployees": "Активные сотрудники",
-      "totalCourses": "Курсы",
+      "totalEmployees": "Пользователи",
+      "activeEmployees": "Активные пользователи",
+      "totalCourses": "Материалы",
+      "totalGroups": "Группы",
       "mandatoryCourses": "Обязательные курсы",
       "completedAssignments": "Завершённые курсы",
       "overdueAssignments": "Просроченные курсы",
