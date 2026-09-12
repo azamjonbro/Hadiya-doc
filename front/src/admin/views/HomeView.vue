@@ -96,6 +96,23 @@ const attentionItems = computed(() => {
   return items
 })
 
+// Each of the four tiles is a count of something that has its own list, and
+// the tile leads there — filtered the way the count was taken (active
+// employees is `isActive`, the same thing the users list calls "active").
+// Overdue assignments live in a report; someone without report access gets
+// the courses list, the same door the attention item uses. A tile that leads
+// somewhere its viewer cannot enter stays inert.
+const tileLinks = computed(() => ({
+  totalCourses: auth.hasPermission('course:read') ? '/bos/courses' : null,
+  totalEmployees: auth.hasPermission('user:read') ? '/bos/users' : null,
+  activeEmployees: auth.hasPermission('user:read') ? { path: '/bos/users', query: { status: 'active' } } : null,
+  overdueAssignments: auth.hasPermission('report:export')
+    ? { path: '/bos/reports', query: { report: 'overdue-assignments' } }
+    : auth.hasPermission('course:read')
+      ? '/bos/courses'
+      : null,
+}))
+
 const toneChip = {
   danger: 'bg-danger-subtle text-danger',
   warning: 'bg-warning-subtle text-warning',
@@ -199,10 +216,10 @@ const taskCompletionItems = computed(
     <template v-else-if="dashboard">
       <!-- Four tiles -->
       <div class="mt-5 grid grid-cols-2 gap-4 lg:grid-cols-4">
-        <StatCard :label="t('dashboard.cards.totalCourses')" :value="dashboard.cards.totalCourses" icon="file-text" tone="primary" />
-        <StatCard :label="t('dashboard.cards.totalEmployees')" :value="dashboard.cards.totalEmployees" icon="user" tone="primary" />
-        <StatCard :label="t('dashboard.cards.activeEmployees')" :value="dashboard.cards.activeEmployees" icon="users" tone="primary" />
-        <StatCard :label="t('dashboard.cards.overdueAssignments')" :value="dashboard.cards.overdueAssignments" icon="alert-triangle" :tone="dashboard.cards.overdueAssignments > 0 ? 'danger' : 'primary'" />
+        <StatCard :label="t('dashboard.cards.totalCourses')" :value="dashboard.cards.totalCourses" icon="file-text" tone="primary" :to="tileLinks.totalCourses" />
+        <StatCard :label="t('dashboard.cards.totalEmployees')" :value="dashboard.cards.totalEmployees" icon="user" tone="primary" :to="tileLinks.totalEmployees" />
+        <StatCard :label="t('dashboard.cards.activeEmployees')" :value="dashboard.cards.activeEmployees" icon="users" tone="primary" :to="tileLinks.activeEmployees" />
+        <StatCard :label="t('dashboard.cards.overdueAssignments')" :value="dashboard.cards.overdueAssignments" icon="alert-triangle" :tone="dashboard.cards.overdueAssignments > 0 ? 'danger' : 'primary'" :to="tileLinks.overdueAssignments" />
       </div>
 
       <div class="mt-4 grid grid-cols-1 gap-4 xl:grid-cols-[1fr_minmax(0,0.95fr)]">

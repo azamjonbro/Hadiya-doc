@@ -1,6 +1,7 @@
 <script setup>
 import { computed, onMounted, onUnmounted, reactive, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
+import { useRoute } from 'vue-router'
 import { roleLabel } from '@/utils/roleLabel'
 import { ROLES } from '@lms/shared'
 import { reportsApi } from '@/services/reports'
@@ -24,6 +25,7 @@ import { apiErrorText } from '@/utils/apiError'
 const { t, te, locale } = useI18n()
 const toast = useToast()
 const auth = useAuthStore()
+const route = useRoute()
 const confirm = useConfirm()
 
 const FORMATS = ['csv', 'xlsx', 'pdf']
@@ -136,6 +138,10 @@ function typeLabel(type) {
 async function loadTypes() {
   try {
     types.value = await reportsApi.listTypes()
+    // Arrived from a dashboard tile (?report=…): open that report straight
+    // away rather than landing on the catalogue and asking for a second click.
+    const wanted = route.query.report
+    if (wanted && types.value.includes(wanted)) openPreview(wanted)
   } catch (error) {
     typesError.value = apiErrorText(error, t('reports.error'))
   }

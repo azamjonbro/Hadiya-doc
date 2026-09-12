@@ -50,6 +50,7 @@ const filters = reactive({
   branch: route.query.branch ?? '',
   department: route.query.department ?? '',
   subdivision: route.query.subdivision ?? '',
+  status: route.query.status ?? '',
 })
 
 // Three answers to "who works here", not two: archived is someone who left,
