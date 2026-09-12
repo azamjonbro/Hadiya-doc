@@ -10,7 +10,7 @@
  * org lists employees are tagged with, so the tree's shape comes from the
  * people and the rows only add a code and a head.
  */
-import { computed, onMounted, reactive, ref } from 'vue'
+import { computed, onBeforeUnmount, onMounted, reactive, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
 import { ORG_LIST_TYPES } from '@lms/shared'
@@ -41,6 +41,32 @@ const loading = ref(true)
 const tree = ref({ total: 0, branches: [], departments: [] })
 const open = ref(new Set(['root']))
 const menuFor = ref('')
+// The ⋯ menu is drawn on <body>, not inside the table: the table scrolls
+// sideways in an overflow container, and a menu hanging out of its bottom
+// edge gave the container a scrollbar instead of showing the menu.
+const menuAt = ref({ top: 0, right: 0 })
+const menuRow = computed(() => rows.value.find((r) => r.key === menuFor.value) ?? null)
+function toggleMenu(row, event) {
+  if (menuFor.value === row.key) {
+    menuFor.value = ''
+    return
+  }
+  const rect = event.currentTarget.getBoundingClientRect()
+  menuAt.value = { top: rect.bottom + 6, right: window.innerWidth - rect.right }
+  menuFor.value = row.key
+}
+function onDocumentClick(event) {
+  if (menuFor.value && !event.target.closest?.('[data-unit-menu]')) menuFor.value = ''
+}
+const closeMenu = () => (menuFor.value = '')
+document.addEventListener('click', onDocumentClick)
+window.addEventListener('scroll', closeMenu, true)
+window.addEventListener('resize', closeMenu)
+onBeforeUnmount(() => {
+  document.removeEventListener('click', onDocumentClick)
+  window.removeEventListener('scroll', closeMenu, true)
+  window.removeEventListener('resize', closeMenu)
+})
 
 const columns = computed(() => [
   { key: 'name', label: t('branchesPage.tree.name') },
@@ -213,30 +239,40 @@ onMounted(load)
             <td v-if="show('code')" class="px-3 text-ink">{{ row.code || (row.kind === 'company' ? '0' : '—') }}</td>
             <td v-if="show('head')" class="px-3 text-ink">{{ row.headName || '—' }}</td>
             <td v-if="show('users')" class="px-3 text-ink">{{ row.users || '—' }}</td>
-            <td class="relative px-3 text-right">
+            <td class="px-3 text-right">
               <button
                 v-if="canEdit && row.kind !== 'company'"
                 type="button"
+                data-unit-menu
                 class="inline-flex h-9 w-9 items-center justify-center rounded-md border transition-default"
                 :class="menuFor === row.key ? 'border-primary bg-primary-subtle text-primary opacity-100' : 'border-transparent text-ink-muted opacity-0 hover:border-border-strong hover:bg-surface group-hover/row:opacity-100 focus:opacity-100'"
                 :aria-label="t('users.actions.more')"
-                @click="menuFor = menuFor === row.key ? '' : row.key"
+                :aria-expanded="menuFor === row.key"
+                @click="toggleMenu(row, $event)"
               >
                 <Icon name="more-horizontal" size="18" />
               </button>
               <button v-else-if="canEdit" type="button" class="inline-flex h-9 w-9 items-center justify-center rounded-md text-ink-muted opacity-0 transition-default hover:bg-surface group-hover/row:opacity-100" :aria-label="t('branchesPage.tree.newUnit')" @click="openCreate(null)"><Icon name="plus" size="16" /></button>
-              <div v-if="menuFor === row.key" class="absolute right-3 top-12 z-20 w-64 rounded-xl border border-border bg-surface p-1.5 text-left text-[14px] shadow-lg">
-                <button v-if="row.kind !== 'subdivision'" type="button" class="flex w-full items-center gap-2.5 rounded-md px-3 py-2 text-ink hover:bg-surface-2" @click="openCreate(row)"><Icon name="plus" size="15" class="text-ink-faint" /> {{ t('branchesPage.tree.createChild') }}</button>
-                <button type="button" class="flex w-full items-center gap-2.5 rounded-md px-3 py-2 text-ink hover:bg-surface-2" @click="viewUsers(row)"><Icon name="eye" size="15" class="text-ink-faint" /> {{ t('branchesPage.tree.viewUsers') }}</button>
-                <button type="button" class="flex w-full items-center gap-2.5 rounded-md px-3 py-2 text-ink hover:bg-surface-2" @click="openEdit(row)"><Icon name="pencil" size="15" class="text-ink-faint" /> {{ t('branchesPage.tree.edit') }}</button>
-                <button v-if="row.kind === 'branch'" type="button" class="flex w-full items-center gap-2.5 rounded-md px-3 py-2 text-ink hover:bg-surface-2" @click="menuFor = ''; router.push({ path: '/bos/settings', query: { tab: 'design', branch: row.name } })"><Icon name="settings" size="15" class="text-ink-faint" /> {{ t('branchesPage.tree.portalSettings') }}</button>
-                <button type="button" class="flex w-full items-center gap-2.5 rounded-md px-3 py-2 text-danger hover:bg-surface-2" @click="remove(row)"><Icon name="trash" size="15" /> {{ t('common.delete') }}</button>
-              </div>
             </td>
           </tr>
         </tbody>
       </table>
     </div>
+
+    <Teleport to="body">
+      <div
+        v-if="menuRow"
+        data-unit-menu
+        class="fixed z-50 w-64 rounded-xl border border-border bg-surface p-1.5 text-left text-[14px] shadow-lg"
+        :style="{ top: `${menuAt.top}px`, right: `${menuAt.right}px` }"
+      >
+        <button v-if="menuRow.kind !== 'subdivision'" type="button" class="flex w-full items-center gap-2.5 rounded-md px-3 py-2 text-ink hover:bg-surface-2" @click="openCreate(menuRow)"><Icon name="plus" size="15" class="text-ink-faint" /> {{ t('branchesPage.tree.createChild') }}</button>
+        <button type="button" class="flex w-full items-center gap-2.5 rounded-md px-3 py-2 text-ink hover:bg-surface-2" @click="viewUsers(menuRow)"><Icon name="eye" size="15" class="text-ink-faint" /> {{ t('branchesPage.tree.viewUsers') }}</button>
+        <button type="button" class="flex w-full items-center gap-2.5 rounded-md px-3 py-2 text-ink hover:bg-surface-2" @click="openEdit(menuRow)"><Icon name="pencil" size="15" class="text-ink-faint" /> {{ t('branchesPage.tree.edit') }}</button>
+        <button v-if="menuRow.kind === 'branch'" type="button" class="flex w-full items-center gap-2.5 rounded-md px-3 py-2 text-ink hover:bg-surface-2" @click="menuFor = ''; router.push({ path: '/bos/settings', query: { tab: 'design', branch: menuRow.name } })"><Icon name="settings" size="15" class="text-ink-faint" /> {{ t('branchesPage.tree.portalSettings') }}</button>
+        <button type="button" class="flex w-full items-center gap-2.5 rounded-md px-3 py-2 text-danger hover:bg-surface-2" @click="remove(menuRow)"><Icon name="trash" size="15" /> {{ t('common.delete') }}</button>
+      </div>
+    </Teleport>
 
     <Modal v-model="modalOpen" size="md" :title="dialog.mode === 'edit' ? t('branchesPage.tree.edit') : t('branchesPage.tree.newUnit')">
       <div class="space-y-4">
