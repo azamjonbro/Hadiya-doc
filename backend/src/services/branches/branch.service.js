@@ -1,4 +1,5 @@
 import { Branch } from '../../models/branch.model.js'
+import { OrgList } from '../../models/orgList.model.js'
 import { User } from '../../models/user.model.js'
 import { Course } from '../../models/course.model.js'
 import { userRepository } from '../../repositories/user.repository.js'
@@ -42,14 +43,102 @@ export const branchService = {
     return [...byKey.values()].sort((a, b) => a.name.localeCompare(b.name))
   },
 
-  async create(actor, name) {
+  /**
+   * The org chart as the reference draws it (rasm «Подразделения»): the
+   * company, then every branch, then the departments people in that branch
+   * sit in, then their subdivisions — each with its code, head and
+   * headcount. Departments and subdivisions are what employees are tagged
+   * with, so the shape comes from the people; the OrgList rows only add
+   * the code and the head.
+   */
+  async tree() {
+    const [branches, lists, people] = await Promise.all([
+      Branch.find().sort({ name: 1 }).lean(),
+      OrgList.find({ type: { $in: ['DEPARTMENT', 'SUBDIVISION'] } }).lean(),
+      User.aggregate([
+        { $match: { isActive: true } },
+        {
+          $group: {
+            _id: { branch: { $ifNull: ['$branch', ''] }, department: { $ifNull: ['$department', ''] }, subdivision: { $ifNull: ['$subdivision', ''] } },
+            n: { $sum: 1 },
+          },
+        },
+      ]),
+    ])
+    const headIds = [...new Set([...branches, ...lists].map((r) => r.headId && String(r.headId)).filter(Boolean))]
+    const heads = headIds.length ? await User.find({ _id: { $in: headIds } }, { fullName: 1 }).lean() : []
+    const headName = new Map(heads.map((u) => [String(u._id), u.fullName]))
+    const listByKey = (type) => new Map(lists.filter((l) => l.type === type).map((l) => [l.nameKey, l]))
+    const departments = listByKey('DEPARTMENT')
+    const subdivisions = listByKey('SUBDIVISION')
+
+    const unit = (kind, name, row) => ({
+      kind,
+      id: row ? String(row._id) : null,
+      name,
+      code: row?.code ?? '',
+      headId: row?.headId ? String(row.headId) : null,
+      headName: row?.headId ? (headName.get(String(row.headId)) ?? '') : '',
+      users: 0,
+      children: [],
+    })
+
+    const branchNodes = new Map()
+    for (const b of branches) branchNodes.set(b.nameKey, unit('branch', b.name, b))
+    const rootDepartments = new Map()
+    const total = people.reduce((sum, row) => sum + row.n, 0)
+
+    for (const row of people) {
+      const { branch, department, subdivision } = row._id
+      let parent = null
+      if (branch) {
+        const key = branch.toLowerCase()
+        if (!branchNodes.has(key)) branchNodes.set(key, unit('branch', branch, null))
+        parent = branchNodes.get(key)
+        parent.users += row.n
+      }
+      if (department) {
+        const holder = parent ? parent.children : null
+        const key = department.toLowerCase()
+        let dep = parent ? holder.find((c) => c.kind === 'department' && c.name.toLowerCase() === key) : rootDepartments.get(key)
+        if (!dep) {
+          dep = unit('department', department, departments.get(key))
+          if (parent) holder.push(dep)
+          else rootDepartments.set(key, dep)
+        }
+        dep.users += row.n
+        if (subdivision) {
+          const skey = subdivision.toLowerCase()
+          let sub = dep.children.find((c) => c.name.toLowerCase() === skey)
+          if (!sub) {
+            sub = unit('subdivision', subdivision, subdivisions.get(skey))
+            dep.children.push(sub)
+          }
+          sub.users += row.n
+        }
+      }
+    }
+    // Declared departments nobody is in yet still belong on the chart.
+    for (const [key, row] of departments) {
+      const seen = [...branchNodes.values()].some((b) => b.children.some((d) => d.name.toLowerCase() === key)) || rootDepartments.has(key)
+      if (!seen) rootDepartments.set(key, unit('department', row.name, row))
+    }
+    const sortTree = (nodes) => nodes.sort((a, b) => a.name.localeCompare(b.name)).map((n) => ({ ...n, children: sortTree(n.children) }))
+    return {
+      total,
+      branches: sortTree([...branchNodes.values()]),
+      departments: sortTree([...rootDepartments.values()]),
+    }
+  },
+
+  async create(actor, name, { code = '', headId = null } = {}) {
     const trimmed = name.trim()
     if (!trimmed) throw ApiError.badRequest('Branch name is required', 'BRANCH_NAME_REQUIRED')
 
     const existing = await Branch.findOne({ nameKey: trimmed.toLowerCase() })
     if (existing) throw ApiError.conflict('A branch with this name already exists', 'BRANCH_EXISTS')
 
-    const branch = await Branch.create({ name: trimmed, nameKey: trimmed.toLowerCase(), createdBy: actor.id })
+    const branch = await Branch.create({ name: trimmed, nameKey: trimmed.toLowerCase(), code, headId: headId || null, createdBy: actor.id })
     await auditLogRepository.record({
       actor: actor.id,
       action: 'BRANCH_CREATED',
@@ -66,13 +155,18 @@ export const branchService = {
    * silently stop being visible — the failure would look like "the course
    * disappeared", days later, with nothing pointing back here.
    */
-  async rename(actor, id, name) {
+  async rename(actor, id, name, { code, headId } = {}) {
     const trimmed = name.trim()
     if (!trimmed) throw ApiError.badRequest('Branch name is required', 'BRANCH_NAME_REQUIRED')
 
     const branch = await Branch.findById(id)
     if (!branch) throw ApiError.notFound('Branch not found')
-    if (branch.name === trimmed) return { id, name: trimmed, movedUsers: 0, movedCourses: 0 }
+    if (code !== undefined) branch.code = code
+    if (headId !== undefined) branch.headId = headId || null
+    if (branch.name === trimmed) {
+      await branch.save()
+      return { id, name: trimmed, code: branch.code, headId: branch.headId ? String(branch.headId) : null, movedUsers: 0, movedCourses: 0 }
+    }
 
     const clash = await Branch.findOne({ nameKey: trimmed.toLowerCase(), _id: { $ne: id } })
     if (clash) throw ApiError.conflict('A branch with this name already exists', 'BRANCH_EXISTS')

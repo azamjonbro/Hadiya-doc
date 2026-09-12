@@ -42,7 +42,7 @@
     "groupManagement": "Boshqaruv",
     "groups": "Guruhlar",
     "trash": "Karzinka",
-    "branches": "Filiallar",
+    "branches": "Bo‘linmalar",
     "auditLog": "Audit jurnali",
     "certificates": "Sertifikatlar",
     "paths": "Yo‘nalishlar",
@@ -727,7 +727,11 @@
       "title": "Sarlavha",
       "published": "Chop etilgan",
       "audience": "Kim ko'radi",
-      "readers": "O'qiganlar"
+      "readers": "O'qiganlar",
+      "likes": "Yoqtirishlar",
+      "comments": "Izohlar",
+      "author": "Muallif",
+      "readersHint": "O‘qiganlar / ko‘ra oladiganlar"
     },
     "yesterday": "kecha",
     "editor": {
@@ -748,7 +752,8 @@
       "noCandidates": "Muqovali chop etilgan maqola yo'q",
       "pin": "Banner qilish",
       "unpin": "Bannerdan olish"
-    }
+    },
+    "searchTitles": "Sarlavha bo‘yicha qidirish…"
   },
   "tasks": {
     "title": "Vazifalar",
@@ -2077,6 +2082,34 @@
       "code": "Bo'linma kodi",
       "head": "Rahbar",
       "total": "Jami xodimlar"
+    },
+    "tree": {
+      "title": "Bo‘linmalar",
+      "subtitle": "Bo‘linmalarni qo‘shing va o‘qitishni butun bo‘limlarga birdaniga tayinlang.",
+      "name": "Bo‘linma nomi",
+      "code": "Bo‘linma kodi",
+      "head": "Rahbar",
+      "users": "Jami xodimlar",
+      "newUnit": "Yangi bo‘linma",
+      "newBranch": "Yangi filial",
+      "newDepartment": "Yangi bo‘lim",
+      "newSubdivision": "Yangi bo‘linma (ichki)",
+      "createChild": "Ichida bo‘linma yaratish",
+      "viewUsers": "Xodimlarni ko‘rish",
+      "edit": "Bo‘linmani tahrirlash",
+      "kind": {
+        "company": "Kompaniya",
+        "branch": "Filial",
+        "department": "Bo‘lim",
+        "subdivision": "Bo‘linma"
+      },
+      "headPlaceholder": "Ism bo‘yicha qidiring",
+      "noBranch": "Filialsiz bo‘limlar",
+      "saved": "Saqlandi",
+      "deleteTitle": "Bo‘linmani o‘chirish",
+      "deleteMessage": "«{name}» o‘chirilsinmi?",
+      "inUse": "Bu bo‘linmada xodimlar bor — avval ularni boshqa joyga o‘tkazing.",
+      "import": "Import"
     }
   },
   "orgLists": {

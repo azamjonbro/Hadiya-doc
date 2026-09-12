@@ -18,6 +18,7 @@ branchesRouter.use(authenticate)
 // Creating, renaming and deleting all move (or refuse to move) employee and
 // course records, so they sit behind user:update rather than user:read.
 branchesRouter.get('/', requirePermission(PERMISSIONS.USER_READ), branchController.overview)
+branchesRouter.get('/tree', requirePermission(PERMISSIONS.USER_READ), branchController.tree)
 branchesRouter.post('/', requirePermission(PERMISSIONS.USER_UPDATE), validateBody(branchNameSchema), branchController.create)
 branchesRouter.patch('/:id', requirePermission(PERMISSIONS.USER_UPDATE), validateBody(branchNameSchema), branchController.rename)
 // Before '/:id', or the literal path would be read as a branch id.

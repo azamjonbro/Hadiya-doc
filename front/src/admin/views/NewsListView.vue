@@ -10,7 +10,7 @@ function relativeDayFactory(t, locale) {
     return date.toLocaleDateString(locale.value, { day: 'numeric', month: 'short', year: 'numeric' })
   }
 }
-import { onMounted, reactive, ref } from 'vue'
+import { computed, onMounted, reactive, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { roleLabel } from '@/utils/roleLabel'
@@ -27,6 +27,8 @@ import Badge from '@/components/ui/Badge.vue'
 import Skeleton from '@/components/ui/Skeleton.vue'
 import EmptyState from '@/components/ui/EmptyState.vue'
 import Icon from '@/components/ui/Icon.vue'
+import ColumnSettings from '@/components/ui/ColumnSettings.vue'
+import { useTableColumns } from '@/composables/useTableColumns'
 import { apiErrorText } from '@/utils/apiError'
 
 const { t, te, locale } = useI18n()
@@ -39,6 +41,26 @@ const nextCursor = ref(null)
 const loading = ref(false)
 const errorMessage = ref('')
 const expandedReportId = ref(null)
+const search = ref('')
+
+// The reference's columns, behind the ⚙ at the end of the header.
+const allColumns = computed(() => [
+  { key: 'thumb', label: t('news.columns.thumb') },
+  { key: 'title', label: t('news.columns.title') },
+  { key: 'published', label: t('news.columns.published') },
+  { key: 'audience', label: t('news.columns.audience') },
+  { key: 'readers', label: t('news.columns.readers') },
+  { key: 'likes', label: t('news.columns.likes') },
+  { key: 'comments', label: t('news.columns.comments') },
+  { key: 'author', label: t('news.columns.author'), hidden: true },
+  { key: 'tags', label: t('news.fields.tags'), hidden: true },
+])
+const columnSettings = useTableColumns('news', allColumns)
+const show = (key) => columnSettings.visible.value.some((c) => c.key === key)
+const visibleItems = computed(() => {
+  const q = search.value.trim().toLowerCase()
+  return q ? items.value.filter((item) => item.title.toLowerCase().includes(q)) : items.value
+})
 
 const showCreateModal = ref(false)
 const createSubmitting = ref(false)
@@ -111,9 +133,12 @@ onMounted(loadFirstPage)
 
 <template>
   <div class="mx-auto w-full max-w-[1440px] px-6 lg:px-8 py-8">
-    <div class="flex items-center justify-between">
+    <div class="flex flex-wrap items-center justify-between gap-3">
       <h1 class="text-[24px] font-semibold text-ink">{{ t('news.title') }}</h1>
-      <AppButton v-if="auth.hasPermission('news:create')" icon="plus" @click="showCreateModal = true">{{ t('news.newArticle') }}</AppButton>
+      <div class="flex items-center gap-2">
+        <AppInput v-model="search" icon="search" class="w-64" :placeholder="t('news.searchTitles')" :aria-label="t('news.searchTitles')" />
+        <AppButton v-if="auth.hasPermission('news:create')" icon="plus" @click="showCreateModal = true">{{ t('news.newArticle') }}</AppButton>
+      </div>
     </div>
 
     <p v-if="errorMessage" class="mt-4 text-small text-danger">{{ errorMessage }}</p>
@@ -122,46 +147,57 @@ onMounted(loadFirstPage)
       <Skeleton v-for="i in 4" :key="i" class="h-20 w-full" />
     </div>
 
-    <!-- Rasn 24: thumbnail, title, published, who sees it, readers,
-         ♡, 💬; the report opens under the row -->
+    <!-- Rasn 24: thumbnail, title, published, who sees it, readers of
+         the audience, ♡, 💬; the ⚙ picks columns; the report opens under
+         the row -->
     <div v-else-if="items.length" class="mt-4 overflow-x-auto">
       <table class="w-full min-w-[900px] text-[14px]">
         <thead>
           <tr class="h-11 border-b border-border text-left text-[13px] text-ink-muted">
-            <th class="w-28 pl-3 pr-2 font-medium">{{ t('news.columns.thumb') }}</th>
-            <th class="px-2 font-medium">{{ t('news.columns.title') }}</th>
-            <th class="w-32 px-2 font-medium text-ink">{{ t('news.columns.published') }} <Icon name="chevron-down" size="12" class="inline text-ink-faint" /></th>
-            <th class="w-36 px-2 font-medium">{{ t('news.columns.audience') }}</th>
-            <th class="w-28 px-2 font-medium">{{ t('news.columns.readers') }}</th>
-            <th class="w-16 px-2"><Icon name="heart" size="16" class="text-ink-muted" /></th>
-            <th class="w-16 px-2"><Icon name="message-square" size="16" class="text-ink-muted" /></th>
-            <th class="w-28 pr-3 text-right"><Icon name="settings" size="16" class="inline text-ink-muted" /></th>
+            <th v-if="show('thumb')" class="w-28 pl-3 pr-2 font-medium">{{ t('news.columns.thumb') }}</th>
+            <th v-if="show('title')" class="px-2 font-medium">{{ t('news.columns.title') }}</th>
+            <th v-if="show('published')" class="w-32 px-2 font-medium text-ink">{{ t('news.columns.published') }} <Icon name="chevron-down" size="12" class="inline text-ink-faint" /></th>
+            <th v-if="show('audience')" class="w-36 px-2 font-medium">{{ t('news.columns.audience') }}</th>
+            <th v-if="show('readers')" class="w-32 px-2 font-medium">{{ t('news.columns.readers') }} <Icon name="info" size="12" class="inline text-ink-faint" :title="t('news.columns.readersHint')" /></th>
+            <th v-if="show('likes')" class="w-16 px-2"><Icon name="heart" size="16" class="text-ink-muted" :title="t('news.columns.likes')" /></th>
+            <th v-if="show('comments')" class="w-16 px-2"><Icon name="message-square" size="16" class="text-ink-muted" :title="t('news.columns.comments')" /></th>
+            <th v-if="show('author')" class="w-40 px-2 font-medium">{{ t('news.columns.author') }}</th>
+            <th v-if="show('tags')" class="w-40 px-2 font-medium">{{ t('news.fields.tags') }}</th>
+            <th class="w-28 pr-3 text-right"><ColumnSettings :columns="columnSettings" /></th>
           </tr>
         </thead>
         <tbody>
-          <template v-for="item in items" :key="item.id">
+          <template v-for="item in visibleItems" :key="item.id">
             <tr class="group h-[76px] border-b border-border transition-default hover:bg-surface-2">
-              <td class="pl-3 pr-2">
+              <td v-if="show('thumb')" class="pl-3 pr-2">
                 <span class="flex h-14 w-24 items-center justify-center overflow-hidden rounded bg-surface-2 text-ink-faint">
                   <img v-if="item.cover" :src="item.cover" alt="" class="h-full w-full object-cover" />
                   <Icon v-else name="image" size="18" />
                 </span>
               </td>
-              <td class="px-2">
+              <td v-if="show('title')" class="px-2">
                 <button type="button" class="line-clamp-2 text-left text-ink hover:text-primary" @click="router.push(`/bos/news/${item.id}`)">{{ item.title }}</button>
               </td>
-              <td class="px-2 text-ink">
+              <td v-if="show('published')" class="px-2 text-ink">
                 <template v-if="item.status === 'PUBLISHED'">{{ relativeDay(item.publishAt) }}</template>
                 <span v-else class="text-ink-muted">{{ t('courses.status.draft') }}</span>
               </td>
-              <td class="px-2 text-ink">
+              <td v-if="show('audience')" class="px-2 text-ink">
                 <template v-if="item.status !== 'PUBLISHED'">—</template>
-                <template v-else-if="item.departmentTargets?.length || item.roleTargets?.length">{{ [...(item.departmentTargets ?? []), ...(item.roleTargets ?? [])].join(', ') }}</template>
+                <template v-else-if="item.departmentTargets?.length || item.roleTargets?.length">{{ [...(item.departmentTargets ?? []), ...(item.roleTargets ?? []).map((r) => roleLabel(r, { t, te }))].join(', ') }}</template>
                 <template v-else>{{ t('common.all') }}</template>
               </td>
-              <td class="px-2 text-ink">{{ item.status === 'PUBLISHED' ? item.views ?? 0 : '—' }}</td>
-              <td class="px-2 text-ink">{{ item.status === 'PUBLISHED' ? item.likes ?? 0 : '—' }}</td>
-              <td class="px-2 text-ink">{{ item.status === 'PUBLISHED' ? item.comments ?? 0 : '—' }}</td>
+              <td v-if="show('readers')" class="px-2 text-ink">
+                <template v-if="item.status === 'PUBLISHED'">{{ item.views ?? 0 }} <span class="text-ink-faint">/ {{ item.audience ?? '—' }}</span></template>
+                <template v-else>—</template>
+              </td>
+              <td v-if="show('likes')" class="px-2 text-ink">{{ item.status === 'PUBLISHED' ? item.likes ?? 0 : '—' }}</td>
+              <td v-if="show('comments')" class="px-2 text-ink">
+                <template v-if="item.status === 'PUBLISHED'">{{ item.comments ?? 0 }} <span v-if="item.comments" class="ml-1 inline-block h-1.5 w-1.5 rounded-full bg-success align-middle" /></template>
+                <template v-else>—</template>
+              </td>
+              <td v-if="show('author')" class="px-2 text-ink-muted">{{ item.authorName || '—' }}</td>
+              <td v-if="show('tags')" class="px-2 text-ink-muted">{{ item.tags?.join(', ') || '—' }}</td>
               <td class="pr-3 text-right">
                 <span class="flex items-center justify-end gap-1 opacity-0 transition-default focus-within:opacity-100 group-hover:opacity-100">
                   <button type="button" class="flex h-8 w-8 items-center justify-center rounded-md text-ink-muted transition-default hover:bg-surface-hover hover:text-ink" :aria-label="t('common.edit')" @click="router.push(`/bos/news/${item.id}`)"><Icon name="pencil" size="15" /></button>
@@ -170,7 +206,7 @@ onMounted(loadFirstPage)
               </td>
             </tr>
             <tr v-if="expandedReportId === item.id" class="border-b border-border">
-              <td colspan="8" class="px-3 py-4"><NewsReportPanel :news-id="item.id" /></td>
+              <td :colspan="columnSettings.visible.value.length + 1" class="px-3 py-4"><NewsReportPanel :news-id="item.id" /></td>
             </tr>
           </template>
         </tbody>

@@ -42,7 +42,7 @@
     "groupManagement": "Management",
     "groups": "Groups",
     "trash": "Trash",
-    "branches": "Branches",
+    "branches": "Org units",
     "auditLog": "Audit log",
     "certificates": "Certificates",
     "paths": "Paths",
@@ -727,7 +727,11 @@
       "title": "Title",
       "published": "Published",
       "audience": "Who sees",
-      "readers": "Readers"
+      "readers": "Readers",
+      "likes": "Likes",
+      "comments": "Comments",
+      "author": "Author",
+      "readersHint": "Read / could see it"
     },
     "yesterday": "yesterday",
     "editor": {
@@ -748,7 +752,8 @@
       "noCandidates": "No published articles with a cover",
       "pin": "Make a banner",
       "unpin": "Unpin"
-    }
+    },
+    "searchTitles": "Search by title…"
   },
   "tasks": {
     "title": "Tasks",
@@ -2077,6 +2082,33 @@
       "code": "Code",
       "head": "Head",
       "total": "Total users"
+    },
+    "tree": {
+      "title": "Org units",
+      "subtitle": "Add units and assign training to whole departments at once.",
+      "name": "Unit name",
+      "code": "Unit code",
+      "head": "Head",
+      "users": "Total users",
+      "newUnit": "New unit",
+      "newBranch": "New branch",
+      "newDepartment": "New department",
+      "newSubdivision": "New subdivision",
+      "createChild": "Create a unit inside",
+      "viewUsers": "View users",
+      "edit": "Edit unit",
+      "kind": {
+        "company": "Company",
+        "branch": "Branch",
+        "department": "Department",
+        "subdivision": "Subdivision"
+      },
+      "headPlaceholder": "Search by name",
+      "saved": "Saved",
+      "deleteTitle": "Delete unit",
+      "deleteMessage": "Delete “{name}”?",
+      "inUse": "People are still in this unit — move them first.",
+      "import": "Import"
     }
   },
   "orgLists": {

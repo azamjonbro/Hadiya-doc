@@ -1,314 +1,260 @@
 <script setup>
-// Branches, and what is attached to each one.
-//
-// Read-only on purpose: a branch is not an entity here, it is a value that
-// people and courses are tagged with (User.branch, Course.branches). New ones
-// are created where they are actually used — the branch picker on the employee
-// form lets you type one. Renaming would have to rewrite every tagged record in
-// step, or the courses targeted at the old name would quietly stop reaching
-// anyone, so it is deliberately not offered from this page.
+/**
+ * The org chart as the reference draws it (rasm «Подразделения»): one
+ * table, the company at the root, branches under it, then the departments
+ * people in that branch sit in, then subdivisions — each row with its
+ * code, its head and its headcount, a chevron to fold it, and a ⋯ that
+ * creates a unit inside, lists its people, edits or deletes it.
+ *
+ * Branches are their own collection; departments and subdivisions are the
+ * org lists employees are tagged with, so the tree's shape comes from the
+ * people and the rows only add a code and a head.
+ */
 import { computed, onMounted, reactive, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
+import { ORG_LIST_TYPES } from '@lms/shared'
 import { branchesApi } from '@/services/branches'
-import { orgApi } from '@/services/org'
+import { orgListsApi } from '@/services/orgLists'
 import { useConfirm } from '@/composables/useConfirm'
 import { useToast } from '@/composables/useToast'
-import AppInput from '@/components/ui/AppInput.vue'
-import Modal from '@/components/ui/Modal.vue'
-import AppCard from '@/components/ui/AppCard.vue'
-import Badge from '@/components/ui/Badge.vue'
+import { useAuthStore } from '@/stores/auth'
+import { apiErrorText } from '@/utils/apiError'
 import AppButton from '@/components/ui/AppButton.vue'
-import EmptyState from '@/components/ui/EmptyState.vue'
-import ErrorState from '@/components/ui/ErrorState.vue'
+import AppInput from '@/components/ui/AppInput.vue'
+import AppSelect from '@/components/ui/AppSelect.vue'
+import UserPicker from '@/components/ui/UserPicker.vue'
+import Modal from '@/components/ui/Modal.vue'
 import Skeleton from '@/components/ui/Skeleton.vue'
 import Icon from '@/components/ui/Icon.vue'
-import { apiErrorText } from '@/utils/apiError'
+import ColumnSettings from '@/components/ui/ColumnSettings.vue'
+import { useTableColumns } from '@/composables/useTableColumns'
 
 const { t } = useI18n()
 const router = useRouter()
 const confirm = useConfirm()
 const toast = useToast()
+const auth = useAuthStore()
 
-const items = ref([])
+const canEdit = computed(() => auth.hasPermission('user:update'))
 const loading = ref(true)
-const errorMessage = ref('')
-// Name of the branch a delete is in flight for — the row is keyed by name and
-// an undeclared one has nothing else to key it by.
-const removing = ref('')
+const tree = ref({ total: 0, branches: [], departments: [] })
+const open = ref(new Set(['root']))
+const menuFor = ref('')
 
-const totals = computed(() => ({
-  branches: items.value.length,
-  employees: items.value.reduce((sum, b) => sum + b.employees, 0),
-  courses: items.value.reduce((sum, b) => sum + b.courses, 0),
-}))
+const columns = computed(() => [
+  { key: 'name', label: t('branchesPage.tree.name') },
+  { key: 'code', label: t('branchesPage.tree.code') },
+  { key: 'head', label: t('branchesPage.tree.head') },
+  { key: 'users', label: t('branchesPage.tree.users') },
+])
+const columnSettings = useTableColumns('org-units', columns)
+const show = (key) => columnSettings.visible.value.some((c) => c.key === key)
+
+// Rows are flattened for the table with their depth; folding a node hides
+// its subtree. The company row's count is everyone active.
+const rows = computed(() => {
+  const out = []
+  const walk = (node, depth, path) => {
+    const key = `${path}/${node.kind}:${node.name}`
+    out.push({ ...node, key, depth, hasChildren: node.children.length > 0 })
+    if (node.children.length && open.value.has(key)) node.children.forEach((child) => walk(child, depth + 1, key))
+  }
+  const companyOpen = open.value.has('root')
+  out.push({ kind: 'company', key: 'root', name: t('portal.brand'), code: '', headName: '', users: tree.value.total, depth: 0, hasChildren: true })
+  if (companyOpen) {
+    tree.value.branches.forEach((b) => walk(b, 1, 'root'))
+    tree.value.departments.forEach((d) => walk(d, 1, 'root'))
+  }
+  return out
+})
+
+function toggle(row) {
+  if (!row.hasChildren) return
+  const next = new Set(open.value)
+  next.has(row.key) ? next.delete(row.key) : next.add(row.key)
+  open.value = next
+}
 
 async function load() {
   loading.value = true
-  errorMessage.value = ''
   try {
-    items.value = await branchesApi.overview()
+    tree.value = await branchesApi.tree()
   } catch (error) {
-    errorMessage.value = apiErrorText(error)
+    toast.error(apiErrorText(error, t('branchesPage.errorTitle')))
   } finally {
     loading.value = false
   }
 }
 
-// The employees list already filters by branch, so this page hands off rather
-// than growing its own copy of that table.
-// The tree under a branch comes from the head-count structure (portal
-// §8): departments and subdivisions are free-text on the user, so this is
-// the only place they exist as a hierarchy.
-const structure = ref(null)
-const expanded = ref(new Set())
-orgApi
-  .structure()
-  .then((result) => (structure.value = result))
-  .catch(() => (structure.value = { branches: [] }))
-function departmentsOf(branchName) {
-  return structure.value?.branches.find((b) => b.name === branchName)?.departments ?? []
-}
-function toggleExpand(name) {
-  const next = new Set(expanded.value)
-  next.has(name) ? next.delete(name) : next.add(name)
-  expanded.value = next
-}
+/* ---------------- editor ---------------- */
+const modalOpen = ref(false)
+const saving = ref(false)
+const dialog = reactive({ mode: 'create', kind: 'branch', id: '', name: '', code: '', headId: '', headName: '', parent: null })
+const kindOptions = computed(() =>
+  ['branch', 'department', 'subdivision'].map((value) => ({ value, label: t(`branchesPage.tree.kind.${value}`) }))
+)
+const iconOf = { company: 'building', branch: 'building', department: 'users', subdivision: 'users' }
 
-function openEmployees(branch) {
-  router.push({ name: 'admin-users-list', query: { branch: branch.name } })
+function openCreate(parent = null) {
+  menuFor.value = ''
+  Object.assign(dialog, {
+    mode: 'create',
+    kind: parent?.kind === 'branch' ? 'department' : parent?.kind === 'department' ? 'subdivision' : 'branch',
+    id: '',
+    name: '',
+    code: '',
+    headId: '',
+    headName: '',
+    parent,
+  })
+  modalOpen.value = true
 }
-
-function openCourses(branch) {
-  router.push({ name: 'admin-courses-list', query: { branch: branch.name } })
-}
-
-// One dialog for create and rename: the fields are the same, and `editing`
-// holds the branch being renamed (null when creating).
-const dialog = reactive({ open: false, editing: null, name: '', submitting: false, error: '' })
-
-function openCreate() {
-  Object.assign(dialog, { open: true, editing: null, name: '', error: '' })
+function openEdit(row) {
+  menuFor.value = ''
+  Object.assign(dialog, { mode: 'edit', kind: row.kind, id: row.id, name: row.name, code: row.code ?? '', headId: row.headId ?? '', headName: row.headName ?? '', parent: null })
+  modalOpen.value = true
 }
 
-function openRename(branch) {
-  Object.assign(dialog, { open: true, editing: branch, name: branch.name, error: '' })
-}
+const listType = (kind) => (kind === 'department' ? ORG_LIST_TYPES.DEPARTMENT : ORG_LIST_TYPES.SUBDIVISION)
 
-async function submitDialog() {
+async function save() {
   const name = dialog.name.trim()
   if (!name) return
-  dialog.submitting = true
-  dialog.error = ''
+  saving.value = true
   try {
-    if (dialog.editing) {
-      const result = await branchesApi.rename(dialog.editing.id, name)
-      // Renaming rewrites the tagged records, so say how many moved — silently
-      // touching dozens of employees is not something to leave unremarked.
-      toast.success(t('branchesPage.renamed', { users: result.movedUsers, courses: result.movedCourses }))
+    const extra = { code: dialog.code.trim(), headId: dialog.headId || null }
+    if (dialog.kind === 'branch') {
+      if (dialog.mode === 'edit' && dialog.id) await branchesApi.update(dialog.id, { name, ...extra })
+      else await branchesApi.create(name, extra)
+    } else if (dialog.mode === 'edit' && dialog.id) {
+      await orgListsApi.update(listType(dialog.kind), dialog.id, { name, ...extra })
     } else {
-      await branchesApi.create(name)
+      await orgListsApi.create(listType(dialog.kind), name, extra)
     }
-    dialog.open = false
+    modalOpen.value = false
+    toast.success(t('branchesPage.tree.saved'))
     await load()
   } catch (error) {
-    dialog.error = apiErrorText(error)
+    toast.error(apiErrorText(error))
   } finally {
-    dialog.submitting = false
+    saving.value = false
   }
 }
 
-/**
- * Delete, with the confirmation carrying the consequence.
- *
- * An empty branch is a plain yes/no. One that still has employees or courses
- * in it is not: deleting it leaves those employees with no branch and pulls
- * the name out of every course targeting it — and a course left with no
- * branches at all is no longer branch-restricted, so it goes from reaching
- * that one office to reaching everybody. The counts are already on the card,
- * so the dialog can say all of that before anything is touched, and the
- * `force` flag is only sent once it has been read and accepted.
- */
-async function removeBranch(branch) {
-  const attached = branch.employees || branch.courses
-  const message = attached
-    ? t('branchesPage.confirmDeleteInUse', {
-        name: branch.name,
-        employees: branch.employees,
-        courses: branch.courses,
-      })
-    : t('branchesPage.confirmDelete', { name: branch.name })
-
-  if (!(await confirm.ask({ message, confirmLabel: t('branchesPage.delete') }))) return
-
-  removing.value = branch.name
+async function remove(row) {
+  menuFor.value = ''
+  const ok = await confirm.ask({ title: t('branchesPage.tree.deleteTitle'), message: t('branchesPage.tree.deleteMessage', { name: row.name }) })
+  if (!ok) return
   try {
-    const result = branch.id
-      ? await branchesApi.remove(branch.id, { force: true })
-      : await branchesApi.removeByName(branch.name, { force: true })
-    toast.success(
-      result.detachedUsers || result.detachedCourses
-        ? t('branchesPage.deletedDetached', {
-            name: result.name,
-            users: result.detachedUsers,
-            courses: result.detachedCourses,
-          })
-        : t('branchesPage.deleted', { name: result.name })
-    )
+    if (row.kind === 'branch') {
+      if (row.id) await branchesApi.remove(row.id)
+      else await branchesApi.removeByName(row.name)
+    } else {
+      if (!row.id) throw new Error(t('branchesPage.tree.inUse'))
+      await orgListsApi.remove(listType(row.kind), row.id)
+    }
+    toast.success(t('branchesPage.deleted', { name: row.name }))
     await load()
   } catch (error) {
-    // The server refuses a branch that is still in use and says how much is
-    // attached; that message is the useful part, so pass it straight through.
-    toast.error(apiErrorText(error))
-  } finally {
-    removing.value = ''
+    toast.error(apiErrorText(error, t('branchesPage.tree.inUse')))
   }
+}
+
+function viewUsers(row) {
+  menuFor.value = ''
+  const query = {}
+  if (row.kind === 'branch') query.branch = row.name
+  if (row.kind === 'department') query.department = row.name
+  if (row.kind === 'subdivision') query.subdivision = row.name
+  router.push({ path: '/bos/users', query })
 }
 
 onMounted(load)
 </script>
 
 <template>
-  <div class="px-6 py-6">
-    <div class="flex items-end justify-between gap-4">
+  <div class="mx-auto w-full max-w-[1440px] px-6 py-8 lg:px-8">
+    <div class="flex flex-wrap items-start justify-between gap-3">
       <div>
-        <h1 class="text-[24px] font-semibold text-ink">{{ t('branchesPage.title') }}</h1>
-        <p class="mt-1 text-small text-ink-faint">{{ t('branchesPage.subtitle') }}</p>
+        <h1 class="text-[24px] font-semibold text-ink">{{ t('branchesPage.tree.title') }}</h1>
+        <p class="mt-1 text-[13px] text-ink-muted">{{ t('branchesPage.tree.subtitle') }}</p>
       </div>
-      <div class="flex items-center gap-3">
-        <div v-if="!loading && items.length" class="hidden gap-2 text-caption text-ink-faint sm:flex">
-          <span>{{ t('branchesPage.totals.branches', { count: totals.branches }) }}</span>
-          <span>·</span>
-          <span>{{ t('branchesPage.totals.employees', { count: totals.employees }) }}</span>
-        </div>
-        <AppButton icon="plus" @click="openCreate">{{ t('branchesPage.create') }}</AppButton>
+      <div v-if="canEdit" class="flex items-center gap-2">
+        <AppButton variant="outline" icon="upload" @click="router.push({ path: '/bos/users', query: { import: '1' } })">{{ t('branchesPage.tree.import') }}</AppButton>
+        <AppButton icon="building" @click="openCreate(null)">{{ t('branchesPage.tree.newUnit') }}</AppButton>
       </div>
     </div>
 
-    <div v-if="loading" class="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-      <Skeleton v-for="i in 6" :key="i" class="h-28 rounded-lg" />
-    </div>
+    <div v-if="loading" class="mt-6 space-y-2"><Skeleton v-for="i in 6" :key="i" class="h-12 w-full" /></div>
 
-    <ErrorState v-else-if="errorMessage" class="mt-6" :title="t('branchesPage.errorTitle')" :description="errorMessage">
-      <template #actions>
-        <AppButton variant="outline" icon="refresh" @click="load">{{ t('common.retry') }}</AppButton>
-      </template>
-    </ErrorState>
-
-    <EmptyState
-      v-else-if="!items.length"
-      class="mt-6"
-      icon="building"
-      :title="t('branchesPage.empty.title')"
-      :description="t('branchesPage.empty.description')"
-    >
-      <template #action>
-        <AppButton icon="plus" @click="openCreate">{{ t('branchesPage.create') }}</AppButton>
-      </template>
-    </EmptyState>
-
-    <!-- Rasn 9: a tree table — the branch, its departments under it,
-         their subdivisions under those; code, head, head-count. Codes and
-         heads are not on the model, and the column says so with "—". -->
     <div v-else class="mt-6 overflow-x-auto">
-      <table class="w-full min-w-[720px] text-[14px]">
+      <table class="w-full min-w-[820px] text-[14px]">
         <thead>
           <tr class="h-11 border-b border-border text-left text-[13px] text-ink-muted">
-            <th class="pl-3 pr-2 font-medium">{{ t('branchesPage.columns.name') }}</th>
-            <th class="w-40 px-2 font-medium">{{ t('branchesPage.columns.code') }}</th>
-            <th class="w-48 px-2 font-medium">{{ t('branchesPage.columns.head') }}</th>
-            <th class="w-40 px-2 font-medium">{{ t('branchesPage.columns.total') }}</th>
-            <th class="w-24 pr-3"></th>
+            <th v-if="show('name')" class="px-3 font-medium">{{ t('branchesPage.tree.name') }}</th>
+            <th v-if="show('code')" class="w-36 px-3 font-medium">{{ t('branchesPage.tree.code') }}</th>
+            <th v-if="show('head')" class="w-60 px-3 font-medium">{{ t('branchesPage.tree.head') }}</th>
+            <th v-if="show('users')" class="w-36 px-3 font-medium">{{ t('branchesPage.tree.users') }}</th>
+            <th class="w-14 px-3 text-right"><ColumnSettings :columns="columnSettings" /></th>
           </tr>
         </thead>
         <tbody>
-          <template v-for="branch in items" :key="branch.name">
-            <tr class="h-14 border-b border-border transition-default hover:bg-surface-2">
-              <td class="pl-3 pr-2">
-                <span class="flex items-center gap-2">
-                  <button
-                    type="button"
-                    class="flex h-6 w-6 items-center justify-center rounded text-ink-faint transition-default hover:bg-surface-hover"
-                    :class="departmentsOf(branch.name).length ? '' : 'invisible'"
-                    :aria-expanded="expanded.has(branch.name)"
-                    :aria-label="t('common.viewDetails')"
-                    @click="toggleExpand(branch.name)"
-                  >
-                    <Icon :name="expanded.has(branch.name) ? 'chevron-down' : 'chevron-right'" size="14" />
-                  </button>
-                  <Icon name="building" size="18" class="text-ink-muted" />
-                  <button type="button" class="text-ink hover:text-primary" @click="openEmployees(branch)">{{ branch.name }}</button>
-                  <Badge v-if="!branch.employees" variant="warning" size="sm">{{ t('branchesPage.noEmployees') }}</Badge>
-                </span>
-              </td>
-              <td class="px-2 text-ink-muted">—</td>
-              <td class="px-2 text-ink-muted">—</td>
-              <td class="px-2 text-ink">{{ branch.employees }}</td>
-              <td class="pr-3 text-right">
-                <span class="flex justify-end gap-1">
-                  <button
-                    type="button"
-                    :disabled="!branch.id"
-                    class="grid h-8 w-8 place-items-center rounded-md text-ink-faint transition-default hover:bg-surface-hover hover:text-ink disabled:cursor-not-allowed disabled:opacity-40"
-                    :title="branch.id ? t('branchesPage.rename') : t('branchesPage.undeclaredHint')"
-                    @click="openRename(branch)"
-                  >
-                    <Icon name="pencil" size="15" />
-                  </button>
-                  <button
-                    type="button"
-                    :disabled="removing === branch.name"
-                    class="grid h-8 w-8 place-items-center rounded-md text-ink-faint transition-default hover:bg-danger-subtle hover:text-danger disabled:opacity-40"
-                    :title="t('branchesPage.delete')"
-                    @click="removeBranch(branch)"
-                  >
-                    <Icon name="trash" size="15" />
-                  </button>
-                </span>
-              </td>
-            </tr>
-            <template v-if="expanded.has(branch.name)">
-              <template v-for="dept in departmentsOf(branch.name)" :key="`${branch.name}/${dept.name}`">
-                <tr class="h-12 border-b border-border transition-default hover:bg-surface-2">
-                  <td class="pl-12 pr-2">
-                    <span class="flex items-center gap-2">
-                      <Icon name="building" size="16" class="text-ink-faint" />
-                      <router-link :to="{ name: 'admin-users-list', query: { branch: branch.name, department: dept.name } }" class="text-ink hover:text-primary">{{ dept.name || t('portal.employees.unassigned') }}</router-link>
-                    </span>
-                  </td>
-                  <td class="px-2 text-ink-muted">—</td>
-                  <td class="px-2 text-ink-muted">—</td>
-                  <td class="px-2 text-ink">{{ dept.count }}</td>
-                  <td></td>
-                </tr>
-                <tr v-for="sub in dept.subdivisions" :key="`${branch.name}/${dept.name}/${sub.name}`" class="h-11 border-b border-border text-ink-muted">
-                  <td class="pl-20 pr-2">{{ sub.name }}</td>
-                  <td class="px-2">—</td>
-                  <td class="px-2">—</td>
-                  <td class="px-2 text-ink">{{ sub.count }}</td>
-                  <td></td>
-                </tr>
-              </template>
-            </template>
-          </template>
+          <tr v-for="row in rows" :key="row.key" class="group/row h-14 border-b border-border transition-default hover:bg-surface-2" :class="menuFor === row.key ? 'bg-surface-2' : ''">
+            <td v-if="show('name')" class="px-3">
+              <div class="flex items-center gap-2" :style="{ paddingLeft: `${row.depth * 24}px` }">
+                <button type="button" class="flex h-6 w-6 shrink-0 items-center justify-center rounded text-ink-faint hover:text-ink" :class="row.hasChildren ? '' : 'invisible'" :aria-label="row.name" @click="toggle(row)">
+                  <Icon :name="open.has(row.key) ? 'chevron-down' : 'chevron-right'" size="14" />
+                </button>
+                <Icon :name="iconOf[row.kind]" size="18" class="shrink-0 text-ink-faint" />
+                <span class="truncate text-ink">{{ row.name }}</span>
+              </div>
+            </td>
+            <td v-if="show('code')" class="px-3 text-ink">{{ row.code || (row.kind === 'company' ? '0' : '—') }}</td>
+            <td v-if="show('head')" class="px-3 text-ink">{{ row.headName || '—' }}</td>
+            <td v-if="show('users')" class="px-3 text-ink">{{ row.users || '—' }}</td>
+            <td class="relative px-3 text-right">
+              <button
+                v-if="canEdit && row.kind !== 'company'"
+                type="button"
+                class="inline-flex h-9 w-9 items-center justify-center rounded-md border transition-default"
+                :class="menuFor === row.key ? 'border-primary bg-primary-subtle text-primary opacity-100' : 'border-transparent text-ink-muted opacity-0 hover:border-border-strong hover:bg-surface group-hover/row:opacity-100 focus:opacity-100'"
+                :aria-label="t('users.actions.more')"
+                @click="menuFor = menuFor === row.key ? '' : row.key"
+              >
+                <Icon name="more-horizontal" size="18" />
+              </button>
+              <button v-else-if="canEdit" type="button" class="inline-flex h-9 w-9 items-center justify-center rounded-md text-ink-muted opacity-0 transition-default hover:bg-surface group-hover/row:opacity-100" :aria-label="t('branchesPage.tree.newUnit')" @click="openCreate(null)"><Icon name="plus" size="16" /></button>
+              <div v-if="menuFor === row.key" class="absolute right-3 top-12 z-20 w-64 rounded-xl border border-border bg-surface p-1.5 text-left text-[14px] shadow-lg">
+                <button v-if="row.kind !== 'subdivision'" type="button" class="flex w-full items-center gap-2.5 rounded-md px-3 py-2 text-ink hover:bg-surface-2" @click="openCreate(row)"><Icon name="plus" size="15" class="text-ink-faint" /> {{ t('branchesPage.tree.createChild') }}</button>
+                <button type="button" class="flex w-full items-center gap-2.5 rounded-md px-3 py-2 text-ink hover:bg-surface-2" @click="viewUsers(row)"><Icon name="eye" size="15" class="text-ink-faint" /> {{ t('branchesPage.tree.viewUsers') }}</button>
+                <button type="button" class="flex w-full items-center gap-2.5 rounded-md px-3 py-2 text-ink hover:bg-surface-2" @click="openEdit(row)"><Icon name="pencil" size="15" class="text-ink-faint" /> {{ t('branchesPage.tree.edit') }}</button>
+                <button type="button" class="flex w-full items-center gap-2.5 rounded-md px-3 py-2 text-danger hover:bg-surface-2" @click="remove(row)"><Icon name="trash" size="15" /> {{ t('common.delete') }}</button>
+              </div>
+            </td>
+          </tr>
         </tbody>
       </table>
     </div>
 
-    <Modal
-      v-model="dialog.open"
-      :title="dialog.editing ? t('branchesPage.rename') : t('branchesPage.create')"
-      :description="dialog.editing ? t('branchesPage.renameHint') : t('branchesPage.createHint')"
-      size="sm"
-    >
-      <AppInput v-model="dialog.name" :label="t('branchesPage.name')" @keyup.enter="submitDialog" />
-      <p v-if="dialog.error" class="mt-2 text-small text-danger">{{ dialog.error }}</p>
-
+    <Modal v-model="modalOpen" size="md" :title="dialog.mode === 'edit' ? t('branchesPage.tree.edit') : t('branchesPage.tree.newUnit')">
+      <div class="space-y-4">
+        <p v-if="dialog.parent" class="text-caption text-ink-muted">{{ t(`branchesPage.tree.kind.${dialog.parent.kind}`) }}: <span class="text-ink">{{ dialog.parent.name }}</span></p>
+        <AppSelect v-if="dialog.mode === 'create'" v-model="dialog.kind" :label="t('branchesPage.tree.kind.company')" :options="kindOptions" />
+        <AppInput v-model="dialog.name" :label="t('branchesPage.tree.name')" required />
+        <AppInput v-model="dialog.code" :label="t('branchesPage.tree.code')" />
+        <UserPicker
+          :model-value="dialog.headId"
+          :display-name="dialog.headName"
+          :label="t('branchesPage.tree.head')"
+          :placeholder="t('branchesPage.tree.headPlaceholder')"
+          @select="(u) => { dialog.headId = u.id; dialog.headName = u.fullName }"
+          @clear="dialog.headId = ''"
+        />
+      </div>
       <template #footer>
-        <AppButton variant="ghost" @click="dialog.open = false">{{ t('common.cancel') }}</AppButton>
-        <AppButton :loading="dialog.submitting" :disabled="!dialog.name.trim()" @click="submitDialog">
-          {{ t('common.save') }}
-        </AppButton>
+        <AppButton variant="secondary" @click="modalOpen = false">{{ t('common.cancel') }}</AppButton>
+        <AppButton :loading="saving" :disabled="!dialog.name.trim()" @click="save">{{ t('common.save') }}</AppButton>
       </template>
     </Modal>
   </div>

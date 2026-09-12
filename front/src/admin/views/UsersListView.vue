@@ -45,7 +45,12 @@ const { ORG_LIST_TYPES } = directory
 const branchOptions = ref([])
 
 const EMPTY_FILTERS = { search: '', role: '', branch: '', department: '', subdivision: '', country: '', status: '' }
-const filters = reactive({ ...EMPTY_FILTERS, branch: route.query.branch ?? '' })
+const filters = reactive({
+  ...EMPTY_FILTERS,
+  branch: route.query.branch ?? '',
+  department: route.query.department ?? '',
+  subdivision: route.query.subdivision ?? '',
+})
 
 // Three answers to "who works here", not two: archived is someone who left,
 // which is a different thing from an account switched off while the person is
@@ -135,7 +140,7 @@ const rangeStart = computed(() => (total.value === 0 ? 0 : (page.value - 1) * PA
 const rangeEnd = computed(() => Math.min(page.value * PAGE_SIZE, total.value))
 
 const showCreateModal = ref(false)
-const showImportWizard = ref(false)
+const showImportWizard = ref(route.query.import === '1')
 const createSubmitting = ref(false)
 const createError = ref('')
 const BLANK_USER = {
