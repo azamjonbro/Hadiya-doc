@@ -100,6 +100,17 @@ function minutes(seconds) {
   return Math.round((seconds ?? 0) / 60)
 }
 
+// Each of the four tiles is a count of something that has its own list, and
+// the tile leads there — filtered the way the count was taken (active users
+// is `isActive`, the same thing the users list calls "active"). A tile that
+// leads somewhere its viewer cannot enter stays inert.
+const tileLinks = computed(() => ({
+  totalCourses: auth.hasPermission('course:read') ? '/bos/courses' : null,
+  totalEmployees: auth.hasPermission('user:read') ? '/bos/users' : null,
+  totalGroups: auth.hasPermission('user:read') ? '/bos/groups' : null,
+  activeEmployees: auth.hasPermission('user:read') ? { path: '/bos/users', query: { status: 'active' } } : null,
+}))
+
 const courseCompletionItems = computed(
   () => dashboard.value?.charts.courseCompletion.map((c) => ({ label: c.title, value: c.avgCompletion, sublabel: `${c.learners}` })) ?? [],
 )
