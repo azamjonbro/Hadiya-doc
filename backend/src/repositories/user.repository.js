@@ -196,7 +196,7 @@ export const userRepository = {
     if (branches.length) filter.branch = { $in: branches }
     if (roleNames.length) {
       const roles = await Role.find({ name: { $in: roleNames.map((name) => name.toUpperCase()) } }, { _id: 1 })
-      filter.roleId = { $in: roles.map((role) => role._id) }
+      filter.$or = [{ roleId: { $in: roles.map((role) => role._id) } }, { roleIds: { $in: roles.map((role) => role._id) } }]
     }
     return User.find(filter)
   },
@@ -213,7 +213,7 @@ export const userRepository = {
     if (departments.length) filter.department = { $in: departments }
     if (roleNames.length) {
       const roles = await Role.find({ name: { $in: roleNames.map((name) => name.toUpperCase()) } }, { _id: 1 })
-      filter.roleId = { $in: roles.map((role) => role._id) }
+      filter.$or = [{ roleId: { $in: roles.map((role) => role._id) } }, { roleIds: { $in: roles.map((role) => role._id) } }]
     }
     return User.find(filter, { _id: 1 })
   },
@@ -226,7 +226,7 @@ export const userRepository = {
       const regex = containsRegex(search)
       filter.$or = [{ fullName: regex }, { jshshir: regex }, { email: regex }]
     }
-    if (roleId) filter.roleId = roleId
+    if (roleId) filter.$and = [...(filter.$and ?? []), { $or: [{ roleId }, { roleIds: roleId }] }]
     if (branch) filter.branch = branch
     if (department) filter.department = department
     if (subdivision) filter.subdivision = subdivision

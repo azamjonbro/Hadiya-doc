@@ -95,7 +95,7 @@ async function wipePersonalData(userId) {
 
 export const userDeletionService = {
   async permanentlyDelete(actor, id) {
-    if (actor.roleName !== ROLES.SUPERADMIN) {
+    if (!(actor.roleNames ?? [actor.roleName]).includes(ROLES.SUPERADMIN)) {
       throw ApiError.forbidden('Only a superadmin can delete an employee permanently', 'SUPERADMIN_ONLY')
     }
     if (id === actor.id) {

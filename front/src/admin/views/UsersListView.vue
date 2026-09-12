@@ -147,7 +147,7 @@ const BLANK_USER = {
   managerName: '',
   email: '',
   phone: '',
-  roleName: ROLES.EMPLOYEE,
+  roleNames: [ROLES.EMPLOYEE],
   branch: '',
   department: '',
   subdivision: '',
@@ -443,7 +443,9 @@ onMounted(() => {
       </template>
 
       <template #cell-role="{ row }">
-        <Badge variant="neutral" size="sm">{{ roleLabel(row.role, { t, te }) }}</Badge>
+        <span class="flex flex-wrap gap-1">
+          <Badge v-for="name in row.roles?.length ? row.roles : [row.role]" :key="name" variant="neutral" size="sm">{{ roleLabel(name, { t, te }) }}</Badge>
+        </span>
       </template>
 
       <template #cell-department="{ row }">

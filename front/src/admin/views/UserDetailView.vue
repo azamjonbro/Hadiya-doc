@@ -143,7 +143,7 @@ onMounted(load)
               <Icon v-if="user.isActive" name="check-circle" size="16" class="text-success" />
             </div>
             <div class="mt-1.5 flex flex-wrap items-center gap-2">
-              <Badge variant="neutral">{{ roleLabel(user.role, { t, te }) }}</Badge>
+              <Badge v-for="name in user.roles?.length ? user.roles : [user.role]" :key="name" variant="neutral">{{ roleLabel(name, { t, te }) }}</Badge>
               <span v-if="user.position" class="text-caption text-ink-faint">{{ user.position }}</span>
               <span v-if="user.department" class="text-caption text-ink-faint">· {{ user.department }}</span>
               <span class="text-caption text-ink-faint">· {{ user.jshshir }}</span>

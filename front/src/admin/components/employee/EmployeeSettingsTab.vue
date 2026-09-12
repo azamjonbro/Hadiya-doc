@@ -71,7 +71,7 @@ const form = reactive({
   birthDate: '',
   hireDate: '',
   terminationDate: '',
-  roleName: '',
+  roleNames: [],
   isActive: true,
   password: '',
   avatar: '',
@@ -102,7 +102,7 @@ function resetFrom(user) {
   form.birthDate = toDateInputValue(user.birthDate)
   form.hireDate = toDateInputValue(user.hireDate)
   form.terminationDate = toDateInputValue(user.terminationDate)
-  form.roleName = user.role ?? ''
+  form.roleNames = user.roles?.length ? [...user.roles] : user.role ? [user.role] : []
   form.isActive = user.isActive
   form.avatar = user.avatar ?? ''
   form.password = ''

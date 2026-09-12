@@ -23,6 +23,7 @@ import BranchSelect from '@/components/ui/BranchSelect.vue'
 import ManagedSelect from '@/components/ui/ManagedSelect.vue'
 import UserPicker from '@/components/ui/UserPicker.vue'
 import FieldRow from './FieldRow.vue'
+import RoleChips from './RoleChips.vue'
 
 const props = defineProps({
   form: { type: Object, required: true },
@@ -64,11 +65,6 @@ const genderOptions = computed(() => [
 // letting the switch flip on save with no explanation.
 const terminationHint = computed(() =>
   props.form.terminationDate ? t('users.fields.terminationDateArchives') : t('users.fields.terminationDateHint')
-)
-
-const roleCreate = computed(() => (props.canManageRoles ? props.directory.addRole : null))
-const roleRemove = computed(() =>
-  props.canManageRoles ? (option) => props.directory.removeRole(option.id) : null
 )
 
 function entryCreate(type) {
@@ -211,14 +207,7 @@ function onManagerCleared() {
       <p class="mt-1.5 text-small text-ink-faint">{{ t('users.fields.managerHint') }}</p>
     </FieldRow>
     <FieldRow :label="t('users.role')" required>
-      <ManagedSelect
-        v-model="form.roleName"
-        :disabled="disabled"
-        :aria-label="t('users.role')"
-        :options="directory.roleOptions.value"
-        :create-entry="roleCreate"
-        :remove-entry="roleRemove"
-      />
+      <RoleChips v-model="form.roleNames" :roles="directory.roles.value" :disabled="disabled" class="sm:pt-1" />
     </FieldRow>
   </div>
 </template>

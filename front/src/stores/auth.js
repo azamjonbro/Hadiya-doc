@@ -108,7 +108,7 @@ export const useAuthStore = defineStore('auth', {
     isScoped: (state) => (state.user?.scope ?? 'SELF') !== 'ALL',
     // Gate for the few irreversible actions that stay with SUPERADMIN even
     // when the matching permission has been granted more widely.
-    isSuperAdmin: (state) => state.user?.role === 'SUPERADMIN',
+    isSuperAdmin: (state) => state.user?.role === 'SUPERADMIN' || (state.user?.roles ?? []).includes('SUPERADMIN'),
   },
 
   actions: {

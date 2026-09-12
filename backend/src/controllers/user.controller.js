@@ -14,7 +14,7 @@ import { resolveRoleScope } from '@lms/shared'
 export const userController = {
   me: asyncHandler(async (req, res) => {
     const user = await userRepository.findById(req.user.id)
-    const role = await roleRepository.findById(req.user.roleId)
+    const role = user ? await roleRepository.effectiveFor(user) : null
     // The access token outlives the account by up to its TTL, so a user
     // deactivated (or a role deleted) mid-session still arrives here with a
     // structurally valid token. Answer 401 so the client clears the session
@@ -36,6 +36,7 @@ export const userController = {
       position: user.position,
       avatar: user.avatar,
       role: role.name,
+      roles: role.names ?? [role.name],
       permissions: role.permissions,
       // The SPA routes on this: a scoped user landing on the company
       // dashboard is sent to their team's instead of collecting a 403.

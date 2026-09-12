@@ -1,5 +1,6 @@
 import {
   ROLES,
+  mergeRoles,
   composeFullName,
   MANDATORY_NOTIFICATION_TYPES,
   isMandatoryNotificationType,
@@ -55,6 +56,7 @@ function toPublicUser(user, role) {
     avatar: user.avatar,
     isActive: user.isActive,
     role: role?.name ?? null,
+    roles: role?.names ?? (role ? [role.name] : []),
     managerId: user.managerId ? user.managerId.toString() : null,
     lastLoginAt: user.lastLoginAt ?? null,
     createdAt: user.createdAt,
@@ -105,6 +107,20 @@ async function decorate(items) {
     managerName: u.managerId ? (managerName.get(u.managerId) ?? '') : '',
     groups: groupsOf.get(u.id) ?? [],
   }))
+}
+
+/**
+ * The roles a request names, as the merged shape plus the ids to store.
+ * `roleNames` wins over `roleName`; duplicates collapse; unknown names are
+ * refused as a whole rather than silently dropped.
+ */
+async function resolveRoles({ roleNames, roleName }) {
+  const names = [...new Set((roleNames?.length ? roleNames : [roleName]).filter(Boolean).map((n) => n.toUpperCase()))]
+  const rows = await Promise.all(names.map((name) => roleRepository.findByName(name)))
+  const missing = names.filter((_, i) => !rows[i])
+  if (missing.length) throw ApiError.badRequest(`Unknown role: ${missing.join(', ')}`, 'UNKNOWN_ROLE')
+  const merged = mergeRoles(rows)
+  return { role: merged, roleIds: merged.roles ? merged.roles.map((r) => r._id) : [merged._id] }
 }
 
 async function resolveRole(roleName) {
@@ -197,9 +213,9 @@ async function partitionBulkTargets(actor, userIds, { requireActive = false } = 
       continue
     }
 
-    const role = roleById.get(user.roleId.toString())
+    const role = roleRepository.effectiveFrom(user, roleById)
     if (!hasUnscopedAccess(actor)) {
-      if (!role || !EMPLOYEE_TIER_ROLES.includes(role.name)) {
+      if (!role || !(role.names ?? [role.name]).every((name) => EMPLOYEE_TIER_ROLES.includes(name))) {
         failed.push({ id, code: 'ROLE_SCOPE_FORBIDDEN', message: 'Managers can only manage employee-tier accounts' })
         continue
       }
@@ -316,7 +332,7 @@ export const userService = {
 
     const roles = await roleRepository.findAll()
     const roleById = new Map(roles.map((r) => [r._id.toString(), r]))
-    const serialize = (rows) => rows.map((u) => toPublicUser(u, roleById.get(u.roleId.toString())))
+    const serialize = (rows) => rows.map((u) => toPublicUser(u, roleRepository.effectiveFrom(u, roleById)))
 
     // Numbered pagination: the client needs a total to render "page 3 of 7",
     // so this mode pays for a count query that cursor mode does not. It is
@@ -401,13 +417,13 @@ export const userService = {
     const user = await userRepository.findById(id)
     if (!user) throw ApiError.notFound('User not found')
     await assertManagerCanView(actor, user.department, user._id)
-    const role = await roleRepository.findById(user.roleId)
+    const role = await roleRepository.effectiveFor(user)
     const [decorated] = await decorate([toPublicUser(user, role)])
     return decorated
   },
 
   async create(actor, payload) {
-    const role = await resolveRole(payload.roleName)
+    const { role, roleIds } = await resolveRoles(payload)
     await assertManagerCanManage(actor, role, payload.department ?? '')
 
     const passwordHash = await hashPassword(payload.password)
@@ -425,6 +441,7 @@ export const userService = {
         phone: payload.phone ?? '',
         passwordHash,
         roleId: role._id,
+        roleIds,
         branch: payload.branch ?? '',
         department: payload.department ?? '',
         subdivision: payload.subdivision ?? '',
@@ -523,9 +540,10 @@ export const userService = {
     const existing = await userRepository.findById(id)
     if (!existing) throw ApiError.notFound('User not found')
 
-    let role = await roleRepository.findById(existing.roleId)
-    if (payload.roleName) {
-      role = await resolveRole(payload.roleName)
+    let role = await roleRepository.effectiveFor(existing)
+    let roleIds = null
+    if (payload.roleNames?.length || payload.roleName) {
+      ;({ role, roleIds } = await resolveRoles(payload))
     }
     await assertManagerCanManage(actor, role, payload.department ?? existing.department)
 
@@ -570,7 +588,10 @@ export const userService = {
     // the account switch.
     if (payload.terminationDate) updateData.isActive = false
     if (payload.avatar !== undefined) updateData.avatar = payload.avatar
-    if (payload.roleName !== undefined) updateData.roleId = role._id
+    if (roleIds) {
+      updateData.roleId = role._id
+      updateData.roleIds = roleIds
+    }
     if (payload.jshshir !== undefined) updateData.jshshir = payload.jshshir
     if (payload.password) updateData.passwordHash = await hashPassword(payload.password)
 
@@ -747,7 +768,7 @@ export const userService = {
 
     const existing = await userRepository.findById(id)
     if (!existing) throw ApiError.notFound('User not found')
-    const role = await roleRepository.findById(existing.roleId)
+    const role = await roleRepository.effectiveFor(existing)
     await assertManagerCanManage(actor, role, existing.department)
 
     const updated = await userRepository.setActive(id, false)

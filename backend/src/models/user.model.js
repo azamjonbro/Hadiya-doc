@@ -25,6 +25,10 @@ const userSchema = new Schema(
     phone: { type: String, default: '' },
     passwordHash: { type: String, required: true },
     roleId: { type: Schema.Types.ObjectId, ref: 'Role', required: true },
+    // Every role the person wears; `roleId` is the primary one (the widest —
+    // see mergeRoles in @lms/shared) and is always among them. Empty on
+    // documents written before roles could be stacked: read as [roleId].
+    roleIds: { type: [{ type: Schema.Types.ObjectId, ref: 'Role' }], default: [] },
     // Who this person reports to. The org chart's only edge — department
     // and subdivision say *where* someone sits, this says who answers for
     // them, and the two disagree often enough (a matrix report, a team lead

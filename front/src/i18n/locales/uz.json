@@ -1869,7 +1869,10 @@
       "role": "Rol",
       "showPermissions": "Ruxsatlarni ko‘rsatish",
       "hidePermissions": "Ruxsatlarni yashirish",
-      "scope": "Ko‘rish doirasi"
+      "scope": "Ko‘rish doirasi",
+      "addRole": "Rol qo‘shish",
+      "permissionsTitle": "Foydalanuvchining ruxsatlari",
+      "noPermissions": "Ruxsatlar yo‘q"
     },
     "training": {
       "hint": "Xodimga tayinlangan kurslar va ularning holati.",

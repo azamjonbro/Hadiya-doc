@@ -1869,7 +1869,10 @@
       "role": "Role",
       "showPermissions": "Show permissions",
       "hidePermissions": "Hide permissions",
-      "scope": "Scope"
+      "scope": "Scope",
+      "addRole": "Add role",
+      "permissionsTitle": "User permissions",
+      "noPermissions": "No permissions"
     },
     "training": {
       "hint": "Courses assigned to this person and how far they are.",

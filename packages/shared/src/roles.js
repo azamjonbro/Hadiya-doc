@@ -80,3 +80,38 @@ export function resolveRoleScope(role) {
 export function isUnscoped(scope) {
   return scope === ROLE_SCOPES.ALL
 }
+
+/**
+ * Several roles worn at once (an EMPLOYEE who is also a MENTOR), folded
+ * into the one shape the rest of the code reads: `permissions` is the
+ * union, `scope` the widest, and `name` / `_id` come from the *primary*
+ * role — the widest-scoped one, SUPERADMIN ahead of everything, then the
+ * one with more permissions — so a name-based check ("is this a
+ * SUPERADMIN?") answers for the most powerful hat, never the least. The
+ * whole set is kept on `names` for anything that wants to know all of them.
+ */
+const SCOPE_RANK = { [ROLE_SCOPES.ALL]: 0, [ROLE_SCOPES.DEPARTMENT]: 1, [ROLE_SCOPES.TEAM]: 2, [ROLE_SCOPES.SELF]: 3 }
+
+export function rankRole(role) {
+  const scope = SCOPE_RANK[resolveRoleScope(role)] ?? 3
+  const superadmin = role?.name === ROLES.SUPERADMIN ? 0 : 1
+  return scope * 10 + superadmin - Math.min(9, (role?.permissions?.length ?? 0) / 1000)
+}
+
+export function mergeRoles(roles) {
+  const list = (roles ?? []).filter(Boolean)
+  if (list.length === 0) return null
+  const sorted = [...list].sort((a, b) => rankRole(a) - rankRole(b))
+  const primary = sorted[0]
+  if (sorted.length === 1) return { ...(primary.toObject?.() ?? primary), _id: primary._id, name: primary.name, names: [primary.name] }
+  const permissions = [...new Set(sorted.flatMap((role) => role.permissions ?? []))]
+  return {
+    _id: primary._id,
+    name: primary.name,
+    isSystem: primary.isSystem,
+    scope: resolveRoleScope(primary),
+    permissions,
+    names: sorted.map((role) => role.name),
+    roles: sorted,
+  }
+}

@@ -56,7 +56,10 @@ export const createUserSchema = z.object({
   jshshir,
   email: optionalEmail.optional(),
   phone: z.string().optional().default(''),
-  roleName: z.string().min(1, 'Role is required'),
+  roleName: z.string().min(1, 'Role is required').optional(),
+  // Several hats at once; when given, the first-ranked one becomes the
+  // primary and `roleName` is ignored.
+  roleNames: z.array(z.string().min(1)).min(1).max(10).optional(),
   branch: z.string().optional().default(''),
   department: z.string().optional().default(''),
   subdivision: z.string().optional().default(''),
@@ -71,7 +74,7 @@ export const createUserSchema = z.object({
   isActive: z.boolean().optional().default(true),
   courseIds: z.array(z.string().min(1)).optional().default([]),
   ...hierarchyFields,
-})
+}).refine((data) => data.roleName || data.roleNames?.length, { message: 'Role is required', path: ['roleName'] })
 
 export const updateUserSchema = z
   .object({
@@ -83,6 +86,7 @@ export const updateUserSchema = z
     email: optionalEmail.optional(),
     phone: z.string().optional(),
     roleName: z.string().min(1).optional(),
+    roleNames: z.array(z.string().min(1)).min(1).max(10).optional(),
     branch: z.string().optional(),
     department: z.string().optional(),
     subdivision: z.string().optional(),
