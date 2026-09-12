@@ -185,7 +185,11 @@ const taskCompletionItems = computed(
 
     <p v-else-if="dashboardError" class="mt-6 text-small text-danger">{{ dashboardError }}</p>
 
-    <template v-else-if="dashboard">
+    <!-- A payload without figures (the cache written before the job ran)
+         is "not yet", not a crash. -->
+    <AppCard v-else-if="!dashboard?.cards" class="mt-6 text-small text-ink-muted">{{ t('dashboard.loading') }}</AppCard>
+
+    <template v-else>
       <!-- Four tiles -->
       <div class="mt-5 grid grid-cols-2 gap-4 lg:grid-cols-4">
         <StatCard :label="t('dashboard.cards.totalCourses')" :value="dashboard.cards.totalCourses" icon="file-text" tone="primary" :to="tileLinks.totalCourses" />
@@ -208,11 +212,11 @@ const taskCompletionItems = computed(
           >
             <span class="relative flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-primary-subtle text-primary">
               <Icon name="message-square" size="20" />
-              <span v-if="inbox?.questions.unanswered" class="absolute -right-1 -top-1.5 flex h-6 min-w-6 items-center justify-center rounded-full bg-primary px-1.5 text-[12px] font-semibold text-primary-foreground">{{ inbox.questions.unanswered }}</span>
+              <span v-if="inbox?.questions?.unanswered" class="absolute -right-1 -top-1.5 flex h-6 min-w-6 items-center justify-center rounded-full bg-primary px-1.5 text-[12px] font-semibold text-primary-foreground">{{ inbox.questions.unanswered }}</span>
             </span>
             <div class="min-w-0">
               <p class="text-[18px] font-medium text-ink">{{ t('dashboard.inbox.questions.title') }}</p>
-              <p v-if="!inbox?.questions.unanswered" class="text-[13px] text-ink-muted">{{ t('dashboard.attention.allClear') }}</p>
+              <p v-if="!inbox?.questions?.unanswered" class="text-[13px] text-ink-muted">{{ t('dashboard.attention.allClear') }}</p>
             </div>
             <Icon name="chevron-right" size="18" class="ml-auto shrink-0 text-ink-faint" />
           </router-link>
@@ -270,7 +274,7 @@ const taskCompletionItems = computed(
             <div class="flex flex-wrap items-center justify-between gap-3">
               <div>
                 <p class="text-[18px] font-medium text-ink">{{ t('dashboard.inbox.employees.title') }}</p>
-                <p class="text-[13px] text-ink-muted">{{ t('dashboard.inbox.employees.subtitle', { count: inbox?.newEmployees.total ?? 0 }) }}</p>
+                <p class="text-[13px] text-ink-muted">{{ t('dashboard.inbox.employees.subtitle', { count: inbox?.newEmployees?.total ?? 0 }) }}</p>
               </div>
               <AppButton v-if="auth.hasPermission('user:read')" variant="secondary" @click="$router.push('/bos/users')">{{ t('dashboard.inbox.employees.open') }}</AppButton>
             </div>
@@ -330,7 +334,7 @@ const taskCompletionItems = computed(
             <div class="flex flex-wrap items-center justify-between gap-3">
               <div>
                 <p class="text-[18px] font-medium text-ink">{{ t('dashboard.inbox.comments.title') }}</p>
-                <p class="text-[13px] text-ink-muted">{{ t('dashboard.inbox.comments.subtitle', { count: inbox?.comments.newThisWeek ?? 0 }) }}</p>
+                <p class="text-[13px] text-ink-muted">{{ t('dashboard.inbox.comments.subtitle', { count: inbox?.comments?.newThisWeek ?? 0 }) }}</p>
               </div>
               <AppButton v-if="auth.hasPermission('news:manage')" variant="secondary" @click="$router.push('/bos/news/comments')">{{ t('dashboard.inbox.comments.open') }}</AppButton>
             </div>
