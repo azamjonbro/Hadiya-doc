@@ -7,9 +7,12 @@
  * live preview. Everything saves into the platform settings' `branding`
  * and applies through the branding store the moment it is saved.
  */
-import { computed, onMounted, reactive, ref } from 'vue'
+import { computed, onMounted, reactive, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { platformSettingsApi } from '@/services/platformSettings'
+import { branchesApi } from '@/services/branches'
+import { http } from '@/services/http'
+import AppSelect from '@/components/ui/AppSelect.vue'
 import { useBrandingStore } from '@/stores/branding'
 import { useToast } from '@/composables/useToast'
 import { apiErrorText } from '@/utils/apiError'
@@ -20,9 +23,26 @@ import ImageUploadField from '@/components/ui/ImageUploadField.vue'
 import Icon from '@/components/ui/Icon.vue'
 import Skeleton from '@/components/ui/Skeleton.vue'
 
+const props = defineProps({
+  // Opened from a branch's ⋯ on the org chart: edit that branch's look.
+  initialBranch: { type: String, default: '' },
+})
+
 const { t } = useI18n()
 const toast = useToast()
 const branding = useBrandingStore()
+
+// '' is the company; a branch name edits that branch's overrides, where an
+// empty field means "same as the company".
+const branch = ref(props.initialBranch)
+const branches = ref([])
+const branchOptions = computed(() => {
+  const names = branches.value.map((b) => b.name)
+  // Opened for a branch the overview does not list yet (just typed on an
+  // employee): still offer it, so the link from the org chart lands.
+  if (branch.value && !names.includes(branch.value)) names.unshift(branch.value)
+  return [{ value: '', label: t('settings.design.companyWide') }, ...names.map((name) => ({ value: name, label: name }))]
+})
 
 const loading = ref(true)
 const saving = ref(false)
@@ -79,8 +99,14 @@ function move(index, delta) {
 async function load() {
   loading.value = true
   try {
-    const settings = await platformSettingsApi.get()
-    const b = settings.branding ?? {}
+    let b
+    if (branch.value) {
+      const { data } = await http.get(`/settings/branding/${encodeURIComponent(branch.value)}`)
+      b = data.data?.branding ?? {}
+    } else {
+      const settings = await platformSettingsApi.get()
+      b = settings.branding ?? {}
+    }
     Object.assign(form, {
       appName: b.appName ?? '',
       primaryColor: b.primaryColor ?? '',
@@ -93,7 +119,7 @@ async function load() {
       portalNav: (b.portalNav ?? []).map((row) => ({ name: row.name, enabled: row.enabled !== false })),
       startPage: b.startPage ?? '',
     })
-    ensureNav()
+    if (!branch.value || form.portalNav.length) ensureNav()
   } catch (error) {
     toast.error(apiErrorText(error))
   } finally {
@@ -116,6 +142,13 @@ async function save() {
       portalNav: form.portalNav.map((row) => ({ name: row.name, enabled: row.enabled })),
       startPage: form.startPage,
     }
+    if (branch.value) {
+      // A branch override: '' inherits, so nothing is deleted from the payload.
+      payload.primaryColor = form.primaryColor || ''
+      await http.put(`/settings/branding/${encodeURIComponent(branch.value)}`, payload)
+      toast.success(t('settings.design.savedBranch', { branch: branch.value }))
+      return
+    }
     if (!form.primaryColor) delete payload.primaryColor
     const settings = await platformSettingsApi.update({ branding: payload })
     branding.set(settings.branding ?? payload)
@@ -128,18 +161,32 @@ async function save() {
 }
 
 const previewColor = computed(() => form.primaryColor || '#347c1a')
-onMounted(load)
+async function resetBranch() {
+  if (!branch.value) return
+  await http.delete(`/settings/branding/${encodeURIComponent(branch.value)}`)
+  toast.success(t('settings.design.branchReset'))
+  await load()
+}
+watch(branch, load)
+onMounted(async () => {
+  branches.value = await branchesApi.overview().catch(() => [])
+  await load()
+})
 </script>
 
 <template>
   <div>
     <div class="flex flex-wrap items-center justify-between gap-3">
       <p class="text-[14px] text-ink-muted">{{ t('settings.design.hint') }}</p>
-      <div class="flex items-center gap-2">
+      <div class="flex flex-wrap items-center gap-2">
+        <AppSelect v-model="branch" class="w-56" :aria-label="t('settings.design.branch')" :options="branchOptions" />
+        <AppButton v-if="branch" variant="ghost" @click="resetBranch">{{ t('settings.design.inheritAll') }}</AppButton>
         <AppButton variant="outline" icon="eye" @click="$router.push('/')">{{ t('settings.design.openPortal') }}</AppButton>
         <AppButton :loading="saving" @click="save">{{ t('common.save') }}</AppButton>
       </div>
     </div>
+
+    <p v-if="branch" class="mt-3 rounded-md bg-primary-subtle px-4 py-2.5 text-[13px] text-primary">{{ t('settings.design.branchHint', { branch }) }}</p>
 
     <div v-if="loading" class="mt-6 space-y-3"><Skeleton v-for="i in 4" :key="i" class="h-16 w-full" /></div>
 

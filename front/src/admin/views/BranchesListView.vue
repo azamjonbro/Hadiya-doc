@@ -229,6 +229,7 @@ onMounted(load)
                 <button v-if="row.kind !== 'subdivision'" type="button" class="flex w-full items-center gap-2.5 rounded-md px-3 py-2 text-ink hover:bg-surface-2" @click="openCreate(row)"><Icon name="plus" size="15" class="text-ink-faint" /> {{ t('branchesPage.tree.createChild') }}</button>
                 <button type="button" class="flex w-full items-center gap-2.5 rounded-md px-3 py-2 text-ink hover:bg-surface-2" @click="viewUsers(row)"><Icon name="eye" size="15" class="text-ink-faint" /> {{ t('branchesPage.tree.viewUsers') }}</button>
                 <button type="button" class="flex w-full items-center gap-2.5 rounded-md px-3 py-2 text-ink hover:bg-surface-2" @click="openEdit(row)"><Icon name="pencil" size="15" class="text-ink-faint" /> {{ t('branchesPage.tree.edit') }}</button>
+                <button v-if="row.kind === 'branch'" type="button" class="flex w-full items-center gap-2.5 rounded-md px-3 py-2 text-ink hover:bg-surface-2" @click="menuFor = ''; router.push({ path: '/bos/settings', query: { tab: 'design', branch: row.name } })"><Icon name="settings" size="15" class="text-ink-faint" /> {{ t('branchesPage.tree.portalSettings') }}</button>
                 <button type="button" class="flex w-full items-center gap-2.5 rounded-md px-3 py-2 text-danger hover:bg-surface-2" @click="remove(row)"><Icon name="trash" size="15" /> {{ t('common.delete') }}</button>
               </div>
             </td>

@@ -1,5 +1,6 @@
 import { Branch } from '../../models/branch.model.js'
 import { OrgList } from '../../models/orgList.model.js'
+import { BranchBranding } from '../../models/branchBranding.model.js'
 import { User } from '../../models/user.model.js'
 import { Course } from '../../models/course.model.js'
 import { userRepository } from '../../repositories/user.repository.js'
@@ -176,6 +177,7 @@ export const branchService = {
     branch.nameKey = trimmed.toLowerCase()
     await branch.save()
 
+    await BranchBranding.updateOne({ branchKey: oldName.toLowerCase() }, { $set: { branch: trimmed, branchKey: trimmed.toLowerCase() } })
     const [users, coursesResult] = await Promise.all([
       User.updateMany({ branch: oldName }, { $set: { branch: trimmed } }),
       // Positional operator: a course can target several branches, and only

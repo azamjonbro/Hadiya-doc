@@ -24,6 +24,7 @@ const luminance = ([r, g, b]) => {
 export const useBrandingStore = defineStore('branding', {
   state: () => ({
     loaded: false,
+    branch: '',
     appName: '',
     logoUrl: '',
     faviconUrl: '',
@@ -46,9 +47,12 @@ export const useBrandingStore = defineStore('branding', {
     startPath: (state) => portalSections.find((item) => item.name === state.startPage)?.path ?? '',
   },
   actions: {
-    async load() {
+    // `branch`: the signed-in person's, laid over the company branding —
+    // called again after login with their branch, and on logout without.
+    async load(branch = '') {
       try {
-        const { data } = await http.get('/settings/public')
+        const { data } = await http.get('/settings/public', { params: branch ? { branch } : {} })
+        this.branch = data.data?.branch ?? ''
         this.set(data.data?.branding ?? {})
       } catch {
         // No settings, no branding: the shipped defaults stand.

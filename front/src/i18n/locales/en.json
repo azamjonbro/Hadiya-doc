@@ -1014,7 +1014,13 @@
       "nav": "User portal navigation menu",
       "navHint": "Put the most important sections in quick access — they are always visible. The rest move to the extra menu.",
       "startPage": "Start page",
-      "addSections": "Add sections: {count}/{max}"
+      "addSections": "Add sections: {count}/{max}",
+      "companyWide": "Whole company",
+      "branch": "Branch",
+      "branchHint": "The “{branch}” branch's portal. An empty field inherits the company setting.",
+      "savedBranch": "Design of “{branch}” saved",
+      "inheritAll": "Same as company",
+      "branchReset": "Branch settings removed"
     }
   },
   "reviews": {
@@ -2136,7 +2142,8 @@
       "deleteTitle": "Delete unit",
       "deleteMessage": "Delete “{name}”?",
       "inUse": "People are still in this unit — move them first.",
-      "import": "Import"
+      "import": "Import",
+      "portalSettings": "Portal settings"
     }
   },
   "orgLists": {

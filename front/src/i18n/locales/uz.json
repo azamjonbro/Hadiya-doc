@@ -1014,7 +1014,13 @@
       "nav": "Foydalanuvchi portali menyusi",
       "navHint": "Eng muhim bo‘limlarni tepaga chiqaring — ular doim ko‘rinadi. Qolganlari qo‘shimcha menyuga o‘tadi.",
       "startPage": "Boshlang‘ich sahifa",
-      "addSections": "Bo‘limlar qo‘shish: {count}/{max}"
+      "addSections": "Bo‘limlar qo‘shish: {count}/{max}",
+      "companyWide": "Butun kompaniya",
+      "branch": "Filial",
+      "branchHint": "«{branch}» filialining portali. Bo‘sh qoldirilgan maydon kompaniya sozlamasini oladi.",
+      "savedBranch": "«{branch}» filiali dizayni saqlandi",
+      "inheritAll": "Kompaniyanikidek",
+      "branchReset": "Filial sozlamalari olib tashlandi"
     }
   },
   "reviews": {
@@ -2137,7 +2143,8 @@
       "deleteTitle": "Bo‘linmani o‘chirish",
       "deleteMessage": "«{name}» o‘chirilsinmi?",
       "inUse": "Bu bo‘linmada xodimlar bor — avval ularni boshqa joyga o‘tkazing.",
-      "import": "Import"
+      "import": "Import",
+      "portalSettings": "Portal sozlamalari"
     }
   },
   "orgLists": {

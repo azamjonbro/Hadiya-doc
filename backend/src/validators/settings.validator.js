@@ -10,6 +10,21 @@ const hexColor = z.string().regex(/^#[0-9a-f]{6}$/i, 'Colour must be #rrggbb')
  * Nothing here accepts a credential. SMTP passwords, storage keys and
  * tokens stay in the environment — see settings.model.js.
  */
+const brandingFields = {
+  appName: z.string().trim().max(120).optional(),
+  logoUrl: z.string().trim().max(1000).optional(),
+  faviconUrl: z.string().trim().max(1000).optional(),
+  primaryColor: hexColor.or(z.literal('')).optional(),
+  loginBackgroundUrl: z.string().trim().max(1000).optional(),
+  coursesCoverUrl: z.string().trim().max(1000).optional(),
+  catalogCoverUrl: z.string().trim().max(1000).optional(),
+  profileCoverUrl: z.string().trim().max(1000).optional(),
+  portalNav: z.array(z.object({ name: z.string().trim().min(1).max(60), enabled: z.boolean().optional() })).max(40).optional(),
+  startPage: z.string().trim().max(60).optional(),
+}
+/** A branch's overrides — every field optional, '' meaning "inherit". */
+export const branchBrandingSchema = z.object(brandingFields)
+
 export const updateSettingsSchema = z
   .object({
     branding: z

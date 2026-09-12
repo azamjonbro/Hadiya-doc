@@ -1,5 +1,6 @@
 <script setup>
 import { computed, ref } from 'vue'
+import { useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { roleLabel } from '@/utils/roleLabel'
 import { useAuthStore } from '@/stores/auth'
@@ -29,7 +30,8 @@ function onLocaleChange(code) {
 // Rasn 26: three boxed tabs — the basics (account, security), the look,
 // and the features (policies, AI, integrations).
 const TABS = ['basic', 'design', 'features']
-const tab = ref('basic')
+const route = useRoute()
+const tab = ref(TABS.includes(route.query.tab) ? route.query.tab : 'basic')
 </script>
 
 <template>
@@ -122,7 +124,7 @@ const tab = ref('basic')
 
       <!-- Brand: colour, logo, covers, portal menu (rasm) -->
       <section v-if="auth.hasPermission('settings:manage') || auth.hasPermission('branding:manage')" class="mt-8 border-t border-border pt-6">
-        <BrandingSettingsCard />
+        <BrandingSettingsCard :initial-branch="route.query.branch ?? ''" />
       </section>
     </template>
 
