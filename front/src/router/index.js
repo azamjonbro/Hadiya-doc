@@ -428,6 +428,13 @@ export function homeRouteFor(auth) {
 }
 
 router.beforeEach(async (to) => {
+  // Settings → Design lets the administrator pick which portal page opens
+  // first; the dashboard stays reachable through the menu.
+  if (to.path === '/' && !to.query.home) {
+    const { useBrandingStore } = await import('@/stores/branding')
+    const branding = useBrandingStore()
+    if (branding.startPath && branding.startPath !== '/') return branding.startPath
+  }
   const auth = useAuthStore()
   // main.js starts this without waiting; the first navigation is where the
   // answer is actually needed, so this is where it is waited for.

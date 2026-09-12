@@ -4,6 +4,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { roleLabel } from '@/utils/roleLabel'
 import { useAuthStore } from '@/stores/auth'
+import { useBrandingStore } from '@/stores/branding'
 import { gamificationApi } from '@/services/gamification'
 import { certificatesApi } from '@/services/certificates'
 import { useToast } from '@/composables/useToast'
@@ -29,6 +30,7 @@ const { t, te, locale } = useI18n()
 const route = useRoute()
 const router = useRouter()
 const auth = useAuthStore()
+const branding = useBrandingStore()
 const toast = useToast()
 
 const activeTab = ref(TABS.includes(route.query.tab) ? route.query.tab : 'summary')
@@ -136,7 +138,7 @@ onMounted(load)
            gradient stays under it for a deployment without the file -->
       <div
         class="h-[160px] w-full bg-cover bg-center bg-gradient-to-r from-primary via-emerald-700 to-slate-700"
-        style="background-image: url('/hero/profile.jpg')"
+        :style="{ backgroundImage: `url('${branding.profileCoverUrl || '/hero/profile.jpg'}')` }"
       ></div>
 
       <div class="px-4 sm:px-[100px]">

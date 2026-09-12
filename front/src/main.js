@@ -4,6 +4,7 @@ import App from './App.vue'
 import { router } from './router'
 import { i18n } from './i18n'
 import { bindAuthStore, bindRouter } from './services/http'
+import { useBrandingStore } from './stores/branding'
 import { useAuthStore } from './stores/auth'
 import { useToast } from './composables/useToast'
 import { apiErrorText } from './utils/apiError'
@@ -92,6 +93,8 @@ function bootstrap() {
   // nothing is decided before the answer arrives; the shell just gets to paint
   // and the chunk gets to download while it is in flight.
   authStore.ensureSession()
+  // The brand colour, logo and covers — public, applied as soon as they arrive.
+  useBrandingStore().load()
   // 12.2 — leave the read-only offline session as soon as the connection
   // is back, rather than on the next reload.
   authStore.watchNetwork()

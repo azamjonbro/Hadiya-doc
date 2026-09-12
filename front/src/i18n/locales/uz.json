@@ -987,6 +987,33 @@
         "ATTENTION_ALERT": "Diqqat pasaydi",
         "PROCTORING_FOREIGN_FACE": "Proctoring ogohlantirishi"
       }
+    },
+    "design": {
+      "hint": "Shaxsiy kabinet va admin panel uchun rang sxemasi va logotipni tanlang, portal sahifalari muqovalarini yuklang.",
+      "openPortal": "Foydalanuvchi portali",
+      "saved": "Dizayn saqlandi",
+      "colorScheme": "Rang sxemasi",
+      "colorHint": "Tayyor sxemalardan birini tanlang yoki o‘zingiznikini yarating.",
+      "defaultColor": "Standart",
+      "customColor": "O‘z rangi",
+      "appName": "Nomi (logotip o‘rnida)",
+      "logo": "Logotip",
+      "logoHint": "Logotip va sayt belgisi (favicon) — brauzer tabida ko‘rinadigan kichik rasm.",
+      "logoFormat": "JPG, PNG, GIF. 250×60 piksel gacha kichraytiriladi.",
+      "favicon": "Favicon",
+      "faviconFormat": "ICO, GIF, PNG, 16×16 piksel gacha.",
+      "covers": "Fonlar va muqovalar",
+      "coversHint": "Foydalanuvchi va admin portali sahifalarining fon va muqovalarini sozlang.",
+      "cover": {
+        "coursesCoverUrl": "«Mening kurslarim» muqovasi",
+        "catalogCoverUrl": "«Katalog» muqovasi",
+        "profileCoverUrl": "Profil muqovasi",
+        "loginBackgroundUrl": "Kirish sahifasi foni"
+      },
+      "coverFormat": "JPG, PNG. Tavsiya: 1920×160 (kirish sahifasi uchun 1920×1080).",
+      "nav": "Foydalanuvchi portali menyusi",
+      "navHint": "Eng muhim bo‘limlarni tepaga chiqaring — ular doim ko‘rinadi. Qolganlari qo‘shimcha menyuga o‘tadi.",
+      "startPage": "Boshlang‘ich sahifa"
     }
   },
   "reviews": {

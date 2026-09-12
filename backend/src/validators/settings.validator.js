@@ -20,6 +20,11 @@ export const updateSettingsSchema = z
         primaryColor: hexColor.optional(),
         loginBackgroundUrl: z.string().trim().max(1000).optional(),
         supportEmail: z.string().trim().email().max(200).or(z.literal('')).optional(),
+        coursesCoverUrl: z.string().trim().max(1000).optional(),
+        catalogCoverUrl: z.string().trim().max(1000).optional(),
+        profileCoverUrl: z.string().trim().max(1000).optional(),
+        portalNav: z.array(z.object({ name: z.string().trim().min(1).max(60), enabled: z.boolean().optional() })).max(40).optional(),
+        startPage: z.string().trim().max(60).optional(),
       })
       .optional(),
     mail: z

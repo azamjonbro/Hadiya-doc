@@ -14,6 +14,7 @@ import AiSettingsCard from '@/admin/components/AiSettingsCard.vue'
 import ApiKeysCard from '@/admin/components/ApiKeysCard.vue'
 import WebhooksCard from '@/admin/components/WebhooksCard.vue'
 import SsoSettingsCard from '@/admin/components/SsoSettingsCard.vue'
+import BrandingSettingsCard from '@/admin/components/BrandingSettingsCard.vue'
 
 const { t, te, locale } = useI18n()
 const auth = useAuthStore()
@@ -116,9 +117,12 @@ const tab = ref('basic')
               {{ t('settings.appearance.dark') }}
             </button>
           </div>
-          <span class="text-ink-muted">{{ t('portal.brand') }}</span>
-          <span class="text-ink">{{ t('portal.brand') }}</span>
         </div>
+      </section>
+
+      <!-- Brand: colour, logo, covers, portal menu (rasm) -->
+      <section v-if="auth.hasPermission('settings:manage') || auth.hasPermission('branding:manage')" class="mt-8 border-t border-border pt-6">
+        <BrandingSettingsCard />
       </section>
     </template>
 

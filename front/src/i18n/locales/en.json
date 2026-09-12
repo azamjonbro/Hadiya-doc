@@ -987,6 +987,33 @@
         "ATTENTION_ALERT": "Low attention",
         "PROCTORING_FOREIGN_FACE": "Proctoring alert"
       }
+    },
+    "design": {
+      "hint": "Pick the colour scheme and logo for the portal and the admin panel, and upload the covers of the portal's pages.",
+      "openPortal": "User portal",
+      "saved": "Design saved",
+      "colorScheme": "Colour scheme",
+      "colorHint": "Pick one of the presets or make your own.",
+      "defaultColor": "Default",
+      "customColor": "Custom colour",
+      "appName": "Name (instead of a logo)",
+      "logo": "Logo",
+      "logoHint": "The logo and the favicon — the small image in the browser tab.",
+      "logoFormat": "JPG, PNG, GIF. Scaled down to 250×60 pixels.",
+      "favicon": "Favicon",
+      "faviconFormat": "ICO, GIF, PNG, up to 16×16 pixels.",
+      "covers": "Backgrounds and covers",
+      "coversHint": "Set the backgrounds and covers of the user and admin portals.",
+      "cover": {
+        "coursesCoverUrl": "“My courses” cover",
+        "catalogCoverUrl": "“Catalog” cover",
+        "profileCoverUrl": "Profile cover",
+        "loginBackgroundUrl": "Login page background"
+      },
+      "coverFormat": "JPG, PNG. Recommended 1920×160 (login: 1920×1080).",
+      "nav": "User portal navigation menu",
+      "navHint": "Put the most important sections in quick access — they are always visible. The rest move to the extra menu.",
+      "startPage": "Start page"
     }
   },
   "reviews": {

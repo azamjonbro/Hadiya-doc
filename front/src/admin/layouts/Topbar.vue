@@ -1,4 +1,5 @@
 <script setup>
+import { useBrandingStore } from '@/stores/branding'
 import { ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
@@ -11,6 +12,7 @@ import Icon from '@/components/ui/Icon.vue'
 import Avatar from '@/components/ui/Avatar.vue'
 
 const { t, locale } = useI18n()
+const branding = useBrandingStore()
 const router = useRouter()
 const theme = useThemeStore()
 const auth = useAuthStore()
@@ -46,7 +48,8 @@ function pickLocale(code) {
       to="/bos"
       class="flex h-16 shrink-0 items-center pl-3 pr-6 text-[34px] font-black uppercase leading-none tracking-tighter text-white transition-opacity hover:opacity-90"
     >
-      {{ t('portal.brand') }}
+      <img v-if="branding.logoUrl" :src="branding.logoUrl" :alt="branding.appName || t('portal.brand')" class="h-9 max-w-[180px] object-contain" />
+      <template v-else>{{ branding.appName || t('portal.brand') }}</template>
     </router-link>
 
     <div class="flex flex-1 justify-center px-4">
