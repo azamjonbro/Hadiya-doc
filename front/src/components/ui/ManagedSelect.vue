@@ -23,6 +23,9 @@ const props = defineProps({
   label: { type: String, default: '' },
   placeholder: { type: String, default: '' },
   disabled: { type: Boolean, default: false },
+  // For a field whose label sits outside the component (a label-left form
+  // row); the control still has to say what it is.
+  ariaLabel: { type: String, default: '' },
   // async (name) => boolean — resolve true when the entry now exists.
   createEntry: { type: Function, default: null },
   // async (option) => boolean — resolve true when it is gone.
@@ -131,6 +134,7 @@ watch(open, (isOpen) => {
     <button
       type="button"
       :disabled="disabled"
+      :aria-label="label ? undefined : ariaLabel || undefined"
       class="flex h-10.5 w-full items-center gap-2 rounded-md border border-border-strong bg-surface pl-3.5 pr-9 text-left text-body text-ink outline-none transition-default focus:border-primary focus:ring-2 focus:ring-primary/15 disabled:cursor-not-allowed disabled:opacity-60"
       @click="toggle"
     >

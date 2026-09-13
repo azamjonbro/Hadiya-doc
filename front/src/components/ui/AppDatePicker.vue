@@ -33,6 +33,9 @@ const props = defineProps({
   required: { type: Boolean, default: false },
   disabled: { type: Boolean, default: false },
   withTime: { type: Boolean, default: false },
+  // For a field whose label sits outside the component (a label-left form
+  // row); the control still has to say what it is.
+  ariaLabel: { type: String, default: '' },
   // Both 'YYYY-MM-DD'. Days outside are unselectable and the year grid stops
   // there, which is what makes a birth-date field stop offering 2041.
   min: { type: String, default: '' },
@@ -448,6 +451,7 @@ const inputId = `datepicker-${Math.random().toString(36).slice(2, 9)}`
         type="text"
         inputmode="numeric"
         autocomplete="off"
+        :aria-label="label ? undefined : ariaLabel || undefined"
         :disabled="disabled"
         :value="typedText"
         :placeholder="placeholder || (withTime ? 'kk.oo.yyyy 00:00' : 'kk.oo.yyyy')"

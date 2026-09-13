@@ -80,6 +80,7 @@ export const adminSections = [
     children: [
       { name: 'ojt-sessions', path: '/bos/ojt/sessions', labelKey: 'ojt.sessionsTitle', permission: 'ojt:manage' },
       { name: 'ojt', path: '/bos/ojt', labelKey: 'ojt.adminTitle', permission: 'ojt:manage' },
+      { name: 'ojt-scales', path: '/bos/ojt/scales', labelKey: 'ojt.scales.title', permission: 'ojt:manage' },
     ],
   },
   // Rasn 23: "staff appraisal" holds the 360° sessions and the
@@ -90,7 +91,8 @@ export const adminSections = [
     path: '/bos/review360',
     labelKey: 'admin.section.appraisal',
     children: [
-      { name: 'review360', path: '/bos/review360', labelKey: 'review360.title', permission: 'review360:manage' },
+      { name: 'review360', path: '/bos/review360', labelKey: 'review360.sessions', permission: 'review360:manage' },
+      { name: 'competency-profiles', path: '/bos/competencies/profiles', labelKey: 'competency.profiles', permission: 'competency:manage' },
       { name: 'competencies', path: '/bos/competencies', labelKey: 'competency.title', permission: 'competency:manage' },
       { name: 'competency-matrix', path: '/bos/competencies/matrix', labelKey: 'competency.matrix', permission: 'competency:assess' },
     ],

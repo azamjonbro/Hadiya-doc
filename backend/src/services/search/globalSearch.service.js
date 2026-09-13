@@ -134,7 +134,7 @@ export const globalSearchService = {
 
     const filter = {
       isActive: true,
-      // Deliberately name only. JSHSHIR and passport are identifiers, not
+      // Deliberately name only. JSHSHIR is an identifier, not
       // search terms, and matching on them turns the palette into a way of
       // confirming somebody's national id one guess at a time.
       $or: [{ fullName: pattern }, { email: pattern }],

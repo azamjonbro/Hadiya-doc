@@ -1,6 +1,7 @@
 <script setup>
 import { computed, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
+import { roleLabel } from '@/utils/roleLabel'
 import Avatar from '@/components/ui/Avatar.vue'
 import Icon from '@/components/ui/Icon.vue'
 import Skeleton from '@/components/ui/Skeleton.vue'
@@ -21,7 +22,7 @@ const props = defineProps({
 
 const emit = defineEmits(['select', 'start-with', 'search-contacts', 'new-group'])
 
-const { t, locale } = useI18n()
+const { t, te, locale } = useI18n()
 
 const tab = ref('chats') // chats | groups | people
 const query = ref('')
@@ -259,7 +260,7 @@ function rowTitle(conversation) {
                     </span>
                   </div>
                   <p class="mt-0.5 truncate text-caption text-ink-muted">
-                    {{ subtitleFor(person) || person.role || person.email }}
+                    {{ subtitleFor(person) || roleLabel(person.role, { t, te }) || person.email }}
                   </p>
                 </div>
                 <span

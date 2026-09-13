@@ -61,7 +61,8 @@ export function requireRole(...roles) {
       next(ApiError.unauthorized())
       return
     }
-    if (!roles.includes(req.user.roleName)) {
+    const held = req.user.roleNames ?? [req.user.roleName]
+    if (!held.some((name) => roles.includes(name))) {
       next(ApiError.forbidden(`Requires role: ${roles.join(' or ')}`))
       return
     }

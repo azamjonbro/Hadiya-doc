@@ -1,6 +1,7 @@
 <script setup>
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
+import { roleLabel } from '@/utils/roleLabel'
 import Avatar from '@/components/ui/Avatar.vue'
 import Icon from '@/components/ui/Icon.vue'
 import Skeleton from '@/components/ui/Skeleton.vue'
@@ -16,7 +17,7 @@ const props = defineProps({
 
 const emit = defineEmits(['close', 'preview-image'])
 
-const { t, locale } = useI18n()
+const { t, te, locale } = useI18n()
 
 const peer = computed(() => props.details?.peer ?? {})
 
@@ -25,7 +26,7 @@ const peer = computed(() => props.details?.peer ?? {})
 const personRows = computed(() => [
   { icon: 'briefcase', label: t('chat.info.position'), value: peer.value.position },
   { icon: 'building', label: t('chat.info.department'), value: peer.value.department },
-  { icon: 'shield', label: t('chat.info.role'), value: peer.value.role },
+  { icon: 'shield', label: t('chat.info.role'), value: roleLabel(peer.value.role, { t, te }) },
   { icon: 'user', label: t('chat.info.jshshir'), value: peer.value.jshshir },
   { icon: 'link', label: t('chat.info.email'), value: peer.value.email },
   { icon: 'user-plus', label: t('chat.info.joinedAt'), value: formatDateTime(peer.value.joinedAt, locale.value) },

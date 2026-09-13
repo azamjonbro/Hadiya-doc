@@ -1,4 +1,5 @@
 import { userService } from '../services/users/user.service.js'
+import { userDeletionService } from '../services/users/userDeletion.service.js'
 import { courseAssignmentService } from '../services/courses/courseAssignment.service.js'
 import { learningStatsService } from '../services/analytics/learningStats.service.js'
 import { learningHistoryService } from '../services/analytics/learningHistory.service.js'
@@ -13,7 +14,7 @@ import { resolveRoleScope } from '@lms/shared'
 export const userController = {
   me: asyncHandler(async (req, res) => {
     const user = await userRepository.findById(req.user.id)
-    const role = await roleRepository.findById(req.user.roleId)
+    const role = user ? await roleRepository.effectiveFor(user) : null
     // The access token outlives the account by up to its TTL, so a user
     // deactivated (or a role deleted) mid-session still arrives here with a
     // structurally valid token. Answer 401 so the client clears the session
@@ -26,15 +27,16 @@ export const userController = {
       id: user._id.toString(),
       firstName: user.firstName ?? '',
       lastName: user.lastName ?? '',
+      patronymic: user.patronymic ?? '',
       fullName: user.fullName,
       jshshir: user.jshshir,
-      passportSeries: user.passportSeries ?? '',
       email: user.email ?? '',
       phone: user.phone,
       department: user.department,
       position: user.position,
       avatar: user.avatar,
       role: role.name,
+      roles: role.names ?? [role.name],
       permissions: role.permissions,
       // The SPA routes on this: a scoped user landing on the company
       // dashboard is sent to their team's instead of collecting a 403.
@@ -93,6 +95,22 @@ export const userController = {
 
   bulkMessage: asyncHandler(async (req, res) => {
     sendSuccess(res, await userService.bulkMessage(req.user, req.body), 'Messages sent')
+  }),
+
+  bulkDepartment: asyncHandler(async (req, res) => {
+    sendSuccess(res, await userService.bulkDepartment(req.user, req.body.userIds, req.body.department), 'Department changed')
+  }),
+
+  bulkDismiss: asyncHandler(async (req, res) => {
+    sendSuccess(res, await userService.bulkDismiss(req.user, req.body.userIds), 'Users dismissed')
+  }),
+
+  bulkDelete: asyncHandler(async (req, res) => {
+    sendSuccess(res, await userDeletionService.bulkDelete(req.user, req.body.userIds), 'Users deleted')
+  }),
+
+  permanentlyDelete: asyncHandler(async (req, res) => {
+    sendSuccess(res, await userDeletionService.permanentlyDelete(req.user, req.params.id), 'User deleted')
   }),
 
   bulkDeactivate: asyncHandler(async (req, res) => {

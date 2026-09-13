@@ -1,8 +1,10 @@
 <script setup>
 import { computed } from 'vue'
+import { useTableColumns } from '@/composables/useTableColumns'
 import Skeleton from './Skeleton.vue'
 import EmptyState from './EmptyState.vue'
 import Icon from './Icon.vue'
+import ColumnSettings from './ColumnSettings.vue'
 
 /**
  * The admin table shell: the frame, the header row, the loading skeleton, the
@@ -42,9 +44,21 @@ const props = defineProps({
   emptyIcon: { type: String, default: 'layers' },
   emptyTitle: { type: String, default: '' },
   emptyDescription: { type: String, default: '' },
+  /**
+   * Turns on the ⚙ at the end of the header (rasm 1.09): "USTUNLAR" — a
+   * draggable list of the columns with a tick box each. What the person
+   * chose is kept in localStorage under this key, so give each table a
+   * name of its own ('users', 'trash'…). The first column is always shown;
+   * a table with nothing in it is not a table.
+   */
+  settingsKey: { type: String, default: '' },
 })
 
 const emit = defineEmits(['update:selected', 'row-click'])
+
+// ---- Column settings (see useTableColumns) ---------------------------
+const columnSettings = useTableColumns(props.settingsKey || 'table', () => props.columns)
+const visibleColumns = computed(() => (props.settingsKey ? columnSettings.visible.value : props.columns))
 
 function keyOf(row, index) {
   const key = typeof props.rowKey === 'function' ? props.rowKey(row, index) : row[props.rowKey]
@@ -91,14 +105,17 @@ const alignClass = { left: 'text-left', center: 'text-center', right: 'text-righ
             />
           </th>
           <th
-            v-for="col in columns"
+            v-for="col in visibleColumns"
             :key="col.key"
             class="px-4 py-3"
             :class="[col.width, col.headClass, alignClass[col.align ?? 'left']]"
           >
             <slot :name="`head-${col.key}`" :column="col">{{ col.label }}</slot>
           </th>
-          <th v-if="chevron" class="w-10 px-4 py-3" />
+          <th v-if="chevron && !settingsKey" class="w-10 px-4 py-3" />
+          <th v-if="settingsKey" class="w-14 px-3 py-2 text-right">
+            <ColumnSettings :columns="columnSettings" />
+          </th>
         </tr>
       </thead>
 
@@ -108,10 +125,10 @@ const alignClass = { left: 'text-left', center: 'text-center', right: 'text-righ
         <template v-if="loading">
           <tr v-for="i in skeletonRows" :key="`skeleton-${i}`" class="border-b border-border last:border-0">
             <td v-if="selectable" class="px-4 py-3"><Skeleton class="h-4 w-4" /></td>
-            <td v-for="col in columns" :key="col.key" class="px-4 py-3">
+            <td v-for="col in visibleColumns" :key="col.key" class="px-4 py-3">
               <Skeleton class="h-4" :class="col.skeletonWidth ?? 'w-24'" />
             </td>
-            <td v-if="chevron" class="px-4 py-3" />
+            <td v-if="chevron || settingsKey" class="px-4 py-3" />
           </tr>
         </template>
 
@@ -132,7 +149,7 @@ const alignClass = { left: 'text-left', center: 'text-center', right: 'text-righ
             />
           </td>
           <td
-            v-for="col in columns"
+            v-for="col in visibleColumns"
             :key="col.key"
             class="px-4 py-3"
             :class="[col.cellClass, alignClass[col.align ?? 'left']]"
@@ -141,7 +158,8 @@ const alignClass = { left: 'text-left', center: 'text-center', right: 'text-righ
               {{ row[col.key] || '—' }}
             </slot>
           </td>
-          <td v-if="chevron" class="px-4 py-3 text-ink-faint"><Icon name="chevron-right" size="15" /></td>
+          <td v-if="chevron" class="px-4 py-3 text-right text-ink-faint"><Icon name="chevron-right" size="15" /></td>
+          <td v-else-if="settingsKey" class="px-3 py-3" />
         </tr>
       </tbody>
     </table>
@@ -151,5 +169,6 @@ const alignClass = { left: 'text-left', center: 'text-center', right: 'text-righ
     <slot v-if="!loading && rows.length === 0" name="empty">
       <EmptyState :icon="emptyIcon" :title="emptyTitle" :description="emptyDescription" />
     </slot>
+
   </div>
 </template>

@@ -1,5 +1,6 @@
 import { Router } from 'express'
 import { healthRouter } from './health.routes.js'
+import { clientErrorsRouter } from './clientErrors.routes.js'
 import { authRouter } from './auth.routes.js'
 import { usersRouter } from './users.routes.js'
 import { groupsRouter } from './groups.routes.js'
@@ -66,6 +67,7 @@ export const v1Router = Router()
 v1Router.use('/public/certificates', publicCertificatesRouter)
 
 v1Router.use('/health', healthRouter)
+v1Router.use('/client-errors', clientErrorsRouter)
 v1Router.use('/auth', authRouter)
 v1Router.use('/users', usersRouter)
 v1Router.use('/groups', groupsRouter)

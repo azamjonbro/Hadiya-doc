@@ -8,12 +8,18 @@
  * the gradient. No hotlinked stock photo: the app must open with no
  * internet (12.2) and the previous hero pulled from Unsplash.
  */
+import { computed } from 'vue'
+import { useBrandingStore } from '@/stores/branding'
+
 const props = defineProps({
   title: { type: String, required: true },
   image: { type: String, default: '' },
   height: { type: String, default: 'h-[160px]' },
 })
-const backgroundImage = props.image ? `url('/hero/${props.image}.jpg')` : 'none'
+// The administrator's cover (Settings → Design) wins over the shipped one.
+const branding = useBrandingStore()
+const override = computed(() => ({ courses: branding.coursesCoverUrl, catalog: branding.catalogCoverUrl, profile: branding.profileCoverUrl })[props.image] || '')
+const backgroundImage = computed(() => (override.value ? `url('${override.value}')` : props.image ? `url('/hero/${props.image}.jpg')` : 'none'))
 // A photo gets a light wash — the reference's banner is a readable photo
 // with a grey veil, not a dark slab; the gradient alone needs the darker
 // one to carry white text.

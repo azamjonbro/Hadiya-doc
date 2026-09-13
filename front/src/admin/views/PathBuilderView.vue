@@ -19,10 +19,17 @@
  * each), so what the administrator sees is what the server sequences by.
  * Stage ids are minted here so a course can point at a brand-new stage in
  * the same save.
+ *
+ * Nothing here is lost by walking away. Every change autosaves a moment
+ * later; leaving the page or closing the tab flushes what is still
+ * pending; and a copy of the unsaved state sits in localStorage, offered
+ * back if the page comes up with it newer than what the server has (a
+ * failed save, a tab killed mid-flush).
  */
-import { computed, onMounted, reactive, ref } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
+import { computed, nextTick, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue'
+import { onBeforeRouteLeave, useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
+import { roleLabel } from '@/utils/roleLabel'
 import { pathsApi } from '@/services/paths'
 import { coursesApi } from '@/services/courses'
 import { certificatesApi } from '@/services/certificates'
@@ -30,6 +37,8 @@ import { usersApi } from '@/services/users'
 import { rolesApi } from '@/services/roles'
 import { reportsApi } from '@/services/reports'
 import { enrollmentRulesApi } from '@/services/enrollmentRules'
+import { useAuthStore } from '@/stores/auth'
+import { API_BASE_URL } from '@/services/apiBase'
 import { useToast } from '@/composables/useToast'
 import { useConfirm } from '@/composables/useConfirm'
 import { apiErrorText } from '@/utils/apiError'
@@ -47,7 +56,7 @@ import Icon from '@/components/ui/Icon.vue'
 import ImageUploadField from '@/components/ui/ImageUploadField.vue'
 import UserPicker from '@/components/ui/UserPicker.vue'
 
-const { t } = useI18n()
+const { t, te } = useI18n()
 const route = useRoute()
 const router = useRouter()
 const toast = useToast()
@@ -119,12 +128,6 @@ function addStage(after = null) {
   const order = after ? after.order + 1 : stages.value.length
   for (const stage of path.value.sections) if (stage.order >= order) stage.order += 1
   path.value.sections.push({ id: mintId(), title: t('pathBuilder.stageDefault'), order, itemIds: [] })
-}
-
-function renameStage(stage) {
-  const title = window.prompt(t('pathBuilder.renameStage'), stage.title)
-  if (title && title.trim()) stage.title = title.trim()
-  menuFor.value = ''
 }
 
 async function removeStage(stage) {
@@ -429,7 +432,11 @@ async function load() {
     const data = await pathsApi.getById(route.params.id)
     data.tags = data.tags ?? []
     data.sections = data.sections ?? []
+    ready = false
     path.value = data
+    draftFound.value = readDraft(data.updatedAt)
+    await nextTick()
+    ready = true
   } catch (error) {
     toast.error(apiErrorText(error, t('paths.loadError')))
   } finally {
@@ -437,68 +444,203 @@ async function load() {
   }
 }
 
-async function save() {
+const AUTOSAVE_MS = 1200
+const auth = useAuthStore()
+const dirty = ref(false)
+const lastSavedAt = ref(null)
+const saveError = ref('')
+const draftFound = ref(null)
+let ready = false
+let autosaveTimer = null
+
+const draftKey = computed(() => `path-draft:${route.params.id}`)
+
+function buildPayload() {
+  const p = path.value
+  const orderedItems = flattenedItems()
+  return {
+    title: p.title,
+    description: p.description ?? '',
+    kind: p.kind,
+    status: p.status,
+    orderMode: p.orderMode,
+    thumbnail: p.thumbnail ?? '',
+    cover: p.cover ?? '',
+    curatorId: p.curatorId || null,
+    tags: p.tags,
+    learningTimeMinutes: Number(p.learningTimeMinutes) || 0,
+    inCatalog: Boolean(p.inCatalog),
+    defaultDeadlineDays: Number(p.defaultDeadlineDays) || 0,
+    notifications: {
+      assign: { enabled: p.notifications.assign.enabled, subject: p.notifications.assign.subject ?? '', text: p.notifications.assign.text ?? '' },
+      beforeDeadline: { enabled: p.notifications.beforeDeadline.enabled, days: Number(p.notifications.beforeDeadline.days) || 3 },
+      afterDeadline: {
+        enabled: p.notifications.afterDeadline.enabled,
+        days: p.notifications.afterDeadline.days.map(Number).filter((d) => d > 0),
+      },
+      completionToAdmins: p.notifications.completionToAdmins,
+    },
+    targetRoles: p.targetRoles,
+    branches: p.branches,
+    department: p.department,
+    certificateTemplateId: p.certificateTemplateId || null,
+    validityDays: Number(p.validityDays) || 0,
+    sections: stages.value.map((stage, index) => ({ id: stage.id, title: stage.title, order: index, itemIds: [] })),
+    items: orderedItems.map((item, index) => ({
+      type: item.type,
+      refId: item.refId,
+      order: index,
+      required: item.required,
+      prerequisiteIds: item.prerequisiteIds ?? [],
+      sectionId: item.sectionId && stageIds.value.has(item.sectionId) ? item.sectionId : null,
+      startDay: Number(item.startDay) || 0,
+      deadlineDays: Number(item.deadlineDays) || 0,
+    })),
+  }
+}
+
+// ---- Draft copy in localStorage --------------------------------------
+
+function writeDraft() {
+  try {
+    localStorage.setItem(draftKey.value, JSON.stringify({ savedAt: Date.now(), path: path.value }))
+  } catch {
+    // Storage full or blocked: the autosave is still the primary copy.
+  }
+}
+
+function clearDraft() {
+  try {
+    localStorage.removeItem(draftKey.value)
+  } catch {
+    // nothing to clear
+  }
+}
+
+function readDraft(serverUpdatedAt) {
+  try {
+    const raw = localStorage.getItem(draftKey.value)
+    if (!raw) return null
+    const draft = JSON.parse(raw)
+    // Only a draft the server has not caught up with is worth offering.
+    if (!draft?.path || draft.savedAt <= new Date(serverUpdatedAt ?? 0).getTime()) {
+      clearDraft()
+      return null
+    }
+    return draft
+  } catch {
+    return null
+  }
+}
+
+function restoreDraft() {
+  if (!draftFound.value) return
+  path.value = draftFound.value.path
+  draftFound.value = null
+  markDirty()
+}
+
+function discardDraft() {
+  draftFound.value = null
+  clearDraft()
+}
+
+// ---- Autosave ---------------------------------------------------------
+
+function markDirty() {
+  dirty.value = true
+  saveError.value = ''
+  writeDraft()
+  clearTimeout(autosaveTimer)
+  autosaveTimer = setTimeout(() => save({ silent: true }), AUTOSAVE_MS)
+}
+
+watch(
+  path,
+  () => {
+    if (ready) markDirty()
+  },
+  { deep: true }
+)
+
+async function save({ silent = false } = {}) {
+  clearTimeout(autosaveTimer)
+  if (!path.value) return false
   if (!path.value.title?.trim()) {
-    toast.error(t('pathBuilder.titleRequired'))
-    return
+    if (!silent) toast.error(t('pathBuilder.titleRequired'))
+    return false
   }
   saving.value = true
   try {
-    const p = path.value
-    const orderedItems = flattenedItems()
-    const sections = stages.value.map((stage, index) => ({
-      id: stage.id,
-      title: stage.title,
-      order: index,
-      itemIds: [],
-    }))
-    await pathsApi.update(route.params.id, {
-      title: p.title,
-      description: p.description ?? '',
-      kind: p.kind,
-      status: p.status,
-      orderMode: p.orderMode,
-      thumbnail: p.thumbnail ?? '',
-      cover: p.cover ?? '',
-      curatorId: p.curatorId || null,
-      tags: p.tags,
-      learningTimeMinutes: Number(p.learningTimeMinutes) || 0,
-      inCatalog: Boolean(p.inCatalog),
-      defaultDeadlineDays: Number(p.defaultDeadlineDays) || 0,
-      notifications: {
-        assign: { enabled: p.notifications.assign.enabled, subject: p.notifications.assign.subject ?? '', text: p.notifications.assign.text ?? '' },
-        beforeDeadline: { enabled: p.notifications.beforeDeadline.enabled, days: Number(p.notifications.beforeDeadline.days) || 3 },
-        afterDeadline: {
-          enabled: p.notifications.afterDeadline.enabled,
-          days: p.notifications.afterDeadline.days.map(Number).filter((d) => d > 0),
-        },
-        completionToAdmins: p.notifications.completionToAdmins,
-      },
-      targetRoles: p.targetRoles,
-      branches: p.branches,
-      department: p.department,
-      certificateTemplateId: p.certificateTemplateId || null,
-      validityDays: Number(p.validityDays) || 0,
-      sections,
-      items: orderedItems.map((item, index) => ({
-        type: item.type,
-        refId: item.refId,
-        order: index,
-        required: item.required,
-        prerequisiteIds: item.prerequisiteIds ?? [],
-        sectionId: item.sectionId && stageIds.value.has(item.sectionId) ? item.sectionId : null,
-        startDay: Number(item.startDay) || 0,
-        deadlineDays: Number(item.deadlineDays) || 0,
-      })),
-    })
-    toast.success(t('pathBuilder.saved'))
-    await load()
+    const updated = await pathsApi.update(route.params.id, buildPayload())
+    // The server hands back its own ids for new items; keep them so a
+    // later reorder talks about the same rows. Done without a full reload
+    // so the watcher above does not see a "change" of our own making.
+    ready = false
+    path.value.updatedAt = updated.updatedAt
+    if (updated.items?.length === path.value.items.length) {
+      const ordered = flattenedItems()
+      updated.items.forEach((row, index) => {
+        if (ordered[index]) ordered[index].id = row.id
+      })
+    }
+    await nextTick()
+    ready = true
+    dirty.value = false
+    lastSavedAt.value = new Date()
+    saveError.value = ''
+    clearDraft()
+    if (!silent) toast.success(t('pathBuilder.saved'))
+    return true
   } catch (error) {
-    toast.error(apiErrorText(error, t('paths.saveError')))
+    saveError.value = apiErrorText(error, t('paths.saveError'))
+    if (!silent) toast.error(saveError.value)
+    return false
   } finally {
     saving.value = false
   }
 }
+
+/**
+ * The tab is going away (closed, reloaded, backgrounded on a phone): the
+ * pending change goes out with `keepalive`, which the browser finishes
+ * after the page is gone. The draft copy stays until a save confirms it.
+ */
+function flushOnHide() {
+  if (!dirty.value || !path.value?.title?.trim()) return
+  try {
+    fetch(`${API_BASE_URL}/paths/${route.params.id}`, {
+      method: 'PATCH',
+      keepalive: true,
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${auth.accessToken}` },
+      body: JSON.stringify(buildPayload()),
+    }).catch(() => {})
+  } catch {
+    // The draft copy is the fallback.
+  }
+}
+
+function onBeforeUnload(event) {
+  if (!dirty.value) return
+  flushOnHide()
+  event.preventDefault()
+  event.returnValue = ''
+}
+
+function onVisibility() {
+  if (document.visibilityState === 'hidden') flushOnHide()
+}
+
+onBeforeRouteLeave(async () => {
+  if (!dirty.value) return true
+  const ok = await save({ silent: true })
+  if (ok) return true
+  return confirm({
+    title: t('pathBuilder.leaveTitle'),
+    message: t('pathBuilder.leaveMessage'),
+    confirmLabel: t('pathBuilder.leaveAnyway'),
+  })
+})
 
 const statusVariant = { ACTIVE: 'info', COMPLETED: 'success', CANCELLED: 'neutral', EXPIRED: 'warning' }
 
@@ -511,6 +653,8 @@ function formatDate(value) {
 }
 
 onMounted(async () => {
+  window.addEventListener('beforeunload', onBeforeUnload)
+  document.addEventListener('visibilitychange', onVisibility)
   await load()
   if (tab.value === 'access') loadRules()
   if (tab.value === 'assignments' || tab.value === 'reports') loadEnrollments()
@@ -526,6 +670,12 @@ onMounted(async () => {
       }),
   ])
   courses.value = courseResult.items
+})
+
+onBeforeUnmount(() => {
+  window.removeEventListener('beforeunload', onBeforeUnload)
+  document.removeEventListener('visibilitychange', onVisibility)
+  clearTimeout(autosaveTimer)
 })
 </script>
 
@@ -548,16 +698,39 @@ onMounted(async () => {
           <h1 class="truncate text-[22px] font-semibold text-ink">{{ path.title || t('pathBuilder.untitled') }}</h1>
           <p class="mt-1.5 text-[13px] text-ink-muted">{{ t('pathBuilder.subtitle') }}</p>
         </div>
-        <a
-          :href="previewUrl"
-          target="_blank"
-          rel="noopener"
-          class="flex shrink-0 items-center gap-2 rounded-md bg-surface-2 px-4 py-2 text-[14px] text-ink transition-default hover:bg-surface-hover"
-        >
-          <Icon name="play" size="14" />
-          {{ t('pathBuilder.preview') }}
-        </a>
+        <div class="flex shrink-0 items-center gap-4">
+          <span class="flex items-center gap-1.5 text-[12px]" :class="saveError ? 'text-danger' : dirty || saving ? 'text-ink-muted' : 'text-success'">
+            <Icon v-if="saving" name="loader" size="13" class="animate-spin" />
+            <Icon v-else-if="saveError" name="alert-circle" size="13" />
+            <Icon v-else-if="!dirty" name="check-check" size="13" />
+            <template v-if="saving">{{ t('pathBuilder.autosave.saving') }}</template>
+            <template v-else-if="saveError">{{ t('pathBuilder.autosave.failed') }}</template>
+            <template v-else-if="dirty">{{ t('pathBuilder.autosave.pending') }}</template>
+            <template v-else>{{ t('pathBuilder.autosave.saved') }}<template v-if="lastSavedAt"> · {{ lastSavedAt.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) }}</template></template>
+          </span>
+          <a
+            :href="previewUrl"
+            target="_blank"
+            rel="noopener"
+            class="flex items-center gap-2 rounded-md bg-surface-2 px-4 py-2 text-[14px] text-ink transition-default hover:bg-surface-hover"
+          >
+            <Icon name="play" size="14" />
+            {{ t('pathBuilder.preview') }}
+          </a>
+        </div>
       </section>
+
+      <!-- An unsaved copy newer than the server's: offer it back once. -->
+      <div v-if="draftFound" class="mt-3 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-warning/40 bg-warning-subtle px-5 py-3 text-[13px] text-ink">
+        <span class="flex items-center gap-2">
+          <Icon name="alert-triangle" size="15" class="text-warning" />
+          {{ t('pathBuilder.autosave.draftFound', { time: new Date(draftFound.savedAt).toLocaleString() }) }}
+        </span>
+        <span class="flex gap-2">
+          <AppButton size="sm" @click="restoreDraft">{{ t('pathBuilder.autosave.restore') }}</AppButton>
+          <AppButton size="sm" variant="ghost" @click="discardDraft">{{ t('pathBuilder.autosave.discard') }}</AppButton>
+        </span>
+      </div>
 
       <!-- Tabs card -->
       <section class="mt-3 rounded-2xl bg-surface shadow-sm">
@@ -646,7 +819,7 @@ onMounted(async () => {
                 <div class="flex items-center justify-end gap-2" @click.stop>
                   <div class="relative">
                     <Icon name="clock" size="14" class="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-ink-muted" />
-                    <select v-model.number="item.deadlineDays" class="w-[132px] rounded-md border border-border-strong bg-surface py-2 pl-8 pr-6 text-[13px] text-ink outline-none">
+                    <select v-model.number="item.deadlineDays" class="w-[150px] rounded-md border border-border-strong bg-surface py-2 pl-8 pr-6 text-[13px] text-ink outline-none">
                       <option v-for="d in DEADLINE_OPTIONS" :key="d" :value="d">{{ deadlineLabel(d) }}</option>
                     </select>
                   </div>
@@ -681,13 +854,21 @@ onMounted(async () => {
                     <span class="h-3 w-3 rounded-full border-2 border-border" />
                   </span>
                 </div>
-                <h3 class="pl-8 text-[18px] font-semibold text-ink">{{ stage.title }}</h3>
+                <!-- The title is the field: click it and type (rasm 1.14). -->
+                <div class="pl-8">
+                  <input
+                    v-model="stage.title"
+                    :placeholder="t('pathBuilder.stageDefault')"
+                    :aria-label="t('pathBuilder.renameStage')"
+                    class="w-full max-w-[560px] rounded-md border border-transparent bg-transparent px-2 py-1 text-[18px] font-semibold text-ink outline-none transition-default hover:border-border focus:border-primary focus:bg-surface -ml-2"
+                    @keydown.enter.prevent="$event.target.blur()"
+                  />
+                </div>
                 <div class="relative flex justify-end" @click.stop>
                   <button type="button" class="rounded-md p-2 text-ink-muted opacity-0 transition-default hover:bg-surface-2 group-hover/stage:opacity-100 focus:opacity-100" :class="menuFor === stage.id ? 'opacity-100' : ''" @click="menuFor = menuFor === stage.id ? '' : stage.id">
                     <Icon name="more-horizontal" size="16" />
                   </button>
                   <div v-if="menuFor === stage.id" class="absolute right-0 top-9 z-20 w-48 rounded-md border border-border bg-surface py-1 text-[13px] shadow-md">
-                    <button type="button" class="flex w-full items-center gap-2 px-3 py-2 text-left hover:bg-surface-2" @click="renameStage(stage)"><Icon name="pencil" size="14" /> {{ t('pathBuilder.renameStage') }}</button>
                     <button type="button" class="flex w-full items-center gap-2 px-3 py-2 text-left hover:bg-surface-2" :disabled="index === 0" @click="moveStage(stage, -1)"><Icon name="chevron-up" size="14" /> {{ t('pathBuilder.moveUp') }}</button>
                     <button type="button" class="flex w-full items-center gap-2 px-3 py-2 text-left hover:bg-surface-2" :disabled="index === stages.length - 1" @click="moveStage(stage, 1)"><Icon name="chevron-down" size="14" /> {{ t('pathBuilder.moveDown') }}</button>
                     <button type="button" class="flex w-full items-center gap-2 px-3 py-2 text-left text-danger hover:bg-surface-2" @click="removeStage(stage)"><Icon name="trash" size="14" /> {{ t('common.delete') }}</button>
@@ -719,7 +900,7 @@ onMounted(async () => {
                 <div class="flex items-center justify-end gap-2" @click.stop>
                   <div class="relative">
                     <Icon name="clock" size="14" class="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-ink-muted" />
-                    <select v-model.number="item.deadlineDays" class="w-[132px] rounded-md border border-border-strong bg-surface py-2 pl-8 pr-6 text-[13px] text-ink outline-none">
+                    <select v-model.number="item.deadlineDays" class="w-[150px] rounded-md border border-border-strong bg-surface py-2 pl-8 pr-6 text-[13px] text-ink outline-none">
                       <option v-for="d in DEADLINE_OPTIONS" :key="d" :value="d">{{ deadlineLabel(d) }}</option>
                     </select>
                   </div>
@@ -1144,7 +1325,7 @@ onMounted(async () => {
               :class="ruleForm[key].includes(value) ? 'border-primary bg-primary-subtle text-primary' : 'border-border text-ink-muted hover:text-ink'"
               @click="toggleIn(ruleForm[key], value)"
             >
-              {{ value }}
+              {{ key === 'roles' ? roleLabel(value, { t, te }) : value }}
             </button>
           </div>
         </div>

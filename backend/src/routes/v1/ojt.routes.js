@@ -7,6 +7,8 @@ import { scopeToManagedUsers } from '../../middlewares/scopeToManagedUsers.middl
 import { ojtController } from '../../controllers/ojt.controller.js'
 import {
   createChecklistSchema,
+  createScaleSchema,
+  updateScaleSchema,
   updateChecklistSchema,
   listChecklistsSchema,
   createSessionSchema,
@@ -33,6 +35,14 @@ import {
 export const ojtRouter = Router()
 
 ojtRouter.use(authenticate)
+
+// ---------------------------------------------------------------------- scales
+// Rating scales for checklist items. Read by observers (a session's items
+// carry a copy, but the editor needs the catalogue), written by ojt:manage.
+ojtRouter.get('/scales', requireAnyPermission(PERMISSIONS.OJT_OBSERVE, PERMISSIONS.OJT_MANAGE), ojtController.listScales)
+ojtRouter.post('/scales', requirePermission(PERMISSIONS.OJT_MANAGE), validateBody(createScaleSchema), ojtController.createScale)
+ojtRouter.patch('/scales/:id', requirePermission(PERMISSIONS.OJT_MANAGE), validateBody(updateScaleSchema), ojtController.updateScale)
+ojtRouter.delete('/scales/:id', requirePermission(PERMISSIONS.OJT_MANAGE), ojtController.removeScale)
 
 // ------------------------------------------------------------------ checklists
 // Readable by anybody who observes: a session's items make no sense without

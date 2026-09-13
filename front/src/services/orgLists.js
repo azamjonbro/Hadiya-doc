@@ -7,8 +7,11 @@ export const orgListsApi = {
   list(type) {
     return http.get(`/org-lists/${type}`).then((r) => r.data.data)
   },
-  create(type, name) {
-    return http.post(`/org-lists/${type}`, { name }).then((r) => r.data.data)
+  create(type, name, extra = {}) {
+    return http.post(`/org-lists/${type}`, { name, ...extra }).then((r) => r.data.data)
+  },
+  update(type, id, payload) {
+    return http.patch(`/org-lists/${type}/${id}`, payload).then((r) => r.data.data)
   },
   remove(type, id) {
     return http.delete(`/org-lists/${type}/${id}`).then((r) => r.data.data)

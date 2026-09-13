@@ -12,10 +12,45 @@ const MODEL_PATH = '/mediapipe/face_landmarker.task'
 const BLINK_SHAPES = ['eyeBlinkLeft', 'eyeBlinkRight']
 const BLINK_CLOSED_SCORE = 0.5
 const BLINK_OPEN_SCORE = 0.2
-const LIVENESS_SAMPLE_MS = 120
+// A blink keeps the eyes shut for roughly 100–150 ms. Sampling every 120 ms
+// straddled that and missed most of them, and a missed blink meant sitting
+// out the whole timeout — the "face control is slow" of 2026-09-14.
+const LIVENESS_SAMPLE_MS = 40
 // A natural blink happens every few seconds for almost everyone — this is
 // generous without making a legitimate employee wait long for a missed one.
-const LIVENESS_TIMEOUT_MS = 8000
+const LIVENESS_TIMEOUT_MS = 5000
+
+// One landmarker for the life of the page. The gate fires many times in a
+// session (every video, every quiz), and building one costs the wasm
+// runtime plus a 3.7 MB model each time — far more than the check itself.
+// Kept as a promise so a second caller mid-load waits on the first; a
+// failed load is dropped so the next call retries rather than staying
+// rejected forever.
+let landmarkerPromise = null
+
+function loadLandmarker() {
+  if (!landmarkerPromise) {
+    landmarkerPromise = (async () => {
+      const { FilesetResolver, FaceLandmarker } = await import('@mediapipe/tasks-vision')
+      const fileset = await FilesetResolver.forVisionTasks(WASM_PATH)
+      return FaceLandmarker.createFromOptions(fileset, {
+        baseOptions: { modelAssetPath: MODEL_PATH, delegate: 'GPU' },
+        runningMode: 'VIDEO',
+        numFaces: 1,
+        outputFaceBlendshapes: true,
+      })
+    })().catch((error) => {
+      landmarkerPromise = null
+      throw error
+    })
+  }
+  return landmarkerPromise
+}
+
+/** Warm the landmarker before it is needed — e.g. when the gate screen opens. */
+export function preloadFaceLandmarker() {
+  loadLandmarker().catch(() => {})
+}
 
 function maxBlinkScore(blendshapes) {
   if (!blendshapes?.categories) return 0
@@ -44,17 +79,6 @@ export function useFaceVerification() {
 
   let landmarker = null
   let timer = null
-
-  async function loadLandmarker() {
-    const { FilesetResolver, FaceLandmarker } = await import('@mediapipe/tasks-vision')
-    const fileset = await FilesetResolver.forVisionTasks(WASM_PATH)
-    return FaceLandmarker.createFromOptions(fileset, {
-      baseOptions: { modelAssetPath: MODEL_PATH, delegate: 'GPU' },
-      runningMode: 'VIDEO',
-      numFaces: 1,
-      outputFaceBlendshapes: true,
-    })
-  }
 
   // Resolves once a blink is seen or the timeout elapses — never rejects on
   // "no blink", since that is inconclusive, not a failure.
@@ -103,10 +127,15 @@ export function useFaceVerification() {
       )
     }
 
-    const videoEl = await camera.start({ video: { width: 480, height: 360, facingMode: 'user' }, audio: false })
+    // The camera prompt and the model load are independent waits — run
+    // them together rather than one after the other.
+    const [videoEl, loaded] = await Promise.all([
+      camera.start({ video: { width: 480, height: 360, facingMode: 'user' }, audio: false }),
+      loadLandmarker(),
+    ])
 
     status.value = 'detecting'
-    landmarker = await loadLandmarker()
+    landmarker = loaded
     await waitForBlink(videoEl)
 
     const blob = await camera.grabFrame(0.9)
@@ -117,7 +146,8 @@ export function useFaceVerification() {
   function stop() {
     clearTimeout(timer)
     timer = null
-    landmarker?.close?.()
+    // The landmarker outlives the capture (see loadLandmarker); only the
+    // camera is released here.
     landmarker = null
     camera.stop()
     status.value = 'idle'

@@ -15,7 +15,7 @@ function canManage(actor) {
 }
 
 async function uniqueSlugFor(title) {
-  const base = slugify(title)
+  const base = slugify(title) || 'path'
   let slug = base
   let counter = 2
   while (await LearningPath.findOne({ slug })) {

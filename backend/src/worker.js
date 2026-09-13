@@ -1,5 +1,6 @@
 import { Worker } from 'bullmq'
 import { logger } from './config/logger.js'
+import { reportError } from './services/alerts/errorAlert.service.js'
 import { errorMessage } from './utils/errorMessage.js'
 import { connectDatabase } from './config/db.js'
 import { redisConnection } from './config/redis.js'
@@ -79,6 +80,7 @@ async function main() {
       videoId: job?.data?.videoId,
       error: err.message,
     })
+    reportError({ source: 'job', code: 'VIDEO_JOB_FAILED', message: err.message, stack: err.stack, route: `video job ${job?.id}`, details: `videoId ${job?.data?.videoId ?? ''}` })
   })
 
   // The orphan sweep (9.5). One at a time and never in parallel with

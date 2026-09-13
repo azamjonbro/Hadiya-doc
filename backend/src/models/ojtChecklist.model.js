@@ -37,6 +37,10 @@ const checklistItemSchema = new Schema(
     // level on the skill matrix rather than a note in a drawer.
     competencyId: { type: Schema.Types.ObjectId, ref: 'Competency', default: null },
     competencyLevel: { type: Number, min: 0, default: null },
+
+    // How the item is judged: a rating scale (ojtScale.model.js), or the
+    // plain yes/no when null.
+    scaleId: { type: Schema.Types.ObjectId, ref: 'OjtScale', default: null },
   },
   { _id: true }
 )

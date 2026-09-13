@@ -60,7 +60,8 @@ function toPublicCycle(cycle, extra = {}) {
     id: String(cycle._id),
     name: cycle.name,
     description: cycle.description ?? '',
-    templateId: String(cycle.templateId),
+    templateId: cycle.templateId ? String(cycle.templateId) : null,
+    managerId: cycle.managerId ? String(cycle.managerId) : cycle.createdBy ? String(cycle.createdBy) : null,
     status: cycle.status,
     subjectIds: (cycle.subjectIds ?? []).map(String),
     subjectCount: (cycle.subjectIds ?? []).length,
@@ -266,9 +267,24 @@ export const review360Service = {
     ])
     const byCycle = new Map(counts.map((row) => [String(row._id), row]))
 
+    // Names for the table's "manager" and "template" columns, one query each.
+    const managerIds = [...new Set(cycles.map((c) => String(c.managerId ?? c.createdBy ?? '')).filter(Boolean))]
+    const templateIds = [...new Set(cycles.map((c) => c.templateId && String(c.templateId)).filter(Boolean))]
+    const [managers, templatesRows] = await Promise.all([
+      managerIds.length ? User.find({ _id: { $in: managerIds } }, { fullName: 1 }).lean() : [],
+      templateIds.length ? ReviewTemplate.find({ _id: { $in: templateIds } }, { name: 1 }).lean() : [],
+    ])
+    const managerName = new Map(managers.map((u) => [String(u._id), u.fullName]))
+    const templateName = new Map(templatesRows.map((t) => [String(t._id), t.name]))
+
     return cycles.map((cycle) => {
       const row = byCycle.get(String(cycle._id))
-      return toPublicCycle(cycle, { invited: row?.invited ?? 0, responded: row?.responded ?? 0 })
+      return toPublicCycle(cycle, {
+        invited: row?.invited ?? 0,
+        responded: row?.responded ?? 0,
+        managerName: managerName.get(String(cycle.managerId ?? cycle.createdBy ?? '')) ?? '',
+        templateName: cycle.templateId ? (templateName.get(String(cycle.templateId)) ?? '') : '',
+      })
     })
   },
 
@@ -282,8 +298,10 @@ export const review360Service = {
   },
 
   async createCycle(actor, payload) {
-    const template = await ReviewTemplate.findById(payload.templateId).lean()
-    if (!template) throw ApiError.notFound('Template not found')
+    if (payload.templateId) {
+      const template = await ReviewTemplate.findById(payload.templateId).lean()
+      if (!template) throw ApiError.notFound('Template not found')
+    }
 
     // Always DRAFT, whatever was sent. Launching sends a questionnaire to
     // everybody in the org chart around each subject, and that is not
@@ -292,6 +310,8 @@ export const review360Service = {
       ...payload,
       status: 'DRAFT',
       questions: [],
+      subjectIds: payload.subjectIds ?? [],
+      managerId: payload.managerId ?? actor.id,
       createdBy: actor.id,
     })
     return toPublicCycle(cycle.toObject())
@@ -376,6 +396,7 @@ export const review360Service = {
     if (!cycle) throw ApiError.notFound('Cycle not found')
     if (cycle.status !== 'DRAFT') throw ApiError.badRequest('This cycle has already been launched', 'CYCLE_NOT_DRAFT')
     if (!cycle.subjectIds.length) throw ApiError.badRequest('A cycle needs somebody to be about', 'CYCLE_NO_SUBJECTS')
+    if (!cycle.templateId) throw ApiError.badRequest('Pick a questionnaire template before launching', 'CYCLE_NO_TEMPLATE')
 
     const template = await ReviewTemplate.findById(cycle.templateId).lean()
     if (!template) throw ApiError.notFound('Template not found')

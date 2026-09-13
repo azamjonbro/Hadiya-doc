@@ -56,14 +56,14 @@ export const orgListService = {
     return [...byKey.values()].sort((a, b) => a.name.localeCompare(b.name))
   },
 
-  async create(actor, type, name) {
+  async create(actor, type, name, { code = '', headId = null } = {}) {
     const trimmed = name.trim()
     const nameKey = trimmed.toLowerCase()
 
     const existing = await OrgList.findOne({ type, nameKey })
     if (existing) throw ApiError.conflict('This entry already exists', 'ORG_LIST_ENTRY_EXISTS')
 
-    const row = await OrgList.create({ type, name: trimmed, nameKey, createdBy: actor.id })
+    const row = await OrgList.create({ type, name: trimmed, nameKey, code, headId: headId || null, createdBy: actor.id })
     await auditLogRepository.record({
       actor: actor.id,
       action: 'ORG_LIST_ENTRY_CREATED',
@@ -73,6 +73,26 @@ export const orgListService = {
     })
 
     return { id: row._id.toString(), name: row.name, declared: true, inUse: false }
+  },
+
+  async update(actor, type, id, payload) {
+    const row = await OrgList.findById(id)
+    if (!row || row.type !== type) throw ApiError.notFound('Entry not found')
+    const oldName = row.name
+    if (payload.name !== undefined && payload.name.trim() !== oldName) {
+      const nameKey = payload.name.trim().toLowerCase()
+      const clash = await OrgList.findOne({ type, nameKey, _id: { $ne: id } })
+      if (clash) throw ApiError.conflict('This entry already exists', 'ORG_LIST_ENTRY_EXISTS')
+      row.name = payload.name.trim()
+      row.nameKey = nameKey
+      // Renaming re-tags everybody carrying the old name.
+      await User.updateMany({ [USER_FIELD_BY_TYPE[type]]: oldName }, { $set: { [USER_FIELD_BY_TYPE[type]]: row.name } })
+    }
+    if (payload.code !== undefined) row.code = payload.code
+    if (payload.headId !== undefined) row.headId = payload.headId || null
+    await row.save()
+    await auditLogRepository.record({ actor: actor.id, action: 'ORG_LIST_UPDATED', entity: 'OrgList', entityId: String(id), metadata: { type, from: oldName, to: row.name } })
+    return { id: String(row._id), type, name: row.name, code: row.code ?? '', headId: row.headId ? String(row.headId) : null }
   },
 
   async remove(actor, type, id) {

@@ -4,6 +4,7 @@ import { connectDatabase } from './config/db.js'
 import { seedRolesAndSuperAdmin } from './seed/seedRolesAndSuperAdmin.js'
 import { createApp } from './app.js'
 import { initSocketServer, closeSocketServer } from './realtime/socket.js'
+import { faceEmbeddingService } from './services/face/faceEmbedding.service.js'
 
 async function main() {
   await connectDatabase()
@@ -14,6 +15,8 @@ async function main() {
     logger.info(`Backend listening on ${env.HOST}:${env.PORT}`, { env: env.NODE_ENV })
   })
   initSocketServer(server)
+  // Not awaited: listening first, the models arrive a second later.
+  if (env.FACE_VERIFICATION_ENABLED) faceEmbeddingService.warmUp()
 
   const shutdown = async (signal) => {
     logger.info(`Received ${signal}, shutting down`)

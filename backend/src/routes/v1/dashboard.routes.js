@@ -14,3 +14,4 @@ dashboardRouter.get('/', dashboardController.get)
 // "may see figures about other people at all"; role.scope is what says how
 // many of them — the split 2.2 introduced.
 dashboardRouter.get('/team', dashboardController.team)
+dashboardRouter.get('/inbox', dashboardController.inbox)

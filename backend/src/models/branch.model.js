@@ -16,6 +16,9 @@ const branchSchema = new Schema(
     // courses from the other. Kept as a separate field rather than a collation
     // so the guarantee survives regardless of how a query is written.
     nameKey: { type: String, required: true, unique: true, lowercase: true, trim: true },
+    // The reference's unit card: a code and who heads it.
+    code: { type: String, default: '', trim: true },
+    headId: { type: Schema.Types.ObjectId, ref: 'User', default: null },
     createdBy: { type: Schema.Types.ObjectId, ref: 'User', default: null },
   },
   { timestamps: true }

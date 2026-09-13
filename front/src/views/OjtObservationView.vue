@@ -192,19 +192,30 @@ async function load({ silent = false } = {}) {
   }
 }
 
+// `result` is a verdict ('PASS' | 'FAIL' | 'NOT_OBSERVED'), or for an item
+// on a rating scale the level index picked (a number): the server turns a
+// level into the verdict, so what is shown here follows the scale's flag.
 async function record(item, result) {
   if (!canRecord.value || inFlight[item.itemId]) return
 
   const previous = item.result
+  const previousLevel = item.level
+  const isLevel = typeof result === 'number'
   const body = {
-    result,
+    ...(isLevel ? { level: result } : { result }),
     note: (notes[item.itemId] ?? '').trim(),
     // Stamped by the phone: a verdict given at 09:40 underground must not
     // read as 11:15 in the car park when the queue finally drains.
     recordedAt: new Date().toISOString(),
   }
 
-  item.result = result
+  if (isLevel) {
+    item.level = result
+    item.result = item.scale?.levels?.[result]?.passes ? 'PASS' : 'FAIL'
+  } else {
+    item.result = result
+    if (result === 'NOT_OBSERVED') item.level = null
+  }
   inFlight[item.itemId] = result
   try {
     await ojtApi.recordObservation(sessionId, item.itemId, body)
@@ -244,12 +255,14 @@ async function record(item, result) {
       // Nowhere to keep it. The verdict is genuinely lost, so the screen
       // shows it as unanswered rather than pretending.
       item.result = previous
+      item.level = previousLevel
       toast.error(t('ojt.notQueued'))
       return
     }
     // The server answered and refused — a completed session, the wrong
     // observer. Its sentence is the useful one.
     item.result = previous
+    item.level = previousLevel
     toast.error(apiErrorText(error, t('ojt.recordFailed')))
   } finally {
     delete inFlight[item.itemId]
@@ -491,7 +504,24 @@ onUnmounted(() => stopWatchingQueue?.())
           </div>
 
           <div class="mt-3" role="group" :aria-label="t('ojt.verdictFor', { title: item.title })">
-            <div class="grid grid-cols-2 gap-2">
+            <!-- An item on a scale offers its levels instead of yes/no -->
+            <div v-if="item.scale?.levels?.length" class="grid gap-2" :class="item.scale.levels.length > 3 ? 'grid-cols-2' : 'grid-cols-1'">
+              <AppButton
+                v-for="(level, index) in item.scale.levels"
+                :key="index"
+                size="lg"
+                block
+                :variant="item.level === index ? (level.passes ? 'primary' : 'danger') : 'secondary'"
+                :icon="item.level === index ? 'check' : ''"
+                :aria-pressed="item.level === index"
+                :disabled="!canRecord"
+                :loading="inFlight[item.itemId] === index"
+                @click="record(item, index)"
+              >
+                {{ level.label }} <span class="ml-1 text-caption opacity-70">· {{ level.points }}</span>
+              </AppButton>
+            </div>
+            <div v-else class="grid grid-cols-2 gap-2">
               <AppButton
                 v-for="verdict in VERDICTS"
                 :key="verdict"

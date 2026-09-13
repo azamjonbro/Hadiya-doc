@@ -3,10 +3,8 @@ import {
   GENDER_VALUES,
   NOTIFICATION_CHANNELS,
   JSHSHIR_PATTERN,
-  PASSPORT_SERIES_PATTERN,
   PASSWORD_MIN_LENGTH,
   normalizeJshshir,
-  normalizePassportSeries,
 } from '@lms/shared'
 
 const jshshir = z
@@ -20,13 +18,6 @@ const jshshir = z
 // a deliberate clear indistinguishable from a field the request never mentioned,
 // and user.service.js would silently drop it. Turning '' into an absent field on
 // the document is that service's job (see the partial indexes in user.model.js).
-const optionalPassportSeries = z
-  .string()
-  .transform(normalizePassportSeries)
-  .refine((value) => value === '' || PASSPORT_SERIES_PATTERN.test(value), {
-    message: 'Passport series must be two Latin letters followed by 7 digits, e.g. AA1234567',
-  })
-
 const optionalEmail = z
   .string()
   .transform((value) => value.trim().toLowerCase())
@@ -61,11 +52,14 @@ export const hierarchyFields = {
 export const createUserSchema = z.object({
   firstName: z.string().trim().min(1, 'First name is required'),
   lastName: z.string().trim().min(1, 'Last name is required'),
+  patronymic: z.string().trim().max(120).optional().default(''),
   jshshir,
-  passportSeries: optionalPassportSeries.optional(),
   email: optionalEmail.optional(),
   phone: z.string().optional().default(''),
-  roleName: z.string().min(1, 'Role is required'),
+  roleName: z.string().min(1, 'Role is required').optional(),
+  // Several hats at once; when given, the first-ranked one becomes the
+  // primary and `roleName` is ignored.
+  roleNames: z.array(z.string().min(1)).min(1).max(10).optional(),
   branch: z.string().optional().default(''),
   department: z.string().optional().default(''),
   subdivision: z.string().optional().default(''),
@@ -80,18 +74,19 @@ export const createUserSchema = z.object({
   isActive: z.boolean().optional().default(true),
   courseIds: z.array(z.string().min(1)).optional().default([]),
   ...hierarchyFields,
-})
+}).refine((data) => data.roleName || data.roleNames?.length, { message: 'Role is required', path: ['roleName'] })
 
 export const updateUserSchema = z
   .object({
     ...hierarchyFields,
     firstName: z.string().trim().min(1).optional(),
     lastName: z.string().trim().min(1).optional(),
+    patronymic: z.string().trim().max(120).optional(),
     jshshir: jshshir.optional(),
-    passportSeries: optionalPassportSeries.optional(),
     email: optionalEmail.optional(),
     phone: z.string().optional(),
     roleName: z.string().min(1).optional(),
+    roleNames: z.array(z.string().min(1)).min(1).max(10).optional(),
     branch: z.string().optional(),
     department: z.string().optional(),
     subdivision: z.string().optional(),
@@ -148,6 +143,11 @@ const bulkUserIds = z.array(objectId).min(1, 'Select at least one employee').max
 
 export const bulkUserIdsSchema = z.object({
   userIds: bulkUserIds,
+})
+
+export const bulkDepartmentSchema = z.object({
+  userIds: bulkUserIds,
+  department: z.string().trim().max(200),
 })
 
 // `message` mirrors sendChatMessageSchema's body: same trim, same 4000 cap,

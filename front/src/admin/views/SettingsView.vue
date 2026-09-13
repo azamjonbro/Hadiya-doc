@@ -1,6 +1,8 @@
 <script setup>
 import { computed, ref } from 'vue'
+import { useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
+import { roleLabel } from '@/utils/roleLabel'
 import { useAuthStore } from '@/stores/auth'
 import { useThemeStore } from '@/stores/theme'
 import { setLocale, availableLocales } from '@/i18n'
@@ -13,8 +15,9 @@ import AiSettingsCard from '@/admin/components/AiSettingsCard.vue'
 import ApiKeysCard from '@/admin/components/ApiKeysCard.vue'
 import WebhooksCard from '@/admin/components/WebhooksCard.vue'
 import SsoSettingsCard from '@/admin/components/SsoSettingsCard.vue'
+import BrandingSettingsCard from '@/admin/components/BrandingSettingsCard.vue'
 
-const { t, locale } = useI18n()
+const { t, te, locale } = useI18n()
 const auth = useAuthStore()
 const theme = useThemeStore()
 
@@ -27,7 +30,8 @@ function onLocaleChange(code) {
 // Rasn 26: three boxed tabs — the basics (account, security), the look,
 // and the features (policies, AI, integrations).
 const TABS = ['basic', 'design', 'features']
-const tab = ref('basic')
+const route = useRoute()
+const tab = ref(TABS.includes(route.query.tab) ? route.query.tab : 'basic')
 </script>
 
 <template>
@@ -62,7 +66,7 @@ const tab = ref('basic')
           <span class="text-ink-muted">Email</span>
           <span class="text-ink">{{ auth.user?.email || '—' }}</span>
           <span class="text-ink-muted">{{ t('users.role') }}</span>
-          <span class="text-ink">{{ auth.user?.role }}</span>
+          <span class="text-ink">{{ roleLabel(auth.user?.role, { t, te }) }}</span>
           <span class="text-ink-muted">{{ t('settings.sections.language') }}</span>
           <div class="max-w-xs"><AppSelect :model-value="locale" :options="languageOptions" @update:model-value="onLocaleChange" /></div>
         </div>
@@ -115,9 +119,12 @@ const tab = ref('basic')
               {{ t('settings.appearance.dark') }}
             </button>
           </div>
-          <span class="text-ink-muted">{{ t('portal.brand') }}</span>
-          <span class="text-ink">{{ t('portal.brand') }}</span>
         </div>
+      </section>
+
+      <!-- Brand: colour, logo, covers, portal menu (rasm) -->
+      <section v-if="auth.hasPermission('settings:manage') || auth.hasPermission('branding:manage')" class="mt-8 border-t border-border pt-6">
+        <BrandingSettingsCard :initial-branch="route.query.branch ?? ''" />
       </section>
     </template>
 

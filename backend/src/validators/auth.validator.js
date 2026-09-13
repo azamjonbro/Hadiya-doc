@@ -1,7 +1,7 @@
 import { z } from 'zod'
 import { PASSWORD_MIN_LENGTH } from '@lms/shared'
 
-const identifier = z.string().min(1, 'JSHSHIR, passport series or email is required')
+const identifier = z.string().min(1, 'JSHSHIR or email is required')
 
 export const loginSchema = z.object({
   identifier,

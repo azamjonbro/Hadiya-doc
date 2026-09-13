@@ -1,18 +1,17 @@
 <script setup>
-import { reactive, ref, watch } from 'vue'
+import { computed, reactive, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useConfirm } from '@/composables/useConfirm'
-import { normalizeJshshir, normalizePassportSeries } from '@lms/shared'
+import { normalizeJshshir } from '@lms/shared'
 import { useAuthStore } from '@/stores/auth'
 import { usersApi } from '@/services/users'
 import { useOrgDirectory } from '@/composables/useOrgDirectory'
-import { toDateInputValue } from '@/utils/format'
+import { formatDateTime, toDateInputValue } from '@/utils/format'
 import { useToast } from '@/composables/useToast'
-import AppCard from '@/components/ui/AppCard.vue'
 import AppButton from '@/components/ui/AppButton.vue'
-import AppInput from '@/components/ui/AppInput.vue'
 import Badge from '@/components/ui/Badge.vue'
 import EmployeeFormFields from './EmployeeFormFields.vue'
+import Icon from '@/components/ui/Icon.vue'
 import GeneratedPasswordField from '@/components/ui/GeneratedPasswordField.vue'
 import ImageUploadField from '@/components/ui/ImageUploadField.vue'
 import FaceEnrollmentWizard from '@/components/face/FaceEnrollmentWizard.vue'
@@ -23,9 +22,9 @@ const props = defineProps({
   user: { type: Object, required: true },
 })
 
-const emit = defineEmits(['updated', 'deactivated'])
+const emit = defineEmits(['updated', 'deactivated', 'deleted'])
 
-const { t } = useI18n()
+const { t, locale } = useI18n()
 const confirm = useConfirm()
 const auth = useAuthStore()
 const toast = useToast()
@@ -56,8 +55,10 @@ usersApi
 const form = reactive({
   firstName: '',
   lastName: '',
+  patronymic: '',
   jshshir: '',
-  passportSeries: '',
+  managerId: '',
+  managerName: '',
   email: '',
   phone: '',
   branch: '',
@@ -70,7 +71,7 @@ const form = reactive({
   birthDate: '',
   hireDate: '',
   terminationDate: '',
-  roleName: '',
+  roleNames: [],
   isActive: true,
   password: '',
   avatar: '',
@@ -85,8 +86,10 @@ const fieldsValid = ref(true)
 function resetFrom(user) {
   form.firstName = user.firstName ?? ''
   form.lastName = user.lastName ?? ''
+  form.patronymic = user.patronymic ?? ''
   form.jshshir = user.jshshir ?? ''
-  form.passportSeries = user.passportSeries ?? ''
+  form.managerId = user.managerId ?? ''
+  form.managerName = user.managerName ?? ''
   form.email = user.email ?? ''
   form.phone = user.phone ?? ''
   form.branch = user.branch ?? ''
@@ -99,7 +102,7 @@ function resetFrom(user) {
   form.birthDate = toDateInputValue(user.birthDate)
   form.hireDate = toDateInputValue(user.hireDate)
   form.terminationDate = toDateInputValue(user.terminationDate)
-  form.roleName = user.role ?? ''
+  form.roleNames = user.roles?.length ? [...user.roles] : user.role ? [user.role] : []
   form.isActive = user.isActive
   form.avatar = user.avatar ?? ''
   form.password = ''
@@ -115,11 +118,8 @@ async function onSave() {
   saving.value = true
   errorMessage.value = ''
   try {
-    const payload = {
-      ...form,
-      jshshir: normalizeJshshir(form.jshshir),
-      passportSeries: normalizePassportSeries(form.passportSeries),
-    }
+    const { managerName: _name, ...rest } = form
+    const payload = { ...rest, jshshir: normalizeJshshir(form.jshshir) }
     if (!payload.password) delete payload.password
     const updated = await usersApi.update(props.user.id, payload)
     form.password = ''
@@ -129,6 +129,49 @@ async function onSave() {
     errorMessage.value = apiErrorText(error)
   } finally {
     saving.value = false
+  }
+}
+
+// The cards on the right: status, password, delete. Each opens in place —
+// the reference shows a "Change" link, not a second form.
+const passwordOpen = ref(false)
+const deleting = ref(false)
+const canDelete = computed(() => auth.hasPermission('user:delete'))
+const lastLogin = computed(() => (props.user.lastLoginAt ? formatDateTime(props.user.lastLoginAt, locale.value) : ''))
+
+async function onToggleActive() {
+  if (!canEdit) return
+  saving.value = true
+  errorMessage.value = ''
+  try {
+    const updated = await usersApi.update(props.user.id, { isActive: !props.user.isActive })
+    form.isActive = updated.isActive
+    emit('updated', updated)
+  } catch (error) {
+    errorMessage.value = apiErrorText(error)
+  } finally {
+    saving.value = false
+  }
+}
+
+async function onDeletePermanently() {
+  const ok = await confirm.ask({
+    title: t('employee.delete.title'),
+    message: t('employee.delete.message', { name: props.user.fullName }),
+    confirmLabel: t('employee.delete.confirm'),
+    danger: true,
+  })
+  if (!ok) return
+  deleting.value = true
+  errorMessage.value = ''
+  try {
+    await usersApi.deletePermanently(props.user.id)
+    toast.success(t('employee.delete.done'))
+    emit('deleted')
+  } catch (error) {
+    errorMessage.value = apiErrorText(error)
+  } finally {
+    deleting.value = false
   }
 }
 
@@ -191,58 +234,102 @@ function onFaceEnrolled() {
 </script>
 
 <template>
-  <AppCard class="max-w-3xl">
-    <h2 class="text-h3 text-ink">{{ t('settings.sections.profile') }}</h2>
-    <p class="mt-1 text-small text-ink-muted">{{ t('employee.settings.hint') }}</p>
+  <!-- The reference (rasm): the form on the left, three cards on the right —
+       status, password, delete — and Save at the top of the card. -->
+  <div>
+    <div class="flex items-center justify-between gap-4 border-b border-border pb-4">
+      <p class="text-[15px] text-ink">{{ t('employee.settings.hint') }}</p>
+      <AppButton v-if="canEdit" type="button" :loading="saving" @click="onSave">{{ saving ? t('users.saving') : t('common.save') }}</AppButton>
+    </div>
 
-    <form class="mt-5 grid grid-cols-1 sm:grid-cols-2 gap-4" @submit.prevent="onSave">
-      <div class="sm:col-span-2 max-w-[10rem]">
-        <ImageUploadField
-          v-model="form.avatar"
-          :label="t('users.fields.avatar')"
-          aspect="aspect-square"
+    <div class="mt-6 grid grid-cols-1 gap-8 lg:grid-cols-[minmax(0,640px)_minmax(280px,360px)]">
+      <form class="min-w-0" @submit.prevent="onSave">
+        <EmployeeFormFields
+          :form="form"
+          :directory="directory"
+          :branch-options="branchOptions"
+          :can-manage-roles="auth.hasPermission('role:manage')"
+          :can-manage-lists="canEdit"
           :disabled="!canEdit"
+          :self-id="props.user.id"
+          @validity="fieldsValid = $event"
         />
+
+        <div class="my-6 border-t border-border sm:max-w-[624px]" />
+
+        <div class="grid grid-cols-1 gap-y-1 sm:grid-cols-[200px_minmax(0,400px)] sm:items-start sm:gap-x-6">
+          <span class="text-small text-ink-muted sm:pt-1">{{ t('users.fields.avatar') }}</span>
+          <div class="max-w-[10rem]">
+            <ImageUploadField v-model="form.avatar" aspect="aspect-square" :disabled="!canEdit" />
+          </div>
+        </div>
+
+        <p v-if="errorMessage" class="mt-4 text-small text-danger">{{ errorMessage }}</p>
+        <button type="submit" class="sr-only">{{ t('common.save') }}</button>
+      </form>
+
+      <div class="space-y-3">
+        <!-- Status -->
+        <div class="rounded-xl border border-border p-4">
+          <div class="flex items-start justify-between gap-3">
+            <div class="min-w-0">
+              <p class="flex items-center gap-1.5 text-small font-medium text-ink">
+                <Icon :name="props.user.isActive ? 'check-circle' : 'eye-off'" size="15" :class="props.user.isActive ? 'text-success' : 'text-ink-faint'" />
+                {{ props.user.isActive ? t('users.filters.active') : t('users.filters.inactive') }}
+              </p>
+              <p class="mt-1 text-caption text-ink-muted">
+                {{ lastLogin ? t('employee.status.lastLogin', { date: lastLogin }) : t('employee.status.neverLoggedIn') }}
+              </p>
+            </div>
+            <button v-if="canEdit" type="button" class="flex shrink-0 items-center gap-1.5 text-small text-ink-muted transition-default hover:text-ink" :disabled="saving" @click="onToggleActive">
+              <Icon name="pencil" size="14" /> {{ props.user.isActive ? t('employee.status.block') : t('employee.status.unblock') }}
+            </button>
+          </div>
+        </div>
+
+        <!-- Password -->
+        <div class="rounded-xl border border-border p-4">
+          <div class="flex items-start justify-between gap-3">
+            <div class="min-w-0">
+              <p class="text-small font-medium text-ink">{{ t('employee.password.title') }}</p>
+              <p class="mt-1 text-caption text-ink-muted">{{ t('employee.password.hint') }}</p>
+            </div>
+            <button v-if="canEdit" type="button" class="flex shrink-0 items-center gap-1.5 text-small text-ink-muted transition-default hover:text-ink" @click="passwordOpen = !passwordOpen">
+              <Icon name="pencil" size="14" /> {{ t('common.edit') }}
+            </button>
+          </div>
+          <div v-if="passwordOpen" class="mt-3">
+            <GeneratedPasswordField v-model="form.password" :aria-label="t('users.fields.newPassword')" :disabled="!canEdit" />
+            <p class="mt-2 text-caption text-ink-faint">{{ t('employee.password.saveHint') }}</p>
+          </div>
+        </div>
+
+        <!-- Delete -->
+        <div v-if="canDelete" class="rounded-xl border border-border p-4">
+          <div class="flex items-start justify-between gap-3">
+            <div class="min-w-0">
+              <p class="text-small font-medium text-ink">{{ t('employee.delete.title') }}</p>
+              <p class="mt-1 text-caption text-ink-muted">{{ t('employee.delete.hint') }}</p>
+            </div>
+            <button
+              v-if="auth.isSuperAdmin"
+              type="button"
+              class="flex shrink-0 items-center gap-1.5 text-small text-danger transition-default hover:opacity-80 disabled:opacity-50"
+              :disabled="deleting"
+              @click="onDeletePermanently"
+            >
+              <Icon name="trash" size="14" /> {{ t('common.delete') }}
+            </button>
+          </div>
+          <button type="button" class="mt-3 text-caption text-ink-muted underline-offset-2 hover:underline" :disabled="deactivating" @click="onDeactivate">
+            {{ deactivating ? t('users.deactivating') : t('users.deactivate') }}
+          </button>
+        </div>
       </div>
-      <EmployeeFormFields
-        :form="form"
-        :directory="directory"
-        :branch-options="branchOptions"
-        :can-manage-roles="auth.hasPermission('role:manage')"
-        :can-manage-lists="canEdit"
-        :disabled="!canEdit"
-        @validity="fieldsValid = $event"
-      />
+    </div>
+  </div>
 
-      <p class="sm:col-span-2 mt-2 text-caption font-semibold uppercase tracking-widest text-ink-faint">
-        {{ t('users.sections.access') }}
-      </p>
-      <label class="sm:col-span-2 flex items-center gap-2 text-small font-medium text-ink">
-        <input v-model="form.isActive" type="checkbox" :disabled="!canEdit" class="h-4 w-4 rounded border-border-strong text-primary" />
-        {{ t('users.filters.active') }}
-      </label>
-      <div class="sm:col-span-2">
-        <GeneratedPasswordField v-model="form.password" :label="t('users.fields.newPassword')" :disabled="!canEdit" />
-      </div>
-
-      <p v-if="errorMessage" class="sm:col-span-2 text-small text-danger">{{ errorMessage }}</p>
-
-      <div v-if="canEdit" class="sm:col-span-2 flex gap-3 pt-2">
-        <AppButton type="submit" :loading="saving">{{ saving ? t('users.saving') : t('users.save') }}</AppButton>
-        <AppButton
-          v-if="auth.hasPermission('user:delete')"
-          type="button"
-          variant="danger"
-          :loading="deactivating"
-          @click="onDeactivate"
-        >
-          {{ deactivating ? t('users.deactivating') : t('users.deactivate') }}
-        </AppButton>
-      </div>
-    </form>
-  </AppCard>
-
-  <AppCard v-if="auth.isSuperAdmin" class="mt-6 max-w-3xl">
+  <div v-if="auth.isSuperAdmin" class="mt-6">
     <h2 class="text-h3 text-ink">{{ t('faceVerification.status.title') }}</h2>
     <p class="mt-1 text-small text-ink-muted">{{ t('faceVerification.status.hint') }}</p>
 
@@ -280,7 +367,7 @@ function onFaceEnrolled() {
         </AppButton>
       </div>
     </div>
-  </AppCard>
+  </div>
 
   <FaceEnrollmentWizard
     v-if="showFaceWizard"

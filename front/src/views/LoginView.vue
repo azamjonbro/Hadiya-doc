@@ -3,6 +3,7 @@ import { onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useAuthStore } from '@/stores/auth'
+import { useBrandingStore } from '@/stores/branding'
 import { homeRouteFor } from '@/router'
 import { useFaceVerification } from '@/composables/useFaceVerification'
 import { apiErrorText } from '@/utils/apiError'
@@ -16,6 +17,7 @@ const { t } = useI18n()
 const route = useRoute()
 const router = useRouter()
 const auth = useAuthStore()
+const branding = useBrandingStore()
 
 const identifier = ref('')
 const password = ref('')
@@ -193,16 +195,20 @@ const highlights = [
     <!-- Brand panel -->
     <div
       class="auth-brand relative hidden w-[44%] max-w-xl shrink-0 overflow-hidden border-r border-white/[0.06] lg:flex lg:flex-col lg:justify-between"
+      :style="branding.loginBackgroundUrl ? { backgroundImage: `linear-gradient(rgba(8,10,17,.55), rgba(8,10,17,.75)), url('${branding.loginBackgroundUrl}')`, backgroundSize: 'cover', backgroundPosition: 'center' } : undefined"
     >
       <div
         class="pointer-events-none absolute inset-0 opacity-[0.06]"
         style="background-image: radial-gradient(currentColor 1px, transparent 1px); background-size: 22px 22px; color: white"
       />
       <div class="relative z-10 flex items-center gap-2.5 px-10 pt-10">
-        <div class="flex h-9 w-9 items-center justify-center rounded-md bg-white/10 text-white">
-          <Icon name="graduation-cap" size="19" />
-        </div>
-        <span class="text-body font-semibold text-white">{{ t('app.name') }}</span>
+        <img v-if="branding.logoUrl" :src="branding.logoUrl" :alt="branding.appName || t('app.name')" class="h-10 max-w-[200px] object-contain" />
+        <template v-else>
+          <div class="flex h-9 w-9 items-center justify-center rounded-md bg-white/10 text-white">
+            <Icon name="graduation-cap" size="19" />
+          </div>
+          <span class="text-body font-semibold text-white">{{ branding.appName || t('app.name') }}</span>
+        </template>
       </div>
 
       <div class="relative z-10 px-10 py-10">

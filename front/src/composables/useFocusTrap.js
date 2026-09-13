@@ -40,6 +40,14 @@ const FOCUSABLE = [
 let scrollLocks = 0
 let previousOverflow = ''
 
+// The open traps, bottom to top. Only the topmost one may pull focus or
+// answer Tab/Escape: with two active at once (a confirm over an editor
+// dialog) each saw the other's panel as "outside", and the two `focusin`
+// handlers took turns dragging focus back — a loop that, depending on the
+// browser, froze the page or left the confirm's buttons unreachable.
+const stack = []
+const isTop = (trap) => stack[stack.length - 1] === trap
+
 function lockScroll() {
   if (typeof document === 'undefined') return
   if (scrollLocks === 0) {
@@ -89,6 +97,7 @@ export function useFocusTrap(containerRef, { isActive, onEscape, initialFocus } 
   let trapped = false
 
   function onKeydown(event) {
+    if (!isTop(self)) return
     if (event.key === 'Escape') {
       // Only when this dialog asked for it. A component with its own
       // Escape handling (the material viewer leaves full screen first)
@@ -124,6 +133,7 @@ export function useFocusTrap(containerRef, { isActive, onEscape, initialFocus } 
   }
 
   function onFocusIn(event) {
+    if (!isTop(self)) return
     const container = containerRef.value
     if (!container || container.contains(event.target)) return
     // Focus left the dialog some other way (a click on the backdrop, a
@@ -134,9 +144,12 @@ export function useFocusTrap(containerRef, { isActive, onEscape, initialFocus } 
     ;(items[0] ?? container).focus()
   }
 
+  const self = {}
+
   async function activate() {
     if (trapped) return
     trapped = true
+    stack.push(self)
     restoreTo = document.activeElement instanceof HTMLElement ? document.activeElement : null
     lockScroll()
     document.addEventListener('keydown', onKeydown, true)
@@ -153,6 +166,8 @@ export function useFocusTrap(containerRef, { isActive, onEscape, initialFocus } 
   function deactivate() {
     if (!trapped) return
     trapped = false
+    const at = stack.indexOf(self)
+    if (at !== -1) stack.splice(at, 1)
     document.removeEventListener('keydown', onKeydown, true)
     document.removeEventListener('focusin', onFocusIn, true)
     unlockScroll()

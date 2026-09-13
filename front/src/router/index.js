@@ -239,6 +239,12 @@ export const router = createRouter({
           meta: { permission: 'competency:manage', titleKey: 'competency.title' },
         },
         {
+          path: 'competencies/profiles',
+          name: 'admin-competency-profiles',
+          component: () => import('@/admin/views/CompetencyProfilesView.vue'),
+          meta: { permission: 'competency:manage', titleKey: 'competency.profiles' },
+        },
+        {
           path: 'competencies/matrix',
           name: 'admin-competency-matrix',
           component: () => import('@/admin/views/CompetencyMatrixView.vue'),
@@ -276,6 +282,12 @@ export const router = createRouter({
           name: 'admin-ojt-sessions',
           component: () => import('@/views/OjtSessionsView.vue'),
           meta: { permission: 'ojt:manage', titleKey: 'ojt.title' },
+        },
+        {
+          path: 'ojt/scales',
+          name: 'admin-ojt-scales',
+          component: () => import('@/admin/views/OjtScalesView.vue'),
+          meta: { permission: 'ojt:manage', titleKey: 'ojt.scales.title' },
         },
         {
           path: 'development-plans',
@@ -416,6 +428,13 @@ export function homeRouteFor(auth) {
 }
 
 router.beforeEach(async (to) => {
+  // Settings → Design lets the administrator pick which portal page opens
+  // first; the dashboard stays reachable through the menu.
+  if (to.path === '/' && !to.query.home) {
+    const { useBrandingStore } = await import('@/stores/branding')
+    const branding = useBrandingStore()
+    if (branding.startPath && branding.startPath !== '/') return branding.startPath
+  }
   const auth = useAuthStore()
   // main.js starts this without waiting; the first navigation is where the
   // answer is actually needed, so this is where it is waited for.

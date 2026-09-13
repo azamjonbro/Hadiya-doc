@@ -37,7 +37,7 @@ const busyId = ref(null)
 // Emptying the bin is deliberately narrower than filling it: the same role
 // split the API enforces, mirrored here so the button is not offered to
 // someone who would only get a 403.
-const canDestroy = auth.user?.role === 'SUPERADMIN'
+const canDestroy = auth.isSuperAdmin
 
 async function load() {
   loading.value = true

@@ -2,11 +2,9 @@ import ExcelJS from 'exceljs'
 import {
   GENERATED_PASSWORD_LENGTH,
   JSHSHIR_PATTERN,
-  PASSPORT_SERIES_PATTERN,
   composeFullName,
   generatePassword,
   normalizeJshshir,
-  normalizePassportSeries,
 } from '@lms/shared'
 import { User } from '../../models/user.model.js'
 import { Role } from '../../models/role.model.js'
@@ -41,9 +39,9 @@ const COLUMNS = {
   jshshir: ['jshshir', 'jshshr', 'pinfl', 'жшшир'],
   firstName: ['firstname', 'first name', 'ism', 'имя'],
   lastName: ['lastname', 'last name', 'familiya', 'фамилия'],
+  patronymic: ['patronymic', 'otasining ismi', 'otasi', 'sharif', 'отчество'],
   email: ['email', 'e-mail', 'pochta'],
   phone: ['phone', 'telefon', 'телефон'],
-  passportSeries: ['passport', 'passportseries', 'passport series', 'passport seriya'],
   employeeNumber: ['employeenumber', 'employee number', 'tabel', 'tabel raqami'],
   role: ['role', 'rol', 'lavozim roli', 'роль'],
   branch: ['branch', 'filial', 'филиал'],
@@ -116,7 +114,7 @@ export async function planImport(rows, { defaultRoleName = 'EMPLOYEE' } = {}) {
     Role.find({}, { name: 1 }).lean(),
     Branch.find({}, { name: 1, nameKey: 1 }).lean(),
     OrgList.find({}, { type: 1, name: 1, nameKey: 1 }).lean(),
-    User.find({}, { jshshir: 1, email: 1, passportSeries: 1, employeeNumber: 1 }).lean(),
+    User.find({}, { jshshir: 1, email: 1, employeeNumber: 1 }).lean(),
   ])
 
   const roleByName = new Map(roles.map((role) => [role.name.toUpperCase(), role]))
@@ -133,9 +131,6 @@ export async function planImport(rows, { defaultRoleName = 'EMPLOYEE' } = {}) {
   // email as a clash with itself — turning a routine re-import into 295
   // errors. The value is only taken if somebody *else* holds it.
   const emailOwner = new Map(existingUsers.filter((u) => u.email).map((u) => [u.email, u.jshshir]))
-  const passportOwner = new Map(
-    existingUsers.filter((u) => u.passportSeries).map((u) => [u.passportSeries, u.jshshir])
-  )
 
   const errors = []
   const planned = []
@@ -165,6 +160,7 @@ export async function planImport(rows, { defaultRoleName = 'EMPLOYEE' } = {}) {
 
     const firstName = (row.firstName ?? '').trim()
     const lastName = (row.lastName ?? '').trim()
+    const patronymic = (row.patronymic ?? '').trim()
     if (!firstName || !lastName) {
       fail(row, firstName ? 'lastName' : 'firstName', 'REQUIRED', 'First and last name are both required')
       continue
@@ -206,25 +202,15 @@ export async function planImport(rows, { defaultRoleName = 'EMPLOYEE' } = {}) {
     }
     if (email) seenEmail.set(email, row.__row)
 
-    const passportSeries = row.passportSeries ? normalizePassportSeries(row.passportSeries) : ''
-    if (passportSeries && !PASSPORT_SERIES_PATTERN.test(passportSeries)) {
-      fail(row, 'passportSeries', 'INVALID_PASSPORT', 'Not a passport series')
-      continue
-    }
-    if (passportSeries && passportOwner.has(passportSeries) && passportOwner.get(passportSeries) !== jshshir) {
-      fail(row, 'passportSeries', 'DUPLICATE_PASSPORT', 'Already registered to someone else')
-      continue
-    }
-
     planned.push({
       row: row.__row,
       jshshir,
       firstName,
       lastName,
-      fullName: composeFullName(firstName, lastName),
+      patronymic,
+      fullName: composeFullName(firstName, lastName, patronymic),
       email: email || undefined,
       phone: (row.phone ?? '').trim(),
-      passportSeries: passportSeries || undefined,
       employeeNumber: (row.employeeNumber ?? '').trim() || undefined,
       roleId: String(role._id),
       roleName: role.name,
@@ -316,11 +302,11 @@ export const userImportService = {
         const user = await User.create({
           firstName: row.firstName,
           lastName: row.lastName,
+          patronymic: row.patronymic ?? '',
           fullName: row.fullName,
           jshshir: row.jshshir,
           email: row.email,
           phone: row.phone ?? '',
-          passportSeries: row.passportSeries,
           employeeNumber: row.employeeNumber,
           passwordHash: await hashPassword(password),
           roleId: row.roleId,

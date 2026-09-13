@@ -13,6 +13,31 @@ export const competenciesApi = {
   update(id, payload) {
     return http.patch(`/competencies/${id}`, payload).then((r) => r.data.data)
   },
+  // Profiles (rasm: «Профили компетенций») and catalogue folders.
+  profiles() {
+    return http.get('/competencies/profiles').then((r) => r.data.data.items)
+  },
+  createProfile(payload) {
+    return http.post('/competencies/profiles', payload).then((r) => r.data.data.profile)
+  },
+  updateProfile(id, payload) {
+    return http.patch(`/competencies/profiles/${id}`, payload).then((r) => r.data.data.profile)
+  },
+  removeProfile(id) {
+    return http.delete(`/competencies/profiles/${id}`).then((r) => r.data.data)
+  },
+  folders() {
+    return http.get('/competencies/folders').then((r) => r.data.data.items)
+  },
+  createFolder(payload) {
+    return http.post('/competencies/folders', payload).then((r) => r.data.data.folder)
+  },
+  updateFolder(id, payload) {
+    return http.patch(`/competencies/folders/${id}`, payload).then((r) => r.data.data.folder)
+  },
+  removeFolder(id) {
+    return http.delete(`/competencies/folders/${id}`).then((r) => r.data.data)
+  },
   remove(id) {
     return http.delete(`/competencies/${id}`).then((r) => r.data.data)
   },
