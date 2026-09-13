@@ -1,4 +1,8 @@
 import { spawn } from 'node:child_process'
+import { env } from '../config/env.js'
+
+const FFMPEG = env.FFMPEG_PATH || 'ffmpeg'
+const FFPROBE = env.FFPROBE_PATH || 'ffprobe'
 
 function runCommand(command, args) {
   return new Promise((resolve, reject) => {
@@ -23,7 +27,7 @@ function runCommand(command, args) {
 }
 
 export async function probeVideo(filePath) {
-  const { stdout } = await runCommand('ffprobe', [
+  const { stdout } = await runCommand(FFPROBE, [
     '-v',
     'error',
     '-print_format',
@@ -75,7 +79,7 @@ export function isConvertibleSubtitle(codec) {
 
 /** Pulls one embedded subtitle stream out as a WebVTT file. */
 export async function extractSubtitleTrack({ inputPath, subtitleIndex, outputPath }) {
-  await runCommand('ffmpeg', [
+  await runCommand(FFMPEG, [
     '-y',
     '-i',
     inputPath,
@@ -90,7 +94,7 @@ export async function extractSubtitleTrack({ inputPath, subtitleIndex, outputPat
 
 export async function transcodeToHls({ inputPath, outputDir, height, segmentSeconds = 6 }) {
   const playlistPath = `${outputDir}/index.m3u8`
-  await runCommand('ffmpeg', [
+  await runCommand(FFMPEG, [
     '-y',
     '-i',
     inputPath,
@@ -118,7 +122,7 @@ export async function transcodeToHls({ inputPath, outputDir, height, segmentSeco
 }
 
 export async function extractThumbnail({ inputPath, outputPath, atSeconds = 1 }) {
-  await runCommand('ffmpeg', [
+  await runCommand(FFMPEG, [
     '-y',
     '-ss',
     String(atSeconds),

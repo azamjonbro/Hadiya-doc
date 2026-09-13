@@ -26,6 +26,7 @@
     "check:signing": "node src/scripts/checkStorageSigning.js",
     "check:mail": "node src/scripts/checkMail.js",
     "media:orphans": "node src/scripts/sweepMediaOrphans.js",
+    "video:requeue-failed": "node src/scripts/requeueFailedVideos.js",
     "backup:now": "node src/scripts/runBackup.js",
     "backup:list": "node src/scripts/restoreBackup.js --list",
     "backup:restore": "node src/scripts/restoreBackup.js",

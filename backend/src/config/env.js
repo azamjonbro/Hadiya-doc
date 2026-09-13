@@ -106,6 +106,11 @@ const envSchema = z.object({
   // S3_ENDPOINT itself at the public name would send video segments out to
   // the internet and back for no reason. Empty = sign with S3_ENDPOINT.
   S3_SIGNING_ENDPOINT: z.string().optional().default(''),
+  // Where the encoder lives when it is not on PATH — a host without root
+  // keeps a static build under the app user's home (the home server since
+  // 2026-09-14). Empty means "ffmpeg"/"ffprobe" as found on PATH.
+  FFMPEG_PATH: z.string().optional().default(''),
+  FFPROBE_PATH: z.string().optional().default(''),
   S3_PUBLIC_URL: z.string().optional().default(''),
 
   // Private bucket — course materials (files/presentations/multimedia) are
