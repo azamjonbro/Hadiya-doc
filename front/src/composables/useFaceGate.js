@@ -1,6 +1,6 @@
 import { computed, ref } from 'vue'
 import { FACE_GATE_ACTIONS } from '@lms/shared'
-import { useFaceVerification } from './useFaceVerification.js'
+import { useFaceVerification, preloadFaceLandmarker } from './useFaceVerification.js'
 import { faceApi } from '@/services/face'
 
 /**
@@ -56,6 +56,9 @@ export function useFaceGate(onPass) {
       showEnrollment.value = true
     } else {
       state.value = 'idle'
+      // The gate screen is up and the employee is reading it — the model
+      // can be loading meanwhile, so the capture starts at once.
+      preloadFaceLandmarker()
     }
     return true
   }
