@@ -18,7 +18,7 @@ function toPublic(category, courseCount = undefined) {
 }
 
 async function uniqueSlugFor(name) {
-  const base = slugify(name)
+  const base = slugify(name) || 'category'
   let slug = base
   let counter = 2
   while (await CourseCategory.findOne({ slug })) {

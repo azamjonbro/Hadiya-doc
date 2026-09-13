@@ -17,7 +17,7 @@ function canManage(actor) {
 }
 
 async function uniqueSlugFor(title) {
-  const base = slugify(title)
+  const base = slugify(title) || 'article'
   let slug = base
   let counter = 2
   while (await KbArticle.findOne({ slug })) {
@@ -70,7 +70,7 @@ export const kbService = {
   async createCategory(actor, payload) {
     const category = await KbCategory.create({
       ...payload,
-      slug: slugify(payload.name),
+      slug: slugify(payload.name) || 'category',
       createdBy: actor.id,
     })
     return { id: String(category._id), name: category.name }
