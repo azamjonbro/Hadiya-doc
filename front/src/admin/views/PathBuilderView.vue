@@ -105,6 +105,27 @@ const assignForm = reactive({ userId: '', userName: '', deadline: '', mandatory:
 const courseById = computed(() => new Map(courses.value.map((course) => [course.id, course])))
 const previewUrl = computed(() => `${window.location.origin}/paths/${route.params.id}`)
 
+/**
+ * "Who can actually reach this?" — the commonest way this page goes wrong.
+ *
+ * Two switches keep a finished-looking path away from every learner, and
+ * both of them live on a tab the author may never open: `status` (a draft is
+ * nobody's) and `inCatalog` (off the catalogue a path exists only for the
+ * people put on it — path.service list()). Neither is visible from the
+ * Structure tab, where the work is done, so the author saves a path, sees
+ * it in the admin list, and reasonably concludes it is live.
+ *
+ * Reported here rather than at save time because it is a state, not an
+ * error: a draft under construction and an assign-only programme are both
+ * legitimate, and each says so instead of blocking anything.
+ */
+const reachIssue = computed(() => {
+  if (!path.value) return ''
+  if (path.value.status !== 'PUBLISHED') return 'draft'
+  if (!path.value.inCatalog) return 'notInCatalog'
+  return ''
+})
+
 // ---- Structure --------------------------------------------------------
 
 function mintId() {
@@ -730,6 +751,21 @@ onBeforeUnmount(() => {
           <AppButton size="sm" @click="restoreDraft">{{ t('pathBuilder.autosave.restore') }}</AppButton>
           <AppButton size="sm" variant="ghost" @click="discardDraft">{{ t('pathBuilder.autosave.discard') }}</AppButton>
         </span>
+      </div>
+
+      <!-- Nobody can open this yet, and nothing else on the page says so. -->
+      <div
+        v-if="reachIssue"
+        class="mt-3 flex flex-wrap items-center justify-between gap-3 rounded-xl px-5 py-3 text-[13px] text-ink"
+        :class="reachIssue === 'draft' ? 'border border-warning/40 bg-warning-subtle' : 'border border-info/40 bg-info-subtle'"
+        data-test="path-reach"
+      >
+        <span class="flex items-center gap-2">
+          <Icon name="alert-triangle" size="15" :class="reachIssue === 'draft' ? 'text-warning' : 'text-info'" />
+          {{ t(`pathBuilder.reach.${reachIssue}`) }}
+        </span>
+        <AppButton v-if="reachIssue === 'draft'" size="sm" @click="path.status = 'PUBLISHED'">{{ t('pathBuilder.reach.publish') }}</AppButton>
+        <AppButton v-else size="sm" @click="path.inCatalog = true">{{ t('pathBuilder.access.addToCatalog') }}</AppButton>
       </div>
 
       <!-- Tabs card -->

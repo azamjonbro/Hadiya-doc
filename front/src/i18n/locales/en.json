@@ -3011,6 +3011,11 @@
       "defaultsTitle": "Default assignment settings",
       "defaultsHint": "Used for new assignments"
     },
+    "reach": {
+      "draft": "This path is a draft — learners do not see it.",
+      "notInCatalog": "The path is published but off the catalogue — only the people assigned to it can see it. Add it to the catalogue, or create an automatic assignment rule under Access.",
+      "publish": "Publish"
+    },
     "completion": {
       "hint": "What is issued when the path is completed.",
       "ruleTitle": "Completion rule",

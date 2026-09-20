@@ -3012,6 +3012,11 @@
       "defaultsTitle": "Standart tayinlash parametrlari",
       "defaultsHint": "Ko'rsatilgan parametrlar yangi tayinlashlar uchun qo'llanadi"
     },
+    "reach": {
+      "draft": "Bu trayektoriya qoralama holatida — o'quvchilar uni ko'rmaydi.",
+      "notInCatalog": "Trayektoriya chop etilgan, lekin katalogda yo'q — uni faqat tayinlanganlar ko'radi. Katalogga qo'shing yoki «Kirish» bo'limida avtomatik tayinlash qoidasini yarating.",
+      "publish": "Chop etish"
+    },
     "completion": {
       "hint": "Trayektoriya tugatilganda nima berilishini sozlang.",
       "ruleTitle": "Yakunlash sharti",
