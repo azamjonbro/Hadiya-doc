@@ -19,3 +19,16 @@ export const passwordResetConfirmSchema = z.object({
   // so a reset can't be rejected for a length an admin-generated password has.
   newPassword: z.string().min(PASSWORD_MIN_LENGTH, `Password must be at least ${PASSWORD_MIN_LENGTH} characters`),
 })
+
+// Own password, from the profile's security tab. The current one is required
+// even though the caller is signed in: a session left open on a shared
+// machine must not be enough to lock its owner out.
+export const changePasswordSchema = z
+  .object({
+    currentPassword: z.string().min(1, 'Current password is required'),
+    newPassword: z.string().min(PASSWORD_MIN_LENGTH, `Password must be at least ${PASSWORD_MIN_LENGTH} characters`),
+  })
+  .refine((data) => data.currentPassword !== data.newPassword, {
+    message: 'The new password must differ from the current one',
+    path: ['newPassword'],
+  })

@@ -5,13 +5,14 @@ import { useI18n } from 'vue-i18n'
 import { useAuthStore } from '@/stores/auth'
 import { useBrandingStore } from '@/stores/branding'
 import { homeRouteFor } from '@/router'
-import { useFaceVerification } from '@/composables/useFaceVerification'
+import { useFaceVerification, preloadFaceLandmarker } from '@/composables/useFaceVerification'
 import { apiErrorText } from '@/utils/apiError'
 import AppInput from '@/components/ui/AppInput.vue'
 import AppButton from '@/components/ui/AppButton.vue'
 import Icon from '@/components/ui/Icon.vue'
 import FaceVerificationPanel from '@/components/face/FaceVerificationPanel.vue'
 import { ssoApi } from '@/services/sso'
+import { securityApi } from '@/services/security'
 
 const { t } = useI18n()
 const route = useRoute()
@@ -51,6 +52,7 @@ async function submitTwoFactor() {
       pendingTwoFactorToken.value = ''
       pendingVerificationToken.value = result.verificationToken
       faceState.value = 'idle'
+      preloadFaceLandmarker()
       return
     }
     goHome()
@@ -64,6 +66,49 @@ async function submitTwoFactor() {
     }
   } finally {
     twoFactorSubmitting.value = false
+  }
+}
+
+/**
+ * "Forgot password?" — the link at the bottom of the form led nowhere
+ * until now (href="#"), while the API had the whole flow. Same card, in
+ * place: the identifier is usually already typed, so it is carried over.
+ *
+ * The response is the same whether or not the account exists (the API
+ * refuses to say, so this page cannot enumerate JSHSHIRs), which is why
+ * the confirmation is worded "if" — and why it says where the link goes:
+ * an account with no email on file gets nothing, and the honest next step
+ * for that person is the admin.
+ */
+const forgotOpen = ref(false)
+const forgotIdentifier = ref('')
+const forgotSubmitting = ref(false)
+const forgotSent = ref(false)
+
+function openForgot() {
+  forgotIdentifier.value = identifier.value
+  forgotSent.value = false
+  errorMessage.value = ''
+  forgotOpen.value = true
+}
+
+function closeForgot() {
+  forgotOpen.value = false
+  forgotSent.value = false
+  errorMessage.value = ''
+}
+
+async function submitForgot() {
+  if (forgotSubmitting.value) return
+  forgotSubmitting.value = true
+  errorMessage.value = ''
+  try {
+    await securityApi.requestPasswordReset(forgotIdentifier.value.trim())
+    forgotSent.value = true
+  } catch (error) {
+    errorMessage.value = loginErrorMessage(error)
+  } finally {
+    forgotSubmitting.value = false
   }
 }
 
@@ -98,7 +143,10 @@ onMounted(async () => {
   // A face challenge handed back by the SSO callback: the panel lives here,
   // so the callback page sends the token rather than duplicating it.
   const faceToken = typeof route.query.faceToken === 'string' ? route.query.faceToken : ''
-  if (faceToken) pendingVerificationToken.value = faceToken
+  if (faceToken) {
+    pendingVerificationToken.value = faceToken
+    preloadFaceLandmarker()
+  }
 
   try {
     sso.value = await ssoApi.status()
@@ -122,7 +170,7 @@ async function runFaceCapture() {
     faceState.value = 'verifying'
     await auth.completeFaceLogin(pendingVerificationToken.value, photoBlob)
     faceState.value = 'success'
-    setTimeout(goHome, 600)
+    setTimeout(goHome, 400)
   } catch (error) {
     if (error?.response) {
       faceState.value = error.response.status === 429 ? 'locked' : 'failed'
@@ -169,6 +217,9 @@ async function onSubmit() {
     if (result.requiresFaceVerification) {
       pendingVerificationToken.value = result.verificationToken
       faceState.value = 'idle'
+      // The model loads while the person reads the face screen, so the
+      // capture itself is the camera and the check — nothing else.
+      preloadFaceLandmarker()
       return
     }
     // One login page for both sides now, so where "home" is depends on who
@@ -272,6 +323,46 @@ const highlights = [
           </form>
         </template>
 
+        <!-- "Forgot password?" — the identifier, then a reset link by mail. -->
+        <template v-else-if="forgotOpen">
+          <h1 class="text-[28px] font-bold text-ink">{{ t('auth.forgot.title') }}</h1>
+          <p class="mt-2 text-small text-ink-muted">{{ t('auth.forgot.subtitle') }}</p>
+
+          <div v-if="forgotSent" class="mt-8 space-y-4">
+            <div class="flex items-start gap-2 rounded-md border border-success/20 bg-success-subtle px-3 py-2.5 text-small text-ink">
+              <Icon name="check-circle" size="16" class="mt-0.5 shrink-0 text-success" />
+              <span>{{ t('auth.forgot.sent') }}</span>
+            </div>
+            <p class="text-caption text-ink-faint">{{ t('auth.forgot.noEmailHint') }}</p>
+            <AppButton variant="ghost" block @click="closeForgot">{{ t('auth.forgot.back') }}</AppButton>
+          </div>
+
+          <form v-else class="mt-8 space-y-4" @submit.prevent="submitForgot">
+            <AppInput
+              v-model="forgotIdentifier"
+              :label="t('auth.login.identifier')"
+              icon="user"
+              autocomplete="username"
+              autofocus
+              required
+            />
+
+            <Transition enter-active-class="transition-default" enter-from-class="opacity-0 -translate-y-1">
+              <div v-if="errorMessage" class="flex items-start gap-2 rounded-md border border-danger/20 bg-danger-subtle px-3 py-2.5 text-small text-danger">
+                <Icon name="alert-circle" size="16" class="mt-0.5 shrink-0" />
+                {{ errorMessage }}
+              </div>
+            </Transition>
+
+            <AppButton type="submit" block size="lg" :loading="forgotSubmitting">
+              {{ t('auth.forgot.submit') }}
+            </AppButton>
+            <AppButton variant="ghost" block @click="closeForgot">
+              {{ t('auth.forgot.back') }}
+            </AppButton>
+          </form>
+        </template>
+
         <template v-else-if="!pendingVerificationToken">
           <h1 class="text-[28px] font-bold text-ink">{{ t('auth.login.title') }}</h1>
           <p class="mt-2 text-small text-ink-muted">{{ t('auth.login.subtitle') }}</p>
@@ -298,7 +389,9 @@ const highlights = [
                 <input v-model="rememberMe" type="checkbox" class="h-4 w-4 rounded border-border-strong text-primary focus:ring-primary/30" />
                 {{ t('auth.login.rememberMe') }}
               </label>
-              <a href="#" class="text-small font-medium text-primary hover:underline">{{ t('auth.login.forgotPassword') }}</a>
+              <button type="button" class="text-small font-medium text-primary hover:underline" @click="openForgot">
+                {{ t('auth.login.forgotPassword') }}
+              </button>
             </div>
 
             <Transition enter-active-class="transition-default" enter-from-class="opacity-0 -translate-y-1">

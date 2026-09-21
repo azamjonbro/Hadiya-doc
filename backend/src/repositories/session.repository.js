@@ -41,8 +41,13 @@ export const sessionRepository = {
     await Session.updateOne({ _id: sessionId }, { $set: { revoked: true } })
   },
 
-  async revokeAllForUser(userId) {
-    await Session.updateMany({ userId, revoked: false }, { $set: { revoked: true } })
+  // `exceptTokenHash` keeps one session alive — the one a password change
+  // was made from. Returns how many were ended.
+  async revokeAllForUser(userId, exceptTokenHash = null) {
+    const filter = { userId, revoked: false }
+    if (exceptTokenHash) filter.refreshTokenHash = { $ne: exceptTokenHash }
+    const result = await Session.updateMany(filter, { $set: { revoked: true } })
+    return result.modifiedCount
   },
 
   async markReplaced(sessionId, newSessionId) {

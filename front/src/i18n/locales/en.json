@@ -124,6 +124,25 @@
       "highlight2": "See your growth across courses, hours and streaks",
       "highlight3": "Enterprise-grade security, logged and monitored access"
     },
+    "forgot": {
+      "title": "Reset your password",
+      "subtitle": "Enter your JSHSHIR or email — we'll send a reset link to the email on the account.",
+      "sent": "If that account exists and has an email on file, a reset link is on its way. It is valid for 60 minutes.",
+      "noEmailHint": "No email on your account? Ask your administrator for a new password.",
+      "submit": "Send the link",
+      "back": "Back to sign in"
+    },
+    "reset": {
+      "title": "New password",
+      "subtitle": "Choose a new password for your account.",
+      "submit": "Save password",
+      "failed": "Could not save the password",
+      "invalidTitle": "This link no longer works",
+      "invalidHint": "It has already been used or has expired. Request a new one with \"Forgot password?\" on the sign-in page.",
+      "doneTitle": "Password changed",
+      "doneHint": "You can sign in with the new password now. Sessions on other devices have been ended.",
+      "toLogin": "Go to sign in"
+    },
     "logout": "Log out",
     "sso": {
       "or": "or",
@@ -960,7 +979,11 @@
       "features": "Features",
       "basicHint": "Account details, language and security settings.",
       "designHint": "How the portal looks: theme and brand.",
-      "featuresHint": "Platform features: attention policy, AI, integrations."
+      "featuresHint": "Platform features: attention policy, AI, integrations.",
+      "profile": "Profile",
+      "notifications": "Notifications",
+      "preferences": "Preferences",
+      "security": "Security"
     },
     "sections": {
       "profile": "Profile",
@@ -3541,6 +3564,21 @@
     "copied": "Copied",
     "copyFailed": "Could not copy",
     "stored": "Stored them"
+  },
+  "changePassword": {
+    "title": "Change password",
+    "hint": "Enter your current password and a new one. Sessions on other devices will be ended; this one stays.",
+    "current": "Current password",
+    "new": "New password",
+    "confirm": "Repeat new password",
+    "submit": "Change password",
+    "mismatch": "Passwords do not match",
+    "tooShort": "At least {length} characters",
+    "lengthHint": "At least {length} characters.",
+    "currentWrong": "The current password is wrong",
+    "failed": "Could not change the password",
+    "done": "Password changed",
+    "doneSignedOut": "Password changed — sign in again with the new one."
   },
   "sessions": {
     "title": "Where you are signed in",

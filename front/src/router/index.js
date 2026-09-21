@@ -17,6 +17,14 @@ export const router = createRouter({
   history: createWebHistory(),
   routes: [
     { path: '/login', name: 'login', component: () => import('@/views/LoginView.vue'), meta: { public: true } },
+    // Where the link in a password-reset mail lands. Public for the same
+    // reason the login page is: whoever holds the link is locked out.
+    {
+      path: '/reset-password',
+      name: 'reset-password',
+      component: () => import('@/views/ResetPasswordView.vue'),
+      meta: { public: true },
+    },
     // Where the identity provider's redirect lands (11.4). Public by
     // necessity: nobody is signed in yet — that is what this page is for.
     {

@@ -15,6 +15,7 @@ import Icon from '@/components/ui/Icon.vue'
 import PillTabs from '@/components/portal/PillTabs.vue'
 import Skeleton from '@/components/ui/Skeleton.vue'
 import AppButton from '@/components/ui/AppButton.vue'
+import ChangePasswordCard from '@/components/security/ChangePasswordCard.vue'
 import TwoFactorCard from '@/components/security/TwoFactorCard.vue'
 import SessionsCard from '@/components/security/SessionsCard.vue'
 import OfflineStorageCard from '@/components/offline/OfflineStorageCard.vue'
@@ -195,6 +196,7 @@ onMounted(loadPrefs)
 
       <template v-else-if="activeTab === 'security'">
         <div class="space-y-4">
+          <ChangePasswordCard />
           <TwoFactorCard />
           <SessionsCard />
           <!-- 12.2 — what this device is holding, and the button that

@@ -16,9 +16,13 @@ const BLINK_OPEN_SCORE = 0.2
 // straddled that and missed most of them, and a missed blink meant sitting
 // out the whole timeout — the "face control is slow" of 2026-09-14.
 const LIVENESS_SAMPLE_MS = 40
-// A natural blink happens every few seconds for almost everyone — this is
-// generous without making a legitimate employee wait long for a missed one.
-const LIVENESS_TIMEOUT_MS = 5000
+// The whole check has to fit in two to three seconds (asked for on
+// 2026-09-21: 5 s of waiting for a blink was most of the wait), and this
+// wait is the only elastic part — camera, upload and the server match are
+// each a few hundred ms. A blink seen inside the window still ends it
+// early; one that is not seen was never the security boundary (see
+// below), so the frame goes to the server regardless.
+const LIVENESS_TIMEOUT_MS = 1500
 
 // One landmarker for the life of the page. The gate fires many times in a
 // session (every video, every quiz), and building one costs the wasm

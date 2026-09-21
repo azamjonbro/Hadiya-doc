@@ -52,3 +52,26 @@ export function splitFullName(fullName) {
   if (parts.length === 1) return { firstName: parts[0], lastName: '' }
   return { lastName: parts[0], firstName: parts.slice(1).join(' ') }
 }
+
+/**
+ * A name the way it is written on a document: each word starts with a
+ * capital, the rest is lower case — "doston" → "Doston", "XALILOV" →
+ * "Xalilov", "abdulla-xon" → "Abdulla-Xon". Uzbek Latin apostrophes stay
+ * where they are ("o'tkir" → "O'tkir"), and Cyrillic is handled by the same
+ * toUpperCase/toLowerCase the Latin is. Applied wherever a name enters the
+ * system — the form, the import sheet, the API — so a record typed in a
+ * hurry in lower case is stored the same as one typed carefully.
+ */
+export function capitalizeName(value) {
+  return String(value ?? '')
+    .trim()
+    .replace(/\s+/g, ' ')
+    .split(' ')
+    .map((word) =>
+      word
+        .split('-')
+        .map((part) => (part ? part.charAt(0).toUpperCase() + part.slice(1).toLowerCase() : part))
+        .join('-')
+    )
+    .join(' ')
+}

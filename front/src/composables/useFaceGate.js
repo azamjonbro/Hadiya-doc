@@ -77,8 +77,8 @@ export function useFaceGate(onPass) {
       state.value = 'verifying'
       await faceApi.verify(photoBlob)
       state.value = 'success'
-      // Long enough to read "verified", short enough not to feel like a wait.
-      setTimeout(pass, 600)
+      // Long enough to see the tick, short enough not to count as a wait.
+      setTimeout(pass, 400)
     } catch (error) {
       if (error?.response) {
         state.value = error.response.status === 429 ? 'locked' : 'failed'

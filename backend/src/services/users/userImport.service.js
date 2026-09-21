@@ -2,6 +2,7 @@ import ExcelJS from 'exceljs'
 import {
   GENERATED_PASSWORD_LENGTH,
   JSHSHIR_PATTERN,
+  capitalizeName,
   composeFullName,
   generatePassword,
   normalizeJshshir,
@@ -158,9 +159,11 @@ export async function planImport(rows, { defaultRoleName = 'EMPLOYEE' } = {}) {
     }
     seenJshshir.set(jshshir, row.__row)
 
-    const firstName = (row.firstName ?? '').trim()
-    const lastName = (row.lastName ?? '').trim()
-    const patronymic = (row.patronymic ?? '').trim()
+    // Capitalised like the form's own fields: a sheet exported from an HR
+    // system in upper case, or typed in lower case, lands as the same record.
+    const firstName = capitalizeName(row.firstName)
+    const lastName = capitalizeName(row.lastName)
+    const patronymic = capitalizeName(row.patronymic)
     if (!firstName || !lastName) {
       fail(row, firstName ? 'lastName' : 'firstName', 'REQUIRED', 'First and last name are both required')
       continue

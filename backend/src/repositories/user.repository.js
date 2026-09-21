@@ -326,11 +326,14 @@ export const userRepository = {
     })
   },
 
+  // The lock goes with the old password: whoever set a new one — the
+  // person via a reset link, or the admin who handed it over — expects the
+  // next login to work, not to wait out the attempts on the lost one.
   async setPassword(userId, passwordHash) {
     await User.updateOne(
       { _id: userId },
       {
-        $set: { passwordHash },
+        $set: { passwordHash, failedLoginAttempts: 0, lockedUntil: null },
         $unset: { passwordResetTokenHash: '', passwordResetExpiresAt: '' },
       }
     )

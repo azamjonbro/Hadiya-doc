@@ -5,6 +5,7 @@ import {
   JSHSHIR_PATTERN,
   PASSWORD_MIN_LENGTH,
   normalizeJshshir,
+  capitalizeName,
 } from '@lms/shared'
 
 const jshshir = z
@@ -39,6 +40,14 @@ const optionalGender = z.union([z.enum(GENDER_VALUES), z.literal('')])
 
 const password = z.string().min(PASSWORD_MIN_LENGTH, `Password must be at least ${PASSWORD_MIN_LENGTH} characters`)
 
+// Names are stored the way a document writes them whatever the form got —
+// "doston xalilov" typed in a hurry must not become a lower-case record that
+// every list and certificate then prints. Required parts refuse '' after the
+// trim; the patronymic may be absent.
+const nameRequired = (label) =>
+  z.string().transform(capitalizeName).refine((value) => value.length > 0, { message: `${label} is required` })
+const patronymic = z.string().transform(capitalizeName).refine((value) => value.length <= 120, { message: 'Too long' })
+
 // Reporting line and HR key. `''` clears them, like the other optional
 // identity fields — see the comment at the top of this file.
 export const hierarchyFields = {
@@ -50,9 +59,9 @@ export const hierarchyFields = {
 }
 
 export const createUserSchema = z.object({
-  firstName: z.string().trim().min(1, 'First name is required'),
-  lastName: z.string().trim().min(1, 'Last name is required'),
-  patronymic: z.string().trim().max(120).optional().default(''),
+  firstName: nameRequired('First name'),
+  lastName: nameRequired('Last name'),
+  patronymic: patronymic.optional().default(''),
   jshshir,
   email: optionalEmail.optional(),
   phone: z.string().optional().default(''),
@@ -79,9 +88,9 @@ export const createUserSchema = z.object({
 export const updateUserSchema = z
   .object({
     ...hierarchyFields,
-    firstName: z.string().trim().min(1).optional(),
-    lastName: z.string().trim().min(1).optional(),
-    patronymic: z.string().trim().max(120).optional(),
+    firstName: nameRequired('First name').optional(),
+    lastName: nameRequired('Last name').optional(),
+    patronymic: patronymic.optional(),
     jshshir: jshshir.optional(),
     email: optionalEmail.optional(),
     phone: z.string().optional(),

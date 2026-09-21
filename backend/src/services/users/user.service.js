@@ -606,7 +606,16 @@ export const userService = {
       updateData.roleIds = roleIds
     }
     if (payload.jshshir !== undefined) updateData.jshshir = payload.jshshir
-    if (payload.password) updateData.passwordHash = await hashPassword(payload.password)
+    if (payload.password) {
+      updateData.passwordHash = await hashPassword(payload.password)
+      // An admin sets a new password because the old one was lost — and
+      // the lost one has usually been guessed at until the account locked.
+      // The lock is about the old password; a new one is a fresh start, or
+      // the person is told "invalid" for another quarter hour and the reset
+      // looks like it did nothing.
+      updateData.failedLoginAttempts = 0
+      updateData.lockedUntil = null
+    }
 
     // Clearing an optional identity field has to remove it from the document,
     // not write '' — a blank string is indexed by the partial unique index and

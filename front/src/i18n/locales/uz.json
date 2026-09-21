@@ -124,6 +124,25 @@
       "highlight2": "Kurslar, soatlar va kunlik ketma-ketlik bo'yicha o'sishingizni ko'ring",
       "highlight3": "Korporativ darajadagi xavfsizlik, kirishlar qayd etiladi"
     },
+    "forgot": {
+      "title": "Parolni tiklash",
+      "subtitle": "JSHSHIR yoki emailingizni kiriting — hisobga biriktirilgan emailga parolni tiklash havolasi yuboramiz.",
+      "sent": "Agar shunday hisob bo'lsa va unga email biriktirilgan bo'lsa, tiklash havolasi yuborildi. Havola 60 daqiqa amal qiladi.",
+      "noEmailHint": "Hisobingizga email biriktirilmagan bo'lsa, yangi parolni administratordan so'rang.",
+      "submit": "Havola yuborish",
+      "back": "Kirish sahifasiga qaytish"
+    },
+    "reset": {
+      "title": "Yangi parol",
+      "subtitle": "Hisobingiz uchun yangi parol o'ylab toping.",
+      "submit": "Parolni saqlash",
+      "failed": "Parolni saqlab bo'lmadi",
+      "invalidTitle": "Havola yaroqsiz",
+      "invalidHint": "Bu havola allaqachon ishlatilgan yoki muddati o'tgan. Kirish sahifasida «Parolni unutdingizmi?» orqali yangisini so'rang.",
+      "doneTitle": "Parol o'zgartirildi",
+      "doneHint": "Endi yangi parol bilan kirishingiz mumkin. Boshqa qurilmalardagi sessiyalar tugatildi.",
+      "toLogin": "Kirish sahifasiga o'tish"
+    },
     "logout": "Chiqish",
     "sso": {
       "or": "yoki",
@@ -960,7 +979,11 @@
       "features": "Funksiyalar",
       "basicHint": "Bu yerda hisob ma'lumotlari, til va xavfsizlik sozlamalari.",
       "designHint": "Portalning ko'rinishi: mavzu va brend.",
-      "featuresHint": "Platforma imkoniyatlari: diqqat siyosati, AI, integratsiyalar."
+      "featuresHint": "Platforma imkoniyatlari: diqqat siyosati, AI, integratsiyalar.",
+      "profile": "Profil",
+      "notifications": "Bildirishnomalar",
+      "preferences": "Ko'rinish",
+      "security": "Xavfsizlik"
     },
     "sections": {
       "profile": "Profil",
@@ -3542,6 +3565,21 @@
     "copied": "Nusxa olindi",
     "copyFailed": "Nusxa olib bo'lmadi",
     "stored": "Saqlab oldim"
+  },
+  "changePassword": {
+    "title": "Parolni o'zgartirish",
+    "hint": "Hozirgi parolni va yangisini kiriting. Boshqa qurilmalardagi sessiyalar tugatiladi, shu qurilma qoladi.",
+    "current": "Hozirgi parol",
+    "new": "Yangi parol",
+    "confirm": "Yangi parolni takrorlang",
+    "submit": "Parolni o'zgartirish",
+    "mismatch": "Parollar mos kelmadi",
+    "tooShort": "Kamida {length} ta belgi",
+    "lengthHint": "Kamida {length} ta belgi.",
+    "currentWrong": "Hozirgi parol noto'g'ri",
+    "failed": "Parolni o'zgartirib bo'lmadi",
+    "done": "Parol o'zgartirildi",
+    "doneSignedOut": "Parol o'zgartirildi — yangi parol bilan qayta kiring."
   },
   "sessions": {
     "title": "Qaysi qurilmalarda kirilgan",

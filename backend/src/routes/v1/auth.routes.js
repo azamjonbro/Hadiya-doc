@@ -12,6 +12,7 @@ import {
   loginSchema,
   passwordResetRequestSchema,
   passwordResetConfirmSchema,
+  changePasswordSchema,
 } from '../../validators/auth.validator.js'
 import { faceRouter } from './face.routes.js'
 import { ssoController } from '../../controllers/sso.controller.js'
@@ -105,6 +106,11 @@ authRouter.post(
  * device" notification was changing the password, which ends every session
  * including the one reading the mail.
  */
+// Own password (the profile's security tab). Under /auth rather than
+// /users/me because the refresh cookie is scoped to this path, and the
+// cookie is how the service knows which session to keep.
+authRouter.put('/password', authenticate, validateBody(changePasswordSchema), authController.changePassword)
+
 authRouter.get('/sessions', authenticate, sessionController.list)
 authRouter.delete('/sessions/others', authenticate, sessionController.revokeOthers)
 authRouter.delete('/sessions/:id', authenticate, sessionController.revoke)

@@ -42,4 +42,22 @@ export const securityApi = {
   revokeOtherSessions() {
     return http.delete('/auth/sessions/others').then((r) => r.data.data)
   },
+
+  // Own password. The API ends every other session and keeps this one; the
+  // result says how many went, and `signedOut` when it could not tell which
+  // one to keep.
+  changePassword(currentPassword, newPassword) {
+    return http.put('/auth/password', { currentPassword, newPassword }).then((r) => r.data.data)
+  },
+
+  // The "forgot password" pair. Both are unauthenticated: the first sends a
+  // reset link to the account's email (and says nothing about whether the
+  // account exists), the second spends that link.
+  requestPasswordReset(identifier) {
+    return http.post('/auth/password-reset/request', { identifier }).then((r) => r.data.data)
+  },
+
+  confirmPasswordReset(token, newPassword) {
+    return http.post('/auth/password-reset/confirm', { token, newPassword }).then((r) => r.data.data)
+  },
 }
