@@ -6,7 +6,7 @@
  * grouped by module. `modelValue` is the list of role names; `roles` the
  * catalogue (`rolesApi.list()`, permissions included).
  */
-import { computed, ref } from 'vue'
+import { computed, nextTick, onBeforeUnmount, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { roleLabel, permissionLabel, moduleLabel } from '@/utils/roleLabel'
 import Icon from '@/components/ui/Icon.vue'
@@ -17,12 +17,67 @@ const props = defineProps({
   modelValue: { type: Array, default: () => [] },
   roles: { type: Array, default: () => [] },
   disabled: { type: Boolean, default: false },
+  // async (name) => role | null — given by a caller who may create roles
+  // (role:manage). The picker then ends with a "new role" field, so an
+  // admin who needs a hat nobody has yet does not have to leave the form
+  // for the roles page and come back.
+  createRole: { type: Function, default: null },
 })
 const emit = defineEmits(['update:modelValue'])
 
 const { t, te } = useI18n()
 const adding = ref(false)
 const showPermissions = ref(false)
+
+// A custom role shows the words the admin typed (registered from the
+// catalogue by rolesApi); a seeded one its translation.
+function labelFor(role) {
+  return roleLabel(role.name, { t, te })
+}
+
+// The "new role" field inside the picker.
+const newRoleName = ref('')
+const creating = ref(false)
+const newRoleInput = ref(null)
+const picker = ref(null)
+
+async function createAndAdd() {
+  const name = newRoleName.value.trim()
+  if (!name || creating.value || !props.createRole) return
+  creating.value = true
+  try {
+    const created = await props.createRole(name)
+    // The key is the server's (KASSIR for "Kassir"), so it is the created
+    // row's name that goes on the record, not what was typed.
+    if (created?.name) {
+      newRoleName.value = ''
+      add(created.name)
+    }
+  } finally {
+    creating.value = false
+  }
+}
+
+// The picker closes on a click anywhere else — not on blur, because the
+// list and the field inside it take focus in turn.
+function onDocumentClick(event) {
+  if (adding.value && picker.value && !picker.value.contains(event.target)) adding.value = false
+}
+watch(adding, (open) => {
+  if (open) {
+    document.addEventListener('mousedown', onDocumentClick)
+    newRoleName.value = ''
+  } else {
+    document.removeEventListener('mousedown', onDocumentClick)
+  }
+})
+onBeforeUnmount(() => document.removeEventListener('mousedown', onDocumentClick))
+
+async function openPicker() {
+  adding.value = true
+  await nextTick()
+  newRoleInput.value?.focus()
+}
 
 const held = computed(() => props.modelValue.map((name) => props.roles.find((r) => r.name === name) ?? { name, permissions: [] }))
 const remaining = computed(() => props.roles.filter((r) => !props.modelValue.includes(r.name)))
@@ -58,7 +113,7 @@ function remove(name) {
         class="inline-flex h-8 items-center gap-1.5 rounded-full bg-surface-2 pl-3 text-small text-ink"
         :class="disabled || modelValue.length <= 1 ? 'pr-3' : 'pr-1.5'"
       >
-        {{ roleLabel(role.name, { t, te }) }}
+        {{ labelFor(role) }}
         <button
           v-if="!disabled && modelValue.length > 1"
           type="button"
@@ -69,20 +124,52 @@ function remove(name) {
           <Icon name="close" size="12" />
         </button>
       </span>
-      <select
-        v-if="adding"
-        class="h-8 rounded-md border border-border-strong bg-surface px-2 text-small text-ink outline-none"
-        autofocus
-        @change="add($event.target.value)"
-        @blur="adding = false"
-      >
-        <option value="">{{ t('common.select') }}</option>
-        <option v-for="role in remaining" :key="role.name" :value="role.name">{{ roleLabel(role.name, { t, te }) }}</option>
-      </select>
+    </div>
+
+    <!-- The picker: what is left to add, and — for whoever may create
+         roles — a field for one that does not exist yet. -->
+    <div v-if="adding" ref="picker" class="relative mt-2">
+      <div class="w-72 max-w-full rounded-md border border-border-strong bg-surface shadow-lg">
+        <ul class="max-h-56 overflow-y-auto py-1">
+          <li v-for="role in remaining" :key="role.name">
+            <button
+              type="button"
+              class="flex w-full items-center px-3 py-1.5 text-left text-small text-ink transition-default hover:bg-surface-hover"
+              @click="add(role.name)"
+            >
+              {{ labelFor(role) }}
+            </button>
+          </li>
+          <li v-if="!remaining.length" class="px-3 py-1.5 text-small text-ink-faint">{{ t('employee.access.allRolesHeld') }}</li>
+        </ul>
+        <!-- Not a <form>: this picker sits inside the employee form, and
+             Enter in a nested form is the outer form's submit. -->
+        <div v-if="createRole" class="flex items-center gap-1.5 border-t border-border p-1.5">
+          <input
+            ref="newRoleInput"
+            v-model="newRoleName"
+            type="text"
+            maxlength="40"
+            :placeholder="t('employee.access.newRolePlaceholder')"
+            :aria-label="t('employee.access.newRole')"
+            :disabled="creating"
+            class="h-8 min-w-0 flex-1 rounded-md border border-border-strong bg-surface px-2 text-small text-ink outline-none placeholder:text-ink-faint focus:border-primary"
+            @keydown.enter.prevent="createAndAdd"
+          />
+          <button
+            type="button"
+            :disabled="creating || !newRoleName.trim()"
+            @click="createAndAdd"
+            class="flex h-8 shrink-0 items-center gap-1 rounded-md bg-primary px-2.5 text-small font-medium text-primary-foreground transition-default disabled:opacity-50"
+          >
+            <Icon name="plus" size="13" /> {{ creating ? t('employee.access.creating') : t('employee.access.create') }}
+          </button>
+        </div>
+      </div>
     </div>
 
     <div class="mt-2.5 flex flex-wrap items-center gap-5 text-small">
-      <button v-if="!disabled && remaining.length" type="button" class="flex items-center gap-1.5 text-primary hover:underline" @click="adding = true">
+      <button v-if="!disabled && (remaining.length || createRole) && !adding" type="button" class="flex items-center gap-1.5 text-primary hover:underline" @click="openPicker">
         <Icon name="plus" size="14" /> {{ t('employee.access.addRole') }}
       </button>
       <button type="button" class="flex items-center gap-1.5 text-ink-muted hover:text-ink" @click="showPermissions = true">

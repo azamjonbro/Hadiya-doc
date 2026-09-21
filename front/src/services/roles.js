@@ -1,14 +1,21 @@
 import { http } from './http'
+import { registerRoleLabels } from '@/utils/roleLabel'
 
 // Roles are rows in a collection, not a fixed enum — the six seeded ones are
 // simply the rows that ship with the app. Listing needs user:read; creating
 // and deleting need role:manage, which only SUPERADMIN holds.
 export const rolesApi = {
   list() {
-    return http.get('/roles').then((r) => r.data.data)
+    return http.get('/roles').then((r) => {
+      registerRoleLabels(r.data.data)
+      return r.data.data
+    })
   },
   create(name, scope) {
-    return http.post('/roles', { name, ...(scope ? { scope } : {}) }).then((r) => r.data.data)
+    return http.post('/roles', { name, ...(scope ? { scope } : {}) }).then((r) => {
+      registerRoleLabels([r.data.data])
+      return r.data.data
+    })
   },
   // The catalogue the permission grid renders its columns from, grouped by
   // module.

@@ -1980,7 +1980,12 @@
       "scope": "Scope",
       "addRole": "Add role",
       "permissionsTitle": "User permissions",
-      "noPermissions": "No permissions"
+      "noPermissions": "No permissions",
+      "newRole": "New role",
+      "newRolePlaceholder": "New role name…",
+      "create": "Add",
+      "creating": "Adding…",
+      "allRolesHeld": "Every existing role is already held"
     },
     "training": {
       "hint": "Courses assigned to this person and how far they are.",

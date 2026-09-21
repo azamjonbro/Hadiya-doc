@@ -207,7 +207,13 @@ function onManagerCleared() {
       <p class="mt-1.5 text-small text-ink-faint">{{ t('users.fields.managerHint') }}</p>
     </FieldRow>
     <FieldRow :label="t('users.role')" required>
-      <RoleChips v-model="form.roleNames" :roles="directory.roles.value" :disabled="disabled" class="sm:pt-1" />
+      <RoleChips
+        v-model="form.roleNames"
+        :roles="directory.roles.value"
+        :disabled="disabled"
+        :create-role="props.canManageRoles ? directory.addRole : null"
+        class="sm:pt-1"
+      />
     </FieldRow>
   </div>
 </template>

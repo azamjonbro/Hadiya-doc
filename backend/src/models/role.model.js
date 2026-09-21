@@ -4,6 +4,11 @@ import { ROLE_SCOPE_VALUES, ROLE_SCOPES } from '@lms/shared'
 const roleSchema = new Schema(
   {
     name: { type: String, required: true, unique: true, uppercase: true, trim: true },
+    // What the admin typed when creating the role ("Bosh hisobchi"), kept
+    // beside the RBAC key it became (BOSH_HISOBCHI) so the UI can show the
+    // words rather than the key. Empty for the seeded roles, whose labels
+    // are translated on the client.
+    label: { type: String, default: '', trim: true },
     permissions: { type: [String], default: [] },
 
     // How far this role can see: ALL, DEPARTMENT, TEAM or SELF. Data on the

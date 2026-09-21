@@ -9,6 +9,7 @@ import { Role } from '../../models/role.model.js'
 import { User } from '../../models/user.model.js'
 import { auditLogRepository } from '../../repositories/auditLog.repository.js'
 import { ApiError } from '../../utils/ApiError.js'
+import { slugify } from '../../utils/slugify.js'
 import { Permission } from '../../models/permission.model.js'
 
 // What a role created from the employee form is allowed to do. An admin adding
@@ -40,6 +41,7 @@ export const roleService = {
       // no field, and the resolver reads that as narrowly as the name allows
       // rather than as ALL.
       scope: resolveRoleScope(role),
+      label: role.label ?? '',
       permissions: role.permissions ?? [],
       isSystem: role.isSystem || SYSTEM_ROLE_NAMES.includes(role.name),
       users: usersByRoleId.get(role._id.toString()) ?? 0,
@@ -48,8 +50,12 @@ export const roleService = {
 
   async create(actor, name, scope = ROLE_SCOPES.SELF) {
     // Role names are the uppercase keys the RBAC layer compares, so normalise
-    // here rather than trusting the form to have done it.
-    const normalized = name.trim().toUpperCase().replace(/\s+/g, '_')
+    // here rather than trusting the form to have done it. Through slugify so
+    // a role typed in Cyrillic ("Кассир") or with an apostrophe ("O'qituvchi")
+    // gets a key (KASSIR, O_QITUVCHI) instead of a 400 — the typed words
+    // are kept as the label.
+    const label = name.trim().replace(/\s+/g, ' ')
+    const normalized = slugify(label).toUpperCase().replace(/-/g, '_')
     if (!/^[A-Z][A-Z0-9_]*$/.test(normalized)) {
       throw ApiError.badRequest(
         'A role name must start with a Latin letter and contain only letters, digits and underscores',
@@ -62,6 +68,7 @@ export const roleService = {
 
     const role = await Role.create({
       name: normalized,
+      label,
       permissions: NEW_ROLE_PERMISSIONS,
       scope,
       isSystem: false,
@@ -74,7 +81,7 @@ export const roleService = {
       metadata: { name: normalized, scope },
     })
 
-    return { id: role._id.toString(), name: role.name, scope: role.scope, isSystem: false, users: 0 }
+    return { id: role._id.toString(), name: role.name, label, scope: role.scope, isSystem: false, users: 0 }
   },
 
   /**

@@ -93,14 +93,16 @@ export function useOrgDirectory() {
     }
   }
 
+  // Resolves to the created role (its `name` is the key the server chose,
+  // which is what a form has to store), or null when the server refused.
   async function addRole(name) {
     try {
-      await rolesApi.create(name)
+      const created = await rolesApi.create(name)
       await loadRoles()
-      return true
+      return created
     } catch (error) {
       toast.error(apiErrorText(error, t('orgLists.addFailed')))
-      return false
+      return null
     }
   }
 

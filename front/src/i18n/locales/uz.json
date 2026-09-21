@@ -1980,7 +1980,12 @@
       "scope": "Ko‘rish doirasi",
       "addRole": "Rol qo‘shish",
       "permissionsTitle": "Foydalanuvchining ruxsatlari",
-      "noPermissions": "Ruxsatlar yo‘q"
+      "noPermissions": "Ruxsatlar yo‘q",
+      "newRole": "Yangi rol",
+      "newRolePlaceholder": "Yangi rol nomi…",
+      "create": "Qo'shish",
+      "creating": "Qo'shilmoqda…",
+      "allRolesHeld": "Barcha mavjud rollar biriktirilgan"
     },
     "training": {
       "hint": "Xodimga tayinlangan kurslar va ularning holati.",
