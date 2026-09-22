@@ -2,6 +2,7 @@
 import { onMounted, reactive, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
+import { roleLabel } from '@/utils/roleLabel'
 import { useConfirm } from '@/composables/useConfirm'
 import { ROLES } from '@lms/shared'
 import { useAuthStore } from '@/stores/auth'
@@ -17,7 +18,7 @@ import Skeleton from '@/components/ui/Skeleton.vue'
 import Icon from '@/components/ui/Icon.vue'
 import { apiErrorText } from '@/utils/apiError'
 
-const { t } = useI18n()
+const { t, te } = useI18n()
 const confirm = useConfirm()
 const route = useRoute()
 const router = useRouter()
@@ -228,7 +229,7 @@ onMounted(load)
           <div class="flex flex-wrap gap-x-4 gap-y-1.5 rounded-md border border-border-strong p-3">
             <label v-for="role in roleOptions" :key="role" class="flex items-center gap-2 text-small text-ink">
               <input type="checkbox" class="h-4 w-4 rounded border-border-strong text-primary" :checked="form.roleTargets.includes(role)" @change="toggleRole(role)" />
-              {{ role }}
+              {{ roleLabel(role, { t, te }) }}
             </label>
           </div>
         </div>

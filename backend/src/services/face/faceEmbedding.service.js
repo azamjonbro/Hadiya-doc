@@ -70,6 +70,13 @@ function ensureModelsLoaded() {
  * forge.
  */
 export const faceEmbeddingService = {
+  // For boot: the first verification after a deploy otherwise pays the
+  // ~1 s model load. Errors are logged by the loader and swallowed here —
+  // a host without the native binary must still start.
+  warmUp() {
+    return ensureModelsLoaded().catch(() => {})
+  },
+
   async detectAndDescribe(buffer) {
     await ensureModelsLoaded()
     const faceapi = faceapiModule

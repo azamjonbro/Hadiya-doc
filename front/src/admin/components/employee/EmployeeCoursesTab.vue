@@ -1,10 +1,13 @@
 <script setup>
-import { onMounted, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { usersApi } from '@/services/users'
 import { coursesApi } from '@/services/courses'
 import { formatDate } from '@/utils/format'
 import EmployeeCourseProgress from '@/admin/components/EmployeeCourseProgress.vue'
+import UserActionsHost from '@/admin/components/users/UserActionsHost.vue'
+import AppButton from '@/components/ui/AppButton.vue'
+import { useAuthStore } from '@/stores/auth'
 import Badge from '@/components/ui/Badge.vue'
 import Skeleton from '@/components/ui/Skeleton.vue'
 import EmptyState from '@/components/ui/EmptyState.vue'
@@ -14,9 +17,19 @@ import { apiErrorText } from '@/utils/apiError'
 
 const props = defineProps({
   userId: { type: String, required: true },
+  // The person, for the "assign a course" action's roster.
+  user: { type: Object, default: null },
 })
 
 const { t, locale } = useI18n()
+const auth = useAuthStore()
+const actionsHost = ref(null)
+const view = ref('assigned')
+const canAssign = computed(() => auth.hasPermission('course:assign'))
+const users = computed(() => (props.user ? [props.user] : []))
+const active = computed(() => assignments.value.filter((a) => a.status !== 'COMPLETED'))
+const completed = computed(() => assignments.value.filter((a) => a.status === 'COMPLETED'))
+const shown = computed(() => (view.value === 'completed' ? completed.value : active.value))
 
 const loading = ref(true)
 const errorMessage = ref('')
@@ -53,6 +66,20 @@ onMounted(load)
 
 <template>
   <div>
+    <div class="flex flex-wrap items-center justify-between gap-4 border-b border-border pb-4">
+      <p class="text-[15px] text-ink">{{ t('employee.training.hint') }}</p>
+      <AppButton v-if="canAssign && user" icon="plus" @click="actionsHost?.open('course')">{{ t('employee.training.assign') }}</AppButton>
+    </div>
+
+    <div class="mb-5 mt-4 flex flex-wrap items-center gap-1.5">
+      <button type="button" class="rounded-full px-3.5 py-1.5 text-small font-medium transition-default" :class="view === 'assigned' ? 'bg-surface-2 text-ink' : 'text-ink-muted hover:text-ink'" @click="view = 'assigned'">
+        {{ t('employee.training.assigned', { count: active.length }) }}
+      </button>
+      <button type="button" class="rounded-full px-3.5 py-1.5 text-small font-medium transition-default" :class="view === 'completed' ? 'bg-surface-2 text-ink' : 'text-ink-muted hover:text-ink'" @click="view = 'completed'">
+        {{ t('employee.training.completed', { count: completed.length }) }}
+      </button>
+    </div>
+
     <div v-if="loading" class="space-y-3">
       <Skeleton v-for="i in 3" :key="i" class="h-14 w-full" />
     </div>
@@ -60,14 +87,14 @@ onMounted(load)
     <TabError v-else-if="errorMessage" :message="errorMessage" @retry="load" />
 
     <EmptyState
-      v-else-if="!assignments.length"
+      v-else-if="!shown.length"
       icon="graduation-cap"
       :title="t('courses.empty')"
       :description="t('employee.courses.emptyHint')"
     />
 
     <div v-else class="divide-y divide-border overflow-hidden rounded-lg border border-border bg-surface">
-      <div v-for="assignment in assignments" :key="assignment.id">
+      <div v-for="assignment in shown" :key="assignment.id">
         <button
           type="button"
           class="flex w-full items-center gap-3 px-4 py-3 text-left transition-default hover:bg-surface-2"
@@ -99,5 +126,7 @@ onMounted(load)
         />
       </div>
     </div>
+
+    <UserActionsHost v-if="user" ref="actionsHost" :users="users" @done="load" />
   </div>
 </template>

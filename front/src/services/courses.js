@@ -18,6 +18,10 @@ export const coursesApi = {
   tags() {
     return http.get('/courses/tags').then((r) => r.data.data.tags)
   },
+  // Courses with an approved translation, and into which languages.
+  languages() {
+    return http.get('/courses/languages').then((r) => r.data.data.items)
+  },
   list(params) {
     return http.get('/courses', { params }).then((r) => r.data.data)
   },

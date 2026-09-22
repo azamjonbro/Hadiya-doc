@@ -1,4 +1,5 @@
 import { courseCategoryService } from '../services/courses/courseCategory.service.js'
+import { ContentTranslation } from '../models/contentTranslation.model.js'
 import { courseRepository } from '../repositories/course.repository.js'
 import { asyncHandler } from '../utils/asyncHandler.js'
 import { sendSuccess } from '../utils/apiResponse.js'
@@ -24,5 +25,16 @@ export const courseCategoryController = {
   // Tags are free text by design, so the only honest source is the courses.
   tags: asyncHandler(async (_req, res) => {
     sendSuccess(res, { tags: await courseRepository.listTags() })
+  }),
+
+  // Which courses can be read in which other language — approved
+  // translations only, since a draft one is not served to learners. The
+  // library's «courses in other languages» panel is drawn from this.
+  languages: asyncHandler(async (_req, res) => {
+    const rows = await ContentTranslation.aggregate([
+      { $match: { entity: 'Course', status: 'APPROVED' } },
+      { $group: { _id: '$entityId', langs: { $addToSet: '$lang' } } },
+    ])
+    sendSuccess(res, { items: rows.map((row) => ({ courseId: String(row._id), langs: row.langs.sort() })) })
   }),
 }

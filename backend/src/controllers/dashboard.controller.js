@@ -1,6 +1,7 @@
 import { dashboardCacheService } from '../services/analytics/dashboardCache.service.js'
 import { hasUnscopedAccess, scopedUserIdsFor } from '../services/access/actorScope.js'
 import { computeTeamDashboard } from '../analytics/teamDashboard.js'
+import { computeDashboardInbox } from '../analytics/dashboardInbox.js'
 import { User } from '../models/user.model.js'
 import { asyncHandler } from '../utils/asyncHandler.js'
 import { sendSuccess } from '../utils/apiResponse.js'
@@ -38,6 +39,15 @@ export const dashboardController = {
     // question asked is "the people I answer for".
     const userIds = scoped ?? (await allActiveUserIds())
     sendSuccess(res, await computeTeamDashboard(userIds))
+  }),
+
+  // The live half of the same page — see dashboardInbox.js. Company-wide
+  // like the cached payload, and fenced the same way.
+  inbox: asyncHandler(async (req, res) => {
+    if (!hasUnscopedAccess(req.user)) {
+      throw ApiError.forbidden('This inbox covers the whole company.', 'DASHBOARD_SCOPE_FORBIDDEN')
+    }
+    sendSuccess(res, await computeDashboardInbox(req.user))
   }),
 }
 

@@ -13,7 +13,23 @@ const checklistItemSchema = z.object({
   weight: z.coerce.number().min(0).max(100).optional(),
   competencyId: objectId.nullable().optional(),
   competencyLevel: z.coerce.number().int().min(0).max(10).nullable().optional(),
+  scaleId: objectId.nullable().optional(),
 })
+
+const scaleLevelSchema = z.object({
+  label: z.string().trim().min(1).max(80),
+  points: z.coerce.number().min(0).max(1000).optional(),
+  passes: z.boolean().optional(),
+})
+const scaleShape = {
+  name: z.string().trim().min(1).max(120),
+  description: z.string().trim().max(1000).optional(),
+  levels: z.array(scaleLevelSchema).min(2).max(20),
+}
+export const createScaleSchema = z.object(scaleShape)
+export const updateScaleSchema = z
+  .object(Object.fromEntries(Object.entries(scaleShape).map(([key, schema]) => [key, schema.optional()])))
+  .refine((data) => Object.keys(data).length > 0, { message: 'No fields to update' })
 
 const checklistShape = {
   name: z.string().trim().min(1).max(160),
@@ -60,12 +76,15 @@ export const listSessionsSchema = z.object({
 })
 
 export const recordObservationSchema = z.object({
-  result: z.enum(['PASS', 'FAIL', 'NOT_OBSERVED']),
+  // Either a verdict, or — for an item on a scale — the level picked; the
+  // service derives the verdict from the level then.
+  result: z.enum(['PASS', 'FAIL', 'NOT_OBSERVED']).optional(),
+  level: z.coerce.number().int().min(0).max(19).optional(),
   note: z.string().trim().max(2000).optional(),
   // Stamped by the phone, so a verdict given at 09:40 in a basement does
   // not read as 11:15 in the car park when the queue finally drains (12.3).
   recordedAt: z.coerce.date().optional(),
-})
+}).refine((data) => data.result !== undefined || data.level !== undefined, { message: 'result or level is required', path: ['result'] })
 
 export const completeSessionSchema = z.object({
   note: z.string().trim().max(2000).optional(),

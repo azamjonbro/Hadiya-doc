@@ -316,7 +316,7 @@ export const faceVerificationService = {
     await faceVerificationChallengeRepository.consume(challenge._id)
 
     const user = await userRepository.findById(userId)
-    const role = await roleRepository.findById(user.roleId)
+    const role = await roleRepository.effectiveFor(user)
     const accessToken = generateAccessToken(user, role)
     const { refreshToken } = await issueSession(user, meta)
 

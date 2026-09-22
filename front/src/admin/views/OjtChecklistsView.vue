@@ -40,6 +40,8 @@ const confirm = useConfirm()
 
 const items = ref([])
 const competencies = ref([])
+const scales = ref([])
+const scaleOptions = computed(() => [{ value: '', label: t('ojt.scales.yesNo') }, ...scales.value.filter((s) => !s.isSystem).map((s) => ({ value: s.id, label: s.name }))])
 const catalogueOpen = ref(true)
 const loading = ref(true)
 const saving = ref(false)
@@ -69,7 +71,7 @@ function emptyDraft() {
 }
 
 function emptyItem() {
-  return { key: nextKey(), title: '', criteria: '', required: true, weight: 1, competencyId: '', competencyLevel: null }
+  return { key: nextKey(), title: '', criteria: '', required: true, weight: 1, competencyId: '', competencyLevel: null, scaleId: '' }
 }
 
 const statusOptions = computed(() =>
@@ -115,6 +117,7 @@ async function load() {
 async function loadCompetencies() {
   try {
     competencies.value = await competenciesApi.list({ status: 'ACTIVE' })
+    scales.value = await ojtApi.scales().catch(() => [])
   } catch {
     // Refused or unreachable — the checklist is still fully editable, it
     // simply cannot link a step to the matrix from here.
@@ -146,6 +149,7 @@ function openEdit(checklist) {
       weight: item.weight ?? 1,
       competencyId: item.competencyId ?? '',
       competencyLevel: item.competencyLevel ?? null,
+      scaleId: item.scaleId ?? '',
     })),
   }
   modalOpen.value = true
@@ -179,6 +183,7 @@ function payloadFrom(value) {
       weight: Number(item.weight) || 0,
       competencyId: item.competencyId || null,
       competencyLevel: item.competencyId ? Number(item.competencyLevel) : null,
+      scaleId: item.scaleId || null,
     })),
   }
 }
@@ -394,6 +399,12 @@ onMounted(() => {
                         />
                       </label>
                       <span class="text-caption text-ink-faint">{{ t('ojt.weightHint') }}</span>
+                      <label class="flex items-center gap-1.5 text-caption text-ink-muted">
+                        {{ t('ojt.scales.scale') }}
+                        <select v-model="item.scaleId" class="h-8 rounded-md border border-border-strong bg-surface px-2 text-small text-ink outline-none focus:border-primary">
+                          <option v-for="option in scaleOptions" :key="option.value" :value="option.value">{{ option.label }}</option>
+                        </select>
+                      </label>
                     </div>
 
                     <div v-if="catalogueOpen" class="flex flex-wrap items-center gap-2">

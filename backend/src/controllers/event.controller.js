@@ -29,6 +29,10 @@ export const eventController = {
     sendSuccess(res, await eventRegistrationService.register(req.user, req.params.id), 'Registered')
   }),
 
+  registerMany: asyncHandler(async (req, res) => {
+    sendSuccess(res, await eventRegistrationService.registerMany(req.user, req.params.id, req.body.userIds), 'Registered')
+  }),
+
   cancelRegistration: asyncHandler(async (req, res) => {
     sendSuccess(
       res,

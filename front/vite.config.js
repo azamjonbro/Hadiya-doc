@@ -55,10 +55,10 @@ export default defineConfig({
          * What is *not* precached, and why.
          *
          * `mediapipe` and `pdfjs` are tens of megabytes of face models and
-         * a PDF renderer in `public/`. The four named chunks are the
-         * document and spreadsheet viewers (pdf.js, pptx, exceljs,
-         * mammoth) — together about 4 MB of the 6.8 MB build, all of them
-         * lazily imported by one screen each.
+         * a PDF renderer in `public/`. The named chunks are the document
+         * and spreadsheet viewers (pdf.js, pptx and the jszip it repairs
+         * decks with, exceljs, mammoth) — together about 4 MB of the
+         * 6.8 MB build, all of them lazily imported by one screen each.
          *
          * Precaching them would make installing the app a 6.8 MB download
          * before anybody opens anything, on phones that are frequently on
@@ -73,8 +73,64 @@ export default defineConfig({
           '**/assets/pdf.worker.min-*.js',
           '**/assets/pdf-*.js',
           '**/assets/pptx-preview*.js',
+          '**/assets/jszip.min-*.js',
           '**/assets/exceljs.min-*.js',
           '**/assets/mammoth.browser-*.js',
+          /**
+           * The admin panel's own pages.
+           *
+           * Offline support is for a learner: their courses, lessons and
+           * the queue of what they did while disconnected. An employee's
+           * phone was installing the whole back office as well — the
+           * users table, the report pages, the path builder — which is
+           * most of a megabyte nobody on that phone can open. Named one
+           * by one rather than by a prefix because a chunk is named after
+           * its component, and several names (HomeView, CourseDetailView)
+           * exist on both sides.
+           */
+          '**/assets/AiCourseView-*.js',
+          '**/assets/AuditLogView-*.js',
+          '**/assets/BranchesListView-*.js',
+          '**/assets/CertificateTemplatesView-*.js',
+          '**/assets/ChatInboxView-*.js',
+          '**/assets/CompetenciesView-*.js',
+          '**/assets/CompetencyMatrixView-*.js',
+          '**/assets/CompetencyProfilesView-*.js',
+          '**/assets/ComplianceView-*.js',
+          '**/assets/CourseBuilderView-*.js',
+          '**/assets/CourseQuestionsView-*.js',
+          '**/assets/CoursesListView-*.js',
+          '**/assets/DevelopmentPlansView-*.js',
+          '**/assets/EventsAdminView-*.js',
+          '**/assets/GradingQueueView-*.js',
+          '**/assets/GroupDetailView-*.js',
+          '**/assets/GroupsListView-*.js',
+          '**/assets/LeaderboardView-*.js',
+          '**/assets/LibraryView-*.js',
+          '**/assets/ManagerDashboardView-*.js',
+          '**/assets/MediaLibraryView-*.js',
+          '**/assets/NewsBannersView-*.js',
+          '**/assets/NewsCommentsView-*.js',
+          '**/assets/NewsListView-*.js',
+          '**/assets/OjtChecklistsView-*.js',
+          '**/assets/OjtScalesView-*.js',
+          '**/assets/PathBuilderView-*.js',
+          '**/assets/PathsListView-*.js',
+          '**/assets/PlanTemplatesView-*.js',
+          '**/assets/PlanTypesView-*.js',
+          '**/assets/QuestionBanksView-*.js',
+          '**/assets/QuizEditorView-*.js',
+          '**/assets/ReportDetailView-*.js',
+          '**/assets/ReportsView-*.js',
+          '**/assets/Review360CycleView-*.js',
+          '**/assets/Review360CyclesView-*.js',
+          '**/assets/RoleEditorView-*.js',
+          '**/assets/RolesPermissionsView-*.js',
+          '**/assets/SettingsView-*.js',
+          '**/assets/TasksListView-*.js',
+          '**/assets/TrashView-*.js',
+          '**/assets/UserDetailView-*.js',
+          '**/assets/UsersListView-*.js',
         ],
         maximumFileSizeToCacheInBytes: 3 * 1024 * 1024,
       },

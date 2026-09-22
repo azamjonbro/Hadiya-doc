@@ -20,6 +20,8 @@ export function formatHours(hours, t) {
   return t('employee.units.days', { value: Math.round((hours / 24) * 10) / 10 })
 }
 
+// Month and weekday names for Uzbek come from utils/uzDateLocale.js, which
+// fills the gap in the runtime at boot — these helpers are plain Intl.
 export function formatDate(value, locale) {
   if (!value) return '—'
   return new Date(value).toLocaleDateString(locale, { day: '2-digit', month: 'short', year: 'numeric' })
@@ -65,4 +67,23 @@ export function formatHms(seconds) {
   const m = Math.floor((total % 3600) / 60)
   const s = total % 60
   return [h, m, s].map((n) => String(n).padStart(2, '0')).join(':')
+}
+
+/** "sentabr 2026" — a calendar's heading. */
+export function formatMonthYear(date, locale) {
+  return new Date(date).toLocaleDateString(locale, { month: 'long', year: 'numeric' })
+}
+
+/** The seven column headings of a Monday-first calendar. */
+export function weekdayNames(locale) {
+  const monday = new Date(2024, 0, 1)
+  return Array.from({ length: 7 }, (_, i) =>
+    new Date(monday.getTime() + i * 86400e3).toLocaleDateString(locale, { weekday: 'short' }),
+  )
+}
+
+/** "12 sen, 14:30" — a date with a time, as an event list writes it. */
+export function formatWhen(value, locale) {
+  if (!value) return '—'
+  return new Date(value).toLocaleString(locale, { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })
 }

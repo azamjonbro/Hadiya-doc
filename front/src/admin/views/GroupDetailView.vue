@@ -2,6 +2,7 @@
 import { computed, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
+import { roleLabel } from '@/utils/roleLabel'
 import { useConfirm } from '@/composables/useConfirm'
 import { useAuthStore } from '@/stores/auth'
 import { groupsApi } from '@/services/groups'
@@ -20,7 +21,7 @@ import EmptyState from '@/components/ui/EmptyState.vue'
 import Icon from '@/components/ui/Icon.vue'
 import { apiErrorText } from '@/utils/apiError'
 
-const { t } = useI18n()
+const { t, te } = useI18n()
 const confirm = useConfirm()
 const route = useRoute()
 const router = useRouter()
@@ -237,10 +238,18 @@ onMounted(load)
           <h1 class="text-[24px] font-semibold text-ink">{{ group.name }}</h1>
           <p v-if="group.description" class="mt-1 text-small text-ink-muted">{{ group.description }}</p>
           <div class="mt-2 flex flex-wrap items-center gap-2">
+            <Badge v-if="group.type === 'DYNAMIC'" variant="warning" size="sm"><Icon name="settings" size="11" class="mr-1 inline" />{{ t('groups.smart') }}</Badge>
             <Badge variant="primary" size="sm">{{ t('groups.memberCount', { count: group.memberCount }) }}</Badge>
             <Badge variant="info" size="sm">{{ t('groups.courseCount', { count: group.courseCount }) }}</Badge>
             <span v-if="group.department" class="text-caption text-ink-faint">{{ group.department }}</span>
           </div>
+          <!-- A smart group's rule, said in words: who it collects -->
+          <p v-if="group.type === 'DYNAMIC'" class="mt-2 text-small text-ink-muted">
+            {{ t('groups.rule.summary') }}
+            <template v-for="(key, index) in ['roles', 'departments', 'branches', 'positions']" :key="key">
+              <span v-if="group.rule?.[key]?.length"><template v-if="index && ['roles', 'departments', 'branches', 'positions'].slice(0, index).some((k) => group.rule?.[k]?.length)"> · </template>{{ t(`groups.rule.${key}`) }}: <span class="text-ink">{{ group.rule[key].join(', ') }}</span></span>
+            </template>
+          </p>
         </div>
         <div v-if="canManage" class="flex gap-2">
           <AppButton variant="outline" icon="pencil" @click="openEdit">{{ t('groups.edit') }}</AppButton>
@@ -254,7 +263,8 @@ onMounted(load)
       <div v-if="activeTab === 'members'" class="mt-6">
         <div class="flex items-center justify-between gap-3">
           <h2 class="text-h3 text-ink">{{ t('groups.tabs.members') }}</h2>
-          <AppButton v-if="canManage" icon="plus" size="sm" @click="openAddMembers">{{ t('groups.addMembers') }}</AppButton>
+          <AppButton v-if="canManage && group.type !== 'DYNAMIC'" icon="plus" size="sm" @click="openAddMembers">{{ t('groups.addMembers') }}</AppButton>
+          <span v-else-if="group.type === 'DYNAMIC'" class="text-caption text-ink-faint">{{ t('groups.rule.auto') }}</span>
         </div>
 
         <EmptyState v-if="!group.members.length" icon="users" :title="t('groups.noMembers')" :description="t('groups.noMembersHint')" />
@@ -274,7 +284,7 @@ onMounted(load)
             </button>
             <Badge v-if="!member.isActive" variant="danger" size="sm">{{ t('users.filters.inactive') }}</Badge>
             <AppButton
-              v-if="canManage"
+              v-if="canManage && group.type !== 'DYNAMIC'"
               variant="ghost"
               size="sm"
               icon="close"
@@ -349,7 +359,7 @@ onMounted(load)
             <Avatar :name="user.fullName" :src="user.avatar" size="xs" />
             <span class="min-w-0 flex-1">
               <span class="block truncate text-small text-ink">{{ user.fullName }}</span>
-              <span class="block truncate text-caption text-ink-faint">{{ user.jshshir }} · {{ user.role }}</span>
+              <span class="block truncate text-caption text-ink-faint">{{ user.jshshir }} · {{ roleLabel(user.role, { t, te }) }}</span>
             </span>
           </label>
         </li>

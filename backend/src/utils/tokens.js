@@ -10,6 +10,8 @@ export function generateAccessToken(user, role) {
       sub: user._id.toString(),
       roleId: role._id.toString(),
       roleName: role.name,
+      // All the hats, for checks that ask "is one of them X?".
+      roleNames: role.names ?? [role.name],
       permissions: role.permissions,
       // Carried on the token so scope costs no query per request. An older
       // token has no `scope`; auth.middleware resolves that from the role

@@ -1,5 +1,5 @@
 <script setup>
-import { computed, ref, useId, useSlots } from 'vue'
+import { computed, onMounted, ref, useId, useSlots } from 'vue'
 import { useI18n } from 'vue-i18n'
 import Icon from './Icon.vue'
 
@@ -18,6 +18,9 @@ const props = defineProps({
   // magnifier icon, a filter row). The field still has to say what it is
   // to anybody who cannot see where it sits.
   ariaLabel: { type: String, default: '' },
+  // For the field a dialog opens on: the caller says which one, rather
+  // than every dialog reaching into the DOM for it.
+  autofocus: { type: Boolean, default: false },
 })
 
 defineEmits(['update:modelValue'])
@@ -31,6 +34,11 @@ const resolvedType = computed(() => {
 })
 
 const inputId = useId()
+const inputEl = ref(null)
+onMounted(() => {
+  if (props.autofocus) inputEl.value?.focus()
+})
+defineExpose({ focus: () => inputEl.value?.focus() })
 const errorId = `${inputId}-error`
 const hintId = `${inputId}-hint`
 
@@ -65,6 +73,7 @@ const accessibleName = computed(() => {
       <Icon v-if="icon" :name="icon" size="17" class="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-ink-faint" />
       <input
         :id="inputId"
+        ref="inputEl"
         :type="resolvedType"
         :value="modelValue"
         :placeholder="placeholder"

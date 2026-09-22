@@ -1,6 +1,7 @@
 <script setup>
 import { computed, nextTick, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
+import { roleLabel } from '@/utils/roleLabel'
 import Modal from '@/components/ui/Modal.vue'
 import Avatar from '@/components/ui/Avatar.vue'
 import Icon from '@/components/ui/Icon.vue'
@@ -22,7 +23,7 @@ const props = defineProps({
 
 const emit = defineEmits(['close', 'rename', 'add-members', 'remove-member', 'leave-group', 'preview-image'])
 
-const { t, locale } = useI18n()
+const { t, te, locale } = useI18n()
 
 const members = computed(() => props.details?.members ?? [])
 
@@ -232,7 +233,7 @@ function addMember(person) {
                 <span v-if="member.id === myId" class="text-caption text-ink-faint">· {{ t('chat.group.you') }}</span>
               </p>
               <p class="truncate text-caption text-ink-faint">
-                {{ [member.position, member.department].filter(Boolean).join(' · ') || member.role }}
+                {{ [member.position, member.department].filter(Boolean).join(' · ') || roleLabel(member.role, { t, te }) }}
               </p>
             </div>
             <button

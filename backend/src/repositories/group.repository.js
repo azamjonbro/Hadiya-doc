@@ -17,6 +17,12 @@ export const groupRepository = {
     return Group.find(filter).sort({ name: 1 })
   },
 
+  // Names only, for a column in the employee table: one query for a page of
+  // people rather than one per row.
+  namesByMembers(userIds) {
+    return Group.find({ memberIds: { $in: userIds } }, { name: 1, memberIds: 1 }).lean()
+  },
+
   listByMember(userId) {
     return Group.find({ memberIds: userId }).sort({ name: 1 })
   },

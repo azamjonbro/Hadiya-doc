@@ -8,7 +8,8 @@ export const roleController = {
   }),
 
   create: asyncHandler(async (req, res) => {
-    sendSuccess(res, await roleService.create(req.user, req.body.name, req.body.scope), 'Role created', 201)
+    const { name, scope, description, permissions } = req.body
+    sendSuccess(res, await roleService.create(req.user, name, scope, { description, permissions }), 'Role created', 201)
   }),
 
   update: asyncHandler(async (req, res) => {

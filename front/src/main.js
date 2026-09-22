@@ -4,10 +4,13 @@ import App from './App.vue'
 import { router } from './router'
 import { i18n } from './i18n'
 import { bindAuthStore, bindRouter } from './services/http'
+import { useBrandingStore } from './stores/branding'
+import { reportClientError, describeInstance } from './utils/errorReporter'
 import { useAuthStore } from './stores/auth'
 import { useToast } from './composables/useToast'
 import { apiErrorText } from './utils/apiError'
 import { registerPwa } from './composables/usePwaUpdate'
+import { installUzbekDateNames } from './utils/uzDateLocale'
 import './assets/main.css'
 
 /**
@@ -49,7 +52,15 @@ function reportUnhandled(app) {
   app.config.errorHandler = (error, instance, info) => {
     console.error('[vue]', info, error)
     toast.error(describe(error))
+    reportClientError({ error, kind: 'vue', component: describeInstance(instance), info })
   }
+
+  // A script error outside Vue and outside a promise — the rarest, and the
+  // one nothing else would catch.
+  window.addEventListener('error', (event) => {
+    if (!event.error) return
+    reportClientError({ error: event.error, kind: 'window', info: `${event.filename ?? ''}:${event.lineno ?? ''}` })
+  })
 
   window.addEventListener('unhandledrejection', (event) => {
     // A cancelled request is a typeahead being retyped, not a failure.
@@ -73,10 +84,15 @@ function reportUnhandled(app) {
     }
     console.error('[unhandled]', event.reason)
     toast.error(describe(event.reason))
+    reportClientError({ error: event.reason, kind: event.reason?.config ? 'request' : 'promise' })
   })
 }
 
 function bootstrap() {
+  // Chrome has no Uzbek month or weekday names; install ours before the
+  // first screen formats a date (utils/uzDateLocale.js).
+  installUzbekDateNames()
+
   const app = createApp(App)
   const pinia = createPinia()
   app.use(pinia)
@@ -92,6 +108,8 @@ function bootstrap() {
   // nothing is decided before the answer arrives; the shell just gets to paint
   // and the chunk gets to download while it is in flight.
   authStore.ensureSession()
+  // The brand colour, logo and covers — public, applied as soon as they arrive.
+  useBrandingStore().load()
   // 12.2 — leave the read-only offline session as soon as the connection
   // is back, rather than on the next reload.
   authStore.watchNetwork()

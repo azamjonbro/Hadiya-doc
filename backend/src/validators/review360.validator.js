@@ -42,10 +42,11 @@ export const updateTemplateSchema = z
   .refine((data) => Object.keys(data).length > 0, { message: 'No fields to update' })
 
 const cycleShape = {
-  name: z.string().trim().min(1).max(160),
+  name: z.string().trim().min(1).max(255),
   description: z.string().trim().max(2000).optional(),
-  templateId: objectId,
-  subjectIds: z.array(objectId).min(1).max(500),
+  templateId: objectId.nullable().optional(),
+  subjectIds: z.array(objectId).max(500).optional(),
+  managerId: objectId.nullable().optional(),
   dueAt: z.coerce.date().nullable().optional(),
   postToCompetencies: z.boolean().optional(),
 }

@@ -13,6 +13,7 @@ import { eventsApi } from '@/services/events'
 import { useToast } from '@/composables/useToast'
 import { useConfirm } from '@/composables/useConfirm'
 import { apiErrorText } from '@/utils/apiError'
+import { formatDate, formatMonthYear, formatWhen as formatWhenValue, weekdayNames } from '@/utils/format'
 import AppButton from '@/components/ui/AppButton.vue'
 import AppInput from '@/components/ui/AppInput.vue'
 import AppSelect from '@/components/ui/AppSelect.vue'
@@ -67,14 +68,31 @@ const attendance = ref({})
 
 const search = ref('')
 const typeFilter = ref('')
+const trainerFilter = ref('')
+// Every trainer named by a loaded event, once each.
+const trainerOptions = computed(() => {
+  const seen = new Map()
+  for (const event of items.value) {
+    for (const trainer of event.trainers ?? []) if (!seen.has(trainer.id)) seen.set(trainer.id, { value: trainer.id, label: trainer.fullName })
+  }
+  return [...seen.values()].sort((a, b) => a.label.localeCompare(b.label))
+})
 const filtered = computed(() => {
   const q = search.value.trim().toLowerCase()
-  return items.value.filter((event) => (!typeFilter.value || event.type === typeFilter.value) && (!q || event.title.toLowerCase().includes(q)))
+  return items.value.filter(
+    (event) =>
+      (!typeFilter.value || event.type === typeFilter.value) &&
+      (!trainerFilter.value || (event.trainerIds ?? []).includes(trainerFilter.value)) &&
+      (!q || event.title.toLowerCase().includes(q)),
+  )
 })
 const upcoming = computed(() => filtered.value.filter((event) => new Date(event.endAt) >= new Date()))
 const past = computed(() => filtered.value.filter((event) => new Date(event.endAt) < new Date()))
 
 function formatWhen(value) {
+  return formatWhenValue(value, locale.value)
+}
+function unusedFormatWhen(value) {
   return new Date(value).toLocaleString(locale.value, {
     day: 'numeric',
     month: 'short',
@@ -96,11 +114,10 @@ function toLocalInput(value) {
 // jumps between months; events keyed by local calendar day.
 const view = ref('month')
 const cursor = ref(new Date(new Date().getFullYear(), new Date().getMonth(), 1))
-const monthLabel = computed(() => cursor.value.toLocaleDateString(locale.value, { month: 'long', year: 'numeric' }))
-const weekdays = computed(() => {
-  const monday = new Date(2024, 0, 1) // a Monday
-  return Array.from({ length: 7 }, (_, i) => new Date(monday.getTime() + i * 86400e3).toLocaleDateString(locale.value, { weekday: 'short' }))
-})
+// Chrome has no Uzbek month or weekday names, so these come from our own
+// formatter (utils/format.js) rather than from `toLocaleDateString`.
+const monthLabel = computed(() => (view.value === 'week' ? weekLabel.value : formatMonthYear(cursor.value, locale.value)))
+const weekdays = computed(() => weekdayNames(locale.value))
 const dayKey = (date) => `${date.getFullYear()}-${date.getMonth()}-${date.getDate()}`
 const monthCells = computed(() => {
   const first = cursor.value
@@ -119,11 +136,49 @@ const monthCells = computed(() => {
     return { key, day: date.getDate(), inMonth: date.getMonth() === first.getMonth(), today: key === todayKey, events: byDay.get(key) ?? [] }
   })
 })
+// The week the cursor sits in, Monday first (rasm «Неделя»).
+const weekStart = computed(() => {
+  const base = view.value === 'week' ? cursor.value : new Date()
+  const offset = (base.getDay() + 6) % 7
+  return new Date(base.getFullYear(), base.getMonth(), base.getDate() - offset)
+})
+const weekCells = computed(() => {
+  const byDay = new Map()
+  for (const event of filtered.value) {
+    const key = dayKey(new Date(event.startAt))
+    if (!byDay.has(key)) byDay.set(key, [])
+    byDay.get(key).push(event)
+  }
+  const todayKey = dayKey(new Date())
+  return Array.from({ length: 7 }, (_, i) => {
+    const date = new Date(weekStart.value.getFullYear(), weekStart.value.getMonth(), weekStart.value.getDate() + i)
+    const key = dayKey(date)
+    return { key, day: date.getDate(), month: date.getMonth(), today: key === todayKey, events: (byDay.get(key) ?? []).sort((a, b) => new Date(a.startAt) - new Date(b.startAt)) }
+  })
+})
+const weekLabel = computed(() => {
+  const end = new Date(weekStart.value.getFullYear(), weekStart.value.getMonth(), weekStart.value.getDate() + 6)
+  return `${formatDate(weekStart.value, locale.value)} – ${formatDate(end, locale.value)}`
+})
+
+// One arrow pair for both grids: a month at a time, or a week.
 function shiftMonth(delta) {
+  if (view.value === 'week') {
+    cursor.value = new Date(cursor.value.getFullYear(), cursor.value.getMonth(), cursor.value.getDate() + delta * 7)
+    return
+  }
   cursor.value = new Date(cursor.value.getFullYear(), cursor.value.getMonth() + delta, 1)
 }
 function goToday() {
-  cursor.value = new Date(new Date().getFullYear(), new Date().getMonth(), 1)
+  const now = new Date()
+  cursor.value = view.value === 'week' ? now : new Date(now.getFullYear(), now.getMonth(), 1)
+}
+// Switching to the week view lands on the week of today (or of the month
+// being looked at), not on the 1st.
+function setView(next) {
+  if (next === 'week' && view.value !== 'week') cursor.value = new Date()
+  if (next === 'month' && view.value === 'week') cursor.value = new Date(cursor.value.getFullYear(), cursor.value.getMonth(), 1)
+  view.value = next
 }
 function timeOf(value) {
   return new Date(value).toLocaleTimeString(locale.value, { hour: '2-digit', minute: '2-digit' })
@@ -305,6 +360,12 @@ onMounted(load)
         <div class="w-52">
           <AppSelect v-model="typeFilter" :placeholder="t('events.type')" :options="[{ value: '', label: t('common.all') }, ...TYPES.map((value) => ({ value, label: t('eventTypes.' + value) }))]" />
         </div>
+        <!-- Rasm «Тренер»: whose events these are. The list is what the
+             loaded events actually name, so it never offers an empty
+             filter. -->
+        <div v-if="trainerOptions.length" class="w-56">
+          <AppSelect v-model="trainerFilter" :placeholder="t('events.fields.trainers')" :options="[{ value: '', label: t('common.all') }, ...trainerOptions]" />
+        </div>
       </div>
 
       <div class="flex flex-wrap items-center justify-between gap-3 px-5 py-3">
@@ -315,8 +376,9 @@ onMounted(load)
           <button type="button" class="flex h-8 w-8 items-center justify-center rounded-md text-ink-muted hover:bg-surface-2" :aria-label="t('a11y.nextPage')" @click="shiftMonth(1)"><Icon name="chevron-right" size="18" /></button>
         </div>
         <div class="flex items-center gap-5 text-[14px]">
-          <button type="button" :class="view === 'month' ? 'font-medium text-ink' : 'text-ink-muted hover:text-ink'" @click="view = 'month'">{{ t('events.views.month') }}</button>
-          <button type="button" :class="view === 'list' ? 'font-medium text-ink' : 'text-ink-muted hover:text-ink'" @click="view = 'list'">{{ t('events.views.list') }}</button>
+          <button type="button" :class="view === 'month' ? 'font-medium text-ink' : 'text-ink-muted hover:text-ink'" @click="setView('month')">{{ t('events.views.month') }}</button>
+          <button type="button" :class="view === 'week' ? 'font-medium text-ink' : 'text-ink-muted hover:text-ink'" @click="setView('week')">{{ t('events.views.week') }}</button>
+          <button type="button" :class="view === 'list' ? 'font-medium text-ink' : 'text-ink-muted hover:text-ink'" @click="setView('list')">{{ t('events.views.list') }}</button>
         </div>
       </div>
 
@@ -349,6 +411,39 @@ onMounted(load)
                   @click="openEdit(event)"
                 >
                   {{ timeOf(event.startAt) }} {{ event.title }}
+                </button>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <!-- Week: seven columns, the day's events in order (rasm «Неделя») -->
+      <div v-else-if="view === 'week'" class="border-t border-border">
+        <div class="grid grid-cols-7 border-b border-border text-center text-[13px] text-ink-muted">
+          <div v-for="(d, index) in weekdays" :key="d" class="border-r border-border py-2 last:border-r-0">
+            {{ d }}
+            <span class="ml-1" :class="weekCells[index]?.today ? 'font-semibold text-primary' : 'text-ink'">{{ weekCells[index]?.day }}</span>
+          </div>
+        </div>
+        <div class="grid grid-cols-7">
+          <div
+            v-for="cell in weekCells"
+            :key="cell.key"
+            class="min-h-[420px] border-r border-border p-2 last:border-r-0"
+            :class="cell.today ? 'bg-surface-2' : ''"
+          >
+            <ul class="space-y-1">
+              <li v-for="event in cell.events" :key="event.id">
+                <button
+                  type="button"
+                  class="block w-full rounded px-1.5 py-1 text-left text-[12px] transition-default"
+                  :class="event.status === 'CANCELLED' ? 'bg-surface-2 text-ink-faint line-through' : 'bg-primary-subtle text-primary hover:bg-primary hover:text-primary-foreground'"
+                  :title="event.title"
+                  @click="openEdit(event)"
+                >
+                  <span class="block font-medium">{{ timeOf(event.startAt) }}</span>
+                  <span class="block truncate">{{ event.title }}</span>
                 </button>
               </li>
             </ul>

@@ -1,5 +1,6 @@
 import { PERMISSIONS } from '@lms/shared'
 import { Competency } from '../../models/competency.model.js'
+import { CompetencyProfile, CompetencyFolder } from '../../models/competencyProfile.model.js'
 import { UserCompetency, HISTORY_LIMIT } from '../../models/userCompetency.model.js'
 import { User } from '../../models/user.model.js'
 import { auditLogRepository } from '../../repositories/auditLog.repository.js'
@@ -30,14 +31,50 @@ const normalizeRequirements = (requirements = []) =>
  * and reading it as an average would let a department-wide bar quietly
  * lower the bar for a job.
  */
-export function requiredLevelFor(competency, user) {
+export function requiredLevelFor(competency, user, profiles = []) {
   const fields = { POSITION: user.position, DEPARTMENT: user.department, BRANCH: user.branch }
   let required = 0
   for (const requirement of competency.requirements ?? []) {
     const actual = keyOf(fields[requirement.scope])
     if (actual && actual === requirement.valueKey) required = Math.max(required, requirement.level)
   }
+  // Profiles written for the person's job title raise the bar the same way.
+  const position = keyOf(user.position)
+  if (position) {
+    for (const profile of profiles) {
+      if (!(profile.positionKeys ?? []).includes(position)) continue
+      for (const item of profile.items ?? []) {
+        if (String(item.competencyId) === String(competency._id)) required = Math.max(required, item.level)
+      }
+    }
+  }
   return required
+}
+
+/** Every profile, once per request — the three places that score a person read them. */
+function loadProfiles() {
+  return CompetencyProfile.find({}, { positionKeys: 1, items: 1 }).lean()
+}
+
+function toPublicProfile(profile, competencyById = null) {
+  return {
+    id: String(profile._id),
+    name: profile.name,
+    description: profile.description ?? '',
+    positions: [...(profile.positions ?? [])],
+    items: (profile.items ?? []).map((item) => ({
+      competencyId: String(item.competencyId),
+      level: item.level,
+      name: competencyById?.get(String(item.competencyId))?.name ?? '',
+      code: competencyById?.get(String(item.competencyId))?.code ?? '',
+    })),
+    itemCount: (profile.items ?? []).length,
+    updatedAt: profile.updatedAt,
+  }
+}
+
+function toPublicFolder(folder, count = 0) {
+  return { id: String(folder._id), name: folder.name, description: folder.description ?? '', order: folder.order ?? 0, count }
 }
 
 /**
@@ -292,7 +329,7 @@ export const competencyService = {
       },
     })
 
-    const required = requiredLevelFor(competency, user)
+    const required = requiredLevelFor(competency, user, await loadProfiles())
     return {
       id: String(row._id),
       userId: String(userId),
@@ -316,9 +353,10 @@ export const competencyService = {
     const user = await User.findById(userId).select('fullName position department branch').lean()
     if (!user) throw ApiError.notFound('User not found')
 
-    const [competencies, rows] = await Promise.all([
+    const [competencies, rows, profiles] = await Promise.all([
       Competency.find({ status: 'ACTIVE' }).sort({ category: 1, order: 1, name: 1 }).lean(),
       UserCompetency.find({ userId }).lean(),
+      loadProfiles(),
     ])
     const rowByCompetency = new Map(rows.map((row) => [String(row.competencyId), row]))
     const now = new Date()
@@ -327,7 +365,7 @@ export const competencyService = {
     let requiredCount = 0
     let metCount = 0
     for (const competency of competencies) {
-      const required = requiredLevelFor(competency, user)
+      const required = requiredLevelFor(competency, user, profiles)
       const row = rowByCompetency.get(String(competency._id))
       if (!required && !row && !includeUnrequired) continue
 
@@ -418,6 +456,7 @@ export const competencyService = {
     }
 
     const now = new Date()
+    const profiles = await loadProfiles()
     return {
       competencies: competencies.map((competency) => ({
         id: String(competency._id),
@@ -431,7 +470,7 @@ export const competencyService = {
         let requiredCount = 0
         let metCount = 0
         const cells = competencies.map((competency) => {
-          const required = requiredLevelFor(competency, user)
+          const required = requiredLevelFor(competency, user, profiles)
           const row = held.get(String(competency._id))
           const current = effectiveLevel(row, now)
           if (required > 0) {
@@ -468,4 +507,87 @@ export const competencyService = {
 
   canManage,
   canAssess,
+
+  // -------------------------------------------------------------- profiles
+  async listProfiles() {
+    const [rows, competencies] = await Promise.all([
+      CompetencyProfile.find().sort({ name: 1 }).lean(),
+      Competency.find({}, { name: 1, code: 1 }).lean(),
+    ])
+    const byId = new Map(competencies.map((c) => [String(c._id), c]))
+    return rows.map((row) => toPublicProfile(row, byId))
+  },
+
+  async getProfile(id) {
+    const profile = await CompetencyProfile.findById(id).lean()
+    if (!profile) throw ApiError.notFound('Profile not found', 'COMPETENCY_PROFILE_NOT_FOUND')
+    const competencies = await Competency.find({ _id: { $in: profile.items.map((i) => i.competencyId) } }, { name: 1, code: 1 }).lean()
+    return toPublicProfile(profile, new Map(competencies.map((c) => [String(c._id), c])))
+  },
+
+  async createProfile(actor, payload) {
+    const profile = await CompetencyProfile.create({
+      ...payload,
+      positionKeys: (payload.positions ?? []).map(keyOf),
+      createdBy: actor.id,
+    })
+    return this.getProfile(profile._id)
+  },
+
+  async updateProfile(actor, id, payload) {
+    const profile = await CompetencyProfile.findById(id)
+    if (!profile) throw ApiError.notFound('Profile not found', 'COMPETENCY_PROFILE_NOT_FOUND')
+    Object.assign(profile, payload)
+    if (payload.positions) profile.positionKeys = payload.positions.map(keyOf)
+    await profile.save()
+    return this.getProfile(profile._id)
+  },
+
+  async removeProfile(actor, id) {
+    const profile = await CompetencyProfile.findByIdAndDelete(id)
+    if (!profile) throw ApiError.notFound('Profile not found', 'COMPETENCY_PROFILE_NOT_FOUND')
+    return { id }
+  },
+
+  // --------------------------------------------------------------- folders
+  async listFolders() {
+    const [folders, counts] = await Promise.all([
+      CompetencyFolder.find().sort({ order: 1, name: 1 }).lean(),
+      Competency.aggregate([{ $match: { category: { $ne: '' } } }, { $group: { _id: '$category', n: { $sum: 1 } } }]),
+    ])
+    const countByName = new Map(counts.map((row) => [row._id, row.n]))
+    // Categories typed on a competency before folders existed still show
+    // as folders; creating one with the same name adopts them.
+    const named = new Set(folders.map((f) => f.name))
+    const implied = [...countByName.keys()].filter((name) => !named.has(name)).map((name) => ({ _id: name, name, order: 9999 }))
+    return [...folders, ...implied].map((folder) => toPublicFolder(folder, countByName.get(folder.name) ?? 0))
+  },
+
+  async createFolder(actor, payload) {
+    const exists = await CompetencyFolder.findOne({ name: payload.name })
+    if (exists) throw ApiError.conflict('A folder with this name already exists', 'COMPETENCY_FOLDER_EXISTS')
+    const folder = await CompetencyFolder.create(payload)
+    return toPublicFolder(folder.toObject())
+  },
+
+  // Renaming a folder re-files everything in it.
+  async updateFolder(actor, id, payload) {
+    const folder = await CompetencyFolder.findById(id)
+    if (!folder) throw ApiError.notFound('Folder not found', 'COMPETENCY_FOLDER_NOT_FOUND')
+    const before = folder.name
+    Object.assign(folder, payload)
+    await folder.save()
+    if (payload.name && payload.name !== before) await Competency.updateMany({ category: before }, { $set: { category: payload.name } })
+    const count = await Competency.countDocuments({ category: folder.name })
+    return toPublicFolder(folder.toObject(), count)
+  },
+
+  // The competencies inside move to the root; nothing is lost.
+  async removeFolder(actor, id) {
+    const folder = await CompetencyFolder.findById(id)
+    if (!folder) throw ApiError.notFound('Folder not found', 'COMPETENCY_FOLDER_NOT_FOUND')
+    await Competency.updateMany({ category: folder.name }, { $set: { category: '' } })
+    await folder.deleteOne()
+    return { id }
+  },
 }

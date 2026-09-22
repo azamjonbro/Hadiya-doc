@@ -25,27 +25,46 @@ export const ORG_LIST_TYPES = Object.freeze({
 export const ORG_LIST_TYPE_VALUES = Object.values(ORG_LIST_TYPES)
 
 /**
- * Surname first — the order every document, list and report in this app shows
- * a person in ("Xalilov Doston"). `fullName` stays on the user document as the
- * one field everything else already reads; it is composed here so the two
- * halves and the whole can never drift apart.
+ * Surname first, then the given name, then the patronymic — the order every
+ * document, list and report in this app shows a person in ("Xalilov Doston
+ * Anvarovich"). `fullName` stays on the user document as the one field
+ * everything else already reads; it is composed here so the parts and the
+ * whole can never drift apart.
  */
-export function composeFullName(firstName, lastName) {
-  return [lastName, firstName]
+export function composeFullName(firstName, lastName, patronymic = '') {
+  return [lastName, firstName, patronymic]
     .map((part) => String(part ?? '').trim())
     .filter(Boolean)
     .join(' ')
 }
 
 /**
- * The inverse, for records written before the form had two fields. The first
- * word is the surname and whatever follows is the given name(s), which is how
- * these were typed; a single word is taken as the given name, since an entry
- * with one word is far more often "Dilshod" than a bare surname.
+ * The inverse, for records written before the form had separate fields. The
+ * first word is the surname and whatever follows is the given name(s), which
+ * is how these were typed; a single word is taken as the given name, since an
+ * entry with one word is far more often "Dilshod" than a bare surname. The
+ * patronymic is not guessed at — a third word may as well be a second given
+ * name, and it is cheaper for an admin to fill one field than to fix a wrong one.
  */
 export function splitFullName(fullName) {
   const parts = String(fullName ?? '').trim().split(/\s+/).filter(Boolean)
   if (parts.length === 0) return { firstName: '', lastName: '' }
   if (parts.length === 1) return { firstName: parts[0], lastName: '' }
   return { lastName: parts[0], firstName: parts.slice(1).join(' ') }
+}
+
+/**
+ * A name the way the reference's user list shows it and the way it is
+ * printed on an ID card: entirely in capitals — "doston xalilov" →
+ * "DOSTON XALILOV", "O'tkir-xon" → "O'TKIR-XON". Cyrillic is handled by the
+ * same toUpperCase the Latin is. Applied wherever a name enters the system
+ * — the form, the import sheet, the API — so a record typed in a hurry in
+ * lower case is stored the same as one typed carefully. (It title-cased
+ * until 2026-09-22; the product decision was to match the reference.)
+ */
+export function capitalizeName(value) {
+  return String(value ?? '')
+    .trim()
+    .replace(/\s+/g, ' ')
+    .toUpperCase()
 }

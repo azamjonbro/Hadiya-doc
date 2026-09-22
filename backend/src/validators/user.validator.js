@@ -3,10 +3,9 @@ import {
   GENDER_VALUES,
   NOTIFICATION_CHANNELS,
   JSHSHIR_PATTERN,
-  PASSPORT_SERIES_PATTERN,
   PASSWORD_MIN_LENGTH,
   normalizeJshshir,
-  normalizePassportSeries,
+  capitalizeName,
 } from '@lms/shared'
 
 const jshshir = z
@@ -20,13 +19,6 @@ const jshshir = z
 // a deliberate clear indistinguishable from a field the request never mentioned,
 // and user.service.js would silently drop it. Turning '' into an absent field on
 // the document is that service's job (see the partial indexes in user.model.js).
-const optionalPassportSeries = z
-  .string()
-  .transform(normalizePassportSeries)
-  .refine((value) => value === '' || PASSPORT_SERIES_PATTERN.test(value), {
-    message: 'Passport series must be two Latin letters followed by 7 digits, e.g. AA1234567',
-  })
-
 const optionalEmail = z
   .string()
   .transform((value) => value.trim().toLowerCase())
@@ -48,6 +40,14 @@ const optionalGender = z.union([z.enum(GENDER_VALUES), z.literal('')])
 
 const password = z.string().min(PASSWORD_MIN_LENGTH, `Password must be at least ${PASSWORD_MIN_LENGTH} characters`)
 
+// Names are stored the way a document writes them whatever the form got —
+// "doston xalilov" typed in a hurry must not become a lower-case record that
+// every list and certificate then prints. Required parts refuse '' after the
+// trim; the patronymic may be absent.
+const nameRequired = (label) =>
+  z.string().transform(capitalizeName).refine((value) => value.length > 0, { message: `${label} is required` })
+const patronymic = z.string().transform(capitalizeName).refine((value) => value.length <= 120, { message: 'Too long' })
+
 // Reporting line and HR key. `''` clears them, like the other optional
 // identity fields — see the comment at the top of this file.
 export const hierarchyFields = {
@@ -56,16 +56,24 @@ export const hierarchyFields = {
     .regex(/^[a-f\d]{24}$|^$/i, 'managerId must be a user id')
     .optional(),
   employeeNumber: z.string().trim().max(64).optional(),
+  functionalManagerId: z
+    .string()
+    .regex(/^[a-f\d]{24}$|^$/i, 'functionalManagerId must be a user id')
+    .optional(),
 }
 
 export const createUserSchema = z.object({
-  firstName: z.string().trim().min(1, 'First name is required'),
-  lastName: z.string().trim().min(1, 'Last name is required'),
+  firstName: nameRequired('First name'),
+  lastName: nameRequired('Last name'),
+  patronymic: patronymic.optional().default(''),
   jshshir,
-  passportSeries: optionalPassportSeries.optional(),
   email: optionalEmail.optional(),
   phone: z.string().optional().default(''),
-  roleName: z.string().min(1, 'Role is required'),
+  mobilePhone: z.string().optional().default(''),
+  roleName: z.string().min(1, 'Role is required').optional(),
+  // Several hats at once; when given, the first-ranked one becomes the
+  // primary and `roleName` is ignored.
+  roleNames: z.array(z.string().min(1)).min(1).max(10).optional(),
   branch: z.string().optional().default(''),
   department: z.string().optional().default(''),
   subdivision: z.string().optional().default(''),
@@ -80,18 +88,20 @@ export const createUserSchema = z.object({
   isActive: z.boolean().optional().default(true),
   courseIds: z.array(z.string().min(1)).optional().default([]),
   ...hierarchyFields,
-})
+}).refine((data) => data.roleName || data.roleNames?.length, { message: 'Role is required', path: ['roleName'] })
 
 export const updateUserSchema = z
   .object({
     ...hierarchyFields,
-    firstName: z.string().trim().min(1).optional(),
-    lastName: z.string().trim().min(1).optional(),
+    firstName: nameRequired('First name').optional(),
+    lastName: nameRequired('Last name').optional(),
+    patronymic: patronymic.optional(),
     jshshir: jshshir.optional(),
-    passportSeries: optionalPassportSeries.optional(),
     email: optionalEmail.optional(),
     phone: z.string().optional(),
+    mobilePhone: z.string().optional(),
     roleName: z.string().min(1).optional(),
+    roleNames: z.array(z.string().min(1)).min(1).max(10).optional(),
     branch: z.string().optional(),
     department: z.string().optional(),
     subdivision: z.string().optional(),
@@ -139,6 +149,12 @@ export const listUsersQuerySchema = z.object({
   limit: z.coerce.number().int().min(1).max(100).optional().default(20),
 })
 
+// The export takes the list's filters and none of its paging: the file is
+// the whole filtered list, capped in the controller.
+export const exportUsersQuerySchema = listUsersQuerySchema.omit({ page: true, cursor: true, limit: true }).extend({
+  format: z.enum(['csv', 'xlsx']).optional().default('xlsx'),
+})
+
 const objectId = z.string().regex(/^[a-f\d]{24}$/i, 'Invalid id')
 
 // Bulk actions from the employees table. The 200 ceiling matches the chat
@@ -148,6 +164,11 @@ const bulkUserIds = z.array(objectId).min(1, 'Select at least one employee').max
 
 export const bulkUserIdsSchema = z.object({
   userIds: bulkUserIds,
+})
+
+export const bulkDepartmentSchema = z.object({
+  userIds: bulkUserIds,
+  department: z.string().trim().max(200),
 })
 
 // `message` mirrors sendChatMessageSchema's body: same trim, same 4000 cap,

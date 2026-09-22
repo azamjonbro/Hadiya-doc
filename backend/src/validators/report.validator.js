@@ -5,6 +5,13 @@ const objectId = z.string().regex(/^[a-f\d]{24}$/i, 'Invalid id')
 
 export const reportExportQuerySchema = z.object({
   format: z.enum(['csv', 'xlsx', 'pdf']),
+  // Queued exports only: who else is told when the file is ready
+  // («Emailga yuborish»), as comma-separated user ids.
+  notify: z
+    .string()
+    .transform((value) => value.split(',').map((v) => v.trim()).filter(Boolean))
+    .pipe(z.array(objectId).max(20))
+    .optional(),
   // The language the admin is looking at — the exported file is written in it.
   lang: z.enum(REPORT_LANGS).optional().default(DEFAULT_REPORT_LANG),
   role: z.string().optional(),
@@ -13,6 +20,54 @@ export const reportExportQuerySchema = z.object({
   pathId: objectId.optional(),
   dateFrom: z.coerce.date().optional(),
   dateTo: z.coerce.date().optional(),
+  // The report page's «add a filter» list (rasm «Прогресс учащихся»): who
+  // the report is about, narrowed the way the users list is. Each is
+  // resolved to a set of people and intersected with the role and scope
+  // fences in reportData.service.js, so every user-based report honours
+  // them at once.
+  department: z.string().trim().max(120).optional(),
+  branch: z.string().trim().max(60).optional(),
+  groupId: objectId.optional(),
+  managerId: objectId.optional(),
+  functionalManagerId: objectId.optional(),
+  status: z.enum(['active', 'inactive']).optional(),
+  // Date ranges on the person, not the row: when they last signed in, when
+  // the account was made, when they completed something, when something
+  // of theirs is due. Each narrows the population like the ones above.
+  lastLoginFrom: z.coerce.date().optional(),
+  lastLoginTo: z.coerce.date().optional(),
+  createdFrom: z.coerce.date().optional(),
+  createdTo: z.coerce.date().optional(),
+  completedFrom: z.coerce.date().optional(),
+  completedTo: z.coerce.date().optional(),
+  deadlineFrom: z.coerce.date().optional(),
+  deadlineTo: z.coerce.date().optional(),
+  assignedFrom: z.coerce.date().optional(),
+  assignedTo: z.coerce.date().optional(),
+  hireFrom: z.coerce.date().optional(),
+  hireTo: z.coerce.date().optional(),
+  terminationFrom: z.coerce.date().optional(),
+  terminationTo: z.coerce.date().optional(),
+  // How the person got onto a course: assigned by hand, through a group,
+  // or enrolled themselves.
+  // Several may be ticked at once: "manual,self".
+  enrollment: z
+    .string()
+    .transform((value) => value.split(',').map((v) => v.trim()).filter(Boolean))
+    .pipe(z.array(z.enum(['manual', 'group', 'self'])).max(3))
+    .optional(),
+  // The rest of the employee record, matched as typed (contains, case
+  // insensitive) except gender, which is one of two.
+  firstName: z.string().trim().max(120).optional(),
+  lastName: z.string().trim().max(120).optional(),
+  jshshir: z.string().trim().max(40).optional(),
+  email: z.string().trim().max(160).optional(),
+  phone: z.string().trim().max(40).optional(),
+  mobilePhone: z.string().trim().max(40).optional(),
+  position: z.string().trim().max(120).optional(),
+  country: z.string().trim().max(80).optional(),
+  address: z.string().trim().max(200).optional(),
+  gender: z.enum(['MALE', 'FEMALE']).optional(),
 })
 
 /**
@@ -23,7 +78,12 @@ export const reportExportQuerySchema = z.object({
  * client that could raise it could turn a preview into an unbounded read,
  * which is the thing the caps exist to stop.
  */
-export const reportPreviewQuerySchema = reportExportQuerySchema.omit({ format: true })
+export const reportPreviewQuerySchema = reportExportQuerySchema.omit({ format: true }).extend({
+  // The report page (rasm «Прогресс учащихся») shows the table itself, with
+  // sorting and pages, and a hundred rows is a glimpse, not a report. The
+  // server still owns the ceiling — see PAGE_MAX_ROWS in the controller.
+  limit: z.coerce.number().int().min(1).max(1000).optional(),
+})
 
 /**
  * A scheduled report (8.4).

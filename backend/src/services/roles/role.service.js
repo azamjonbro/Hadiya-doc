@@ -9,6 +9,7 @@ import { Role } from '../../models/role.model.js'
 import { User } from '../../models/user.model.js'
 import { auditLogRepository } from '../../repositories/auditLog.repository.js'
 import { ApiError } from '../../utils/ApiError.js'
+import { slugify } from '../../utils/slugify.js'
 import { Permission } from '../../models/permission.model.js'
 
 // What a role created from the employee form is allowed to do. An admin adding
@@ -24,7 +25,12 @@ export const roleService = {
   async list() {
     const [roles, counts] = await Promise.all([
       Role.find().sort({ name: 1 }).lean(),
-      User.aggregate([{ $group: { _id: '$roleId', users: { $sum: 1 } } }]),
+      // Somebody wearing a role as their second hat still holds it.
+      User.aggregate([
+        { $project: { ids: { $setUnion: [['$roleId'], { $ifNull: ['$roleIds', []] }] } } },
+        { $unwind: '$ids' },
+        { $group: { _id: '$ids', users: { $sum: 1 } } },
+      ]),
     ])
 
     const usersByRoleId = new Map(counts.map((row) => [String(row._id), row.users]))
@@ -35,16 +41,22 @@ export const roleService = {
       // no field, and the resolver reads that as narrowly as the name allows
       // rather than as ALL.
       scope: resolveRoleScope(role),
+      label: role.label ?? '',
+      description: role.description ?? '',
       permissions: role.permissions ?? [],
       isSystem: role.isSystem || SYSTEM_ROLE_NAMES.includes(role.name),
       users: usersByRoleId.get(role._id.toString()) ?? 0,
     }))
   },
 
-  async create(actor, name, scope = ROLE_SCOPES.SELF) {
+  async create(actor, name, scope = ROLE_SCOPES.SELF, { description = '', permissions } = {}) {
     // Role names are the uppercase keys the RBAC layer compares, so normalise
-    // here rather than trusting the form to have done it.
-    const normalized = name.trim().toUpperCase().replace(/\s+/g, '_')
+    // here rather than trusting the form to have done it. Through slugify so
+    // a role typed in Cyrillic ("Кассир") or with an apostrophe ("O'qituvchi")
+    // gets a key (KASSIR, O_QITUVCHI) instead of a 400 — the typed words
+    // are kept as the label.
+    const label = name.trim().replace(/\s+/g, ' ')
+    const normalized = slugify(label).toUpperCase().replace(/-/g, '_')
     if (!/^[A-Z][A-Z0-9_]*$/.test(normalized)) {
       throw ApiError.badRequest(
         'A role name must start with a Latin letter and contain only letters, digits and underscores',
@@ -57,7 +69,11 @@ export const roleService = {
 
     const role = await Role.create({
       name: normalized,
-      permissions: NEW_ROLE_PERMISSIONS,
+      label,
+      description,
+      // The baseline is always in: a role that cannot read its own profile
+      // is a role nobody can sign in with.
+      permissions: [...new Set([...NEW_ROLE_PERMISSIONS, ...(permissions ?? [])])],
       scope,
       isSystem: false,
     })
@@ -69,7 +85,7 @@ export const roleService = {
       metadata: { name: normalized, scope },
     })
 
-    return { id: role._id.toString(), name: role.name, scope: role.scope, isSystem: false, users: 0 }
+    return { id: role._id.toString(), name: role.name, label, description, permissions: role.permissions, scope: role.scope, isSystem: false, users: 0 }
   },
 
   /**
@@ -102,13 +118,18 @@ export const roleService = {
     return [...byModule.entries()].map(([module, items]) => ({ module, permissions: items }))
   },
 
-  async update(actor, id, { permissions, scope }) {
+  async update(actor, id, { permissions, scope, label, description }) {
     const role = await Role.findById(id)
     if (!role) throw ApiError.notFound('Role not found')
 
-    if (role.isSystem || SYSTEM_ROLE_NAMES.includes(role.name)) {
+    const system = role.isSystem || SYSTEM_ROLE_NAMES.includes(role.name)
+    // A built-in role's words may change — its description is documentation
+    // — but not what it can do or how far it sees.
+    if (system && (permissions !== undefined || scope !== undefined || label !== undefined)) {
       throw ApiError.badRequest('Built-in roles cannot be edited', 'SYSTEM_ROLE_PROTECTED')
     }
+    if (label !== undefined) role.label = label.replace(/\s+/g, ' ')
+    if (description !== undefined) role.description = description
 
     const before = { permissions: [...role.permissions], scope: resolveRoleScope(role) }
     if (permissions !== undefined) {
@@ -135,13 +156,15 @@ export const roleService = {
       },
     })
 
-    const users = await User.countDocuments({ roleId: role._id })
+    const users = await User.countDocuments({ $or: [{ roleId: role._id }, { roleIds: role._id }] })
     return {
       id: role._id.toString(),
       name: role.name,
+      label: role.label ?? '',
+      description: role.description ?? '',
       permissions: role.permissions,
-      scope: role.scope,
-      isSystem: false,
+      scope: resolveRoleScope(role),
+      isSystem: system,
       users,
     }
   },
@@ -157,7 +180,7 @@ export const roleService = {
       throw ApiError.badRequest('Built-in roles cannot be deleted', 'SYSTEM_ROLE_PROTECTED')
     }
 
-    const users = await User.countDocuments({ roleId: role._id })
+    const users = await User.countDocuments({ $or: [{ roleId: role._id }, { roleIds: role._id }] })
     if (users > 0) {
       throw ApiError.conflict(
         `${users} employee${users === 1 ? '' : 's'} still hold this role — move them to another one first`,

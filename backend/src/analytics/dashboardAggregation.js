@@ -1,5 +1,6 @@
 import { User } from '../models/user.model.js'
 import { Course } from '../models/course.model.js'
+import { Group } from '../models/group.model.js'
 import { CourseAssignment } from '../models/courseAssignment.model.js'
 import { VideoProgress } from '../models/videoProgress.model.js'
 import { VideoSession } from '../models/videoSession.model.js'
@@ -215,6 +216,7 @@ async function cards() {
     totalEmployees,
     activeEmployees,
     totalCourses,
+    totalGroups,
     mandatoryCourses,
     completedAssignments,
     overdueAssignments,
@@ -226,6 +228,7 @@ async function cards() {
     User.countDocuments({}),
     User.countDocuments({ isActive: true }),
     Course.countDocuments({ status: { $ne: 'ARCHIVED' }, deletedAt: null }),
+    Group.countDocuments({}),
     CourseAssignment.countDocuments({ status: 'ACTIVE', mandatory: true }),
     CourseAssignment.countDocuments({ status: 'COMPLETED' }),
     CourseAssignment.countDocuments({
@@ -243,6 +246,7 @@ async function cards() {
     totalEmployees,
     activeEmployees,
     totalCourses,
+    totalGroups,
     mandatoryCourses,
     completedAssignments,
     overdueAssignments,

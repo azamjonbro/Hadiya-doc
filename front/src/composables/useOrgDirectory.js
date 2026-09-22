@@ -1,5 +1,6 @@
 import { computed, reactive, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
+import { roleLabel } from '@/utils/roleLabel'
 import { ORG_LIST_TYPES, ORG_LIST_TYPE_VALUES } from '@lms/shared'
 import { orgListsApi } from '@/services/orgLists'
 import { rolesApi } from '@/services/roles'
@@ -21,7 +22,7 @@ import { apiErrorText } from '@/utils/apiError'
  * client-side is how a dropdown starts disagreeing with the database.
  */
 export function useOrgDirectory() {
-  const { t } = useI18n()
+  const { t, te } = useI18n()
   const toast = useToast()
 
   const roles = ref([])
@@ -50,7 +51,7 @@ export function useOrgDirectory() {
   const roleOptions = computed(() =>
     roles.value.map((role) => ({
       value: role.name,
-      label: role.name,
+      label: roleLabel(role.name, { t, te }),
       id: role.id,
       // Built-in roles are wired into the code, and a role somebody holds
       // would leave those accounts pointing at nothing.
@@ -92,14 +93,16 @@ export function useOrgDirectory() {
     }
   }
 
+  // Resolves to the created role (its `name` is the key the server chose,
+  // which is what a form has to store), or null when the server refused.
   async function addRole(name) {
     try {
-      await rolesApi.create(name)
+      const created = await rolesApi.create(name)
       await loadRoles()
-      return true
+      return created
     } catch (error) {
       toast.error(apiErrorText(error, t('orgLists.addFailed')))
-      return false
+      return null
     }
   }
 

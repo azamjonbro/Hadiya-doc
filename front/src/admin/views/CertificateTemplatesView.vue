@@ -25,6 +25,7 @@ import Tabs from '@/components/ui/Tabs.vue'
 import EmptyState from '@/components/ui/EmptyState.vue'
 import Skeleton from '@/components/ui/Skeleton.vue'
 import Icon from '@/components/ui/Icon.vue'
+import { formatDate as formatDay } from '@/utils/format'
 
 const { t, locale } = useI18n()
 const toast = useToast()
@@ -71,7 +72,7 @@ const canvasAspect = computed(() =>
 
 function formatDate(value) {
   if (!value) return '—'
-  return new Date(value).toLocaleDateString(locale.value, { year: 'numeric', month: 'short', day: 'numeric' })
+  return formatDay(value, locale.value)
 }
 
 function sampleFor(key) {

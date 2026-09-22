@@ -217,9 +217,11 @@ export const certificateService = {
    * otherwise — the same contract every other listing uses, so a manager
    * cannot read certificates for a department they cannot read people for.
    */
-  async list({ scopedUserIds = null, status = '', search = '', limit = 50, cursor = null } = {}) {
+  async list({ scopedUserIds = null, userId = null, status = '', search = '', limit = 50, cursor = null } = {}) {
     const filter = {}
     if (scopedUserIds) filter.userId = { $in: scopedUserIds }
+    // A person outside the allow-list yields nothing, not everything.
+    if (userId) filter.userId = scopedUserIds && !scopedUserIds.map(String).includes(userId) ? null : userId
     if (status === 'REVOKED') filter.revokedAt = { $ne: null }
     if (status === 'VALID') {
       filter.revokedAt = null

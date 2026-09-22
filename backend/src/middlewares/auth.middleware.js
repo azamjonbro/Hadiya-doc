@@ -17,6 +17,7 @@ export function authenticate(req, res, next) {
       id: payload.sub,
       roleId: payload.roleId,
       roleName: payload.roleName,
+      roleNames: payload.roleNames ?? [payload.roleName],
       permissions: payload.permissions,
       // A token issued before 2.2 carries no scope. Resolved from the role
       // name rather than defaulted to ALL: for the fifteen minutes those

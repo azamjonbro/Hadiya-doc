@@ -20,12 +20,13 @@ import { useAuthStore } from '@/stores/auth'
 import { useToast } from '@/composables/useToast'
 import { apiErrorText } from '@/utils/apiError'
 import { formatDateTime } from '@/utils/format'
-import AppCard from '@/components/ui/AppCard.vue'
 import AppButton from '@/components/ui/AppButton.vue'
 import AppInput from '@/components/ui/AppInput.vue'
 import AppSelect from '@/components/ui/AppSelect.vue'
 import AppDatePicker from '@/components/ui/AppDatePicker.vue'
 import UserPicker from '@/components/ui/UserPicker.vue'
+import Avatar from '@/components/ui/Avatar.vue'
+import Tooltip from '@/components/ui/Tooltip.vue'
 import Badge from '@/components/ui/Badge.vue'
 import Modal from '@/components/ui/Modal.vue'
 import Skeleton from '@/components/ui/Skeleton.vue'
@@ -54,8 +55,90 @@ const creating = ref(false)
 const checklists = ref([])
 const form = ref(emptyForm())
 
+// The reference's wizard (rasm): participants → observation sheet → date.
+// The observer is the person scheduling, until they say otherwise; the
+// date defaults to tomorrow 08:00 so a session is one click from ready.
+const step = ref(0)
+const STEPS = ['participants', 'checklist', 'when']
+
+function tomorrowAtEight() {
+  const d = new Date()
+  d.setDate(d.getDate() + 1)
+  d.setHours(8, 0, 0, 0)
+  const pad = (n) => String(n).padStart(2, '0')
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T08:00`
+}
+
+// The participants step is a table of pairs (rasm «Участники»): two
+// columns — who watches, whom they watch — and one row per session.
+// «Add another» adds a row, so a whole shift is scheduled in one pass
+// while each session still holds exactly one observer and one trainee,
+// which is what keeps it gradeable on its own.
+function me() {
+  return auth.user?.id ? { id: auth.user.id, fullName: auth.user.fullName, avatar: auth.user.avatar ?? '' } : { id: '', fullName: '', avatar: '' }
+}
+function emptyPair() {
+  return { observer: me(), trainee: { id: '', fullName: '', avatar: '' } }
+}
+
 function emptyForm() {
-  return { checklistId: '', traineeId: '', traineeName: '', observerId: '', observerName: '', scheduledAt: '', location: '' }
+  return {
+    checklistId: '',
+    pairs: [emptyPair()],
+    scheduledAt: tomorrowAtEight(),
+    location: '',
+  }
+}
+
+// Which cell is open, as "<row index>:<observer|trainee>"; only one
+// picker is on screen at a time.
+const picking = ref('')
+function pick(index, side) {
+  picking.value = picking.value === `${index}:${side}` ? '' : `${index}:${side}`
+}
+function choose(index, side, user) {
+  form.value.pairs[index][side] = { id: user.id, fullName: user.fullName, avatar: user.avatar ?? '' }
+  picking.value = ''
+}
+function addPair() {
+  form.value.pairs = [...form.value.pairs, emptyPair()]
+}
+function removePair(index) {
+  form.value.pairs = form.value.pairs.filter((_, i) => i !== index)
+  picking.value = ''
+}
+
+// Every row must name both people; a half-filled row is a session that
+// cannot exist.
+const completePairs = computed(() => form.value.pairs.filter((pair) => pair.observer.id && pair.trainee.id))
+
+const stepDone = computed(() => [
+  form.value.pairs.length > 0 && completePairs.value.length === form.value.pairs.length,
+  Boolean(form.value.checklistId),
+  Boolean(form.value.scheduledAt),
+])
+const canNext = computed(() => stepDone.value[step.value])
+const chosenChecklist = computed(() => checklists.value.find((c) => c.id === form.value.checklistId) ?? null)
+
+function next() {
+  if (!canNext.value) return
+  if (step.value < STEPS.length - 1) step.value += 1
+  else create()
+}
+
+// The day and month a session sits on: what was recorded when it was
+// completed, when it started otherwise, when it is planned failing that.
+function sessionDate(session) {
+  return new Date(session.completedAt ?? session.startedAt ?? session.scheduledAt)
+}
+const dayOf = (session) => sessionDate(session).getDate()
+const monthOf = (session) => sessionDate(session).toLocaleDateString(locale.value, { month: 'short' })
+function timeOf(session) {
+  const start = sessionDate(session)
+  const end = session.completedAt && session.startedAt ? new Date(session.completedAt) : null
+  const fmt = (d) => d.toLocaleTimeString(locale.value, { hour: '2-digit', minute: '2-digit' })
+  const day = start.toLocaleDateString(locale.value, { day: 'numeric', month: 'short', year: 'numeric' })
+  return end ? t('ojt.timeRange', { from: `${day}, ${fmt(new Date(session.startedAt))}`, to: fmt(end) }) : `${day}, ${fmt(start)}`
 }
 
 const statusOptions = computed(() =>
@@ -155,6 +238,8 @@ async function start(session) {
 
 async function openCreate() {
   form.value = emptyForm()
+  step.value = 0
+  picking.value = ''
   modalOpen.value = true
   try {
     // Only ACTIVE ones: the server refuses to schedule against a draft or an
@@ -166,28 +251,41 @@ async function openCreate() {
 }
 
 async function create() {
-  if (!form.value.checklistId || !form.value.traineeId || !form.value.observerId) {
+  if (!form.value.checklistId || !completePairs.value.length) {
     toast.error(t('ojt.createRequired'))
     return
   }
   creating.value = true
   try {
-    const payload = {
-      checklistId: form.value.checklistId,
-      traineeId: form.value.traineeId,
-      observerId: form.value.observerId,
-      location: form.value.location.trim(),
+    // One request per row, and one failure does not sink the rest: the
+    // server refuses a row where the observer is the trainee, and the
+    // other rows of the round should still exist.
+    const results = await Promise.allSettled(
+      completePairs.value.map((pair) =>
+        ojtApi.createSession({
+          checklistId: form.value.checklistId,
+          observerId: pair.observer.id,
+          traineeId: pair.trainee.id,
+          location: form.value.location.trim(),
+          ...(form.value.scheduledAt ? { scheduledAt: form.value.scheduledAt } : {}),
+        }),
+      ),
+    )
+    const made = results.filter((result) => result.status === 'fulfilled').length
+    const failed = results.length - made
+    if (made) toast.success(made === 1 ? t('ojt.sessionCreated') : t('ojt.sessionsCreated', { n: made }))
+    if (failed) {
+      // The server is the one that knows "the observer cannot be the
+      // trainee" and "this checklist has no items"; its sentence is the
+      // useful one, so the first rejection speaks for the batch.
+      const first = results.find((result) => result.status === 'rejected')
+      toast.error(apiErrorText(first?.reason, t('ojt.saveError')))
     }
-    if (form.value.scheduledAt) payload.scheduledAt = form.value.scheduledAt
-    await ojtApi.createSession(payload)
-    modalOpen.value = false
-    toast.success(t('ojt.sessionCreated'))
-    page.value = 1
-    await load()
-  } catch (error) {
-    // The server is the one that knows "the observer cannot be the trainee"
-    // and "this checklist has no items"; its sentence is the useful one.
-    toast.error(apiErrorText(error, t('ojt.saveError')))
+    if (made) {
+      modalOpen.value = false
+      page.value = 1
+      await load()
+    }
   } finally {
     creating.value = false
   }
@@ -200,10 +298,10 @@ onMounted(load)
   <div class="min-h-screen bg-surface pb-12">
     <div class="mx-auto w-full max-w-[840px] px-4 pt-10">
       <div class="flex flex-wrap items-center justify-between gap-3">
-        <h1 class="flex items-center gap-2 text-[24px] font-semibold text-ink">
-          {{ t('ojt.title') }}
-          <span class="flex h-5 w-5 items-center justify-center rounded-full bg-primary text-[12px] font-semibold text-primary-foreground" :title="t('ojt.sessionsSubtitle')">?</span>
-        </h1>
+        <div>
+          <h1 class="text-[24px] font-semibold text-ink">{{ t('ojt.title') }}</h1>
+          <p class="mt-1 text-[13px] text-ink-muted">{{ t('ojt.subtitleHint') }}</p>
+        </div>
         <AppButton v-if="canManage" icon="plus" size="sm" @click="openCreate">{{ t('ojt.newSession') }}</AppButton>
       </div>
 
@@ -266,109 +364,217 @@ onMounted(load)
       <AppButton v-if="status || search" class="mt-4" size="sm" variant="secondary" @click="clearFilters">{{ t('portal.ojt.clearFilters') }}</AppButton>
     </div>
 
-    <div v-else class="mt-4 space-y-3">
-      <AppCard v-for="session in visibleSessions" :key="session.id" class="p-4">
-        <div class="flex flex-wrap items-start justify-between gap-3">
-          <div class="min-w-0 flex-1">
-            <div class="flex flex-wrap items-center gap-2">
-              <p class="truncate font-medium text-ink">{{ session.traineeName }}</p>
-              <Badge :variant="statusVariant[session.status]" size="sm">
-                {{ t(`ojt.sessionStatus.${session.status}`) }}
-              </Badge>
-              <Badge v-if="session.outcome" :variant="session.outcome === 'PASS' ? 'success' : 'danger'" size="sm">
-                {{ t(`ojt.outcome.${session.outcome}`) }}
-              </Badge>
-              <Badge v-if="session.signedAt" variant="primary" size="sm">{{ t('ojt.signedShort') }}</Badge>
-            </div>
+    <div v-else class="mt-4 divide-y divide-border border-t border-border">
+      <!-- The reference's row: the day in a grey block, then status, time
+           and the checklist, then who is observed and by whom. -->
+      <div
+        v-for="session in visibleSessions"
+        :key="session.id"
+        class="flex cursor-pointer flex-wrap items-start gap-4 py-4 transition-default hover:bg-surface-2 sm:flex-nowrap"
+        @click="router.push({ name: 'ojt-session', params: { sessionId: session.id } })"
+      >
+        <div class="flex h-[78px] w-[78px] shrink-0 flex-col items-center justify-center rounded-lg bg-surface-2">
+          <span class="text-[26px] font-semibold leading-none text-ink">{{ dayOf(session) }}</span>
+          <span class="mt-1 text-[12px] text-ink-muted">{{ monthOf(session) }}</span>
+        </div>
 
-            <p class="mt-1 truncate text-small text-ink-muted">
-              {{ session.checklistName }} · {{ t('ojt.versionLabel', { version: session.checklistVersion }) }}
-            </p>
-
-            <p class="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-caption text-ink-faint">
-              <span>
-                <Icon name="user" size="11" class="mr-1 inline" />{{ t('ojt.observer') }}: {{ session.observerName }}
-              </span>
-              <span v-if="session.location">
-                <Icon name="map-pin" size="11" class="mr-1 inline" />{{ session.location }}
-              </span>
-              <span>
-                <Icon name="calendar" size="11" class="mr-1 inline" />
-                <template v-if="session.completedAt">
-                  {{ t('ojt.completedAt') }}: {{ formatDateTime(session.completedAt, locale) }}
-                </template>
-                <template v-else-if="session.startedAt">
-                  {{ t('ojt.startedAt') }}: {{ formatDateTime(session.startedAt, locale) }}
-                </template>
-                <template v-else>
-                  {{ t('ojt.scheduledAt') }}: {{ formatDateTime(session.scheduledAt, locale) }}
-                </template>
-              </span>
-              <span v-if="session.status === 'COMPLETED'">
-                {{ t('ojt.percentOfAssessed', { percent: session.score.percent }) }}
-              </span>
-            </p>
+        <div class="min-w-0 flex-1 sm:w-[240px] sm:flex-none">
+          <div class="flex flex-wrap items-center gap-1.5">
+            <Badge :variant="statusVariant[session.status]" size="sm" dot>{{ t(`ojt.sessionStatus.${session.status}`) }}</Badge>
+            <Badge v-if="session.outcome" :variant="session.outcome === 'PASS' ? 'success' : 'danger'" size="sm">{{ t(`ojt.outcome.${session.outcome}`) }}</Badge>
+            <Badge v-if="session.signedAt" variant="primary" size="sm">{{ t('ojt.signedShort') }}</Badge>
           </div>
+          <p class="mt-2 flex items-center gap-1.5 text-[13px] text-ink-muted"><Icon name="clock" size="13" class="shrink-0" /> <span class="truncate">{{ timeOf(session) }}</span></p>
+          <p class="mt-1 flex items-center gap-1.5 text-[13px] text-ink"><Icon name="check-square" size="13" class="shrink-0 text-ink-faint" /> <span class="truncate">{{ session.checklistName }}</span></p>
+          <p v-if="session.status === 'COMPLETED'" class="mt-1 text-caption text-ink-faint">{{ t('ojt.percentOfAssessed', { percent: session.score.percent }) }}</p>
+        </div>
 
-          <div class="flex shrink-0 flex-wrap gap-2">
-            <AppButton
-              v-if="session.status === 'SCHEDULED' && isMyObservation(session)"
-              size="sm"
-              icon="play"
-              :loading="starting === session.id"
-              @click="start(session)"
-            >
-              {{ t('ojt.start') }}
-            </AppButton>
-            <AppButton
-              variant="secondary"
-              size="sm"
-              icon="arrow-right"
-              icon-position="right"
-              @click="router.push({ name: 'ojt-session', params: { sessionId: session.id } })"
-            >
-              {{ t('ojt.open') }}
-            </AppButton>
+        <div class="min-w-0 flex-1">
+          <p class="text-[11px] font-semibold uppercase tracking-wider text-ink-faint">{{ t('ojt.columns.employee') }}</p>
+          <div class="mt-2 flex items-center gap-2.5">
+            <Avatar :name="session.traineeName" :src="session.traineeAvatar" size="sm" />
+            <div class="min-w-0">
+              <p class="truncate text-[14px] font-medium uppercase text-ink">{{ session.traineeName }}</p>
+              <p class="truncate text-caption text-ink-muted">{{ session.traineeDepartment || session.location || '—' }}</p>
+            </div>
           </div>
         </div>
-      </AppCard>
 
-      <div v-if="totalPages > 1" class="flex justify-center pt-2">
+        <div class="min-w-0 flex-1">
+          <p class="text-[11px] font-semibold uppercase tracking-wider text-ink-faint">{{ t('ojt.columns.observer') }}</p>
+          <div class="mt-2 flex items-center gap-2.5">
+            <Avatar :name="session.observerName" :src="session.observerAvatar" size="sm" />
+            <div class="min-w-0">
+              <p class="truncate text-[14px] font-medium uppercase text-ink">{{ session.observerName }}</p>
+              <p class="truncate text-caption text-ink-muted">{{ session.observerDepartment || '—' }}</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="flex shrink-0 items-center gap-2 self-center" @click.stop>
+          <AppButton
+            v-if="session.status === 'SCHEDULED' && isMyObservation(session)"
+            size="sm"
+            icon="play"
+            :loading="starting === session.id"
+            @click="start(session)"
+          >
+            {{ t('ojt.start') }}
+          </AppButton>
+          <Icon v-else name="chevron-right" size="16" class="text-ink-faint" />
+        </div>
+      </div>
+
+      <div v-if="totalPages > 1" class="flex justify-center pt-4">
         <Pagination :page="page" :total-pages="totalPages" @update:page="goToPage" />
       </div>
     </div>
 
-    <Modal v-model="modalOpen" size="md" :title="t('ojt.newSession')">
-      <div class="space-y-4">
-        <AppSelect
-          v-model="form.checklistId"
-          :label="t('ojt.checklist')"
-          :placeholder="t('ojt.checklist')"
-          :options="checklistOptions"
-        />
-        <p v-if="!checklistOptions.length" class="text-caption text-warning">{{ t('ojt.noActiveChecklists') }}</p>
+    <Modal v-model="modalOpen" size="xl">
+      <!-- rasm: the stepper down the left, one question on the right -->
+      <div class="grid grid-cols-1 sm:grid-cols-[250px_minmax(0,1fr)]">
+        <ol class="border-b border-border px-4 pb-6 sm:border-b-0 sm:border-r sm:pr-6">
+          <li v-for="(key, index) in STEPS" :key="key" class="relative flex items-start gap-3.5 pb-8 last:pb-0">
+            <span v-if="index < STEPS.length - 1" class="absolute left-[25px] top-[52px] h-[calc(100%-52px)] w-px bg-border" aria-hidden="true" />
+            <button
+              type="button"
+              class="flex h-[52px] w-[52px] shrink-0 items-center justify-center rounded-full border-2 bg-surface transition-default"
+              :class="step === index ? 'border-primary text-primary' : stepDone[index] ? 'border-success text-success' : 'border-border text-ink-faint'"
+              :disabled="index > step && !stepDone[index - 1]"
+              @click="step = index"
+            >
+              <Icon :name="index === 0 ? 'users' : index === 1 ? 'check-square' : 'calendar'" size="22" />
+            </button>
+            <div class="pt-3.5">
+              <p class="text-[15px]" :class="step === index ? 'font-semibold text-primary' : 'text-ink'">{{ t(`ojt.wizard.${key === 'checklist' ? 'checklistStep' : key}`) }}</p>
+              <p v-if="index === 1 && chosenChecklist" class="mt-0.5 text-caption text-ink-muted">{{ chosenChecklist.name }}</p>
+              <p v-if="index === 2 && form.scheduledAt" class="mt-0.5 text-caption text-ink-muted">{{ formatDateTime(form.scheduledAt, locale) }}</p>
+            </div>
+          </li>
+        </ol>
 
-        <UserPicker
-          v-model="form.traineeId"
-          :display-name="form.traineeName"
-          :label="t('ojt.trainee')"
-          @select="(user) => (form.traineeName = user.fullName)"
-        />
-        <UserPicker
-          v-model="form.observerId"
-          :display-name="form.observerName"
-          :label="t('ojt.observer')"
-          @select="(user) => (form.observerName = user.fullName)"
-        />
+        <div class="flex min-h-[340px] flex-col px-4 sm:pl-8">
+          <!-- Step 1: participants -->
+          <template v-if="step === 0">
+            <h3 class="text-[20px] font-semibold text-ink">{{ t('ojt.wizard.participants') }}</h3>
+            <!-- Two columns, one row per session (rasm «Участники») -->
+            <div class="mt-8">
+              <div class="grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)_28px] gap-x-6 border-b border-border pb-2 text-[13px] text-ink-muted">
+                <span class="flex items-center gap-1.5">
+                  {{ t('ojt.wizard.observerLabel') }}
+                  <Tooltip :text="t('ojt.wizard.observerHint')" position="top"><Icon name="info" size="14" class="text-ink-faint" /></Tooltip>
+                </span>
+                <span>{{ t('ojt.wizard.employee') }}</span>
+                <span></span>
+              </div>
 
-        <AppDatePicker v-model="form.scheduledAt" with-time :label="t('ojt.scheduledAt')" />
-        <AppInput v-model="form.location" :label="t('ojt.location')" :hint="t('ojt.locationHint')" />
+              <div
+                v-for="(pair, index) in form.pairs"
+                :key="index"
+                class="grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)_28px] items-center gap-x-6 border-b border-border py-2"
+              >
+                <!-- Observer cell -->
+                <div>
+                  <UserPicker
+                    v-if="picking === `${index}:observer`"
+                    :placeholder="t('ojt.wizard.pickObserver')"
+                    @select="(u) => choose(index, 'observer', u)"
+                  />
+                  <button v-else type="button" class="flex w-full items-center gap-2 rounded-lg px-1.5 py-1.5 text-left transition-default hover:bg-surface-2" @click="pick(index, 'observer')">
+                    <template v-if="pair.observer.id">
+                      <Avatar :name="pair.observer.fullName" :src="pair.observer.avatar" size="sm" />
+                      <span class="min-w-0 flex-1 truncate text-[14px] text-ink">{{ pair.observer.fullName }}<span v-if="pair.observer.id === auth.user?.id" class="text-ink-muted"> {{ t('ojt.wizard.you') }}</span></span>
+                    </template>
+                    <template v-else>
+                      <span class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-dashed border-border-strong text-ink-faint"><Icon name="user" size="14" /></span>
+                      <span class="min-w-0 flex-1 truncate text-[14px] font-medium text-ink">{{ t('ojt.wizard.pickObserver') }}</span>
+                    </template>
+                    <Icon name="chevron-down" size="14" class="shrink-0 text-ink-faint" />
+                  </button>
+                </div>
+
+                <!-- Employee cell -->
+                <div>
+                  <UserPicker
+                    v-if="picking === `${index}:trainee`"
+                    :placeholder="t('ojt.wizard.pickEmployee')"
+                    @select="(u) => choose(index, 'trainee', u)"
+                  />
+                  <button
+                    v-else
+                    type="button"
+                    class="flex w-full items-center gap-2 rounded-lg px-1.5 py-1.5 text-left transition-default hover:bg-surface-2"
+                    :class="pair.trainee.id ? '' : 'bg-surface-2'"
+                    @click="pick(index, 'trainee')"
+                  >
+                    <template v-if="pair.trainee.id">
+                      <Avatar :name="pair.trainee.fullName" :src="pair.trainee.avatar" size="sm" />
+                      <span class="min-w-0 flex-1 truncate text-[14px] text-ink">{{ pair.trainee.fullName }}</span>
+                    </template>
+                    <template v-else>
+                      <span class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-dashed border-border-strong text-ink-faint"><Icon name="user" size="14" /></span>
+                      <span class="min-w-0 flex-1 truncate text-[14px] font-medium text-ink">{{ t('ojt.wizard.pickEmployee') }}</span>
+                    </template>
+                    <Icon name="chevron-down" size="14" class="shrink-0 text-ink-faint" />
+                  </button>
+                </div>
+
+                <!-- The last row left standing cannot be removed: a
+                     session needs a pair. -->
+                <button
+                  v-if="form.pairs.length > 1"
+                  type="button"
+                  class="flex h-7 w-7 items-center justify-center rounded-md text-ink-faint transition-default hover:bg-surface-2 hover:text-danger"
+                  :aria-label="t('common.delete')"
+                  @click="removePair(index)"
+                >
+                  <Icon name="close" size="14" />
+                </button>
+                <span v-else></span>
+              </div>
+
+              <button type="button" class="mt-4 flex items-center gap-2 text-[14px] text-primary hover:underline" @click="addPair">
+                <Icon name="user-plus" size="16" /> {{ t('ojt.wizard.addMore') }}
+              </button>
+            </div>
+          </template>
+
+          <!-- Step 2: which checklist -->
+          <template v-else-if="step === 1">
+            <h3 class="text-[20px] font-semibold text-ink">{{ t('ojt.wizard.checklistStep') }}</h3>
+            <p class="mt-1 text-[13px] text-ink-muted">{{ t('ojt.wizard.checklistHint') }}</p>
+            <p v-if="!checklistOptions.length" class="mt-6 text-caption text-warning">{{ t('ojt.noActiveChecklists') }}</p>
+            <ul v-else class="mt-6 space-y-2">
+              <li v-for="checklist in checklists" :key="checklist.id">
+                <label class="flex cursor-pointer items-start gap-3 rounded-lg border p-3.5 transition-default" :class="form.checklistId === checklist.id ? 'border-primary bg-primary-subtle' : 'border-border hover:bg-surface-2'">
+                  <input v-model="form.checklistId" type="radio" :value="checklist.id" class="mt-1 accent-primary" />
+                  <span class="min-w-0">
+                    <span class="block text-[14px] font-medium text-ink">{{ checklist.name }}</span>
+                    <span class="block text-caption text-ink-muted">{{ [checklist.position, checklist.department].filter(Boolean).join(' · ') || t('ojt.itemsCount', { count: checklist.items?.length ?? 0 }) }}</span>
+                  </span>
+                </label>
+              </li>
+            </ul>
+          </template>
+
+          <!-- Step 3: when and where -->
+          <template v-else>
+            <h3 class="text-[20px] font-semibold text-ink">{{ t('ojt.wizard.when') }}</h3>
+            <p class="mt-1 text-[13px] text-ink-muted">{{ t('ojt.wizard.whenHint') }}</p>
+            <div class="mt-6 max-w-sm space-y-4">
+              <AppDatePicker v-model="form.scheduledAt" with-time :label="t('ojt.scheduledAt')" />
+              <AppInput v-model="form.location" :label="t('ojt.location')" :hint="t('ojt.locationHint')" />
+            </div>
+          </template>
+
+          <div class="mt-auto flex items-center justify-end gap-2 pt-8">
+            <AppButton v-if="step > 0" variant="ghost" @click="step -= 1">{{ t('ojt.wizard.back') }}</AppButton>
+            <AppButton :disabled="!canNext" :loading="creating" icon="chevron-right" icon-position="right" @click="next">
+              {{ step === STEPS.length - 1 ? t('ojt.wizard.create') : t('ojt.wizard.next') }}
+            </AppButton>
+          </div>
+        </div>
       </div>
-
-      <template #footer>
-        <AppButton variant="secondary" @click="modalOpen = false">{{ t('common.cancel') }}</AppButton>
-        <AppButton :loading="creating" @click="create">{{ t('common.save') }}</AppButton>
-      </template>
     </Modal>
     </div>
   </div>

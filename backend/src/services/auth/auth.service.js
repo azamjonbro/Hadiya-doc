@@ -35,15 +35,16 @@ export function toPublicUser(user, role) {
     id: user._id.toString(),
     firstName: user.firstName ?? '',
     lastName: user.lastName ?? '',
+    patronymic: user.patronymic ?? '',
     fullName: user.fullName,
     jshshir: user.jshshir,
-    passportSeries: user.passportSeries ?? '',
     email: user.email ?? '',
     branch: user.branch ?? '',
     department: user.department,
     position: user.position,
     avatar: user.avatar,
     role: role.name,
+    roles: role.names ?? [role.name],
     permissions: role.permissions,
     // The SPA's router reads this before /users/me has answered: without
     // it a SUPERADMIN reloading /bos was bounced to the team dashboard as
@@ -139,7 +140,7 @@ export async function establishSession(user, meta) {
   const pendingFaceVerification = await issueFaceChallengeIfRequired(user)
   if (pendingFaceVerification) return pendingFaceVerification
 
-  const role = await roleRepository.findById(user.roleId)
+  const role = await roleRepository.effectiveFor(user)
   const accessToken = generateAccessToken(user, role)
   const { refreshToken } = await issueSession(user, meta)
   return { accessToken, refreshToken, user: toPublicUser(user, role) }
@@ -263,7 +264,7 @@ export const authService = {
       throw ApiError.unauthorized('Account no longer active', 'ACCOUNT_INACTIVE')
     }
 
-    const role = await roleRepository.findById(user.roleId)
+    const role = await roleRepository.effectiveFor(user)
     const accessToken = generateAccessToken(user, role)
     const { refreshToken: newRefreshToken } = await issueSession(user, meta, live._id)
 
@@ -317,6 +318,53 @@ export const authService = {
         rawToken,
       })
     }
+  },
+
+  /**
+   * Own password, from the profile's security tab.
+   *
+   * Every other session is ended — a changed password is most often the
+   * answer to "somebody else is in my account", and leaving their session
+   * alive would make the change cosmetic — but the one making the request
+   * stays: signing somebody out of the device they just secured their
+   * account from is the opposite of what they asked for. Without the
+   * refresh cookie (a token-only client) there is no way to tell which
+   * session that is, so all of them go and the client signs in again.
+   */
+  async changePassword(actor, { currentPassword, newPassword }, currentRefreshToken) {
+    const user = await userRepository.findById(actor.id)
+    if (!user) throw ApiError.notFound('User not found')
+
+    const valid = await verifyPassword(user.passwordHash, currentPassword)
+    if (!valid) throw ApiError.badRequest('The current password is wrong', 'CURRENT_PASSWORD_WRONG')
+
+    await userRepository.setPassword(user._id, await hashPassword(newPassword))
+
+    const keep = currentRefreshToken ? hashOpaqueToken(currentRefreshToken) : null
+    const revoked = await sessionRepository.revokeAllForUser(user._id, keep)
+
+    await auditLogRepository.record({
+      actor: actor.id,
+      action: 'PASSWORD_CHANGED',
+      entity: 'User',
+      entityId: user._id.toString(),
+      metadata: { sessionsRevoked: revoked },
+    })
+
+    // Mandatory (§9.3) and best-effort: the change already happened, and a
+    // relay that is down must not turn a 200 into a 500 after the fact.
+    notificationService
+      .notify({
+        userId: user._id,
+        type: 'PASSWORD_CHANGED',
+        vars: { changedAt: new Date().toISOString().slice(0, 16).replace('T', ' ') },
+        severity: 'WARNING',
+        relatedEntityType: 'User',
+        relatedEntityId: user._id.toString(),
+      })
+      .catch((error) => logger.warn('PASSWORD_CHANGED notification failed', { userId: user._id.toString(), error: error.message }))
+
+    return { sessionsRevoked: revoked, signedOut: !keep }
   },
 
   async confirmPasswordReset(rawToken, newPassword) {

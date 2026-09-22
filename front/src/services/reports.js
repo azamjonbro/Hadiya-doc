@@ -35,8 +35,8 @@ export const reportsApi = {
    * and it says so, so a preview showing 100 of 8 000 rows is never mistaken
    * for the report.
    */
-  preview(type, filters = {}) {
-    return http.get(`/reports/${type}/preview`, { params: toParams(filters) }).then((r) => r.data.data)
+  preview(type, filters = {}, { limit } = {}) {
+    return http.get(`/reports/${type}/preview`, { params: toParams(filters, limit ? { limit } : {}) }).then((r) => r.data.data)
   },
 
   /**

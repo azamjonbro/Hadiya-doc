@@ -1,28 +1,38 @@
 import { Schema, model } from 'mongoose'
 
 // An employee is identified by the document they already carry: the JSHSHIR is
-// the canonical handle, the passport series is an equivalent alternative to
-// type at the login screen. Both replace the old free-text `username`.
+// the canonical handle (email is the other one accepted at the login screen).
+// Both replace the old free-text `username`; the passport series that used to
+// sit beside them was dropped on 2026-09-12 — nobody typed it, and a second
+// identity number is a second thing to leak.
 //
-// `passportSeries` and `email` are optional, so their uniqueness is enforced by
-// a *partial* index rather than `sparse`: a sparse index still stores explicit
-// nulls, which would make the second employee without an email collide with the
-// first. The partial filter indexes only documents where the field is a string.
+// `email` is optional, so its uniqueness is enforced by a *partial* index
+// rather than `sparse`: a sparse index still stores explicit nulls, which would
+// make the second employee without an email collide with the first. The
+// partial filter indexes only documents where the field is a string.
 const userSchema = new Schema(
   {
-    // The two halves an admin actually types. `fullName` stays because every
+    // The three parts an admin actually types. `fullName` stays because every
     // list, report, chat header and export in the app reads it; it is composed
-    // from these two on write (see composeFullName in @lms/shared) rather than
-    // being a third thing anyone can edit.
+    // from these on write (see composeFullName in @lms/shared) rather than
+    // being a fourth thing anyone can edit.
     firstName: { type: String, default: '', trim: true },
     lastName: { type: String, default: '', trim: true },
+    patronymic: { type: String, default: '', trim: true },
     fullName: { type: String, required: true, trim: true },
     jshshir: { type: String, required: true, unique: true, trim: true },
-    passportSeries: { type: String, default: undefined, trim: true, uppercase: true },
     email: { type: String, default: undefined, trim: true, lowercase: true },
     phone: { type: String, default: '' },
+    // The reference keeps two: a desk line and a mobile. HR filters and
+    // exports ask for them separately, so they are two fields rather than
+    // one box people put both numbers in.
+    mobilePhone: { type: String, default: '' },
     passwordHash: { type: String, required: true },
     roleId: { type: Schema.Types.ObjectId, ref: 'Role', required: true },
+    // Every role the person wears; `roleId` is the primary one (the widest —
+    // see mergeRoles in @lms/shared) and is always among them. Empty on
+    // documents written before roles could be stacked: read as [roleId].
+    roleIds: { type: [{ type: Schema.Types.ObjectId, ref: 'Role' }], default: [] },
     // Who this person reports to. The org chart's only edge — department
     // and subdivision say *where* someone sits, this says who answers for
     // them, and the two disagree often enough (a matrix report, a team lead
@@ -30,12 +40,21 @@ const userSchema = new Schema(
     //
     // Null for the people at the top, and for everyone until M2 has run.
     managerId: { type: Schema.Types.ObjectId, ref: 'User', default: null },
+    // Who directs the work, when that is not the line manager (the
+    // reference's «Функциональный руководитель»): a matrix organisation
+    // has a person you report to and a person whose work you do. Only the
+    // line manager fences what anybody may see — this one is a fact on the
+    // record and a filter, never a permission.
+    functionalManagerId: { type: Schema.Types.ObjectId, ref: 'User', default: null },
 
     // HR's own identifier for the employee. Not an identity we authenticate
     // against — that is the JSHSHIR — but the column every HR export is
     // keyed by, which is what makes a bulk import (2.6) able to match rows
     // to accounts without guessing at names.
     employeeNumber: { type: String, default: undefined, trim: true },
+    // When the password last checked out. A column in the employee table,
+    // nothing more — sessions and devices keep their own timestamps.
+    lastLoginAt: { type: Date, default: null },
 
     /**
      * The identity provider's own id for this person (11.4).
@@ -148,10 +167,6 @@ const userSchema = new Schema(
   { timestamps: true }
 )
 
-userSchema.index(
-  { passportSeries: 1 },
-  { unique: true, partialFilterExpression: { passportSeries: { $type: 'string' } } }
-)
 userSchema.index({ email: 1 }, { unique: true, partialFilterExpression: { email: { $type: 'string' } } })
 // Partial for the same reason as the three above: only SSO users have one,
 // and two people must never share a provider subject — that would be one
@@ -172,5 +187,6 @@ userSchema.index(
 // "Who reports to this person" is the query the whole hierarchy is built
 // from — $graphLookup walks it once per level.
 userSchema.index({ managerId: 1 })
+userSchema.index({ functionalManagerId: 1 })
 
 export const User = model('User', userSchema)

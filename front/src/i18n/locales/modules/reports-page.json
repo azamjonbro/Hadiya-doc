@@ -1,0 +1,281 @@
+{
+  "uz": {
+    "reports": {
+      "page": {
+        "export": "Eksport",
+        "exportAs": "{format} sifatida yuklab olish",
+        "average": "o'rtacha",
+        "rows": "Qatorlar: {n}",
+        "loadedOf": "(ekranda {n} tasi)",
+        "truncated": "Ekranda {shown} qator, jami {total} ta. To'liq ro'yxat uchun:"
+      },
+      "chips": {
+        "add": "Filtr qo'shish",
+        "allAdded": "Barcha filtrlar qo'shilgan",
+        "remove": "Filtrni olib tashlash",
+        "any": "Barchasi",
+        "allTime": "Butun davr",
+        "lastDays": "Oxirgi {n} kun",
+        "course": "O'quv nomi",
+        "period": "O'qish boshlanish sanasi",
+        "role": "Rol",
+        "user": "Xodim",
+        "department": "Bo'lim",
+        "branch": "Filial",
+        "group": "Guruh",
+        "manager": "Rahbar",
+        "status": "Hisob holati",
+        "statusActive": "Faol",
+        "statusInactive": "Faol emas",
+        "completed": "Tugallash sanasi",
+        "deadline": "Bajarish muddati",
+        "lastLogin": "Oxirgi kirish sanasi",
+        "created": "Foydalanuvchi yaratilgan sana",
+        "enrollment": "Tayinlash turi",
+        "enrollmentManual": "Administrator tayinlagan",
+        "enrollmentSelf": "Mustaqil yozilgan",
+        "enrollmentGroup": "Guruh orqali",
+        "assigned": "Qayta tayinlash sanasi",
+        "notChosen": "Tanlanmagan",
+        "selectAll": "Hammasini tanlash",
+        "clearAll": "Tanlovni bekor qilish",
+        "apply": "Qo'llash",
+        "addPick": "Qo'shish",
+        "contains": "…ni o'z ichiga oladi",
+        "firstName": "Ism",
+        "lastName": "Familiya",
+        "jshshir": "Login (JSHSHIR)",
+        "email": "Email",
+        "phone": "Telefon",
+        "position": "Lavozim",
+        "country": "Davlat",
+        "gender": "Jinsi",
+        "address": "Manzil",
+        "hire": "Ishga qabul sanasi",
+        "termination": "Ishdan bo'shash sanasi",
+        "template": {
+          "save": "Shablon sifatida saqlash",
+          "title": "Hisobot shablonini yaratish",
+          "name": "Shablon nomi",
+          "namePlaceholder": "Nomini kiriting",
+          "create": "Yaratish",
+          "saved": "Shablon saqlandi",
+          "history": "Shablonlar va tarix",
+          "none": "Hali shablonlar yo'q — filtrlarni sozlab, 🔖 ni bosing.",
+          "delete": "O'chirish",
+          "recent": "So'nggi ochilganlar"
+        },
+        "more": {
+          "email": "Emailga yuborish",
+          "emailTitle": "Hisobotni emailga yuborish",
+          "emailHint": "Fayl (XLSX) joriy filtrlar bilan tayyorlanadi; tanlangan xodimlar tayyor bo'lganda xabar oladi.",
+          "recipients": "Qabul qiluvchilar",
+          "send": "Yuborish",
+          "sent": "Hisobot navbatga qo'yildi — tayyor bo'lganda xabar boradi"
+        },
+        "functionalManager": "Funksional rahbar",
+        "mobilePhone": "Mobile Number"
+      },
+      "ideas": {
+        "title": "Savol yoki g'oya bormi?",
+        "text": "Hisobot bo'yicha savolni AI yordamchiga bering — u kerakli hisobot va filtrlarni topib beradi.",
+        "cta": "AI yordamchiga yozish"
+      },
+      "schedules": {
+        "filtersNote": "Reja hisobotni to'liq, filtrsiz tuzadi."
+      },
+      "groups": {
+        "development": "Rivojlanish rejalari"
+      },
+      "types": {
+        "development-plan-progress": "Rivojlanish rejalari"
+      }
+    }
+  },
+  "ru": {
+    "reports": {
+      "page": {
+        "export": "Экспорт",
+        "exportAs": "Скачать как {format}",
+        "average": "среднее",
+        "rows": "Строк: {n}",
+        "loadedOf": "(на экране {n})",
+        "truncated": "На экране {shown} строк из {total}. Полный список:"
+      },
+      "chips": {
+        "add": "Добавить фильтр",
+        "allAdded": "Все фильтры добавлены",
+        "remove": "Убрать фильтр",
+        "any": "Все",
+        "allTime": "Весь период",
+        "lastDays": "Последние {n} дней",
+        "course": "Название обучения",
+        "period": "Дата начала обучения",
+        "role": "Роль",
+        "user": "Сотрудник",
+        "department": "Подразделение",
+        "branch": "Филиал",
+        "group": "Группа",
+        "manager": "Руководитель",
+        "status": "Статус учётной записи",
+        "statusActive": "Активен",
+        "statusInactive": "Неактивен",
+        "completed": "Дата завершения",
+        "deadline": "Срок выполнения",
+        "lastLogin": "Дата последнего входа",
+        "created": "Дата создания пользователя",
+        "enrollment": "Тип назначения",
+        "enrollmentManual": "Назначено администратором",
+        "enrollmentSelf": "Самостоятельная запись",
+        "enrollmentGroup": "Через группу",
+        "assigned": "Дата переназначения",
+        "notChosen": "Не выбрано",
+        "selectAll": "Выбрать все",
+        "clearAll": "Снять выбор",
+        "apply": "Применить",
+        "addPick": "Добавить",
+        "contains": "содержит…",
+        "firstName": "Имя",
+        "lastName": "Фамилия",
+        "jshshir": "Логин (ПИНФЛ)",
+        "email": "Email",
+        "phone": "Телефон",
+        "position": "Должность",
+        "country": "Страна",
+        "gender": "Пол",
+        "address": "Адрес",
+        "hire": "Дата приёма",
+        "termination": "Дата увольнения",
+        "template": {
+          "save": "Сохранить как шаблон",
+          "title": "Создание шаблона отчёта",
+          "name": "Название шаблона",
+          "namePlaceholder": "Введите название",
+          "create": "Создать",
+          "saved": "Шаблон сохранён",
+          "history": "Шаблоны и история",
+          "none": "Шаблонов пока нет — настройте фильтры и нажмите 🔖.",
+          "delete": "Удалить",
+          "recent": "Недавно открытые"
+        },
+        "more": {
+          "email": "Отправить на почту",
+          "emailTitle": "Отправить отчёт на почту",
+          "emailHint": "Файл (XLSX) будет собран с текущими фильтрами; выбранные сотрудники получат уведомление, когда он готов.",
+          "recipients": "Получатели",
+          "send": "Отправить",
+          "sent": "Отчёт поставлен в очередь — уведомление придёт, когда он готов"
+        },
+        "functionalManager": "Функциональный руководитель",
+        "mobilePhone": "Mobile Number"
+      },
+      "ideas": {
+        "title": "Возникли идеи?",
+        "text": "Задайте вопрос по отчётам AI-помощнику — он подскажет нужный отчёт и фильтры.",
+        "cta": "Написать AI-помощнику"
+      },
+      "schedules": {
+        "filtersNote": "Отчёт по расписанию собирается целиком, без фильтров."
+      },
+      "groups": {
+        "development": "Планы развития"
+      },
+      "types": {
+        "development-plan-progress": "Планы развития"
+      }
+    }
+  },
+  "en": {
+    "reports": {
+      "page": {
+        "export": "Export",
+        "exportAs": "Download as {format}",
+        "average": "average",
+        "rows": "Rows: {n}",
+        "loadedOf": "({n} on screen)",
+        "truncated": "{shown} of {total} rows on screen. For the full list:"
+      },
+      "chips": {
+        "add": "Add filter",
+        "allAdded": "Every filter is added",
+        "remove": "Remove filter",
+        "any": "All",
+        "allTime": "All time",
+        "lastDays": "Last {n} days",
+        "course": "Training name",
+        "period": "Training start date",
+        "role": "Role",
+        "user": "Employee",
+        "department": "Department",
+        "branch": "Branch",
+        "group": "Group",
+        "manager": "Manager",
+        "status": "Account status",
+        "statusActive": "Active",
+        "statusInactive": "Inactive",
+        "completed": "Completion date",
+        "deadline": "Due date",
+        "lastLogin": "Last sign-in date",
+        "created": "User creation date",
+        "enrollment": "Assignment type",
+        "enrollmentManual": "Assigned by an administrator",
+        "enrollmentSelf": "Self-enrolled",
+        "enrollmentGroup": "Through a group",
+        "assigned": "Reassignment date",
+        "notChosen": "Not chosen",
+        "selectAll": "Select all",
+        "clearAll": "Clear selection",
+        "apply": "Apply",
+        "addPick": "Add",
+        "contains": "contains…",
+        "firstName": "First name",
+        "lastName": "Last name",
+        "jshshir": "Login (PINFL)",
+        "email": "Email",
+        "phone": "Phone",
+        "position": "Position",
+        "country": "Country",
+        "gender": "Gender",
+        "address": "Address",
+        "hire": "Hire date",
+        "termination": "Termination date",
+        "template": {
+          "save": "Save as template",
+          "title": "Create report template",
+          "name": "Template name",
+          "namePlaceholder": "Enter a name",
+          "create": "Create",
+          "saved": "Template saved",
+          "history": "Templates and history",
+          "none": "No templates yet — set the filters and press 🔖.",
+          "delete": "Delete",
+          "recent": "Recently opened"
+        },
+        "more": {
+          "email": "Send by email",
+          "emailTitle": "Send the report by email",
+          "emailHint": "The file (XLSX) is built with the current filters; the people chosen are notified when it is ready.",
+          "recipients": "Recipients",
+          "send": "Send",
+          "sent": "Report queued — you will be notified when it is ready"
+        },
+        "functionalManager": "Functional manager",
+        "mobilePhone": "Mobile Number"
+      },
+      "ideas": {
+        "title": "Questions or ideas?",
+        "text": "Ask the AI assistant about the reports — it will point you to the right report and filters.",
+        "cta": "Ask the AI assistant"
+      },
+      "schedules": {
+        "filtersNote": "A scheduled report is built in full, without filters."
+      },
+      "groups": {
+        "development": "Development plans"
+      },
+      "types": {
+        "development-plan-progress": "Development plans"
+      }
+    }
+  }
+}

@@ -38,7 +38,7 @@ import { logger } from '../../config/logger.js'
  */
 
 async function uniqueSlugFor(title) {
-  const base = slugify(title)
+  const base = slugify(title) || 'course'
   let slug = base
   let counter = 2
   while (await courseRepository.findBySlug(slug)) {

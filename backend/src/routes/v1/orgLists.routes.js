@@ -4,7 +4,7 @@ import { authenticate } from '../../middlewares/auth.middleware.js'
 import { requirePermission } from '../../middlewares/rbac.middleware.js'
 import { validateBody, validateParams } from '../../middlewares/validate.middleware.js'
 import { orgListController } from '../../controllers/orgList.controller.js'
-import { orgListNameSchema, orgListTypeParamSchema } from '../../validators/orgList.validator.js'
+import { orgListNameSchema, orgListUpdateSchema, orgListTypeParamSchema } from '../../validators/orgList.validator.js'
 
 export const orgListsRouter = Router()
 
@@ -20,6 +20,13 @@ orgListsRouter.post(
   validateParams(orgListTypeParamSchema),
   validateBody(orgListNameSchema),
   orgListController.create
+)
+orgListsRouter.patch(
+  '/:type/:id',
+  requirePermission(PERMISSIONS.USER_UPDATE),
+  validateParams(orgListTypeParamSchema),
+  validateBody(orgListUpdateSchema),
+  orgListController.update
 )
 orgListsRouter.delete(
   '/:type/:id',

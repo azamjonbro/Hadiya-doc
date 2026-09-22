@@ -2,6 +2,8 @@ import { z } from 'zod'
 
 export const branchNameSchema = z.object({
   name: z.string().min(1, 'Branch name is required').max(60, 'Branch name is too long'),
+  code: z.string().trim().max(40).optional(),
+  headId: z.string().regex(/^[a-f\d]{24}$|^$/i).nullable().optional(),
 })
 
 // `?force=1` on a delete. Written out rather than z.coerce.boolean(), which

@@ -1,4 +1,7 @@
 import { REPORT_TYPES, reportDataService, PREVIEW_MAX_ROWS } from '../services/reports/reportData.service.js'
+
+// The most rows the on-screen report page may hold at once.
+const PAGE_MAX_ROWS = 1000
 import { auditLogRepository } from '../repositories/auditLog.repository.js'
 import { reportExportService } from '../services/reports/reportExport.service.js'
 import { reportTranslator } from '../services/reports/reportI18n.js'
@@ -34,15 +37,16 @@ export const reportController = {
    */
   preview: asyncHandler(async (req, res) => {
     const { type } = req.params
-    const { lang, ...filters } = req.validatedQuery
+    const { lang, limit, ...filters } = req.validatedQuery
     const t = reportTranslator(lang)
+    // The modal glimpse asks for nothing and gets a hundred; the report page
+    // asks for up to a thousand. Clamped here, never trusted from the query.
+    const maxRows = Math.min(limit ?? PREVIEW_MAX_ROWS, PAGE_MAX_ROWS)
 
     const { columns, rows, totalRows } = await reportDataService.build(
       req.user,
       type,
-      // Injected here, never taken from the query: a client that could set
-      // its own cap could turn a preview into an unbounded read.
-      { ...filters, maxRows: PREVIEW_MAX_ROWS },
+      { ...filters, maxRows },
       lang,
       { scopedUserIds: req.scopedUserIds }
     )
@@ -66,13 +70,13 @@ export const reportController = {
       totalRows,
       previewRows: rows.length,
       truncated: totalRows > rows.length,
-      previewLimit: PREVIEW_MAX_ROWS,
+      previewLimit: maxRows,
     })
   }),
 
   export: asyncHandler(async (req, res) => {
     const { type } = req.params
-    const { format, lang, ...filters } = req.validatedQuery
+    const { format, lang, notify: _notify, ...filters } = req.validatedQuery
     const t = reportTranslator(lang)
     // The sheet/document title is localised, but the download filename stays
     // the ASCII slug — non-ASCII in Content-Disposition is where downloads
@@ -137,7 +141,7 @@ export const reportController = {
    */
   queueExport: asyncHandler(async (req, res) => {
     const { type } = req.params
-    const { format, lang, ...filters } = req.validatedQuery
+    const { format, lang, notify, ...filters } = req.validatedQuery
 
     // Resolved here, not in the worker: the job has to export what this
     // person could see when they asked.
@@ -147,6 +151,9 @@ export const reportController = {
       lang,
       filters,
       scopedUserIds: req.scopedUserIds ?? null,
+      // «Send by email»: the people named are told when the file is ready,
+      // the same way a schedule's recipients are.
+      notify: notify ?? [],
     })
     await queueExport(job._id)
 

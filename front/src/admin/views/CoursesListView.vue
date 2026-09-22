@@ -1,5 +1,5 @@
 <script setup>
-import { computed, onMounted, reactive, ref } from 'vue'
+import { computed, reactive, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useAuthStore } from '@/stores/auth'
@@ -16,13 +16,150 @@ import Skeleton from '@/components/ui/Skeleton.vue'
 import EmptyState from '@/components/ui/EmptyState.vue'
 import Icon from '@/components/ui/Icon.vue'
 import CourseDangerActions from '@/admin/components/CourseDangerActions.vue'
+import ProjectManageModal from '@/admin/components/projects/ProjectManageModal.vue'
+import AddMembersModal from '@/admin/components/projects/AddMembersModal.vue'
+import FileCourseModal from '@/admin/components/projects/FileCourseModal.vue'
+import Avatar from '@/components/ui/Avatar.vue'
+import Modal from '@/components/ui/Modal.vue'
+import Tooltip from '@/components/ui/Tooltip.vue'
+import { projectsApi } from '@/services/projects'
+import { useProjectsStore } from '@/stores/projects'
+import { useCourseMarksStore } from '@/stores/courseMarks'
+import { useToast } from '@/composables/useToast'
 import { apiErrorText } from '@/utils/apiError'
+import { formatDate } from '@/utils/format'
 import { onClickOutside } from '@/composables/onClickOutside'
 
 const { t, locale } = useI18n()
 const auth = useAuthStore()
 const router = useRouter()
 const route = useRoute()
+const toast = useToast()
+const projectsStore = useProjectsStore()
+
+// One view, two pages. At /bos/courses this is the whole library; at
+// /bos/projects/:id it is one folder of it (rasm 4): the project's name and
+// people in the header, only its courses in the table, and every "create"
+// filing what it makes into the folder. The table is the same either way,
+// which is why this is a mode and not a second view.
+const projectId = computed(() => (route.name === 'admin-project' ? String(route.params.id) : ''))
+
+// The reference's views of the library (rasm «Учебные материалы»):
+// «Yaqindagilar» — what this person opened lately, «Sevimlilar» — what
+// they starred, «Menga ochiq» — courses in projects others let them into.
+// The first two are marks kept in this browser (courseMarks store); the
+// third is read off the projects. None of them page: they are short by
+// nature, and a bookmark list with page 2 is a list nobody scrolls.
+const VIEWS = ['recent', 'favorites', 'shared']
+const view = computed(() => (!projectId.value && VIEWS.includes(route.query.view) ? route.query.view : ''))
+const marks = useCourseMarksStore()
+const viewTitleKey = computed(() => ({ recent: 'admin.section.recent', favorites: 'admin.section.favorites', shared: 'admin.section.shared' })[view.value] ?? 'admin.section.allMaterials')
+
+async function loadView() {
+  loading.value = true
+  errorMessage.value = ''
+  try {
+    let rows = []
+    if (view.value === 'shared') {
+      await projectsStore.load()
+      const others = projectsStore.items.filter((p) => p.access && p.access !== 'OWNER')
+      const pages = await Promise.all(others.map((p) => coursesApi.list({ page: 1, limit: 100, projectId: p.id }).catch(() => ({ items: [] }))))
+      rows = pages.flatMap((page) => page.items)
+    } else {
+      const ids = view.value === 'recent' ? marks.recent : marks.favorites
+      // One request per mark, and a mark whose course is gone is dropped
+      // rather than shown as a dead row.
+      const found = await Promise.all(ids.map((id) => coursesApi.getById(id).catch(() => null)))
+      rows = found.filter(Boolean)
+      for (const id of ids) if (!found[ids.indexOf(id)]) marks.forget(id)
+    }
+    items.value = rows
+    total.value = rows.length
+    totalPages.value = 1
+    page.value = 1
+  } catch (error) {
+    errorMessage.value = apiErrorText(error)
+  } finally {
+    loading.value = false
+  }
+}
+const project = ref(null)
+const projectError = ref('')
+const manageOpen = ref(false)
+const membersOpen = ref(false)
+const fileOpen = ref(false)
+const projectMenuOpen = ref(false)
+const projectMenuRef = ref(null)
+onClickOutside(projectMenuRef, () => (projectMenuOpen.value = false))
+const canManageProject = computed(() => project.value?.access === 'OWNER')
+const canFile = computed(() => project.value?.access === 'OWNER' || project.value?.access === 'EDIT')
+// The header's avatar row: the owner, then members, capped like the
+// reference caps it.
+const projectPeople = computed(() => {
+  if (!project.value) return []
+  return [project.value.owner, ...(project.value.members ?? [])].filter(Boolean).slice(0, 6)
+})
+
+async function loadProject() {
+  project.value = null
+  projectError.value = ''
+  if (!projectId.value) return
+  try {
+    project.value = await projectsApi.getById(projectId.value)
+    projectsStore.upsert(project.value)
+    // Made from the sidebar's "+": land in the dialog with the name selected.
+    if (route.query.manage === '1') {
+      manageOpen.value = true
+      router.replace({ path: route.path })
+    }
+  } catch (error) {
+    projectError.value = apiErrorText(error)
+  }
+}
+function onProjectUpdated(updated) {
+  project.value = updated
+  projectsStore.upsert(updated)
+}
+function onProjectDeleted(id) {
+  projectsStore.forget(id)
+  router.replace(project.value?.parentId ? `/bos/projects/${project.value.parentId}` : '/bos/courses')
+}
+
+// «Yaratish → Papka» (rasm «Создать»): a folder inside this project, named
+// on the spot, opened straight away.
+const folderOpen = ref(false)
+const folderName = ref('')
+const folderSaving = ref(false)
+async function createFolder() {
+  const name = folderName.value.trim()
+  if (!name) return
+  folderSaving.value = true
+  try {
+    const folder = await projectsApi.create({ name, parentId: projectId.value })
+    projectsStore.upsert(folder)
+    folderOpen.value = false
+    folderName.value = ''
+    router.push(`/bos/projects/${folder.id}`)
+  } catch (error) {
+    toast.error(apiErrorText(error))
+  } finally {
+    folderSaving.value = false
+  }
+}
+async function onCourseFiled(course) {
+  fileOpen.value = false
+  projectsStore.bump(projectId.value, 1)
+  if (project.value) project.value.courseCount = (project.value.courseCount ?? 0) + 1
+  toast.success(t('projects.file.done', { title: course.title }))
+  await loadFirstPage()
+}
+// Filing is by project, so the "new course" links carry the folder along
+// and the builder files what it makes.
+const withProject = (path) => {
+  if (!projectId.value) return path
+  const joiner = path.includes('?') ? '&' : '?'
+  return `${path}${joiner}project=${projectId.value}`
+}
 
 const filters = reactive({
   search: '',
@@ -110,10 +247,12 @@ function buildParams() {
   if (filters.categoryId) params.categoryId = filters.categoryId
   if (filters.level) params.level = filters.level
   if (filters.tag) params.tag = filters.tag
+  if (projectId.value) params.projectId = projectId.value
   return params
 }
 
 async function load() {
+  if (view.value) return loadView()
   loading.value = true
   errorMessage.value = ''
   try {
@@ -173,18 +312,31 @@ const createRef = ref(null)
 onClickOutside(createRef, () => (createOpen.value = false))
 const createItems = computed(() =>
   [
-    { key: 'course', icon: 'layers', tone: 'bg-sky-100 text-sky-600', labelKey: 'portal.courses.typeCourse', to: '/bos/courses/new', permission: 'course:create' },
+    ...(projectId.value
+      ? [{ key: 'folder', icon: 'grid', tone: 'bg-amber-100 text-amber-700', labelKey: 'projects.folder.one', action: () => { folderName.value = ''; folderOpen.value = true }, permission: 'course:create' }]
+      : []),
+    { key: 'course', icon: 'layers', tone: 'bg-sky-100 text-sky-600', labelKey: 'portal.courses.typeCourse', to: withProject('/bos/courses/new'), permission: 'course:create' },
+    // Inside a project: bring in a course that already exists (rasm 4's
+    // "load or drag materials here"). Absent from the whole library, where
+    // everything already is.
+    ...(projectId.value
+      ? [{ key: 'file', icon: 'download', tone: 'bg-lime-100 text-lime-700', labelKey: 'projects.file.action', action: () => (fileOpen.value = true), permission: 'course:update' }]
+      : []),
     { key: 'path', icon: 'trending-up', tone: 'bg-violet-100 text-violet-600', labelKey: 'portal.courses.typePath', to: '/bos/paths', permission: 'path:manage' },
     { key: 'quiz', icon: 'check-circle', tone: 'bg-emerald-100 text-emerald-600', labelKey: 'questions.title', to: '/bos/question-banks', permission: 'quiz:configure' },
     { key: 'task', icon: 'pencil', tone: 'bg-amber-100 text-amber-600', labelKey: 'nav.tasks', to: '/bos/tasks', permission: 'task:create' },
-    { key: 'scorm', icon: 'upload', tone: 'bg-teal-100 text-teal-600', labelKey: 'courses.import', to: '/bos/courses/new?import=scorm', permission: 'course:create' },
+    { key: 'scorm', icon: 'upload', tone: 'bg-teal-100 text-teal-600', labelKey: 'courses.import', to: withProject('/bos/courses/new?import=scorm'), permission: 'course:create' },
     { key: 'ai', icon: 'sparkles', tone: 'bg-rose-100 text-rose-600', labelKey: 'ai.title', to: '/bos/ai', permission: 'course:create' },
   ].filter((item) => auth.hasPermission(item.permission)),
 )
 function create(item) {
   createOpen.value = false
-  router.push(item.to)
+  if (item.action) item.action()
+  else router.push(item.to)
 }
+// Authoring inside a folder needs write access to it; a VIEW member sees
+// the courses and no way to add to them.
+const canCreate = computed(() => auth.hasPermission('course:create') && !view.value && (!projectId.value || canFile.value))
 
 const selected = ref([])
 const allSelected = computed(() => items.value.length > 0 && selected.value.length === items.value.length)
@@ -192,7 +344,24 @@ function toggleAll() {
   selected.value = allSelected.value ? [] : items.value.map((course) => course.id)
 }
 
-onMounted(load)
+// The same component serves both routes, so moving from one project to
+// another (or back to the library) is a param change, not a remount.
+watch(
+  [projectId, view],
+  async () => {
+    selected.value = []
+    filtersOpen.value = false
+    await Promise.all([loadProject(), loadFirstPage()])
+  },
+  { immediate: true },
+)
+// A star toggled on the favourites view removes the row from it.
+watch(
+  () => marks.favorites.length,
+  () => {
+    if (view.value === 'favorites') loadView()
+  },
+)
 </script>
 
 <template>
@@ -201,9 +370,61 @@ onMounted(load)
          on the right "···", upload, "create with AI" and the green
          Create menu -->
     <div class="flex flex-wrap items-start justify-between gap-3">
-      <div>
-        <h1 class="text-[24px] font-semibold text-ink">{{ t('admin.section.library') }}</h1>
-        <p class="mt-1 text-[13px] text-ink-muted">{{ t('common.pagination.range', { from: rangeStart, to: rangeEnd, total }) }}</p>
+      <div v-if="projectId" class="min-w-0">
+        <nav v-if="project?.path?.length" class="mb-1 flex flex-wrap items-center gap-1 text-[13px] text-ink-muted" :aria-label="t('projects.folder.path')">
+          <template v-for="(crumb, index) in project.path" :key="crumb.id">
+            <router-link :to="`/bos/projects/${crumb.id}`" class="hover:text-ink">{{ crumb.name }}</router-link>
+            <Icon v-if="index < project.path.length - 1" name="chevron-right" size="12" class="text-ink-faint" />
+          </template>
+        </nav>
+        <h1 class="truncate text-[24px] font-semibold text-ink">{{ project?.name ?? '…' }}</h1>
+        <!-- Rasn 4: who works in the folder — the owner's avatar, the
+             members', a "+" that adds more and "···" for the rest -->
+        <div v-if="project" class="mt-2 flex items-center gap-1.5">
+          <Tooltip v-for="person in projectPeople" :key="person.id" :text="person.fullName" position="bottom">
+            <Avatar :name="person.fullName" :src="person.avatar" size="sm" />
+          </Tooltip>
+          <span v-if="project.memberCount + 1 > projectPeople.length" class="flex h-8 w-8 items-center justify-center rounded-full bg-surface-2 text-[12px] text-ink-muted">
+            +{{ project.memberCount + 1 - projectPeople.length }}
+          </span>
+          <Tooltip v-if="canManageProject" :text="t('projects.members.addTitle')" position="bottom">
+            <button
+              type="button"
+              class="flex h-8 w-8 items-center justify-center rounded-full bg-surface-2 text-ink-muted transition-default hover:bg-surface-hover hover:text-ink"
+              :aria-label="t('projects.members.addTitle')"
+              @click="membersOpen = true"
+            >
+              <Icon name="plus" size="16" />
+            </button>
+          </Tooltip>
+          <div ref="projectMenuRef" class="relative">
+            <button
+              type="button"
+              class="flex h-8 w-8 items-center justify-center rounded-full text-ink-muted transition-default hover:bg-surface-2 hover:text-ink"
+              :aria-label="t('projects.manage.title')"
+              :aria-expanded="projectMenuOpen"
+              aria-haspopup="menu"
+              @click="projectMenuOpen = !projectMenuOpen"
+            >
+              <Icon name="more-horizontal" size="18" />
+            </button>
+            <Transition enter-active-class="transition-default" enter-from-class="opacity-0 -translate-y-1" leave-active-class="transition-default" leave-to-class="opacity-0 -translate-y-1">
+              <div v-if="projectMenuOpen" class="absolute left-0 z-20 mt-1 w-56 rounded-xl bg-surface p-1.5 shadow-xl" role="menu">
+                <button type="button" role="menuitem" class="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-left text-[14px] text-ink transition-default hover:bg-surface-2" @click="projectMenuOpen = false; manageOpen = true">
+                  <Icon name="settings" size="16" class="text-ink-muted" />{{ t('projects.manage.title') }}
+                </button>
+                <router-link role="menuitem" to="/bos/courses" class="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-left text-[14px] text-ink transition-default hover:bg-surface-2" @click="projectMenuOpen = false">
+                  <Icon name="book-open" size="16" class="text-ink-muted" />{{ t('admin.section.allMaterials') }}
+                </router-link>
+              </div>
+            </Transition>
+          </div>
+        </div>
+        <p v-else-if="projectError" class="mt-1 text-[13px] text-danger">{{ projectError }}</p>
+      </div>
+      <div v-else>
+        <h1 class="text-[24px] font-semibold text-ink">{{ t(viewTitleKey) }}</h1>
+        <p class="mt-1 text-[13px] text-ink-muted">{{ view ? t('common.total') + ': ' + total : t('common.pagination.range', { from: rangeStart, to: rangeEnd, total }) }}</p>
       </div>
       <div class="flex flex-wrap items-center gap-2">
         <button
@@ -216,17 +437,17 @@ onMounted(load)
           <Icon name="filter" size="18" />
         </button>
         <button
-          v-if="auth.hasPermission('course:create')"
+          v-if="canCreate"
           type="button"
           class="flex h-10 w-10 items-center justify-center rounded-lg bg-surface-2 text-ink-muted transition-default hover:bg-surface-hover hover:text-ink"
           :title="t('courses.import')"
           :aria-label="t('courses.import')"
-          @click="router.push('/bos/courses/new?import=scorm')"
+          @click="router.push(withProject('/bos/courses/new?import=scorm'))"
         >
           <Icon name="upload" size="18" />
         </button>
         <!-- The AI course button carries the reference's gradient ring -->
-        <span v-if="auth.hasPermission('course:create')" class="rounded-lg bg-gradient-to-r from-rose-500 via-purple-500 to-blue-500 p-[2px]">
+        <span v-if="canCreate" class="rounded-lg bg-gradient-to-r from-rose-500 via-purple-500 to-blue-500 p-[2px]">
           <button
             type="button"
             class="flex h-9 items-center gap-2 rounded-[6px] bg-surface px-4 text-[14px] font-medium text-ink transition-default hover:bg-surface-2"
@@ -235,7 +456,7 @@ onMounted(load)
             <Icon name="plus" size="16" />{{ t('ai.title') }}
           </button>
         </span>
-        <div v-if="auth.hasPermission('course:create')" ref="createRef" class="relative">
+        <div v-if="canCreate" ref="createRef" class="relative">
           <AppButton icon="plus" :aria-expanded="createOpen" aria-haspopup="menu" @click="createOpen = !createOpen">{{ t('common.create') }}</AppButton>
           <Transition enter-active-class="transition-default" enter-from-class="opacity-0 -translate-y-1" leave-active-class="transition-default" leave-to-class="opacity-0 -translate-y-1">
             <div v-if="createOpen" class="absolute right-0 z-20 mt-2 grid w-[380px] grid-cols-2 gap-1 rounded-xl bg-surface p-3 shadow-xl" role="menu">
@@ -298,8 +519,8 @@ onMounted(load)
     </div>
 
     <!-- The table (rasn 2): checkbox, icon + name, type, assignments,
-         author, added; 56px rows -->
-    <div v-else-if="items.length" class="mt-4 overflow-x-auto">
+         author, added; 56px rows. In a project, its folders come first. -->
+    <div v-else-if="items.length || project?.folders?.length" class="mt-4 overflow-x-auto">
       <table class="w-full min-w-[860px] text-[14px]">
         <thead>
           <tr class="h-11 border-b border-border text-left text-[13px] text-ink-muted">
@@ -313,6 +534,25 @@ onMounted(load)
           </tr>
         </thead>
         <tbody>
+          <tr
+            v-for="folder in project?.folders ?? []"
+            :key="`folder-${folder.id}`"
+            class="group h-14 cursor-pointer border-b border-border transition-default hover:bg-surface-2"
+            @click="router.push(`/bos/projects/${folder.id}`)"
+          >
+            <td class="pl-3" @click.stop><input type="checkbox" class="h-4 w-4 rounded border-border-strong" disabled /></td>
+            <td class="pr-2">
+              <span class="flex items-center gap-3">
+                <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-amber-100 text-amber-600 dark:bg-amber-500/15 dark:text-amber-300"><Icon name="grid" size="18" /></span>
+                <span class="block truncate text-ink">{{ folder.name }}</span>
+              </span>
+            </td>
+            <td class="px-2 text-ink">{{ t('projects.folder.one') }}</td>
+            <td class="px-2 text-ink">—</td>
+            <td class="px-2 text-ink">{{ folder.courseCount ? t('library.count', { n: folder.courseCount }) : '—' }}</td>
+            <td class="px-2 text-ink-muted">{{ formatDate(folder.createdAt, locale) }}</td>
+            <td class="pr-3"></td>
+          </tr>
           <tr
             v-for="course in items"
             :key="course.id"
@@ -332,22 +572,68 @@ onMounted(load)
             <td class="px-2 text-ink">{{ t('portal.courses.typeCourse') }}</td>
             <td class="px-2 text-ink">{{ course.assignmentCount ? t('portal.courses.assigned') : '—' }}</td>
             <td class="px-2 text-ink">{{ course.authorName || '—' }}</td>
-            <td class="px-2 text-ink-muted">{{ new Date(course.createdAt).toLocaleDateString(locale, { day: 'numeric', month: 'short', year: 'numeric' }) }}</td>
+            <td class="px-2 text-ink-muted">{{ formatDate(course.createdAt, locale) }}</td>
             <td class="pr-3 text-right" @click.stop>
-              <CourseDangerActions
-                :course="course"
-                layout="icons"
-                class="justify-end opacity-0 transition-default focus-within:opacity-100 group-hover:opacity-100"
-                @archived="onCourseArchived"
-                @deleted="onCourseDeleted"
-              />
+              <span class="flex items-center justify-end gap-1">
+                <!-- The star (rasm «Избранное»): stays lit once set -->
+                <button
+                  type="button"
+                  class="flex h-8 w-8 items-center justify-center rounded-md transition-default hover:bg-surface-hover"
+                  :class="marks.isFavorite(course.id) ? 'text-warning' : 'text-ink-faint opacity-0 focus-visible:opacity-100 group-hover:opacity-100'"
+                  :aria-label="t('admin.section.favorites')"
+                  :aria-pressed="marks.isFavorite(course.id)"
+                  @click="marks.toggleFavorite(course.id)"
+                >
+                  <Icon name="star" size="16" />
+                </button>
+                <CourseDangerActions
+                  :course="course"
+                  layout="icons"
+                  class="justify-end opacity-0 transition-default focus-within:opacity-100 group-hover:opacity-100"
+                  @archived="onCourseArchived"
+                  @deleted="onCourseDeleted"
+                />
+              </span>
             </td>
           </tr>
         </tbody>
       </table>
     </div>
 
+    <!-- Rasn 4: an empty folder asks for materials and names the formats -->
+    <div v-else-if="projectId && !project?.folders?.length" class="mt-6 flex flex-col items-center px-6 py-14 text-center">
+      <div class="relative flex h-40 w-40 items-center justify-center rounded-full bg-surface-2">
+        <Icon name="file-text" size="56" class="text-ink-faint" />
+        <span class="absolute bottom-5 right-4 h-12 w-2 rotate-45 rounded-full bg-primary" aria-hidden="true"></span>
+      </div>
+      <h2 class="mt-7 text-[20px] font-medium text-ink">{{ t('projects.empty.title') }}</h2>
+      <p class="mt-2 text-[15px] text-ink-muted">
+        <template v-if="canCreate">
+          <button type="button" class="text-ink underline decoration-ink-faint underline-offset-4 hover:decoration-ink" @click="router.push(withProject('/bos/courses/new'))">{{ t('projects.empty.create') }}</button>,
+          <button type="button" class="text-ink underline decoration-ink-faint underline-offset-4 hover:decoration-ink" @click="fileOpen = true">{{ t('projects.empty.file') }}</button>
+          {{ t('projects.empty.or') }}
+          <button type="button" class="text-ink underline decoration-ink-faint underline-offset-4 hover:decoration-ink" @click="router.push(withProject('/bos/courses/new?import=scorm'))">{{ t('projects.empty.upload') }}</button>
+        </template>
+        <template v-else>{{ t('projects.empty.viewOnly') }}</template>
+      </p>
+      <p class="mt-16 text-[13px] text-ink-faint">{{ t('projects.empty.formats') }}</p>
+    </div>
+    <EmptyState v-else-if="view" :icon="view === 'favorites' ? 'star' : view === 'shared' ? 'users' : 'clock'" :title="t(`admin.views.${view}.empty`)" :description="t(`admin.views.${view}.hint`)" class="mt-6" />
     <EmptyState v-else icon="book-open" :title="t('courses.empty')" class="mt-6" />
+
+    <Modal v-model="folderOpen" :title="t('projects.folder.new')" size="sm">
+      <AppInput v-if="folderOpen" v-model="folderName" autofocus :label="t('projects.folder.name')" :placeholder="t('projects.folder.placeholder')" @keyup.enter="createFolder" />
+      <template #footer>
+        <AppButton variant="secondary" @click="folderOpen = false">{{ t('common.cancel') }}</AppButton>
+        <AppButton :disabled="!folderName.trim()" :loading="folderSaving" @click="createFolder">{{ t('common.create') }}</AppButton>
+      </template>
+    </Modal>
+
+    <template v-if="project">
+      <ProjectManageModal v-model="manageOpen" :project="project" @updated="onProjectUpdated" @deleted="onProjectDeleted" />
+      <AddMembersModal v-model="membersOpen" :project="project" @added="onProjectUpdated" />
+      <FileCourseModal v-model="fileOpen" :project="project" @filed="onCourseFiled" />
+    </template>
 
     <div v-if="totalPages > 1" class="mt-6 flex justify-end">
       <Pagination :page="page" :total-pages="totalPages" @update:page="goToPage" />

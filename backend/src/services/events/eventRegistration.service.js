@@ -52,7 +52,7 @@ export const eventRegistrationService = {
    * tolerated: a room with eleven people in it is a problem somebody
    * notices, whereas losing a registration is one nobody does.
    */
-  async register(actor, eventId) {
+  async register(actor, eventId, { userId = actor.id } = {}) {
     const event = await Event.findById(eventId)
     if (!event) throw ApiError.notFound('Event not found')
     if (event.status === 'CANCELLED') throw ApiError.badRequest('This event was cancelled', 'EVENT_CANCELLED')
@@ -61,7 +61,7 @@ export const eventRegistrationService = {
     }
     if (event.endAt < new Date()) throw ApiError.badRequest('This event has already happened', 'EVENT_PAST')
 
-    const existing = await EventRegistration.findOne({ eventId, userId: actor.id })
+    const existing = await EventRegistration.findOne({ eventId, userId })
     if (existing && existing.status !== 'CANCELLED') {
       return { status: existing.status, waitlistPosition: existing.waitlistPosition }
     }
@@ -76,7 +76,7 @@ export const eventRegistrationService = {
     // Upsert rather than create: somebody who cancelled and came back has a
     // CANCELLED row already, and the unique index would refuse a new one.
     const row = await EventRegistration.findOneAndUpdate(
-      { eventId, userId: actor.id },
+      { eventId, userId },
       { $set: { status, waitlistPosition, registeredAt: new Date(), attendedAt: null, markedBy: null } },
       { upsert: true, new: true, setDefaultsOnInsert: true }
     )
@@ -85,7 +85,7 @@ export const eventRegistrationService = {
 
     await notificationService
       .notify({
-        userId: actor.id,
+        userId,
         type: status === 'REGISTERED' ? 'EVENT_REGISTERED' : 'EVENT_WAITLISTED',
         vars: {
           eventTitle: event.title,
@@ -98,6 +98,20 @@ export const eventRegistrationService = {
       .catch((error) => logger.warn('Event registration notice failed', { error: error.message }))
 
     return { status: row.status, waitlistPosition: row.waitlistPosition }
+  },
+
+  /** The organiser signing a list of people up — one seat each, in order. */
+  async registerMany(actor, eventId, userIds) {
+    const registered = []
+    const failed = []
+    for (const userId of [...new Set(userIds.map(String))]) {
+      try {
+        registered.push({ userId, ...(await this.register(actor, eventId, { userId })) })
+      } catch (error) {
+        failed.push({ userId, code: error.code ?? 'FAILED', message: error.message })
+      }
+    }
+    return { registered, failed }
   },
 
   /**

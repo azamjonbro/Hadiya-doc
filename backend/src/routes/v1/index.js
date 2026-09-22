@@ -1,5 +1,6 @@
 import { Router } from 'express'
 import { healthRouter } from './health.routes.js'
+import { clientErrorsRouter } from './clientErrors.routes.js'
 import { authRouter } from './auth.routes.js'
 import { usersRouter } from './users.routes.js'
 import { groupsRouter } from './groups.routes.js'
@@ -26,6 +27,7 @@ import { orgRouter } from './org.routes.js'
 import { aiChatRouter } from './aiChat.routes.js'
 import { dashboardRouter } from './dashboard.routes.js'
 import { branchesRouter } from './branches.routes.js'
+import { projectsRouter } from './projects.routes.js'
 import { rolesRouter } from './roles.routes.js'
 import { orgListsRouter } from './orgLists.routes.js'
 import { proctorRouter } from './proctor.routes.js'
@@ -66,6 +68,7 @@ export const v1Router = Router()
 v1Router.use('/public/certificates', publicCertificatesRouter)
 
 v1Router.use('/health', healthRouter)
+v1Router.use('/client-errors', clientErrorsRouter)
 v1Router.use('/auth', authRouter)
 v1Router.use('/users', usersRouter)
 v1Router.use('/groups', groupsRouter)
@@ -96,6 +99,7 @@ v1Router.use('/org', orgRouter)
 v1Router.use('/ai-chat', aiChatRouter)
 v1Router.use('/dashboard', dashboardRouter)
 v1Router.use('/branches', branchesRouter)
+v1Router.use('/projects', projectsRouter)
 v1Router.use('/roles', rolesRouter)
 v1Router.use('/org-lists', orgListsRouter)
 v1Router.use('/proctor', proctorRouter)

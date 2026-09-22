@@ -1,3 +1,4 @@
+import { userRepository } from '../../repositories/user.repository.js'
 import { eventRepository } from '../../repositories/event.repository.js'
 import { auditLogRepository } from '../../repositories/auditLog.repository.js'
 import { Event } from '../../models/event.model.js'
@@ -51,7 +52,18 @@ function toPublicEvent(event) {
 export const eventService = {
   async calendar(query) {
     const rows = await eventRepository.listInRange(query)
-    return rows.map(toPublicEvent)
+    const events = rows.map(toPublicEvent)
+    // The trainers' names, for the calendar's «Trener» filter and the
+    // event card: one lookup for the page rather than one per event.
+    const ids = [...new Set(events.flatMap((event) => event.trainerIds))]
+    if (ids.length) {
+      const users = await userRepository.findByIds(ids)
+      const nameById = new Map(users.map((user) => [String(user._id), user.fullName]))
+      for (const event of events) {
+        event.trainers = event.trainerIds.map((id) => ({ id, fullName: nameById.get(id) ?? '' })).filter((t) => t.fullName)
+      }
+    } else for (const event of events) event.trainers = []
+    return events
   },
 
   /**

@@ -4,12 +4,13 @@ import { useI18n } from 'vue-i18n'
 import { apiErrorText } from '@/utils/apiError'
 import { useToast } from '@/composables/useToast'
 import { notificationsApi } from '@/services/notifications'
+import { formatRelative } from '@/utils/chatFormat'
 import AppButton from '@/components/ui/AppButton.vue'
 import EmptyState from '@/components/ui/EmptyState.vue'
 import Skeleton from '@/components/ui/Skeleton.vue'
 import Icon from '@/components/ui/Icon.vue'
 
-const { t } = useI18n()
+const { t, locale } = useI18n()
 const toast = useToast()
 
 const items = ref([])
@@ -40,15 +41,7 @@ function iconFor(n) {
   return typeMeta[n.type]?.icon ?? 'bell'
 }
 
-function timeAgo(dateString) {
-  const seconds = Math.floor((Date.now() - new Date(dateString).getTime()) / 1000)
-  if (seconds < 60) return t('notifications.justNow')
-  const minutes = Math.floor(seconds / 60)
-  if (minutes < 60) return `${minutes}m`
-  const hours = Math.floor(minutes / 60)
-  if (hours < 24) return `${hours}h`
-  return `${Math.floor(hours / 24)}d`
-}
+const timeAgo = (dateString) => formatRelative(dateString, locale.value, t)
 
 async function load() {
   loading.value = true
@@ -111,7 +104,7 @@ onMounted(load)
     <div class="flex items-center justify-between">
       <div>
         <h1 class="text-[24px] font-semibold text-ink">{{ t('notifications.title') }}</h1>
-        <p v-if="unreadCount > 0" class="mt-1 text-small text-ink-muted">{{ unreadCount }} unread</p>
+        <p v-if="unreadCount > 0" class="mt-1 text-small text-ink-muted">{{ t('notifications.unreadCount', { count: unreadCount }) }}</p>
       </div>
       <AppButton variant="ghost" size="sm" icon="check-square" :disabled="unreadCount === 0" @click="markAllRead">
         {{ t('notifications.markAllRead') }}
@@ -133,7 +126,7 @@ onMounted(load)
         :class="filter === 'unread' ? 'bg-primary text-primary-foreground' : 'bg-surface-2 text-ink-muted hover:bg-surface-hover'"
         @click="filter = 'unread'"
       >
-        Unread
+        {{ t('notifications.unread') }}
       </button>
     </div>
 

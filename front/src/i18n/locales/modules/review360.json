@@ -1,16 +1,15 @@
 {
   "uz": {
     "review360": {
-      "title": "360° baholash",
-      "subtitle": "Xodim haqida rahbari, tengdoshlari va qo’l ostidagilar bir vaqtda javob beradi",
+      "title": "Baholash sessiyalari",
+      "subtitle": "Xodimlar samaradorligini 360° kompetensiya baholash orqali boshqaring.",
       "mine": "Menga kelgan so’rovnomalar",
       "mineSubtitle": "Sizdan javob kutilayotgan baholashlar",
       "respond": "Baholash",
-      "cycle": "Sikl",
-      "cycles": "Sikllar",
+      "cycle": "Sessiya",
+      "cycles": "Sessiyalar",
       "templates": "So’rovnomalar",
       "templatesSubtitle": "Savollar to’plami — sikl shundan yig’iladi",
-
       "status": {
         "DRAFT": "Qoralama",
         "RUNNING": "Ketmoqda",
@@ -32,19 +31,16 @@
         "RATING": "Baho (shkala)",
         "TEXT": "Matnli javob"
       },
-
       "allStatuses": "Barcha holatlar",
       "filterStatus": "Holat",
-
-      "newCycle": "Yangi sikl",
-      "editCycle": "Siklni tahrirlash",
+      "newCycle": "Yangi sessiya",
+      "editCycle": "Sessiyani sozlash",
       "newTemplate": "Yangi so’rovnoma",
       "editTemplate": "So’rovnomani tahrirlash",
       "open": "Ochish",
       "preview": "Kim baholaydi",
       "launch": "Boshlash",
       "closeCycle": "Yopish",
-
       "name": "Nomi",
       "description": "Tavsif",
       "template": "So’rovnoma",
@@ -60,7 +56,6 @@
       "noDue": "Muddat belgilanmagan",
       "postToCompetencies": "Yopilganda kompetensiya darajasini yozib qo’y",
       "postToCompetenciesHint": "Savolga kompetensiya biriktirilgan bo’lsa, o’rtacha baho xodim kartasiga daraja bo’lib tushadi",
-
       "raterGroups": "Kimlardan so’raladi",
       "raterGroupsHint": "Guruhlar managerId dan chiqadi — qo’lda ro’yxat tuzilmaydi",
       "maxPeers": "Ko’pi bilan tengdosh",
@@ -70,7 +65,6 @@
       "anonymousGroupsHint": "Bu guruhlarning javoblari birga qo’shiladi va chegaraga yetmaguncha ko’rsatilmaydi",
       "anonymityThreshold": "Anonimlik chegarasi (N)",
       "anonymityThresholdHint": "Guruhdan kamida shuncha javob kelmasa, hisobotda o’sha guruh yopiq qoladi",
-
       "questions": "Savollar",
       "questionsHint": "Tartib shu ro’yxatdagidek bo’ladi",
       "addQuestion": "Savol qo’shish",
@@ -84,7 +78,6 @@
       "competencyNone": "Biriktirilmagan",
       "competencyUnavailable": "Kompetensiya ro’yxati sizga ochiq emas",
       "askedGroups": "Qaysi guruhlarga beriladi",
-
       "subjectCount": "{count} xodim",
       "progressOf": "{responded} / {invited} javob",
       "launchedAt": "Boshlandi",
@@ -94,7 +87,6 @@
       "emptyCyclesHint": "Sikl — bu bir guruh xodimni bir so’rovnoma bo’yicha baholash",
       "emptyTemplates": "So’rovnoma yo’q",
       "emptyTemplatesHint": "Avval savollarni yozing, sikl keyin shundan yig’iladi",
-
       "previewTitle": "Kim baholaydi",
       "previewSubtitle": "Bu ro’yxat boshlanganda aynan shunday tarqatiladi — hozir tekshirib oling",
       "previewThreshold": "Anonimlik chegarasi: {n}",
@@ -103,7 +95,6 @@
       "previewSealed": "Yopiq qoladi",
       "previewSealedHint": "Bu guruhlarda chegaradan kam odam bor — hisobotda ular ko’rsatilmaydi",
       "previewEmpty": "Hech kim topilmadi — bu xodimlar uchun so’rovnoma yuborilmaydi",
-
       "confirmLaunchTitle": "Siklni boshlaymizmi?",
       "confirmLaunchMessage": "{count} xodim atrofidagi barcha baholovchilarga so’rovnoma tarqatiladi. Savollar muzlatiladi, siklni keyin tahrirlab yoki o’chirib bo’lmaydi.",
       "confirmCloseTitle": "Siklni yopamizmi?",
@@ -112,7 +103,6 @@
       "confirmDeleteCycleMessage": "Faqat boshlanmagan qoralama o’chiriladi.",
       "confirmDeleteTemplateTitle": "So’rovnoma o’chirilsinmi?",
       "confirmDeleteTemplateMessage": "Undan sikl yig’ilgan bo’lsa, server o’chirmaydi — arxivga o’tkazing.",
-
       "cycleSaved": "Sikl saqlandi",
       "cycleLaunched": "Sikl boshlandi — {count} ta so’rovnoma tarqatildi",
       "cycleClosed": "Sikl yopildi",
@@ -121,7 +111,6 @@
       "templateDeleted": "So’rovnoma o’chirildi",
       "levelsPosted": "{count} ta kompetensiya darajasi yozildi",
       "levelsSkipped": "{count} tasi o’tkazib yuborildi — javob soni chegaradan kam",
-
       "loadError": "Ma’lumotni olib bo’lmadi",
       "saveError": "Saqlab bo’lmadi",
       "nameRequired": "Nom kiritilishi shart",
@@ -129,7 +118,6 @@
       "subjectsRequired": "Kamida bitta xodim tanlang",
       "questionsRequired": "Kamida bitta savol yozing",
       "questionTextRequired": "Savol matni bo’sh qolmasin",
-
       "backToCycles": "Sikllar ro’yxati",
       "overallProgress": "Umumiy javob darajasi",
       "subjectProgress": "Xodimlar bo’yicha",
@@ -137,7 +125,6 @@
       "viewReport": "Hisobot",
       "reportOnlyWhenClosed": "Hisobot sikl yopilgandan keyin ochiladi",
       "emptyProgress": "Bu siklda hali so’rovnoma yo’q",
-
       "reportFor": "{name} — 360° hisobot",
       "reportSelf": "O’zi",
       "reportOthers": "Boshqalar",
@@ -152,7 +139,6 @@
       "reportCompetencies": "Kompetensiyalar bo’yicha o’rtacha",
       "reportCompetencyUnknown": "Kompetensiya",
       "reportEmpty": "Bu xodim bo’yicha ko’rsatadigan javob yo’q",
-
       "minePending": "Javob kutilmoqda",
       "mineAnswered": "Javob berilgan",
       "mineEmptyPending": "Javob kutayotgan so’rovnoma yo’q",
@@ -163,7 +149,6 @@
       "mineSubmittedAt": "Javob berildi: {date}",
       "answerNow": "Javob berish",
       "viewAnswers": "Javoblarni ko’rish",
-
       "respondAbout": "{name} haqida",
       "respondAs": "Siz — {group}",
       "respondAnonymous": "Javobingiz anonim: u shu guruhdagi boshqalarning javoblari bilan qo’shiladi va guruhda kamida {threshold} kishi javob bermaguncha umuman ko’rsatilmaydi.",
@@ -180,7 +165,17 @@
       "respondMissing": "{count} ta majburiy savol javobsiz",
       "respondRequiredMark": "Majburiy savol",
       "respondClearRating": "Bahoni tozalash",
-      "respondNotFound": "So’rovnoma topilmadi"
+      "respondNotFound": "So’rovnoma topilmadi",
+      "sessions": "Baholash sessiyalari",
+      "manager": "Baholash menejeri",
+      "managerPlaceholder": "Ism bo‘yicha qidiring",
+      "namePlaceholder": "Sessiya nomini kiriting…",
+      "descriptionPlaceholder": "Sessiya tavsifini kiriting…",
+      "startAt": "Boshlanish sanasi",
+      "endAt": "Tugash sanasi",
+      "statusLabel": "Holat",
+      "progress": "Javoblar",
+      "noTemplate": "Shablon tanlanmagan"
     },
     "errors": {
       "CYCLE_NOT_DRAFT": "Boshlangan siklni o’zgartirib bo’lmaydi.",
@@ -198,19 +193,17 @@
       "UNKNOWN_QUESTION": "Bu savol so’rovnomaga kirmaydi."
     }
   },
-
   "ru": {
     "review360": {
-      "title": "360° оценка",
-      "subtitle": "Сотрудника одновременно оценивают руководитель, коллеги и подчинённые",
+      "title": "Оценочные сессии",
+      "subtitle": "Управляйте эффективностью сотрудников с помощью оценки компетенций методом 360 градусов.",
       "mine": "Мои анкеты",
       "mineSubtitle": "Оценки, которых ждут от вас",
       "respond": "Оценка",
-      "cycle": "Цикл",
-      "cycles": "Циклы",
+      "cycle": "Сессия",
+      "cycles": "Сессии",
       "templates": "Анкеты",
       "templatesSubtitle": "Набор вопросов — из него собирается цикл",
-
       "status": {
         "DRAFT": "Черновик",
         "RUNNING": "Идёт",
@@ -232,19 +225,16 @@
         "RATING": "Оценка (шкала)",
         "TEXT": "Текстовый ответ"
       },
-
       "allStatuses": "Все статусы",
       "filterStatus": "Статус",
-
-      "newCycle": "Новый цикл",
-      "editCycle": "Изменить цикл",
+      "newCycle": "Новая сессия",
+      "editCycle": "Настроить сессию",
       "newTemplate": "Новая анкета",
       "editTemplate": "Изменить анкету",
       "open": "Открыть",
       "preview": "Кто будет оценивать",
       "launch": "Запустить",
       "closeCycle": "Закрыть",
-
       "name": "Название",
       "description": "Описание",
       "template": "Анкета",
@@ -260,7 +250,6 @@
       "noDue": "Срок не задан",
       "postToCompetencies": "При закрытии записать уровень компетенции",
       "postToCompetenciesHint": "Если к вопросу привязана компетенция, средняя оценка станет уровнем в карточке сотрудника",
-
       "raterGroups": "У кого спрашивать",
       "raterGroupsHint": "Группы берутся из managerId — список вручную не составляется",
       "maxPeers": "Не более коллег",
@@ -270,7 +259,6 @@
       "anonymousGroupsHint": "Ответы этих групп складываются вместе и не показываются, пока не набран порог",
       "anonymityThreshold": "Порог анонимности (N)",
       "anonymityThresholdHint": "Если из группы пришло меньше ответов, в отчёте она остаётся закрытой",
-
       "questions": "Вопросы",
       "questionsHint": "Порядок будет таким же, как в списке",
       "addQuestion": "Добавить вопрос",
@@ -284,7 +272,6 @@
       "competencyNone": "Не привязана",
       "competencyUnavailable": "Список компетенций вам недоступен",
       "askedGroups": "Каким группам задаётся",
-
       "subjectCount": "Сотрудников: {count}",
       "progressOf": "{responded} / {invited} ответов",
       "launchedAt": "Запущен",
@@ -294,7 +281,6 @@
       "emptyCyclesHint": "Цикл — это оценка группы сотрудников по одной анкете",
       "emptyTemplates": "Анкет нет",
       "emptyTemplatesHint": "Сначала напишите вопросы, цикл соберётся из них",
-
       "previewTitle": "Кто будет оценивать",
       "previewSubtitle": "Именно так рассылка и уйдёт при запуске — проверьте сейчас",
       "previewThreshold": "Порог анонимности: {n}",
@@ -303,7 +289,6 @@
       "previewSealed": "Останется закрытой",
       "previewSealedHint": "В этих группах людей меньше порога — в отчёте они не показываются",
       "previewEmpty": "Никто не найден — этим сотрудникам анкеты не уйдут",
-
       "confirmLaunchTitle": "Запустить цикл?",
       "confirmLaunchMessage": "Анкеты уйдут всем оценивающим вокруг {count} сотрудников. Вопросы заморозятся, изменить или удалить цикл будет нельзя.",
       "confirmCloseTitle": "Закрыть цикл?",
@@ -312,7 +297,6 @@
       "confirmDeleteCycleMessage": "Удаляется только незапущенный черновик.",
       "confirmDeleteTemplateTitle": "Удалить анкету?",
       "confirmDeleteTemplateMessage": "Если по ней уже собирали цикл, сервер откажет — переведите в архив.",
-
       "cycleSaved": "Цикл сохранён",
       "cycleLaunched": "Цикл запущен — разослано анкет: {count}",
       "cycleClosed": "Цикл закрыт",
@@ -321,7 +305,6 @@
       "templateDeleted": "Анкета удалена",
       "levelsPosted": "Записано уровней компетенций: {count}",
       "levelsSkipped": "Пропущено: {count} — ответов меньше порога",
-
       "loadError": "Не удалось загрузить данные",
       "saveError": "Не удалось сохранить",
       "nameRequired": "Название обязательно",
@@ -329,7 +312,6 @@
       "subjectsRequired": "Выберите хотя бы одного сотрудника",
       "questionsRequired": "Добавьте хотя бы один вопрос",
       "questionTextRequired": "Текст вопроса не должен быть пустым",
-
       "backToCycles": "Список циклов",
       "overallProgress": "Общая доля ответов",
       "subjectProgress": "По сотрудникам",
@@ -337,7 +319,6 @@
       "viewReport": "Отчёт",
       "reportOnlyWhenClosed": "Отчёт открывается после закрытия цикла",
       "emptyProgress": "В этом цикле ещё нет анкет",
-
       "reportFor": "{name} — отчёт 360°",
       "reportSelf": "Сам",
       "reportOthers": "Другие",
@@ -352,7 +333,6 @@
       "reportCompetencies": "Средние по компетенциям",
       "reportCompetencyUnknown": "Компетенция",
       "reportEmpty": "По этому сотруднику нечего показать",
-
       "minePending": "Ждут ответа",
       "mineAnswered": "Отвечено",
       "mineEmptyPending": "Анкет, ждущих ответа, нет",
@@ -363,7 +343,6 @@
       "mineSubmittedAt": "Ответ отправлен: {date}",
       "answerNow": "Ответить",
       "viewAnswers": "Посмотреть ответы",
-
       "respondAbout": "О сотруднике {name}",
       "respondAs": "Вы — {group}",
       "respondAnonymous": "Ваш ответ анонимен: он складывается с ответами других в этой группе и не показывается, пока в группе не ответят хотя бы {threshold} человек.",
@@ -380,7 +359,17 @@
       "respondMissing": "Без ответа обязательных вопросов: {count}",
       "respondRequiredMark": "Обязательный вопрос",
       "respondClearRating": "Сбросить оценку",
-      "respondNotFound": "Анкета не найдена"
+      "respondNotFound": "Анкета не найдена",
+      "sessions": "Оценочные сессии",
+      "manager": "Менеджер оценки",
+      "managerPlaceholder": "Поиск по имени",
+      "namePlaceholder": "Введите название сессии…",
+      "descriptionPlaceholder": "Введите описание сессии…",
+      "startAt": "Дата начала",
+      "endAt": "Дата завершения",
+      "statusLabel": "Статус",
+      "progress": "Ответы",
+      "noTemplate": "Шаблон не выбран"
     },
     "errors": {
       "CYCLE_NOT_DRAFT": "Запущенный цикл изменить нельзя.",
@@ -398,19 +387,17 @@
       "UNKNOWN_QUESTION": "Этот вопрос не входит в анкету."
     }
   },
-
   "en": {
     "review360": {
-      "title": "360° review",
-      "subtitle": "Manager, peers and reports answer about one person at the same time",
+      "title": "Appraisal sessions",
+      "subtitle": "Manage employee performance with 360° competency reviews.",
       "mine": "My questionnaires",
       "mineSubtitle": "Reviews waiting on you",
       "respond": "Respond",
-      "cycle": "Cycle",
-      "cycles": "Cycles",
+      "cycle": "Session",
+      "cycles": "Sessions",
       "templates": "Questionnaires",
       "templatesSubtitle": "The set of questions a cycle is built from",
-
       "status": {
         "DRAFT": "Draft",
         "RUNNING": "Running",
@@ -432,19 +419,16 @@
         "RATING": "Rating (scale)",
         "TEXT": "Free text"
       },
-
       "allStatuses": "All statuses",
       "filterStatus": "Status",
-
-      "newCycle": "New cycle",
-      "editCycle": "Edit cycle",
+      "newCycle": "New session",
+      "editCycle": "Set up session",
       "newTemplate": "New questionnaire",
       "editTemplate": "Edit questionnaire",
       "open": "Open",
       "preview": "Who will rate",
       "launch": "Launch",
       "closeCycle": "Close",
-
       "name": "Name",
       "description": "Description",
       "template": "Questionnaire",
@@ -460,7 +444,6 @@
       "noDue": "No deadline",
       "postToCompetencies": "Write competency levels on close",
       "postToCompetenciesHint": "Where a question is linked to a competency, the average becomes a level on the employee's record",
-
       "raterGroups": "Who is asked",
       "raterGroupsHint": "The groups come off managerId — no list is built by hand",
       "maxPeers": "Peers at most",
@@ -470,7 +453,6 @@
       "anonymousGroupsHint": "These groups' answers are pooled and stay hidden until the threshold is met",
       "anonymityThreshold": "Anonymity threshold (N)",
       "anonymityThresholdHint": "Below this many answers from a group, the report keeps that group sealed",
-
       "questions": "Questions",
       "questionsHint": "The order is the order of this list",
       "addQuestion": "Add a question",
@@ -484,7 +466,6 @@
       "competencyNone": "Not linked",
       "competencyUnavailable": "The competency catalogue is not open to you",
       "askedGroups": "Asked of which groups",
-
       "subjectCount": "{count} people",
       "progressOf": "{responded} / {invited} answered",
       "launchedAt": "Launched",
@@ -494,7 +475,6 @@
       "emptyCyclesHint": "A cycle reviews a group of people against one questionnaire",
       "emptyTemplates": "No questionnaires",
       "emptyTemplatesHint": "Write the questions first — a cycle is assembled from them",
-
       "previewTitle": "Who will rate",
       "previewSubtitle": "This is exactly what launching sends — check it now",
       "previewThreshold": "Anonymity threshold: {n}",
@@ -503,7 +483,6 @@
       "previewSealed": "Will stay sealed",
       "previewSealedHint": "These groups hold fewer people than the threshold — the report will not show them",
       "previewEmpty": "Nobody was found — these people will get no questionnaire",
-
       "confirmLaunchTitle": "Launch the cycle?",
       "confirmLaunchMessage": "A questionnaire goes to every rater around {count} people. The questions freeze, and the cycle can no longer be edited or deleted.",
       "confirmCloseTitle": "Close the cycle?",
@@ -512,7 +491,6 @@
       "confirmDeleteCycleMessage": "Only a draft that has not been launched is deleted.",
       "confirmDeleteTemplateTitle": "Delete the questionnaire?",
       "confirmDeleteTemplateMessage": "If a cycle was built from it the server will refuse — archive it instead.",
-
       "cycleSaved": "Cycle saved",
       "cycleLaunched": "Cycle launched — {count} questionnaires sent",
       "cycleClosed": "Cycle closed",
@@ -521,7 +499,6 @@
       "templateDeleted": "Questionnaire deleted",
       "levelsPosted": "{count} competency levels written",
       "levelsSkipped": "{count} skipped — fewer answers than the threshold",
-
       "loadError": "Could not load the data",
       "saveError": "Could not save",
       "nameRequired": "A name is required",
@@ -529,7 +506,6 @@
       "subjectsRequired": "Choose at least one person",
       "questionsRequired": "Add at least one question",
       "questionTextRequired": "A question cannot be empty",
-
       "backToCycles": "All cycles",
       "overallProgress": "Overall response rate",
       "subjectProgress": "By person",
@@ -537,7 +513,6 @@
       "viewReport": "Report",
       "reportOnlyWhenClosed": "The report opens once the cycle is closed",
       "emptyProgress": "This cycle has no questionnaires yet",
-
       "reportFor": "{name} — 360° report",
       "reportSelf": "Self",
       "reportOthers": "Others",
@@ -552,7 +527,6 @@
       "reportCompetencies": "Averages by competency",
       "reportCompetencyUnknown": "Competency",
       "reportEmpty": "There is nothing to show for this person",
-
       "minePending": "Waiting for you",
       "mineAnswered": "Answered",
       "mineEmptyPending": "No questionnaires are waiting",
@@ -563,7 +537,6 @@
       "mineSubmittedAt": "Answered: {date}",
       "answerNow": "Answer",
       "viewAnswers": "See your answers",
-
       "respondAbout": "About {name}",
       "respondAs": "You are the {group}",
       "respondAnonymous": "Your answer is anonymous: it is pooled with the others in this group and is not shown at all until at least {threshold} people in it have answered.",
@@ -580,7 +553,17 @@
       "respondMissing": "{count} required questions are unanswered",
       "respondRequiredMark": "Required question",
       "respondClearRating": "Clear the rating",
-      "respondNotFound": "Questionnaire not found"
+      "respondNotFound": "Questionnaire not found",
+      "sessions": "Appraisal sessions",
+      "manager": "Appraisal manager",
+      "managerPlaceholder": "Search by name",
+      "namePlaceholder": "Enter a session name…",
+      "descriptionPlaceholder": "Enter a session description…",
+      "startAt": "Start date",
+      "endAt": "End date",
+      "statusLabel": "Status",
+      "progress": "Responses",
+      "noTemplate": "No template yet"
     },
     "errors": {
       "CYCLE_NOT_DRAFT": "A launched cycle can no longer be changed.",

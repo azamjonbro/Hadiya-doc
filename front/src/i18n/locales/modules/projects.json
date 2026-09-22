@@ -1,0 +1,674 @@
+{
+  "uz": {
+    "admin": {
+      "section": {
+        "allMaterials": "Barcha materiallar",
+        "recent": "Yaqindagilar",
+        "favorites": "Sevimlilar",
+        "shared": "Menga ochiq",
+        "tools": "Boshqa"
+      },
+      "views": {
+        "recent": {
+          "empty": "Hali ochilgan kurslar yo'q",
+          "hint": "Siz ochgan oxirgi 20 ta kurs shu yerda turadi."
+        },
+        "favorites": {
+          "empty": "Sevimlilar bo'sh",
+          "hint": "Ro'yxatda kurs qatoridagi ⭐ ni bosing — u shu yerga tushadi."
+        },
+        "shared": {
+          "empty": "Sizga ochilgan loyihalar yo'q",
+          "hint": "Boshqa egasi bo'lgan loyihaga a'zo qilinsangiz, uning kurslari shu yerda ko'rinadi."
+        }
+      }
+    },
+    "projects": {
+      "title": "Loyihalar",
+      "one": "Loyiha",
+      "add": "Loyiha qo'shish",
+      "none": "Hali loyihalar yo'q",
+      "manage": {
+        "title": "Loyihani boshqarish",
+        "name": "Loyiha nomi",
+        "members": "Loyiha a'zolari",
+        "owner": "Loyiha egasi",
+        "noMembers": "Hozircha faqat loyiha egasi. A'zolarni «A'zolar qo'shish» orqali kiriting.",
+        "done": "Tayyor"
+      },
+      "members": {
+        "addTitle": "A'zolar qo'shish",
+        "addHint": "A'zolar loyihadagi materiallar va papkalarga kirish huquqini oladi.",
+        "search": "Ism yoki email bo'yicha qidirish",
+        "nobody": "Hech kim topilmadi",
+        "remove": "Loyihadan chiqarish",
+        "added": "{n} ta a'zo qo'shildi",
+        "confirm": "Qo'shish"
+      },
+      "access": {
+        "label": "Kirish darajasi",
+        "VIEW": "Ko'rish",
+        "EDIT": "Tahrirlash"
+      },
+      "delete": {
+        "action": "Loyihani o'chirish",
+        "title": "Loyihani o'chirasizmi?",
+        "message": "«{name}» loyihasi o'chiriladi. Undagi {n} ta kurs o'chmaydi — ular umumiy kutubxonaga qaytadi, tayinlovlar va natijalar saqlanib qoladi.",
+        "confirm": "O'chirish",
+        "done": "Loyiha o'chirildi"
+      },
+      "empty": {
+        "title": "O'quv materiallarini qo'shing",
+        "create": "Yarating",
+        "file": "mavjud kursni ko'chiring",
+        "or": "yoki",
+        "upload": "SCORM yuklang",
+        "viewOnly": "Bu loyihada hali materiallar yo'q. Sizda faqat ko'rish huquqi bor.",
+        "formats": "Formatlar: kurs, o'quv yo'li, test, vazifa, SCORM (zip), video (mp4), pdf, docx, pptx, xlsx"
+      },
+      "file": {
+        "action": "Mavjud kursni ko'chirish",
+        "title": "Kursni loyihaga ko'chirish",
+        "hint": "Tanlangan kurs «{name}» loyihasiga o'tadi. Tayinlovlar va natijalarga ta'sir qilmaydi.",
+        "confirm": "Ko'chirish",
+        "unfiled": "Umumiy kutubxona (loyihasiz)",
+        "inProject": "Loyiha: {name}",
+        "done": "«{title}» loyihaga ko'chirildi"
+      },
+      "folder": {
+        "one": "Papka",
+        "new": "Yangi papka",
+        "name": "Papka nomi",
+        "placeholder": "masalan: 2026 yil kurslari",
+        "path": "Joylashuv",
+        "inherits": "Papkaga kirish huquqi loyihanikidan olinadi — a'zolar loyihada boshqariladi."
+      }
+    },
+    "library": {
+      "tabs": {
+        "ready": "Tayyor kurslar",
+        "external": "Tashqi kutubxonalar"
+      },
+      "banner": {
+        "title": "{n} ta tayyor kurs — kompaniyaning o'z kutubxonasi",
+        "text": "Xodimlarni o'qitish uchun nashr qilingan kurslar: sotuv ko'nikmalari va shaxsiy samaradorlikdan tortib mehnat muhofazasi va shaxsiy ma'lumotlar bilan ishlashgacha — hammasi bir joyda.",
+        "cta": "Barcha materiallar"
+      },
+      "shelves": "Yo'nalishlar",
+      "unshelved": "Boshqa kurslar",
+      "count": "{n} ta kurs",
+      "view": "Ko'rish",
+      "more": "Yana",
+      "menu": {
+        "edit": "Tahrirlashga ochish",
+        "asLearner": "Xodim sifatida ko'rish"
+      },
+      "duration": {
+        "hours": "{h} s {m} daq",
+        "minutes": "{m} daq"
+      },
+      "empty": {
+        "title": "Hali nashr qilingan kurslar yo'q",
+        "text": "Kurs nashr qilinishi bilan u shu yerda, o'z yo'nalishi ostida paydo bo'ladi."
+      },
+      "otherLanguages": "Boshqa tillardagi kurslar",
+      "lang": {
+        "uz": "O'zbek tilida",
+        "ru": "Rus tilida",
+        "en": "Ingliz tilida"
+      },
+      "noTranslations": {
+        "title": "Tarjima qilingan kurslar hali yo'q",
+        "text": "AI yordamchi kursni boshqa tilga o'giradi; tasdiqlangan tarjimalar shu yerda ko'rinadi."
+      },
+      "order": {
+        "button": "Kurs buyurtma qilish",
+        "title": "Kerakli kursni topmadingizmi?",
+        "text": "Mavzuni yozing — AI yordamchi kurs qoralamasini bir necha daqiqada tayyorlaydi: bo'limlar, darslar va test. Keyin uni tahrirlab, nashr qilasiz.",
+        "confirm": "AI bilan yaratish"
+      },
+      "external": {
+        "intro": "Tashqi kutubxonalardagi tayyor kurslarni platformaga qo'shing va o'qitishni tez boshlang.",
+        "available": "Integratsiya uchun mavjud",
+        "planned": "Rejada",
+        "learnMore": "Batafsil",
+        "go1": "Go1 kutubxonasidagi minglab tayyor kurslar bilan o'qitishni tez boshlang.",
+        "linkedin": "LinkedIn Learning'ning tayyor kurslari bilan kompaniyadagi o'qitishni kuchaytiring.",
+        "coursera": "Coursera'dagi yetakchi universitetlar va kompaniyalar kurslarini xodimlaringizga oching.",
+        "udemy": "Udemy Business kutubxonasini ulang va xodimlarni kasbiy kurslar bilan ta'minlang.",
+        "note": "Bu kutubxonalar hali ulanmagan: har biri xizmat ko'rsatuvchi bilan shartnoma va API kalitini talab qiladi. Tanlaganingizni ayting — integratsiya alohida ish sifatida rejalashtiriladi."
+      }
+    },
+    "users": {
+      "exchange": {
+        "button": "Eksport/Import",
+        "exportXlsx": "Ro'yxatni Excel'ga (XLSX)",
+        "exportCsv": "Ro'yxatni CSV'ga",
+        "done": "{n} ta xodim yuklab olindi",
+        "truncated": "Faylda {exported} ta qator, jami {total} ta — filtrni toraytirib qayta yuklang."
+      },
+      "fields": {
+        "mobilePhone": "Mobile Number",
+        "functionalManager": "Funksional rahbar",
+        "functionalManagerHint": "Ishni yo'naltiradigan rahbar — bevosita rahbardan boshqa bo'lsa. Ko'rish huquqiga ta'sir qilmaydi."
+      }
+    },
+    "groups": {
+      "newSmartGroup": "Yangi smart-guruh",
+      "smart": "Smart-guruh",
+      "smartHint": "A'zolar qoidaga ko'ra avtomatik yig'iladi: yangi xodim mos kelsa — qo'shiladi, mos kelmay qolsa — chiqadi.",
+      "rule": {
+        "roles": "Rollar",
+        "departments": "Bo'limlar",
+        "branches": "Filiallar",
+        "positions": "Lavozimlar",
+        "hint": "Kamida bitta shart tanlang. Bir turdagi shartlar YOKI bilan, turli turdagilar VA bilan birikadi.",
+        "summary": "Qoida:",
+        "auto": "A'zolar qoida bo'yicha avtomatik yig'iladi"
+      }
+    },
+    "events": {
+      "views": {
+        "week": "Hafta"
+      },
+      "fields": {
+        "trainers": "Trener"
+      }
+    },
+    "integrations": {
+      "title": "Integratsiyalar",
+      "hint": "Bu o‘rnatma nimaga ulangani. Server kalitlari (.env) administrator tomonidan, qolganlari shu paneldan sozlanadi.",
+      "open": "Ochish",
+      "where": {
+        "env": "Server sozlamasi"
+      },
+      "status": {
+        "on": "Ulangan",
+        "off": "Ulanmagan",
+        "none": "Har tadbirda"
+      },
+      "items": {
+        "sso": {
+          "name": "Korporativ hisob (SSO)",
+          "text": "OIDC provayderi orqali kirish"
+        },
+        "mail": {
+          "name": "Pochta (SMTP)",
+          "text": "Bildirishnoma va hisobotlar xati"
+        },
+        "push": {
+          "name": "Push bildirishnomalar",
+          "text": "Brauzer va PWA uchun (VAPID)"
+        },
+        "ai": {
+          "name": "AI yordamchi",
+          "text": "Kurs va tarjima generatsiyasi"
+        },
+        "storage": {
+          "name": "Fayl saqlagich (S3)",
+          "text": "Video, hujjat va rasmlar"
+        },
+        "api": {
+          "name": "Public API",
+          "text": "Tashqi tizimlar uchun kalitlar"
+        },
+        "webhooks": {
+          "name": "Webhook",
+          "text": "Hodisalarni boshqa tizimga uzatish"
+        },
+        "meetings": {
+          "name": "Onlayn uchrashuvlar",
+          "text": "Zoom, Teams, Meet — har tadbirning o‘z havolasi"
+        }
+      }
+    }
+  },
+  "ru": {
+    "admin": {
+      "section": {
+        "allMaterials": "Все материалы",
+        "recent": "Недавние",
+        "favorites": "Избранное",
+        "shared": "Доступные мне",
+        "tools": "Прочее"
+      },
+      "views": {
+        "recent": {
+          "empty": "Недавно открытых курсов нет",
+          "hint": "Здесь последние 20 курсов, которые вы открывали."
+        },
+        "favorites": {
+          "empty": "В избранном пусто",
+          "hint": "Нажмите ⭐ в строке курса — он появится здесь."
+        },
+        "shared": {
+          "empty": "Вам не открыли ни одного проекта",
+          "hint": "Когда вас добавят в чужой проект, его курсы будут здесь."
+        }
+      }
+    },
+    "projects": {
+      "title": "Проекты",
+      "one": "Проект",
+      "add": "Добавить проект",
+      "none": "Проектов пока нет",
+      "manage": {
+        "title": "Управление проектом",
+        "name": "Название проекта",
+        "members": "Участники проекта",
+        "owner": "Владелец проекта",
+        "noMembers": "Пока только владелец. Добавьте участников кнопкой «Добавление участников».",
+        "done": "Готово"
+      },
+      "members": {
+        "addTitle": "Добавление участников",
+        "addHint": "Участники получат доступ к материалам и папкам проекта.",
+        "search": "Поиск по имени или email",
+        "nobody": "Никого не найдено",
+        "remove": "Убрать из проекта",
+        "added": "Добавлено участников: {n}",
+        "confirm": "Добавить"
+      },
+      "access": {
+        "label": "Уровень доступа",
+        "VIEW": "Просмотр",
+        "EDIT": "Редактирование"
+      },
+      "delete": {
+        "action": "Удалить проект",
+        "title": "Удалить проект?",
+        "message": "Проект «{name}» будет удалён. Курсы ({n}) не пропадут — они вернутся в общую библиотеку, назначения и результаты сохранятся.",
+        "confirm": "Удалить",
+        "done": "Проект удалён"
+      },
+      "empty": {
+        "title": "Добавьте учебные материалы",
+        "create": "Создайте",
+        "file": "перенесите существующий курс",
+        "or": "или",
+        "upload": "загрузите SCORM",
+        "viewOnly": "В этом проекте пока нет материалов. У вас доступ только на просмотр.",
+        "formats": "Форматы: курс, траектория, тест, задание, SCORM (zip), видео (mp4), pdf, docx, pptx, xlsx"
+      },
+      "file": {
+        "action": "Перенести существующий курс",
+        "title": "Перенести курс в проект",
+        "hint": "Выбранный курс перейдёт в проект «{name}». На назначения и результаты это не влияет.",
+        "confirm": "Перенести",
+        "unfiled": "Общая библиотека (без проекта)",
+        "inProject": "Проект: {name}",
+        "done": "«{title}» перенесён в проект"
+      },
+      "folder": {
+        "one": "Папка",
+        "new": "Новая папка",
+        "name": "Название папки",
+        "placeholder": "например: Курсы 2026",
+        "path": "Расположение",
+        "inherits": "Доступ к папке наследуется от проекта — участники управляются в проекте."
+      }
+    },
+    "library": {
+      "tabs": {
+        "ready": "Готовые курсы",
+        "external": "Внешние библиотеки курсов"
+      },
+      "banner": {
+        "title": "{n} готовых курсов — собственная библиотека компании",
+        "text": "Опубликованные курсы для обучения сотрудников: от навыков продаж и личной эффективности до охраны труда и работы с персональными данными — всё в одном месте.",
+        "cta": "Все материалы"
+      },
+      "shelves": "Направления",
+      "unshelved": "Другие курсы",
+      "count": "Курсов: {n}",
+      "view": "Посмотреть",
+      "more": "Ещё",
+      "menu": {
+        "edit": "Открыть в редакторе",
+        "asLearner": "Посмотреть как сотрудник"
+      },
+      "duration": {
+        "hours": "{h} ч {m} мин",
+        "minutes": "{m} мин"
+      },
+      "empty": {
+        "title": "Опубликованных курсов пока нет",
+        "text": "Как только курс будет опубликован, он появится здесь под своим направлением."
+      },
+      "otherLanguages": "Курсы на других языках",
+      "lang": {
+        "uz": "На узбекском",
+        "ru": "На русском",
+        "en": "На английском"
+      },
+      "noTranslations": {
+        "title": "Переведённых курсов пока нет",
+        "text": "AI-помощник переводит курс на другой язык; утверждённые переводы появятся здесь."
+      },
+      "order": {
+        "button": "Курсы на заказ",
+        "title": "Не нашли нужный курс?",
+        "text": "Опишите тему — AI-помощник за несколько минут подготовит черновик курса: разделы, уроки и тест. Останется отредактировать и опубликовать.",
+        "confirm": "Создать с ИИ"
+      },
+      "external": {
+        "intro": "Добавляйте курсы из внешних библиотек на платформу и запускайте обучение быстро и легко.",
+        "available": "Доступные для интеграции",
+        "planned": "В планах",
+        "learnMore": "Узнать больше",
+        "go1": "Быстрый старт обучения с тысячами готовых курсов из библиотеки Go1.",
+        "linkedin": "Усильте обучение в компании готовыми курсами от LinkedIn Learning.",
+        "coursera": "Откройте сотрудникам курсы ведущих университетов и компаний на Coursera.",
+        "udemy": "Подключите библиотеку Udemy Business и дайте сотрудникам профессиональные курсы.",
+        "note": "Эти библиотеки пока не подключены: для каждой нужен договор с поставщиком и API-ключ. Скажите, какую выбрать, — интеграция планируется отдельной задачей."
+      }
+    },
+    "users": {
+      "exchange": {
+        "button": "Экспорт/Импорт",
+        "exportXlsx": "Список в Excel (XLSX)",
+        "exportCsv": "Список в CSV",
+        "done": "Выгружено сотрудников: {n}",
+        "truncated": "В файле {exported} строк из {total} — сузьте фильтр и выгрузите снова."
+      },
+      "fields": {
+        "mobilePhone": "Mobile Number",
+        "functionalManager": "Функциональный руководитель",
+        "functionalManagerHint": "Тот, кто направляет работу, если это не линейный руководитель. На права доступа не влияет."
+      }
+    },
+    "groups": {
+      "newSmartGroup": "Новая смарт-группа",
+      "smart": "Смарт-группа",
+      "smartHint": "Участники подбираются по правилу автоматически: новый сотрудник, подходящий под правило, добавляется, переставший подходить — выбывает.",
+      "rule": {
+        "roles": "Роли",
+        "departments": "Подразделения",
+        "branches": "Филиалы",
+        "positions": "Должности",
+        "hint": "Выберите хотя бы одно условие. Условия одного типа — ИЛИ, разных типов — И.",
+        "summary": "Правило:",
+        "auto": "Участники подбираются по правилу автоматически"
+      }
+    },
+    "events": {
+      "views": {
+        "week": "Неделя"
+      },
+      "fields": {
+        "trainers": "Тренер"
+      }
+    },
+    "integrations": {
+      "title": "Интеграции",
+      "hint": "К чему подключена эта установка. Серверные ключи (.env) настраивает администратор, остальное — здесь.",
+      "open": "Открыть",
+      "where": {
+        "env": "Настройка сервера"
+      },
+      "status": {
+        "on": "Подключено",
+        "off": "Не подключено",
+        "none": "В каждом мероприятии"
+      },
+      "items": {
+        "sso": {
+          "name": "Корпоративный вход (SSO)",
+          "text": "Вход через OIDC-провайдера"
+        },
+        "mail": {
+          "name": "Почта (SMTP)",
+          "text": "Письма уведомлений и отчётов"
+        },
+        "push": {
+          "name": "Push-уведомления",
+          "text": "Для браузера и PWA (VAPID)"
+        },
+        "ai": {
+          "name": "AI-помощник",
+          "text": "Генерация курсов и переводов"
+        },
+        "storage": {
+          "name": "Хранилище файлов (S3)",
+          "text": "Видео, документы и изображения"
+        },
+        "api": {
+          "name": "Public API",
+          "text": "Ключи для внешних систем"
+        },
+        "webhooks": {
+          "name": "Webhooks",
+          "text": "Передача событий в другие системы"
+        },
+        "meetings": {
+          "name": "Онлайн-встречи",
+          "text": "Zoom, Teams, Meet — ссылка у каждого мероприятия"
+        }
+      }
+    }
+  },
+  "en": {
+    "admin": {
+      "section": {
+        "allMaterials": "All materials",
+        "recent": "Recent",
+        "favorites": "Favourites",
+        "shared": "Shared with me",
+        "tools": "More"
+      },
+      "views": {
+        "recent": {
+          "empty": "Nothing opened lately",
+          "hint": "The last 20 courses you opened live here."
+        },
+        "favorites": {
+          "empty": "No favourites yet",
+          "hint": "Press ⭐ on a course row — it lands here."
+        },
+        "shared": {
+          "empty": "No projects shared with you",
+          "hint": "When someone adds you to their project, its courses show here."
+        }
+      }
+    },
+    "projects": {
+      "title": "Projects",
+      "one": "Project",
+      "add": "Add project",
+      "none": "No projects yet",
+      "manage": {
+        "title": "Manage project",
+        "name": "Project name",
+        "members": "Project members",
+        "owner": "Project owner",
+        "noMembers": "Only the owner so far. Add people with “Add members”.",
+        "done": "Done"
+      },
+      "members": {
+        "addTitle": "Add members",
+        "addHint": "Members get access to the project's materials and folders.",
+        "search": "Search by name or email",
+        "nobody": "Nobody found",
+        "remove": "Remove from project",
+        "added": "{n} member(s) added",
+        "confirm": "Add"
+      },
+      "access": {
+        "label": "Access level",
+        "VIEW": "View",
+        "EDIT": "Edit"
+      },
+      "delete": {
+        "action": "Delete project",
+        "title": "Delete this project?",
+        "message": "“{name}” will be deleted. Its {n} course(s) are not — they return to the general library with assignments and results intact.",
+        "confirm": "Delete",
+        "done": "Project deleted"
+      },
+      "empty": {
+        "title": "Add learning materials",
+        "create": "Create one",
+        "file": "move an existing course here",
+        "or": "or",
+        "upload": "upload a SCORM package",
+        "viewOnly": "Nothing in this project yet. You have view access only.",
+        "formats": "Formats: course, learning path, quiz, task, SCORM (zip), video (mp4), pdf, docx, pptx, xlsx"
+      },
+      "file": {
+        "action": "Move an existing course",
+        "title": "Move a course into the project",
+        "hint": "The chosen course moves into “{name}”. Assignments and results are unaffected.",
+        "confirm": "Move",
+        "unfiled": "General library (no project)",
+        "inProject": "Project: {name}",
+        "done": "“{title}” moved into the project"
+      },
+      "folder": {
+        "one": "Folder",
+        "new": "New folder",
+        "name": "Folder name",
+        "placeholder": "e.g. 2026 courses",
+        "path": "Location",
+        "inherits": "A folder takes its access from the project — members are managed on the project."
+      }
+    },
+    "library": {
+      "tabs": {
+        "ready": "Ready courses",
+        "external": "External libraries"
+      },
+      "banner": {
+        "title": "{n} ready courses — the company's own library",
+        "text": "Published courses for training staff: from sales skills and personal effectiveness to workplace safety and handling personal data — all in one place.",
+        "cta": "All materials"
+      },
+      "shelves": "Topics",
+      "unshelved": "Other courses",
+      "count": "{n} courses",
+      "view": "View",
+      "more": "More",
+      "menu": {
+        "edit": "Open in editor",
+        "asLearner": "View as a learner"
+      },
+      "duration": {
+        "hours": "{h} h {m} min",
+        "minutes": "{m} min"
+      },
+      "empty": {
+        "title": "No published courses yet",
+        "text": "As soon as a course is published it appears here under its topic."
+      },
+      "otherLanguages": "Courses in other languages",
+      "lang": {
+        "uz": "In Uzbek",
+        "ru": "In Russian",
+        "en": "In English"
+      },
+      "noTranslations": {
+        "title": "No translated courses yet",
+        "text": "The AI assistant translates a course into another language; approved translations show up here."
+      },
+      "order": {
+        "button": "Order a course",
+        "title": "Can't find the course you need?",
+        "text": "Describe the topic — the AI assistant drafts a course in minutes: sections, lessons and a quiz. Then edit and publish it.",
+        "confirm": "Create with AI"
+      },
+      "external": {
+        "intro": "Add courses from external libraries to the platform and start training quickly.",
+        "available": "Available for integration",
+        "planned": "Planned",
+        "learnMore": "Learn more",
+        "go1": "Kick off training with thousands of ready courses from the Go1 library.",
+        "linkedin": "Strengthen training with ready-made courses from LinkedIn Learning.",
+        "coursera": "Open courses from leading universities and companies on Coursera to your staff.",
+        "udemy": "Connect the Udemy Business library and give staff professional courses.",
+        "note": "None of these is connected yet: each needs a vendor contract and an API key. Say which one and the integration is planned as its own piece of work."
+      }
+    },
+    "users": {
+      "exchange": {
+        "button": "Export/Import",
+        "exportXlsx": "List as Excel (XLSX)",
+        "exportCsv": "List as CSV",
+        "done": "{n} employees exported",
+        "truncated": "{exported} of {total} rows in the file — narrow the filter and export again."
+      },
+      "fields": {
+        "mobilePhone": "Mobile Number",
+        "functionalManager": "Functional manager",
+        "functionalManagerHint": "Who directs the work when that is not the line manager. Does not affect access."
+      }
+    },
+    "groups": {
+      "newSmartGroup": "New smart group",
+      "smart": "Smart group",
+      "smartHint": "Members are gathered by a rule automatically: a new employee who matches is added, one who stops matching leaves.",
+      "rule": {
+        "roles": "Roles",
+        "departments": "Departments",
+        "branches": "Branches",
+        "positions": "Positions",
+        "hint": "Pick at least one condition. Conditions of one kind combine with OR, of different kinds with AND.",
+        "summary": "Rule:",
+        "auto": "Members are gathered by the rule automatically"
+      }
+    },
+    "events": {
+      "views": {
+        "week": "Week"
+      },
+      "fields": {
+        "trainers": "Trainer"
+      }
+    },
+    "integrations": {
+      "title": "Integrations",
+      "hint": "What this installation is wired to. Server keys (.env) are the administrator's; the rest is set here.",
+      "open": "Open",
+      "where": {
+        "env": "Server setting"
+      },
+      "status": {
+        "on": "Connected",
+        "off": "Not connected",
+        "none": "Per event"
+      },
+      "items": {
+        "sso": {
+          "name": "Corporate sign-in (SSO)",
+          "text": "Sign in through an OIDC provider"
+        },
+        "mail": {
+          "name": "Mail (SMTP)",
+          "text": "Notification and report emails"
+        },
+        "push": {
+          "name": "Push notifications",
+          "text": "Browser and PWA (VAPID)"
+        },
+        "ai": {
+          "name": "AI assistant",
+          "text": "Course and translation generation"
+        },
+        "storage": {
+          "name": "File storage (S3)",
+          "text": "Video, documents and images"
+        },
+        "api": {
+          "name": "Public API",
+          "text": "Keys for outside systems"
+        },
+        "webhooks": {
+          "name": "Webhooks",
+          "text": "Send events to other systems"
+        },
+        "meetings": {
+          "name": "Online meetings",
+          "text": "Zoom, Teams, Meet — a link per event"
+        }
+      }
+    }
+  }
+}

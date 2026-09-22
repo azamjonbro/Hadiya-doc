@@ -60,6 +60,10 @@ export const authController = {
     sendSuccess(res, null, 'If the account exists, a reset link has been issued')
   }),
 
+  changePassword: asyncHandler(async (req, res) => {
+    sendSuccess(res, await authService.changePassword(req.user, req.body, getRefreshToken(req)), 'Password changed')
+  }),
+
   confirmPasswordReset: asyncHandler(async (req, res) => {
     await authService.confirmPasswordReset(req.body.token, req.body.newPassword)
     sendSuccess(res, null, 'Password has been reset')

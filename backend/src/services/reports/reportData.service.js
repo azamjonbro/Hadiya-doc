@@ -5,6 +5,8 @@ import { VideoProgress } from '../../models/videoProgress.model.js'
 import { News } from '../../models/news.model.js'
 import { NewsView } from '../../models/newsView.model.js'
 import { Task } from '../../models/task.model.js'
+import { Group } from '../../models/group.model.js'
+import { containsRegex } from '../../utils/escapeRegex.js'
 import { roleRepository } from '../../repositories/role.repository.js'
 import { ApiError } from '../../utils/ApiError.js'
 import { DEFAULT_REPORT_LANG, reportTranslator } from './reportI18n.js'
@@ -23,6 +25,80 @@ import {
   dateRangeMatch,
 } from './reportHelpers.js'
 import { EXTRA_REPORT_BUILDERS } from './reportBuilders.extra.js'
+
+// The people the «add a filter» chips name (department, branch, group,
+// manager, account status) — one list, or null when none is set. Combined
+// with the role and scope lists below by intersection, so every user-based
+// report narrows the same way without each builder knowing the filters.
+function rangeOf(from, to) {
+  const range = {}
+  if (from) range.$gte = from
+  if (to) range.$lte = to
+  return Object.keys(range).length ? range : null
+}
+
+async function resolvePopulationFilter(filters) {
+  const match = {}
+  if (filters.department) match.department = filters.department
+  if (filters.branch) match.branch = filters.branch
+  if (filters.managerId) match.managerId = toObjectId(filters.managerId)
+  if (filters.functionalManagerId) match.functionalManagerId = toObjectId(filters.functionalManagerId)
+  if (filters.status) match.isActive = filters.status === 'active'
+  const lastLogin = rangeOf(filters.lastLoginFrom, filters.lastLoginTo)
+  if (lastLogin) match.lastLoginAt = lastLogin
+  const created = rangeOf(filters.createdFrom, filters.createdTo)
+  if (created) match.createdAt = created
+  const hired = rangeOf(filters.hireFrom, filters.hireTo)
+  if (hired) match.hireDate = hired
+  const left = rangeOf(filters.terminationFrom, filters.terminationTo)
+  if (left) match.terminationDate = left
+  if (filters.gender) match.gender = filters.gender
+  // Free-text fields of the record, matched the way the users list
+  // searches them: as a substring, case-insensitively.
+  for (const key of ['firstName', 'lastName', 'jshshir', 'email', 'phone', 'mobilePhone', 'position', 'country', 'address']) {
+    if (filters[key]) match[key] = containsRegex(filters[key])
+  }
+  const lists = []
+  if (Object.keys(match).length) {
+    const ids = await User.distinct('_id', match)
+    lists.push(ids.map((id) => id.toString()))
+  }
+  if (filters.groupId) {
+    const group = await Group.findById(filters.groupId, { memberIds: 1 }).lean()
+    lists.push((group?.memberIds ?? []).map((id) => id.toString()))
+  }
+  // People with a completion, or a due date, inside the range — read off
+  // their assignments (cancelled ones excluded).
+  const completed = rangeOf(filters.completedFrom, filters.completedTo)
+  if (completed) {
+    const ids = await CourseAssignment.distinct('userId', { completedAt: completed, status: { $ne: 'CANCELLED' } })
+    lists.push(ids.map((id) => id.toString()))
+  }
+  const deadline = rangeOf(filters.deadlineFrom, filters.deadlineTo)
+  if (deadline) {
+    const ids = await CourseAssignment.distinct('userId', { deadline, status: { $ne: 'CANCELLED' } })
+    lists.push(ids.map((id) => id.toString()))
+  }
+  const assigned = rangeOf(filters.assignedFrom, filters.assignedTo)
+  if (assigned) {
+    const ids = await CourseAssignment.distinct('userId', { assignedAt: assigned, status: { $ne: 'CANCELLED' } })
+    lists.push(ids.map((id) => id.toString()))
+  }
+  // How they got onto a course: the row says. Self-enrolment is the one
+  // where the person assigned themselves; a group row carries its group.
+  const enrollment = Array.isArray(filters.enrollment) ? filters.enrollment : filters.enrollment ? [filters.enrollment] : []
+  if (enrollment.length) {
+    const ways = {
+      group: { groupId: { $ne: null } },
+      self: { $expr: { $eq: ['$assignedBy', '$userId'] } },
+      manual: { groupId: null, $expr: { $ne: ['$assignedBy', '$userId'] } },
+    }
+    const ids = await CourseAssignment.distinct('userId', { $or: enrollment.map((way) => ways[way]), status: { $ne: 'CANCELLED' } })
+    lists.push(ids.map((id) => id.toString()))
+  }
+  if (!lists.length) return null
+  return lists.reduce((acc, list) => intersectIds(acc, list), null)
+}
 
 async function resolveRoleUserIds(roleName) {
   const role = await roleRepository.findByName(roleName)
@@ -370,14 +446,16 @@ export const reportDataService = {
     const builder = REPORT_BUILDERS[type]
     if (!builder) throw ApiError.badRequest('Unknown report type', 'UNKNOWN_REPORT_TYPE')
 
-    const [roleUserIds, scopeUserIds] = await Promise.all([
+    const [roleUserIds, scopeUserIds, filterUserIds] = await Promise.all([
       filters.role ? resolveRoleUserIds(filters.role) : null,
       scopedUserIds === undefined ? scopedUserIdsFor(actor) : scopedUserIds,
+      resolvePopulationFilter(filters),
     ])
 
-    // Both are "must be one of these" lists, so they combine the same way the
-    // builders combine their own: intersect, and treat null as no constraint.
-    const population = intersectIds(roleUserIds, scopeUserIds)
+    // All three are "must be one of these" lists, so they combine the same
+    // way the builders combine their own: intersect, and treat null as no
+    // constraint.
+    const population = intersectIds(intersectIds(roleUserIds, scopeUserIds), filterUserIds)
     const result = await builder({ ...filters, roleUserIds: population }, reportTranslator(lang))
 
     // AT-22: the cap is fine, the silence was not. A caller now always

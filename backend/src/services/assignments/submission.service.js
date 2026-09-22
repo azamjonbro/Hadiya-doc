@@ -190,10 +190,8 @@ export const submissionService = {
 
     // A named reviewer sees their own queue; with nobody named it is
     // everybody's.
-    const mine = rows.filter((row) => {
-      const reviewers = row.assignmentId?.reviewerIds ?? []
-      return reviewers.length === 0 || reviewers.some((id) => String(id) === String(actor.id))
-    })
+    const namesMe = (row) => (row.assignmentId?.reviewerIds ?? []).some((id) => String(id) === String(actor.id))
+    const mine = rows.filter((row) => (row.assignmentId?.reviewerIds ?? []).length === 0 || namesMe(row))
 
     return {
       items: mine.map((row) => ({
@@ -208,6 +206,8 @@ export const submissionService = {
         attemptNo: row.attemptNo,
         submittedAt: row.submittedAt,
         late: row.late,
+        // Named as a reviewer, as opposed to seeing it because nobody was.
+        assignedToMe: namesMe(row),
       })),
     }
   },

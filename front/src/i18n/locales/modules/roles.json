@@ -1,0 +1,89 @@
+{
+  "uz": {
+    "roles": {
+      "title": "Rollar",
+      "hint": "Bu yerda kerakli funksiyalar to'plami va kirish darajasiga ega rollar yaratishingiz mumkin. O'rnatilgan rollarning ruxsatlari o'zgartirilmaydi.",
+      "editTitle": "Rolni tahrirlash",
+      "description": "Tavsif",
+      "descriptionPlaceholder": "Bu rol nima uchun — bir jumla",
+      "namePlaceholder": "masalan: Bosh hisobchi",
+      "nameRequired": "Rol nomini kiriting",
+      "editorHint": "Bu rol uchun ruxsatlar to'plamini tanlang.",
+      "systemHint": "O'rnatilgan rol: ruxsatlari va doirasi qulflangan, faqat tavsifini o'zgartirish mumkin.",
+      "basics": "Asosiy",
+      "access": "Kirish ruxsatlari",
+      "toggleGroup": "Butun bo'limni yoqish/o'chirish",
+      "notFound": "Rol topilmadi",
+      "deleteInUse": "Rolni ushlab turgan xodimlar bor — avval ularni boshqa rolga o'tkazing",
+      "descriptions": {
+        "SUPERADMIN": "Hisobning barcha sozlamalarini boshqaradi",
+        "ADMIN": "Foydalanuvchilar, materiallar va hisobotlarni boshqaradi",
+        "MANAGER": "O'z jamoasining o'qishini kuzatadi va rivojlanish rejalarini boshqaradi",
+        "EMPLOYEE": "Xodim portaliga kirish huquqi bor",
+        "CALL_OPERATOR": "Xodim portaliga kirish huquqi bor (call-markaz)",
+        "SELLER": "Xodim portaliga kirish huquqi bor (savdo)",
+        "AUTHOR": "O'quv materiallarini yaratishi va tahrirlashi mumkin",
+        "INSTRUCTOR": "Vazifalarni tekshiradi va tadbirlarni o'tkazadi",
+        "MENTOR": "Ish joyida o'qitish va kuzatuv varaqlarini to'ldiradi"
+      }
+    }
+  },
+  "ru": {
+    "roles": {
+      "title": "Роли",
+      "hint": "Здесь вы можете создать роли с нужным вам набором функций и уровнем доступа. Права встроенных ролей не меняются.",
+      "editTitle": "Редактирование роли",
+      "description": "Описание",
+      "descriptionPlaceholder": "Для чего эта роль — одной строкой",
+      "namePlaceholder": "например: Главный бухгалтер",
+      "nameRequired": "Введите название роли",
+      "editorHint": "Выберите набор разрешений для этой роли.",
+      "systemHint": "Встроенная роль: права и область заблокированы, можно изменить только описание.",
+      "basics": "Основное",
+      "access": "Разрешения доступа",
+      "toggleGroup": "Включить/выключить весь раздел",
+      "notFound": "Роль не найдена",
+      "deleteInUse": "Роль назначена сотрудникам — сначала переведите их на другую роль",
+      "descriptions": {
+        "SUPERADMIN": "Может управлять всеми настройками аккаунта",
+        "ADMIN": "Управляет пользователями, материалами и отчётами",
+        "MANAGER": "Следит за обучением своей команды и управляет планами развития",
+        "EMPLOYEE": "Есть доступ к порталу пользователя",
+        "CALL_OPERATOR": "Есть доступ к порталу пользователя (колл-центр)",
+        "SELLER": "Есть доступ к порталу пользователя (продажи)",
+        "AUTHOR": "Может создавать и редактировать учебные материалы",
+        "INSTRUCTOR": "Проверяет задания и проводит мероприятия",
+        "MENTOR": "Обучение на рабочем месте и листы наблюдения"
+      }
+    }
+  },
+  "en": {
+    "roles": {
+      "title": "Roles",
+      "hint": "Create roles with the set of functions and access level you need. Built-in roles' permissions cannot be changed.",
+      "editTitle": "Edit role",
+      "description": "Description",
+      "descriptionPlaceholder": "What this role is for — one line",
+      "namePlaceholder": "e.g. Chief accountant",
+      "nameRequired": "Enter a role name",
+      "editorHint": "Pick the set of permissions for this role.",
+      "systemHint": "Built-in role: permissions and scope are locked; only the description can change.",
+      "basics": "Basics",
+      "access": "Access permissions",
+      "toggleGroup": "Toggle the whole section",
+      "notFound": "Role not found",
+      "deleteInUse": "People hold this role — move them to another role first",
+      "descriptions": {
+        "SUPERADMIN": "Manages every account setting",
+        "ADMIN": "Manages users, materials and reports",
+        "MANAGER": "Follows the team's learning and manages development plans",
+        "EMPLOYEE": "Has access to the learner portal",
+        "CALL_OPERATOR": "Has access to the learner portal (call centre)",
+        "SELLER": "Has access to the learner portal (sales)",
+        "AUTHOR": "Can create and edit learning materials",
+        "INSTRUCTOR": "Grades assignments and runs events",
+        "MENTOR": "On-the-job training and observation sheets"
+      }
+    }
+  }
+}

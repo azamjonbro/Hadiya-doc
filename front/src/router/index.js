@@ -17,6 +17,14 @@ export const router = createRouter({
   history: createWebHistory(),
   routes: [
     { path: '/login', name: 'login', component: () => import('@/views/LoginView.vue'), meta: { public: true } },
+    // Where the link in a password-reset mail lands. Public for the same
+    // reason the login page is: whoever holds the link is locked out.
+    {
+      path: '/reset-password',
+      name: 'reset-password',
+      component: () => import('@/views/ResetPasswordView.vue'),
+      meta: { public: true },
+    },
     // Where the identity provider's redirect lands (11.4). Public by
     // necessity: nobody is signed in yet — that is what this page is for.
     {
@@ -171,6 +179,22 @@ export const router = createRouter({
           component: () => import('@/admin/views/CoursesListView.vue'),
           meta: { permission: 'course:read', titleKey: 'admin.nav.courses' },
         },
+        // One folder of the library: the same list view, scoped to the
+        // project (rasm 4).
+        {
+          path: 'projects/:id',
+          name: 'admin-project',
+          component: () => import('@/admin/views/CoursesListView.vue'),
+          meta: { permission: 'course:read', titleKey: 'projects.title' },
+        },
+        // The course library (rasm 1–3): the catalogue of ready courses,
+        // by collection, and the external libraries.
+        {
+          path: 'library',
+          name: 'admin-library',
+          component: () => import('@/admin/views/LibraryView.vue'),
+          meta: { permission: 'course:read', titleKey: 'admin.section.library' },
+        },
         {
           path: 'courses/new',
           name: 'admin-course-builder',
@@ -220,6 +244,15 @@ export const router = createRouter({
           component: () => import('@/admin/views/ReportsView.vue'),
           meta: { permission: 'report:export', titleKey: 'nav.reports' },
         },
+        // One report as a page (rasm «Прогресс учащихся»): the same
+        // permission the catalogue asks for — reading a report is exporting
+        // it without the file.
+        {
+          path: 'reports/:type',
+          name: 'admin-report-detail',
+          component: () => import('@/admin/views/ReportDetailView.vue'),
+          meta: { permission: 'report:export', titleKey: 'nav.reports' },
+        },
         {
           path: 'team',
           name: 'admin-team-dashboard',
@@ -232,11 +265,31 @@ export const router = createRouter({
           component: () => import('@/admin/views/RolesPermissionsView.vue'),
           meta: { permission: 'role:manage', titleKey: 'roles.title' },
         },
+        // One role as a page (rasm «Редактирование роли»): name, description,
+        // the permission groups, Save on the right.
+        {
+          path: 'roles/new',
+          name: 'admin-role-new',
+          component: () => import('@/admin/views/RoleEditorView.vue'),
+          meta: { permission: 'role:manage', titleKey: 'roles.newRole' },
+        },
+        {
+          path: 'roles/:id',
+          name: 'admin-role-edit',
+          component: () => import('@/admin/views/RoleEditorView.vue'),
+          meta: { permission: 'role:manage', titleKey: 'roles.editTitle' },
+        },
         {
           path: 'competencies',
           name: 'admin-competencies',
           component: () => import('@/admin/views/CompetenciesView.vue'),
           meta: { permission: 'competency:manage', titleKey: 'competency.title' },
+        },
+        {
+          path: 'competencies/profiles',
+          name: 'admin-competency-profiles',
+          component: () => import('@/admin/views/CompetencyProfilesView.vue'),
+          meta: { permission: 'competency:manage', titleKey: 'competency.profiles' },
         },
         {
           path: 'competencies/matrix',
@@ -276,6 +329,12 @@ export const router = createRouter({
           name: 'admin-ojt-sessions',
           component: () => import('@/views/OjtSessionsView.vue'),
           meta: { permission: 'ojt:manage', titleKey: 'ojt.title' },
+        },
+        {
+          path: 'ojt/scales',
+          name: 'admin-ojt-scales',
+          component: () => import('@/admin/views/OjtScalesView.vue'),
+          meta: { permission: 'ojt:manage', titleKey: 'ojt.scales.title' },
         },
         {
           path: 'development-plans',
@@ -416,6 +475,13 @@ export function homeRouteFor(auth) {
 }
 
 router.beforeEach(async (to) => {
+  // Settings → Design lets the administrator pick which portal page opens
+  // first; the dashboard stays reachable through the menu.
+  if (to.path === '/' && !to.query.home) {
+    const { useBrandingStore } = await import('@/stores/branding')
+    const branding = useBrandingStore()
+    if (branding.startPath && branding.startPath !== '/') return branding.startPath
+  }
   const auth = useAuthStore()
   // main.js starts this without waiting; the first navigation is where the
   // answer is actually needed, so this is where it is waited for.

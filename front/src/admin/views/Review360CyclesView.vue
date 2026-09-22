@@ -36,6 +36,7 @@ import Skeleton from '@/components/ui/Skeleton.vue'
 import ProgressBar from '@/components/ui/ProgressBar.vue'
 import UserPicker from '@/components/ui/UserPicker.vue'
 import Icon from '@/components/ui/Icon.vue'
+import DataTable from '@/components/ui/DataTable.vue'
 
 const { t, locale } = useI18n()
 const router = useRouter()
@@ -54,6 +55,49 @@ const saving = ref(false)
 const statusFilter = ref('')
 
 const canManage = computed(() => auth.hasPermission('review360:manage'))
+
+/* ---------------- new session (rasm) ---------------- */
+// The reference asks three things to start a session — a name, a
+// description, who runs it — and everything else (template, subjects,
+// due date) is set up afterwards through the edit dialog below.
+const newOpen = ref(false)
+const newDraft = ref({ name: '', description: '', managerId: '', managerName: '' })
+function openNewCycle() {
+  newDraft.value = { name: '', description: '', managerId: auth.user?.id ?? '', managerName: auth.user?.fullName ?? '' }
+  newOpen.value = true
+}
+async function createSession() {
+  const draft = newDraft.value
+  if (!draft.name.trim()) return toast.error(t('review360.nameRequired'))
+  saving.value = true
+  try {
+    const cycle = await review360Api.createCycle({
+      name: draft.name.trim().slice(0, 255),
+      description: draft.description.trim(),
+      managerId: draft.managerId || null,
+    })
+    newOpen.value = false
+    toast.success(t('review360.cycleSaved'))
+    await load()
+    // Straight into set-up: the session is not launchable until it has a
+    // template and people.
+    await openEditCycle(cycle)
+  } catch (error) {
+    toast.error(apiErrorText(error, t('review360.saveError')))
+  } finally {
+    saving.value = false
+  }
+}
+
+const cycleColumns = computed(() => [
+  { key: 'name', label: t('review360.name') },
+  { key: 'managerName', label: t('review360.manager'), width: 'w-52' },
+  { key: 'templateName', label: t('review360.template'), width: 'w-56' },
+  { key: 'startAt', label: t('review360.startAt'), width: 'w-44' },
+  { key: 'endAt', label: t('review360.endAt'), width: 'w-44' },
+  { key: 'status', label: t('review360.statusLabel'), width: 'w-40' },
+  { key: 'progress', label: t('review360.progress'), hidden: true, width: 'w-40' },
+])
 
 /* ---------------- cycle editor ---------------- */
 const cycleModalOpen = ref(false)
@@ -171,19 +215,12 @@ async function loadCompetencies() {
 
 /* ---------------- cycles ---------------- */
 
-function openNewCycle() {
-  editingCycleId.value = ''
-  cycleDraft.value = emptyCycle()
-  subjectPick.value = ''
-  cycleModalOpen.value = true
-}
-
 async function openEditCycle(cycle) {
   editingCycleId.value = cycle.id
   cycleDraft.value = {
     name: cycle.name,
     description: cycle.description ?? '',
-    templateId: cycle.templateId,
+    templateId: cycle.templateId ?? '',
     subjects: cycle.subjectIds.map((id) => ({ id, fullName: '' })),
     dueAt: toDateInputValue(cycle.dueAt),
     postToCompetencies: Boolean(cycle.postToCompetencies),
@@ -468,102 +505,55 @@ onMounted(async () => {
         />
       </div>
 
-      <div v-if="loading" class="mt-6 space-y-3">
-        <Skeleton v-for="n in 4" :key="n" class="h-28 w-full rounded-lg" />
-      </div>
-
-      <EmptyState
-        v-else-if="!cycles.length"
-        class="mt-6"
-        icon="refresh"
-        :title="t('review360.emptyCycles')"
-        :description="t('review360.emptyCyclesHint')"
-      />
-
-      <div v-else class="mt-4 space-y-3">
-        <AppCard v-for="cycle in cycles" :key="cycle.id" class="p-4">
-          <div class="flex flex-wrap items-start justify-between gap-4">
-            <div class="min-w-0 flex-1">
-              <div class="flex flex-wrap items-center gap-2">
-                <p class="truncate font-medium text-ink">{{ cycle.name }}</p>
-                <Badge :variant="statusVariant[cycle.status]" size="sm">
-                  {{ t(`review360.status.${cycle.status}`) }}
-                </Badge>
-                <span class="text-caption text-ink-faint">{{ templateName(cycle.templateId) }}</span>
-              </div>
-
-              <p v-if="cycle.description" class="mt-1 line-clamp-2 text-small text-ink-muted">
-                {{ cycle.description }}
-              </p>
-
-              <p class="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-caption text-ink-faint">
-                <span>
-                  <Icon name="users" size="11" class="mr-1 inline" />
-                  {{ t('review360.subjectCount', { count: cycle.subjectCount }) }}
-                </span>
-                <span>
-                  <Icon name="clock" size="11" class="mr-1 inline" />
-                  {{ cycle.dueAt ? formatDate(cycle.dueAt, locale) : t('review360.noDue') }}
-                </span>
-                <span v-if="cycle.launchedAt">
-                  {{ t('review360.launchedAt') }}: {{ formatDate(cycle.launchedAt, locale) }}
-                </span>
-                <span v-else>{{ t('review360.notLaunched') }}</span>
-                <span v-if="cycle.closedAt">
-                  {{ t('review360.closedAt') }}: {{ formatDate(cycle.closedAt, locale) }}
-                </span>
-              </p>
-
-              <div v-if="cycle.invited" class="mt-3 max-w-md">
-                <div class="flex items-center justify-between text-caption text-ink-muted">
-                  <span>{{ t('review360.progressOf', { responded: cycle.responded, invited: cycle.invited }) }}</span>
-                  <span>{{ percentOf(cycle) }}%</span>
-                </div>
-                <ProgressBar
-                  class="mt-1"
-                  size="sm"
-                  :value="percentOf(cycle)"
-                  :variant="cycle.status === 'CLOSED' ? 'success' : 'primary'"
-                />
-              </div>
-            </div>
-
-            <div class="flex shrink-0 flex-wrap items-center gap-2">
-              <AppButton variant="secondary" size="sm" icon="bar-chart" @click="openCycle(cycle)">
-                {{ t('review360.open') }}
-              </AppButton>
-              <template v-if="canManage && cycle.status === 'DRAFT'">
-                <AppButton variant="secondary" size="sm" icon="eye" @click="openPreview(cycle)">
-                  {{ t('review360.preview') }}
-                </AppButton>
-                <AppButton
-                  variant="ghost"
-                  size="sm"
-                  icon="pencil"
-                  :aria-label="t('review360.editCycle')"
-                  @click="openEditCycle(cycle)"
-                />
-                <AppButton
-                  variant="ghost"
-                  size="sm"
-                  icon="trash"
-                  :aria-label="t('common.delete')"
-                  @click="removeCycle(cycle)"
-                />
-              </template>
-              <AppButton
-                v-if="canManage && cycle.status === 'RUNNING'"
-                variant="secondary"
-                size="sm"
-                icon="check"
-                @click="closeCycle(cycle)"
-              >
-                {{ t('review360.closeCycle') }}
-              </AppButton>
+      <!-- The reference's table: name, who runs it, the template, when it
+           started and ended, status — with the ⚙ for the rest. Click a row
+           to open the session; the draft-only actions sit on the right. -->
+      <DataTable
+        settings-key="review360-cycles"
+        class="mt-4"
+        clickable-rows
+        :columns="cycleColumns"
+        :rows="cycles"
+        :loading="loading"
+        empty-icon="refresh"
+        :empty-title="t('review360.emptyCycles')"
+        :empty-description="t('review360.emptyCyclesHint')"
+        @row-click="openCycle"
+      >
+        <template #cell-name="{ row }">
+          <div class="flex items-center gap-2.5">
+            <Icon name="check-square" size="18" class="shrink-0 text-ink-faint" />
+            <div class="min-w-0">
+              <p class="truncate font-medium text-ink">{{ row.name }}</p>
+              <p class="truncate text-caption text-ink-faint">{{ t('review360.subjectCount', { count: row.subjectCount }) }}</p>
             </div>
           </div>
-        </AppCard>
-      </div>
+        </template>
+        <template #cell-managerName="{ row }">{{ row.managerName || '—' }}</template>
+        <template #cell-templateName="{ row }">{{ row.templateName || t('review360.noTemplate') }}</template>
+        <template #cell-startAt="{ row }">{{ row.launchedAt ? formatDate(row.launchedAt, locale) : formatDate(row.createdAt, locale) }}</template>
+        <template #cell-endAt="{ row }">{{ row.closedAt ? formatDate(row.closedAt, locale) : row.dueAt ? formatDate(row.dueAt, locale) : '—' }}</template>
+        <template #cell-status="{ row }">
+          <div class="flex items-center justify-between gap-2">
+            <Badge :variant="statusVariant[row.status]" size="sm" dot>{{ t(`review360.status.${row.status}`) }}</Badge>
+            <span v-if="canManage" class="flex shrink-0 items-center gap-0.5" @click.stop>
+              <template v-if="row.status === 'DRAFT'">
+                <AppButton variant="ghost" size="sm" icon="eye" :aria-label="t('review360.preview')" @click="openPreview(row)" />
+                <AppButton variant="ghost" size="sm" icon="pencil" :aria-label="t('review360.editCycle')" @click="openEditCycle(row)" />
+                <AppButton variant="ghost" size="sm" icon="trash" :aria-label="t('common.delete')" @click="removeCycle(row)" />
+              </template>
+              <AppButton v-else-if="row.status === 'RUNNING'" variant="ghost" size="sm" icon="check" :aria-label="t('review360.closeCycle')" @click="closeCycle(row)" />
+            </span>
+          </div>
+        </template>
+        <template #cell-progress="{ row }">
+          <div v-if="row.invited" class="flex items-center gap-2">
+            <div class="w-20"><ProgressBar size="sm" :value="percentOf(row)" :variant="row.status === 'CLOSED' ? 'success' : 'primary'" /></div>
+            <span class="text-caption text-ink-faint">{{ row.responded }}/{{ row.invited }}</span>
+          </div>
+          <span v-else>—</span>
+        </template>
+      </DataTable>
     </template>
 
     <!-- ----------------------------- templates ----------------------------- -->
@@ -618,6 +608,44 @@ onMounted(async () => {
         </AppCard>
       </div>
     </template>
+
+    <!-- ------------------------- new session (rasm) ------------------------- -->
+    <Modal v-model="newOpen" size="md" :title="t('review360.newCycle')">
+      <div class="flex gap-6">
+        <span class="hidden h-16 w-16 shrink-0 items-center justify-center rounded-xl bg-primary-subtle text-primary sm:flex">
+          <Icon name="check-square" size="30" />
+        </span>
+        <div class="min-w-0 flex-1 space-y-4">
+          <div>
+            <AppInput v-model="newDraft.name" :label="t('review360.name')" :placeholder="t('review360.namePlaceholder')" required />
+            <p class="mt-1 text-right text-caption text-ink-faint">{{ newDraft.name.length }}/255</p>
+          </div>
+          <div>
+            <label class="mb-1.5 block text-small font-medium text-ink">{{ t('review360.description') }}</label>
+            <textarea
+              v-model="newDraft.description"
+              rows="3"
+              maxlength="2000"
+              :placeholder="t('review360.descriptionPlaceholder')"
+              class="w-full rounded-md border border-border-strong bg-surface px-3.5 py-2.5 text-body text-ink outline-none transition-default focus:border-primary focus:ring-2 focus:ring-primary/15"
+            />
+            <p class="mt-1 text-right text-caption text-ink-faint">{{ newDraft.description.length }}/2000</p>
+          </div>
+          <UserPicker
+            :model-value="newDraft.managerId"
+            :display-name="newDraft.managerName"
+            :label="t('review360.manager')"
+            :placeholder="t('review360.managerPlaceholder')"
+            @select="(u) => { newDraft.managerId = u.id; newDraft.managerName = u.fullName }"
+            @clear="newDraft.managerId = ''"
+          />
+        </div>
+      </div>
+      <template #footer>
+        <AppButton variant="secondary" @click="newOpen = false">{{ t('common.cancel') }}</AppButton>
+        <AppButton :loading="saving" :disabled="!newDraft.name.trim()" @click="createSession">{{ t('common.create') }}</AppButton>
+      </template>
+    </Modal>
 
     <!-- ---------------------------- cycle modal ---------------------------- -->
     <Modal

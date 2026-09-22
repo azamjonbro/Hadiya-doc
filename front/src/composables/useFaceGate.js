@@ -1,6 +1,6 @@
 import { computed, ref } from 'vue'
 import { FACE_GATE_ACTIONS } from '@lms/shared'
-import { useFaceVerification } from './useFaceVerification.js'
+import { useFaceVerification, preloadFaceLandmarker } from './useFaceVerification.js'
 import { faceApi } from '@/services/face'
 
 /**
@@ -56,6 +56,9 @@ export function useFaceGate(onPass) {
       showEnrollment.value = true
     } else {
       state.value = 'idle'
+      // The gate screen is up and the employee is reading it — the model
+      // can be loading meanwhile, so the capture starts at once.
+      preloadFaceLandmarker()
     }
     return true
   }
@@ -74,8 +77,8 @@ export function useFaceGate(onPass) {
       state.value = 'verifying'
       await faceApi.verify(photoBlob)
       state.value = 'success'
-      // Long enough to read "verified", short enough not to feel like a wait.
-      setTimeout(pass, 600)
+      // Long enough to see the tick, short enough not to count as a wait.
+      setTimeout(pass, 400)
     } catch (error) {
       if (error?.response) {
         state.value = error.response.status === 429 ? 'locked' : 'failed'
