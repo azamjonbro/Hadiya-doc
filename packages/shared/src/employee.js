@@ -54,24 +54,17 @@ export function splitFullName(fullName) {
 }
 
 /**
- * A name the way it is written on a document: each word starts with a
- * capital, the rest is lower case — "doston" → "Doston", "XALILOV" →
- * "Xalilov", "abdulla-xon" → "Abdulla-Xon". Uzbek Latin apostrophes stay
- * where they are ("o'tkir" → "O'tkir"), and Cyrillic is handled by the same
- * toUpperCase/toLowerCase the Latin is. Applied wherever a name enters the
- * system — the form, the import sheet, the API — so a record typed in a
- * hurry in lower case is stored the same as one typed carefully.
+ * A name the way the reference's user list shows it and the way it is
+ * printed on an ID card: entirely in capitals — "doston xalilov" →
+ * "DOSTON XALILOV", "O'tkir-xon" → "O'TKIR-XON". Cyrillic is handled by the
+ * same toUpperCase the Latin is. Applied wherever a name enters the system
+ * — the form, the import sheet, the API — so a record typed in a hurry in
+ * lower case is stored the same as one typed carefully. (It title-cased
+ * until 2026-09-22; the product decision was to match the reference.)
  */
 export function capitalizeName(value) {
   return String(value ?? '')
     .trim()
     .replace(/\s+/g, ' ')
-    .split(' ')
-    .map((word) =>
-      word
-        .split('-')
-        .map((part) => (part ? part.charAt(0).toUpperCase() + part.slice(1).toLowerCase() : part))
-        .join('-')
-    )
-    .join(' ')
+    .toUpperCase()
 }

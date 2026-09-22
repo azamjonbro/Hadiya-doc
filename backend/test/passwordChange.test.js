@@ -125,7 +125,7 @@ describe('own password, admin-set password, and name case', () => {
     })
   })
 
-  describe('names are stored capitalised', () => {
+  describe('names are stored in capitals', () => {
     test('on create', () => {
       const parsed = createUserSchema.parse({
         firstName: 'doston',
@@ -135,15 +135,15 @@ describe('own password, admin-set password, and name case', () => {
         password: 'Secret12',
         roleName: 'EMPLOYEE',
       })
-      assert.equal(parsed.firstName, 'Doston')
-      assert.equal(parsed.lastName, 'Xalilov')
-      assert.equal(parsed.patronymic, "O'tkir-Xon O'g'li")
+      assert.equal(parsed.firstName, 'DOSTON')
+      assert.equal(parsed.lastName, 'XALILOV')
+      assert.equal(parsed.patronymic, "O'TKIR-XON O'G'LI")
     })
 
     test('on update, and Cyrillic too', () => {
       const parsed = updateUserSchema.parse({ firstName: '  иван ', lastName: 'ПЕТРОВ', patronymic: '' })
-      assert.equal(parsed.firstName, 'Иван')
-      assert.equal(parsed.lastName, 'Петров')
+      assert.equal(parsed.firstName, 'ИВАН')
+      assert.equal(parsed.lastName, 'ПЕТРОВ')
       assert.equal(parsed.patronymic, '')
     })
 

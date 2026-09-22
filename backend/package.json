@@ -12,6 +12,7 @@
     "migrate:chat": "node src/scripts/migrateLegacyChat.js",
     "migrate:jshshir": "node src/scripts/migrateUsernameToJshshir.js",
     "migrate:names": "node src/scripts/backfillEmployeeNames.js",
+    "migrate:uppercase-names": "node src/scripts/uppercaseEmployeeNames.js",
     "migrate:templates": "node src/scripts/migrateNotificationTemplates.js",
     "migrate:prefs": "node src/scripts/migrateUserNotificationPrefs.js",
     "migrate:hierarchy": "node src/scripts/migrateUserHierarchy.js",
