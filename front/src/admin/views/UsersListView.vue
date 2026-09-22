@@ -26,6 +26,7 @@ import BulkGroupCreateModal from '@/admin/components/users/BulkGroupCreateModal.
 import BulkGroupMembersModal from '@/admin/components/users/BulkGroupMembersModal.vue'
 import UserImportWizard from '@/admin/components/users/UserImportWizard.vue'
 import { apiErrorText } from '@/utils/apiError'
+import { onClickOutside } from '@/composables/onClickOutside'
 import { formatDate, formatDateTime } from '@/utils/format'
 
 const { t, te, locale } = useI18n()
@@ -102,7 +103,7 @@ const columns = computed(() => [
   { key: 'id', label: 'ID', hidden: true, cellClass: 'font-mono text-caption text-ink-faint' },
   { key: 'status', label: t('users.status'), skeletonWidth: 'w-6', width: 'w-20' },
   { key: 'department', label: t('users.fields.department') },
-  { key: 'groups', label: t('users.columns.groups'), hidden: true },
+  { key: 'groups', label: t('users.columns.groups'), skeletonWidth: 'w-8', width: 'w-28' },
   { key: 'progress', label: t('users.columns.progress'), skeletonWidth: 'w-16', width: 'w-40' },
   { key: 'role', label: t('users.role'), skeletonWidth: 'w-20', width: 'w-36' },
   { key: 'createdAt', label: t('users.columns.createdAt'), hidden: true },
@@ -142,6 +143,26 @@ const rangeEnd = computed(() => Math.min(page.value * PAGE_SIZE, total.value))
 
 const showCreateModal = ref(false)
 const showImportWizard = ref(route.query.import === '1')
+
+// «Eksport/Import» (rasm «Пользователи»): the filtered list as a file.
+const exchangeOpen = ref(false)
+const exchangeRef = ref(null)
+onClickOutside(exchangeRef, () => (exchangeOpen.value = false))
+const exporting = ref(false)
+async function exportUsers(format) {
+  exchangeOpen.value = false
+  exporting.value = true
+  try {
+    const { page: _page, limit: _limit, ...params } = buildParams()
+    const result = await usersApi.export(format, params)
+    if (result.truncated) toast.error(t('users.exchange.truncated', { exported: result.exportedRows.toLocaleString(), total: result.totalRows.toLocaleString() }))
+    else toast.success(t('users.exchange.done', { n: result.exportedRows.toLocaleString() }))
+  } catch (error) {
+    toast.error(apiErrorText(error))
+  } finally {
+    exporting.value = false
+  }
+}
 const createSubmitting = ref(false)
 const createError = ref('')
 const BLANK_USER = {
@@ -375,16 +396,31 @@ onMounted(() => {
         >
           <Icon name="filter" size="18" />
         </button>
-        <!-- Its own permission (§8.2): creating one account and creating
+        <!-- Rasm «Пользователи»: one grey «Eksport/Import» button with a
+             menu — the list as XLSX/CSV, or the import wizard. Import keeps
+             its own permission (§8.2): creating one account and creating
              three hundred are different decisions. -->
-        <AppButton
-          v-if="auth.hasPermission('user:import')"
-          variant="secondary"
-          icon="upload"
-          @click="showImportWizard = true"
-        >
-          {{ t('userImport.open') }}
-        </AppButton>
+        <div v-if="auth.hasPermission('user:import') || auth.hasPermission('report:export')" ref="exchangeRef" class="relative">
+          <AppButton variant="secondary" icon="chevron-down" icon-position="right" :aria-expanded="exchangeOpen" aria-haspopup="menu" @click="exchangeOpen = !exchangeOpen">
+            {{ t('users.exchange.button') }}
+          </AppButton>
+          <Transition enter-active-class="transition-default" enter-from-class="opacity-0 -translate-y-1" leave-active-class="transition-default" leave-to-class="opacity-0 -translate-y-1">
+            <div v-if="exchangeOpen" class="absolute right-0 z-20 mt-2 w-64 rounded-xl bg-surface p-1.5 shadow-xl ring-1 ring-border" role="menu">
+              <template v-if="auth.hasPermission('report:export')">
+                <button type="button" role="menuitem" class="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-left text-[14px] text-ink transition-default hover:bg-surface-2" :disabled="exporting" @click="exportUsers('xlsx')">
+                  <Icon :name="exporting ? 'loader' : 'download'" size="16" class="text-ink-muted" />{{ t('users.exchange.exportXlsx') }}
+                </button>
+                <button type="button" role="menuitem" class="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-left text-[14px] text-ink transition-default hover:bg-surface-2" :disabled="exporting" @click="exportUsers('csv')">
+                  <Icon name="file-text" size="16" class="text-ink-muted" />{{ t('users.exchange.exportCsv') }}
+                </button>
+              </template>
+              <div v-if="auth.hasPermission('user:import') && auth.hasPermission('report:export')" class="my-1 border-t border-border"></div>
+              <button v-if="auth.hasPermission('user:import')" type="button" role="menuitem" class="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-left text-[14px] text-ink transition-default hover:bg-surface-2" @click="exchangeOpen = false; showImportWizard = true">
+                <Icon name="upload" size="16" class="text-ink-muted" />{{ t('userImport.open') }}
+              </button>
+            </div>
+          </Transition>
+        </div>
         <AppButton v-if="auth.hasPermission('user:create')" icon="user-plus" @click="showCreateModal = true">{{ t('users.newUser') }}</AppButton>
       </div>
     </div>
@@ -472,8 +508,9 @@ onMounted(() => {
         </div>
       </template>
 
+      <!-- Rasm «Пользователи»: the count, the names on hover -->
       <template #cell-groups="{ row }">
-        <span class="text-ink">{{ row.groups?.length ? row.groups.join(', ') : '—' }}</span>
+        <span class="text-ink" :title="row.groups?.length ? row.groups.join(', ') : ''">{{ row.groups?.length ? row.groups.length : '—' }}</span>
       </template>
       <template #cell-createdAt="{ row }">{{ formatDate(row.createdAt, locale) }}</template>
       <template #cell-lastLoginAt="{ row }">{{ row.lastLoginAt ? formatDateTime(row.lastLoginAt, locale) : '—' }}</template>

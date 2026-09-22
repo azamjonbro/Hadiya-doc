@@ -53,6 +53,26 @@ export const usersApi = {
   list(params) {
     return http.get('/users', { params }).then((r) => r.data.data)
   },
+  // The list as a file, with the same filters. Returns what the server said
+  // about the cut, like a report export does — 5 000 of 12 000 people looks
+  // like a complete list otherwise.
+  async export(format, params = {}) {
+    const response = await http.get('/users/export', { params: { ...params, format }, responseType: 'blob' })
+    const url = URL.createObjectURL(response.data)
+    const link = document.createElement('a')
+    link.href = url
+    link.download = `users-${new Date().toISOString().slice(0, 10)}.${format}`
+    document.body.appendChild(link)
+    link.click()
+    link.remove()
+    URL.revokeObjectURL(url)
+    const headers = response.headers ?? {}
+    return {
+      truncated: headers['x-report-truncated'] === 'true',
+      totalRows: Number(headers['x-report-total-rows'] ?? 0),
+      exportedRows: Number(headers['x-report-exported-rows'] ?? 0),
+    }
+  },
   departments() {
     return http.get('/users/departments').then((r) => r.data.data)
   },

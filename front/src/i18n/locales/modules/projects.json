@@ -112,6 +112,15 @@
         "udemy": "Udemy Business kutubxonasini ulang va xodimlarni kasbiy kurslar bilan ta'minlang.",
         "note": "Bu kutubxonalar hali ulanmagan: har biri xizmat ko'rsatuvchi bilan shartnoma va API kalitini talab qiladi. Tanlaganingizni ayting — integratsiya alohida ish sifatida rejalashtiriladi."
       }
+    },
+    "users": {
+      "exchange": {
+        "button": "Eksport/Import",
+        "exportXlsx": "Ro'yxatni Excel'ga (XLSX)",
+        "exportCsv": "Ro'yxatni CSV'ga",
+        "done": "{n} ta xodim yuklab olindi",
+        "truncated": "Faylda {exported} ta qator, jami {total} ta — filtrni toraytirib qayta yuklang."
+      }
     }
   },
   "ru": {
@@ -227,6 +236,15 @@
         "udemy": "Подключите библиотеку Udemy Business и дайте сотрудникам профессиональные курсы.",
         "note": "Эти библиотеки пока не подключены: для каждой нужен договор с поставщиком и API-ключ. Скажите, какую выбрать, — интеграция планируется отдельной задачей."
       }
+    },
+    "users": {
+      "exchange": {
+        "button": "Экспорт/Импорт",
+        "exportXlsx": "Список в Excel (XLSX)",
+        "exportCsv": "Список в CSV",
+        "done": "Выгружено сотрудников: {n}",
+        "truncated": "В файле {exported} строк из {total} — сузьте фильтр и выгрузите снова."
+      }
     }
   },
   "en": {
@@ -341,6 +359,15 @@
         "coursera": "Open courses from leading universities and companies on Coursera to your staff.",
         "udemy": "Connect the Udemy Business library and give staff professional courses.",
         "note": "None of these is connected yet: each needs a vendor contract and an API key. Say which one and the integration is planned as its own piece of work."
+      }
+    },
+    "users": {
+      "exchange": {
+        "button": "Export/Import",
+        "exportXlsx": "List as Excel (XLSX)",
+        "exportCsv": "List as CSV",
+        "done": "{n} employees exported",
+        "truncated": "{exported} of {total} rows in the file — narrow the filter and export again."
       }
     }
   }

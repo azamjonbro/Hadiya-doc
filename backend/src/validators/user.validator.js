@@ -143,6 +143,12 @@ export const listUsersQuerySchema = z.object({
   limit: z.coerce.number().int().min(1).max(100).optional().default(20),
 })
 
+// The export takes the list's filters and none of its paging: the file is
+// the whole filtered list, capped in the controller.
+export const exportUsersQuerySchema = listUsersQuerySchema.omit({ page: true, cursor: true, limit: true }).extend({
+  format: z.enum(['csv', 'xlsx']).optional().default('xlsx'),
+})
+
 const objectId = z.string().regex(/^[a-f\d]{24}$/i, 'Invalid id')
 
 // Bulk actions from the employees table. The 200 ceiling matches the chat

@@ -10,8 +10,66 @@ import { asyncHandler } from '../utils/asyncHandler.js'
 import { sendSuccess } from '../utils/apiResponse.js'
 import { ApiError } from '../utils/ApiError.js'
 import { resolveRoleScope } from '@lms/shared'
+import { reportExportService } from '../services/reports/reportExport.service.js'
+import { auditLogRepository } from '../repositories/auditLog.repository.js'
+
+// The users list as a file (rasm «Пользователи» → Экспорт/Импорт). The same
+// filters as the list, every row that matches up to this cap — the synchronous
+// reports stop at the same number for the same reason: somebody is waiting.
+const USER_EXPORT_MAX = 5000
+const USER_EXPORT_COLUMNS = [
+  ['fullName', 'F.I.Sh.'],
+  ['jshshir', 'JSHSHIR'],
+  ['email', 'Email'],
+  ['phone', 'Telefon'],
+  ['branch', 'Filial'],
+  ['department', "Bo'lim"],
+  ['subdivision', "Bo'linma"],
+  ['position', 'Lavozim'],
+  ['role', 'Rol'],
+  ['groups', 'Guruhlar'],
+  ['managerName', 'Rahbar'],
+  ['isActive', 'Faol'],
+  ['hireDate', 'Ishga kirgan'],
+  ['terminationDate', 'Ishdan ketgan'],
+]
 
 export const userController = {
+  export: asyncHandler(async (req, res) => {
+    const { format, ...filters } = req.validatedQuery
+    const { items, total } = await userService.list(req.user, { ...filters, page: 1, limit: USER_EXPORT_MAX })
+    const columns = USER_EXPORT_COLUMNS.map(([key, header]) => ({ key, header }))
+    const day = (value) => (value ? new Date(value).toISOString().slice(0, 10) : '')
+    const rows = items.map((u) => ({
+      ...u,
+      groups: (u.groups ?? []).join(', '),
+      isActive: u.isActive ? 'Ha' : "Yo'q",
+      hireDate: day(u.hireDate),
+      terminationDate: day(u.terminationDate),
+    }))
+    // Employee data leaving the system is recorded like every report export.
+    await auditLogRepository.record({
+      actor: req.user.id,
+      action: 'USERS_EXPORTED',
+      entity: 'User',
+      entityId: 'list',
+      metadata: { format, filters, rowCount: rows.length, total },
+      ip: req.ip,
+      userAgent: req.headers['user-agent'] ?? '',
+    })
+    const stamp = new Date().toISOString().slice(0, 10)
+    res.setHeader('Content-Disposition', `attachment; filename="users-${stamp}.${format}"`)
+    res.setHeader('X-Report-Total-Rows', String(total))
+    res.setHeader('X-Report-Exported-Rows', String(rows.length))
+    res.setHeader('X-Report-Truncated', total > rows.length ? 'true' : 'false')
+    res.setHeader('Content-Type', reportExportService.contentType(format))
+    if (format === 'csv') {
+      res.send(reportExportService.toCsv({ columns, rows }))
+      return
+    }
+    res.send(await reportExportService.toXlsxBuffer({ columns, rows }, 'Users'))
+  }),
+
   me: asyncHandler(async (req, res) => {
     const user = await userRepository.findById(req.user.id)
     const role = user ? await roleRepository.effectiveFor(user) : null

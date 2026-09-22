@@ -11,6 +11,7 @@ import {
   createUserSchema,
   updateUserSchema,
   listUsersQuerySchema,
+  exportUsersQuerySchema,
   activityQuerySchema,
   learningHistoryQuerySchema,
   bulkMessageSchema,
@@ -73,6 +74,9 @@ usersRouter.get(
 )
 
 usersRouter.get('/', requirePermission(PERMISSIONS.USER_READ), validateQuery(listUsersQuerySchema), userController.list)
+// Before '/:id': "export" is a literal segment. Reading the list is user:read;
+// taking a copy of it is the report permission, like every other export.
+usersRouter.get('/export', requirePermission(PERMISSIONS.REPORT_EXPORT), validateQuery(exportUsersQuerySchema), userController.export)
 usersRouter.post('/', requirePermission(PERMISSIONS.USER_CREATE), validateBody(createUserSchema), userController.create)
 // Declared before '/:id' — Express matches in order, so a literal segment
 // that could also be read as an id has to come first.

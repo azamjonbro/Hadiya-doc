@@ -44,7 +44,11 @@ function onDrop(key) {
 function onDocumentClick(event) {
   if (open.value && !event.target.closest?.('[data-column-settings]')) open.value = false
 }
-function close() {
+// Closing on scroll keeps the popover anchored to a gear that has moved —
+// but a scroll *inside* the popover is the person reading the long list
+// (an employee record has two dozen columns), and must not close it.
+function close(event) {
+  if (event?.target?.closest?.('[data-column-settings]')) return
   open.value = false
 }
 document.addEventListener('click', onDocumentClick)
@@ -73,11 +77,13 @@ onBeforeUnmount(() => {
     <div
       v-if="open"
       data-column-settings
-      class="fixed z-50 w-[200px] -translate-x-full rounded-xl bg-surface p-2 shadow-lg ring-1 ring-border"
-      :style="{ top: `${at.top}px`, left: `${at.left}px` }"
+      class="fixed z-50 flex w-[220px] -translate-x-full flex-col rounded-xl bg-surface p-2 shadow-lg ring-1 ring-border"
+      :style="{ top: `${at.top}px`, left: `${at.left}px`, maxHeight: `calc(100vh - ${at.top}px - 16px)` }"
     >
-      <p class="px-3 pb-2 pt-1.5 text-[11px] font-semibold uppercase tracking-wider text-ink-muted">{{ t('table.columns') }}</p>
-      <ul class="space-y-0.5">
+      <p class="shrink-0 px-3 pb-2 pt-1.5 text-[11px] font-semibold uppercase tracking-wider text-ink-muted">{{ t('table.columns') }}</p>
+      <!-- The list scrolls, the heading stays: two dozen columns do not fit
+           under a gear that sits low on the page. -->
+      <ul class="min-h-0 space-y-0.5 overflow-y-auto overscroll-contain">
         <li
           v-for="col in columns.ordered.value"
           :key="col.key"
