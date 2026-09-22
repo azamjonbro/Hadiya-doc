@@ -8,6 +8,11 @@ import { http } from './http'
  * apart in imports is how an AI budget ends up on somebody's profile.
  */
 export const platformSettingsApi = {
+  // What this installation is wired to (settings → integrations).
+  integrations() {
+    return http.get('/settings/integrations').then((r) => r.data.data.items)
+  },
+
   get() {
     return http.get('/settings').then((r) => r.data.data)
   },

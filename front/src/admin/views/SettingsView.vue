@@ -14,6 +14,7 @@ import FacePolicyForm from '@/admin/components/FacePolicyForm.vue'
 import AiSettingsCard from '@/admin/components/AiSettingsCard.vue'
 import ApiKeysCard from '@/admin/components/ApiKeysCard.vue'
 import WebhooksCard from '@/admin/components/WebhooksCard.vue'
+import IntegrationsCard from '@/admin/components/IntegrationsCard.vue'
 import SsoSettingsCard from '@/admin/components/SsoSettingsCard.vue'
 import BrandingSettingsCard from '@/admin/components/BrandingSettingsCard.vue'
 
@@ -146,6 +147,7 @@ const tab = ref(TABS.includes(route.query.tab) ? route.query.tab : 'basic')
         <section class="mt-6 border-t border-border pt-6"><AiSettingsCard /></section>
         <section class="mt-6 border-t border-border pt-6"><ApiKeysCard /></section>
         <section class="mt-6 border-t border-border pt-6"><WebhooksCard /></section>
+        <section class="mt-6 border-t border-border pt-6"><IntegrationsCard /></section>
       </template>
     </template>
   </div>

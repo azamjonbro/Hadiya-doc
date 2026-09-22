@@ -3,6 +3,7 @@ import { PERMISSIONS } from '@lms/shared'
 import { authenticate } from '../../middlewares/auth.middleware.js'
 import { requirePermission } from '../../middlewares/rbac.middleware.js'
 import { validateBody } from '../../middlewares/validate.middleware.js'
+import { integrationStatusService } from '../../services/settings/integrationStatus.service.js'
 import { settingsService } from '../../services/settings/settings.service.js'
 import { BranchBranding, BRANDING_FIELDS, mergeBranding } from '../../models/branchBranding.model.js'
 import { updateSettingsSchema, branchBrandingSchema } from '../../validators/settings.validator.js'
@@ -44,6 +45,16 @@ settingsRouter.get(
   '/',
   asyncHandler(async (_req, res) => {
     sendSuccess(res, await settingsService.get())
+  })
+)
+
+// What this installation is wired to (the reference's «Сервисы»). Read
+// only, and only for the people who could act on it.
+settingsRouter.get(
+  '/integrations',
+  requirePermission(PERMISSIONS.SETTINGS_MANAGE),
+  asyncHandler(async (_req, res) => {
+    sendSuccess(res, { items: await integrationStatusService.list() })
   })
 )
 

@@ -169,6 +169,53 @@
       "fields": {
         "trainers": "Trener"
       }
+    },
+    "integrations": {
+      "title": "Integratsiyalar",
+      "hint": "Bu o‘rnatma nimaga ulangani. Server kalitlari (.env) administrator tomonidan, qolganlari shu paneldan sozlanadi.",
+      "open": "Ochish",
+      "where": {
+        "env": "Server sozlamasi"
+      },
+      "status": {
+        "on": "Ulangan",
+        "off": "Ulanmagan",
+        "none": "Har tadbirda"
+      },
+      "items": {
+        "sso": {
+          "name": "Korporativ hisob (SSO)",
+          "text": "OIDC provayderi orqali kirish"
+        },
+        "mail": {
+          "name": "Pochta (SMTP)",
+          "text": "Bildirishnoma va hisobotlar xati"
+        },
+        "push": {
+          "name": "Push bildirishnomalar",
+          "text": "Brauzer va PWA uchun (VAPID)"
+        },
+        "ai": {
+          "name": "AI yordamchi",
+          "text": "Kurs va tarjima generatsiyasi"
+        },
+        "storage": {
+          "name": "Fayl saqlagich (S3)",
+          "text": "Video, hujjat va rasmlar"
+        },
+        "api": {
+          "name": "Public API",
+          "text": "Tashqi tizimlar uchun kalitlar"
+        },
+        "webhooks": {
+          "name": "Webhook",
+          "text": "Hodisalarni boshqa tizimga uzatish"
+        },
+        "meetings": {
+          "name": "Onlayn uchrashuvlar",
+          "text": "Zoom, Teams, Meet — har tadbirning o‘z havolasi"
+        }
+      }
     }
   },
   "ru": {
@@ -341,6 +388,53 @@
       "fields": {
         "trainers": "Тренер"
       }
+    },
+    "integrations": {
+      "title": "Интеграции",
+      "hint": "К чему подключена эта установка. Серверные ключи (.env) настраивает администратор, остальное — здесь.",
+      "open": "Открыть",
+      "where": {
+        "env": "Настройка сервера"
+      },
+      "status": {
+        "on": "Подключено",
+        "off": "Не подключено",
+        "none": "В каждом мероприятии"
+      },
+      "items": {
+        "sso": {
+          "name": "Корпоративный вход (SSO)",
+          "text": "Вход через OIDC-провайдера"
+        },
+        "mail": {
+          "name": "Почта (SMTP)",
+          "text": "Письма уведомлений и отчётов"
+        },
+        "push": {
+          "name": "Push-уведомления",
+          "text": "Для браузера и PWA (VAPID)"
+        },
+        "ai": {
+          "name": "AI-помощник",
+          "text": "Генерация курсов и переводов"
+        },
+        "storage": {
+          "name": "Хранилище файлов (S3)",
+          "text": "Видео, документы и изображения"
+        },
+        "api": {
+          "name": "Public API",
+          "text": "Ключи для внешних систем"
+        },
+        "webhooks": {
+          "name": "Webhooks",
+          "text": "Передача событий в другие системы"
+        },
+        "meetings": {
+          "name": "Онлайн-встречи",
+          "text": "Zoom, Teams, Meet — ссылка у каждого мероприятия"
+        }
+      }
     }
   },
   "en": {
@@ -512,6 +606,53 @@
       },
       "fields": {
         "trainers": "Trainer"
+      }
+    },
+    "integrations": {
+      "title": "Integrations",
+      "hint": "What this installation is wired to. Server keys (.env) are the administrator's; the rest is set here.",
+      "open": "Open",
+      "where": {
+        "env": "Server setting"
+      },
+      "status": {
+        "on": "Connected",
+        "off": "Not connected",
+        "none": "Per event"
+      },
+      "items": {
+        "sso": {
+          "name": "Corporate sign-in (SSO)",
+          "text": "Sign in through an OIDC provider"
+        },
+        "mail": {
+          "name": "Mail (SMTP)",
+          "text": "Notification and report emails"
+        },
+        "push": {
+          "name": "Push notifications",
+          "text": "Browser and PWA (VAPID)"
+        },
+        "ai": {
+          "name": "AI assistant",
+          "text": "Course and translation generation"
+        },
+        "storage": {
+          "name": "File storage (S3)",
+          "text": "Video, documents and images"
+        },
+        "api": {
+          "name": "Public API",
+          "text": "Keys for outside systems"
+        },
+        "webhooks": {
+          "name": "Webhooks",
+          "text": "Send events to other systems"
+        },
+        "meetings": {
+          "name": "Online meetings",
+          "text": "Zoom, Teams, Meet — a link per event"
+        }
       }
     }
   }
