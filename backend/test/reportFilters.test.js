@@ -100,6 +100,18 @@ describe('report filters · who the report is about', () => {
     )
   })
 
+  test('the matrix line and the second phone number', async () => {
+    await User.updateOne({ _id: store._id }, { $set: { functionalManagerId: manager._id, mobilePhone: `+99890${stamp}` } })
+    const byFunctional = await reportDataService.build(actor(), 'employee-progress', { functionalManagerId: manager._id.toString() })
+    assert.deepEqual(namesOf(byFunctional), [store.fullName])
+    // The line manager and the functional one are different fields: Sales
+    // reports to the manager, Store only does their work.
+    const byLine = await reportDataService.build(actor(), 'employee-progress', { managerId: manager._id.toString() })
+    assert.deepEqual(namesOf(byLine), [sales.fullName])
+    const byMobile = await reportDataService.build(actor(), 'employee-progress', { mobilePhone: stamp })
+    assert.deepEqual(namesOf(byMobile), [store.fullName])
+  })
+
   test('account status, and filters intersect rather than add up', async () => {
     const inactive = await reportDataService.build(actor(), 'employee-progress', { status: 'inactive', role: role.name })
     assert.deepEqual(namesOf(inactive), [store.fullName])

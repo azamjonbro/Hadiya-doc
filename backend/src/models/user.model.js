@@ -23,6 +23,10 @@ const userSchema = new Schema(
     jshshir: { type: String, required: true, unique: true, trim: true },
     email: { type: String, default: undefined, trim: true, lowercase: true },
     phone: { type: String, default: '' },
+    // The reference keeps two: a desk line and a mobile. HR filters and
+    // exports ask for them separately, so they are two fields rather than
+    // one box people put both numbers in.
+    mobilePhone: { type: String, default: '' },
     passwordHash: { type: String, required: true },
     roleId: { type: Schema.Types.ObjectId, ref: 'Role', required: true },
     // Every role the person wears; `roleId` is the primary one (the widest —
@@ -36,6 +40,12 @@ const userSchema = new Schema(
     //
     // Null for the people at the top, and for everyone until M2 has run.
     managerId: { type: Schema.Types.ObjectId, ref: 'User', default: null },
+    // Who directs the work, when that is not the line manager (the
+    // reference's «Функциональный руководитель»): a matrix organisation
+    // has a person you report to and a person whose work you do. Only the
+    // line manager fences what anybody may see — this one is a fact on the
+    // record and a filter, never a permission.
+    functionalManagerId: { type: Schema.Types.ObjectId, ref: 'User', default: null },
 
     // HR's own identifier for the employee. Not an identity we authenticate
     // against — that is the JSHSHIR — but the column every HR export is
@@ -177,5 +187,6 @@ userSchema.index(
 // "Who reports to this person" is the query the whole hierarchy is built
 // from — $graphLookup walks it once per level.
 userSchema.index({ managerId: 1 })
+userSchema.index({ functionalManagerId: 1 })
 
 export const User = model('User', userSchema)

@@ -42,6 +42,7 @@ function toPublicUser(user, role) {
     // it was never filled in, and a v-model bound to `undefined` warns.
     email: user.email ?? '',
     phone: user.phone,
+    mobilePhone: user.mobilePhone ?? '',
     branch: user.branch ?? '',
     department: user.department,
     subdivision: user.subdivision ?? '',
@@ -60,6 +61,7 @@ function toPublicUser(user, role) {
     role: role?.name ?? null,
     roles: role?.names ?? (role ? [role.name] : []),
     managerId: user.managerId ? user.managerId.toString() : null,
+    functionalManagerId: user.functionalManagerId ? user.functionalManagerId.toString() : null,
     lastLoginAt: user.lastLoginAt ?? null,
     createdAt: user.createdAt,
     updatedAt: user.updatedAt,
@@ -89,7 +91,9 @@ function duplicateIdentityError(error) {
  * manager, and group membership is the group's cache to keep.
  */
 async function decorate(items) {
-  const managerIds = [...new Set(items.map((u) => u.managerId).filter(Boolean))]
+  // Both reporting lines at once: the line manager and, where a matrix
+  // organisation has one, the person whose work they actually do.
+  const managerIds = [...new Set(items.flatMap((u) => [u.managerId, u.functionalManagerId]).filter(Boolean))]
   const userIds = items.map((u) => u.id)
   const [managers, groups, progressRows] = await Promise.all([
     managerIds.length ? userRepository.findByIds(managerIds) : [],
@@ -117,6 +121,7 @@ async function decorate(items) {
   return items.map((u) => ({
     ...u,
     managerName: u.managerId ? (managerName.get(u.managerId) ?? '') : '',
+    functionalManagerName: u.functionalManagerId ? (managerName.get(u.functionalManagerId) ?? '') : '',
     groups: groupsOf.get(u.id) ?? [],
     progress: progressOf.get(u.id) ?? { total: 0, completed: 0 },
   }))
@@ -462,6 +467,10 @@ export const userService = {
         // No cycle check on create: a brand-new document has no reports, so
         // nothing can already be pointing at it.
         managerId: payload.managerId || null,
+        // No cycle check: it fences nothing, so a loop here costs nothing
+        // but a confusing chart.
+        functionalManagerId: payload.functionalManagerId || null,
+        mobilePhone: payload.mobilePhone ?? '',
         position: payload.position ?? '',
         country: payload.country ?? '',
         address: payload.address ?? '',
@@ -586,6 +595,8 @@ export const userService = {
       await orgHierarchyService.assertNoCycle(id, managerId)
       updateData.managerId = managerId
     }
+    if (payload.functionalManagerId !== undefined) updateData.functionalManagerId = payload.functionalManagerId || null
+    if (payload.mobilePhone !== undefined) updateData.mobilePhone = payload.mobilePhone
     if (payload.position !== undefined) updateData.position = payload.position
     if (payload.country !== undefined) updateData.country = payload.country
     if (payload.address !== undefined) updateData.address = payload.address

@@ -146,6 +146,11 @@
         "exportCsv": "Ro'yxatni CSV'ga",
         "done": "{n} ta xodim yuklab olindi",
         "truncated": "Faylda {exported} ta qator, jami {total} ta — filtrni toraytirib qayta yuklang."
+      },
+      "fields": {
+        "mobilePhone": "Mobile Number",
+        "functionalManager": "Funksional rahbar",
+        "functionalManagerHint": "Ishni yo'naltiradigan rahbar — bevosita rahbardan boshqa bo'lsa. Ko'rish huquqiga ta'sir qilmaydi."
       }
     },
     "groups": {
@@ -365,6 +370,11 @@
         "exportCsv": "Список в CSV",
         "done": "Выгружено сотрудников: {n}",
         "truncated": "В файле {exported} строк из {total} — сузьте фильтр и выгрузите снова."
+      },
+      "fields": {
+        "mobilePhone": "Mobile Number",
+        "functionalManager": "Функциональный руководитель",
+        "functionalManagerHint": "Тот, кто направляет работу, если это не линейный руководитель. На права доступа не влияет."
       }
     },
     "groups": {
@@ -584,6 +594,11 @@
         "exportCsv": "List as CSV",
         "done": "{n} employees exported",
         "truncated": "{exported} of {total} rows in the file — narrow the filter and export again."
+      },
+      "fields": {
+        "mobilePhone": "Mobile Number",
+        "functionalManager": "Functional manager",
+        "functionalManagerHint": "Who directs the work when that is not the line manager. Does not affect access."
       }
     },
     "groups": {

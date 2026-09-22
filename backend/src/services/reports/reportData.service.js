@@ -42,6 +42,7 @@ async function resolvePopulationFilter(filters) {
   if (filters.department) match.department = filters.department
   if (filters.branch) match.branch = filters.branch
   if (filters.managerId) match.managerId = toObjectId(filters.managerId)
+  if (filters.functionalManagerId) match.functionalManagerId = toObjectId(filters.functionalManagerId)
   if (filters.status) match.isActive = filters.status === 'active'
   const lastLogin = rangeOf(filters.lastLoginFrom, filters.lastLoginTo)
   if (lastLogin) match.lastLoginAt = lastLogin
@@ -54,7 +55,7 @@ async function resolvePopulationFilter(filters) {
   if (filters.gender) match.gender = filters.gender
   // Free-text fields of the record, matched the way the users list
   // searches them: as a substring, case-insensitively.
-  for (const key of ['firstName', 'lastName', 'jshshir', 'email', 'phone', 'position', 'country', 'address']) {
+  for (const key of ['firstName', 'lastName', 'jshshir', 'email', 'phone', 'mobilePhone', 'position', 'country', 'address']) {
     if (filters[key]) match[key] = containsRegex(filters[key])
   }
   const lists = []

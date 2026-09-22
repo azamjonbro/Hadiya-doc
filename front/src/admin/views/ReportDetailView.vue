@@ -70,6 +70,8 @@ const EMPTY_FILTERS = {
   status: '',
   managerId: '',
   managerLabel: '',
+  functionalManagerId: '',
+  functionalManagerLabel: '',
   userId: '',
   userLabel: '',
   firstName: '',
@@ -77,6 +79,7 @@ const EMPTY_FILTERS = {
   jshshir: '',
   email: '',
   phone: '',
+  mobilePhone: '',
   position: '',
   country: '',
   gender: '',
@@ -88,7 +91,7 @@ const EMPTY_FILTERS = {
 }
 const filters = ref({ ...EMPTY_FILTERS })
 const queryFilters = computed(() => {
-  const { userLabel, managerLabel, ...rest } = filters.value
+  const { userLabel, managerLabel, functionalManagerLabel, ...rest } = filters.value
   return rest
 })
 

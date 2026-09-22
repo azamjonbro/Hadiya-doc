@@ -59,8 +59,11 @@ const form = reactive({
   jshshir: '',
   managerId: '',
   managerName: '',
+  functionalManagerId: '',
+  functionalManagerName: '',
   email: '',
   phone: '',
+  mobilePhone: '',
   branch: '',
   department: '',
   subdivision: '',
@@ -90,8 +93,11 @@ function resetFrom(user) {
   form.jshshir = user.jshshir ?? ''
   form.managerId = user.managerId ?? ''
   form.managerName = user.managerName ?? ''
+  form.functionalManagerId = user.functionalManagerId ?? ''
+  form.functionalManagerName = user.functionalManagerName ?? ''
   form.email = user.email ?? ''
   form.phone = user.phone ?? ''
+  form.mobilePhone = user.mobilePhone ?? ''
   form.branch = user.branch ?? ''
   form.department = user.department ?? ''
   form.subdivision = user.subdivision ?? ''
@@ -118,7 +124,8 @@ async function onSave() {
   saving.value = true
   errorMessage.value = ''
   try {
-    const { managerName: _name, ...rest } = form
+    // The *Name fields are what the pickers show, not fields the API knows.
+    const { managerName: _name, functionalManagerName: _functionalName, ...rest } = form
     const payload = { ...rest, jshshir: normalizeJshshir(form.jshshir) }
     if (!payload.password) delete payload.password
     const updated = await usersApi.update(props.user.id, payload)

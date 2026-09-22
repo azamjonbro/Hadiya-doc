@@ -83,6 +83,15 @@ function onManagerCleared() {
   props.form.managerId = ''
   props.form.managerName = ''
 }
+
+function onFunctionalManagerPicked(user) {
+  props.form.functionalManagerId = user.id
+  props.form.functionalManagerName = user.fullName
+}
+function onFunctionalManagerCleared() {
+  props.form.functionalManagerId = ''
+  props.form.functionalManagerName = ''
+}
 </script>
 
 <template>
@@ -111,6 +120,9 @@ function onManagerCleared() {
     </FieldRow>
     <FieldRow :label="t('users.fields.phone')">
       <AppInput v-model="form.phone" :disabled="disabled" :aria-label="t('users.fields.phone')" :hint="t('users.fields.phoneHint')" />
+    </FieldRow>
+    <FieldRow :label="t('users.fields.mobilePhone')">
+      <AppInput v-model="form.mobilePhone" :disabled="disabled" :aria-label="t('users.fields.mobilePhone')" />
     </FieldRow>
     <FieldRow :label="t('users.fields.position')">
       <ManagedSelect
@@ -205,6 +217,19 @@ function onManagerCleared() {
         @clear="onManagerCleared"
       />
       <p class="mt-1.5 text-small text-ink-faint">{{ t('users.fields.managerHint') }}</p>
+    </FieldRow>
+    <!-- The matrix line: who directs the work when that is not the line
+         manager. A fact on the record and a filter, never a permission. -->
+    <FieldRow :label="t('users.fields.functionalManager')">
+      <UserPicker
+        :model-value="form.functionalManagerId"
+        :display-name="form.functionalManagerName"
+        :placeholder="t('users.fields.managerPlaceholder')"
+        :disabled="disabled"
+        @select="onFunctionalManagerPicked"
+        @clear="onFunctionalManagerCleared"
+      />
+      <p class="mt-1.5 text-small text-ink-faint">{{ t('users.fields.functionalManagerHint') }}</p>
     </FieldRow>
     <FieldRow :label="t('users.role')" required>
       <RoleChips

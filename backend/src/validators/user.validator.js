@@ -56,6 +56,10 @@ export const hierarchyFields = {
     .regex(/^[a-f\d]{24}$|^$/i, 'managerId must be a user id')
     .optional(),
   employeeNumber: z.string().trim().max(64).optional(),
+  functionalManagerId: z
+    .string()
+    .regex(/^[a-f\d]{24}$|^$/i, 'functionalManagerId must be a user id')
+    .optional(),
 }
 
 export const createUserSchema = z.object({
@@ -65,6 +69,7 @@ export const createUserSchema = z.object({
   jshshir,
   email: optionalEmail.optional(),
   phone: z.string().optional().default(''),
+  mobilePhone: z.string().optional().default(''),
   roleName: z.string().min(1, 'Role is required').optional(),
   // Several hats at once; when given, the first-ranked one becomes the
   // primary and `roleName` is ignored.
@@ -94,6 +99,7 @@ export const updateUserSchema = z
     jshshir: jshshir.optional(),
     email: optionalEmail.optional(),
     phone: z.string().optional(),
+    mobilePhone: z.string().optional(),
     roleName: z.string().min(1).optional(),
     roleNames: z.array(z.string().min(1)).min(1).max(10).optional(),
     branch: z.string().optional(),

@@ -116,6 +116,8 @@ const columns = computed(() => [
   { key: 'phone', label: t('users.fields.phone'), hidden: true },
   { key: 'position', label: t('users.fields.position'), hidden: true },
   { key: 'managerName', label: t('users.fields.manager'), hidden: true },
+  { key: 'functionalManagerName', label: t('users.fields.functionalManager'), hidden: true },
+  { key: 'mobilePhone', label: t('users.fields.mobilePhone'), hidden: true },
   { key: 'country', label: t('users.fields.country'), hidden: true },
   { key: 'birthDate', label: t('users.fields.birthDate'), hidden: true },
   { key: 'gender', label: t('users.fields.gender'), hidden: true },
@@ -172,8 +174,11 @@ const BLANK_USER = {
   jshshir: '',
   managerId: '',
   managerName: '',
+  functionalManagerId: '',
+  functionalManagerName: '',
   email: '',
   phone: '',
+  mobilePhone: '',
   roleNames: [ROLES.EMPLOYEE],
   branch: '',
   department: '',
@@ -342,7 +347,9 @@ async function onCreateSubmit() {
   try {
     // Normalised here as well as on the server, so the value the admin sees in
     // the table is the one they typed minus the spaces they read it out with.
-    const { managerName: _name, ...rest } = createForm
+    // The two *Name fields are what the pickers show, not fields the API
+    // knows: the ids beside them are the record.
+    const { managerName: _name, functionalManagerName: _functionalName, ...rest } = createForm
     const created = await usersApi.create({
       ...rest,
       jshshir: normalizeJshshir(createForm.jshshir),

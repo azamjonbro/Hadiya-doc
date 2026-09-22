@@ -72,7 +72,9 @@
           "recipients": "Qabul qiluvchilar",
           "send": "Yuborish",
           "sent": "Hisobot navbatga qo'yildi — tayyor bo'lganda xabar boradi"
-        }
+        },
+        "functionalManager": "Funksional rahbar",
+        "mobilePhone": "Mobile Number"
       },
       "ideas": {
         "title": "Savol yoki g'oya bormi?",
@@ -163,7 +165,9 @@
           "recipients": "Получатели",
           "send": "Отправить",
           "sent": "Отчёт поставлен в очередь — уведомление придёт, когда он готов"
-        }
+        },
+        "functionalManager": "Функциональный руководитель",
+        "mobilePhone": "Mobile Number"
       },
       "ideas": {
         "title": "Возникли идеи?",
@@ -254,7 +258,9 @@
           "recipients": "Recipients",
           "send": "Send",
           "sent": "Report queued — you will be notified when it is ready"
-        }
+        },
+        "functionalManager": "Functional manager",
+        "mobilePhone": "Mobile Number"
       },
       "ideas": {
         "title": "Questions or ideas?",

@@ -29,6 +29,7 @@ export const reportExportQuerySchema = z.object({
   branch: z.string().trim().max(60).optional(),
   groupId: objectId.optional(),
   managerId: objectId.optional(),
+  functionalManagerId: objectId.optional(),
   status: z.enum(['active', 'inactive']).optional(),
   // Date ranges on the person, not the row: when they last signed in, when
   // the account was made, when they completed something, when something
@@ -62,6 +63,7 @@ export const reportExportQuerySchema = z.object({
   jshshir: z.string().trim().max(40).optional(),
   email: z.string().trim().max(160).optional(),
   phone: z.string().trim().max(40).optional(),
+  mobilePhone: z.string().trim().max(40).optional(),
   position: z.string().trim().max(120).optional(),
   country: z.string().trim().max(80).optional(),
   address: z.string().trim().max(200).optional(),
