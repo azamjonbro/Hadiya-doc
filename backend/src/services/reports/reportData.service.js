@@ -5,6 +5,7 @@ import { VideoProgress } from '../../models/videoProgress.model.js'
 import { News } from '../../models/news.model.js'
 import { NewsView } from '../../models/newsView.model.js'
 import { Task } from '../../models/task.model.js'
+import { Group } from '../../models/group.model.js'
 import { roleRepository } from '../../repositories/role.repository.js'
 import { ApiError } from '../../utils/ApiError.js'
 import { DEFAULT_REPORT_LANG, reportTranslator } from './reportI18n.js'
@@ -23,6 +24,29 @@ import {
   dateRangeMatch,
 } from './reportHelpers.js'
 import { EXTRA_REPORT_BUILDERS } from './reportBuilders.extra.js'
+
+// The people the «add a filter» chips name (department, branch, group,
+// manager, account status) — one list, or null when none is set. Combined
+// with the role and scope lists below by intersection, so every user-based
+// report narrows the same way without each builder knowing the filters.
+async function resolvePopulationFilter(filters) {
+  const match = {}
+  if (filters.department) match.department = filters.department
+  if (filters.branch) match.branch = filters.branch
+  if (filters.managerId) match.managerId = toObjectId(filters.managerId)
+  if (filters.status) match.isActive = filters.status === 'active'
+  const lists = []
+  if (Object.keys(match).length) {
+    const ids = await User.distinct('_id', match)
+    lists.push(ids.map((id) => id.toString()))
+  }
+  if (filters.groupId) {
+    const group = await Group.findById(filters.groupId, { memberIds: 1 }).lean()
+    lists.push((group?.memberIds ?? []).map((id) => id.toString()))
+  }
+  if (!lists.length) return null
+  return lists.reduce((acc, list) => intersectIds(acc, list), null)
+}
 
 async function resolveRoleUserIds(roleName) {
   const role = await roleRepository.findByName(roleName)
@@ -370,14 +394,16 @@ export const reportDataService = {
     const builder = REPORT_BUILDERS[type]
     if (!builder) throw ApiError.badRequest('Unknown report type', 'UNKNOWN_REPORT_TYPE')
 
-    const [roleUserIds, scopeUserIds] = await Promise.all([
+    const [roleUserIds, scopeUserIds, filterUserIds] = await Promise.all([
       filters.role ? resolveRoleUserIds(filters.role) : null,
       scopedUserIds === undefined ? scopedUserIdsFor(actor) : scopedUserIds,
+      resolvePopulationFilter(filters),
     ])
 
-    // Both are "must be one of these" lists, so they combine the same way the
-    // builders combine their own: intersect, and treat null as no constraint.
-    const population = intersectIds(roleUserIds, scopeUserIds)
+    // All three are "must be one of these" lists, so they combine the same
+    // way the builders combine their own: intersect, and treat null as no
+    // constraint.
+    const population = intersectIds(intersectIds(roleUserIds, scopeUserIds), filterUserIds)
     const result = await builder({ ...filters, roleUserIds: population }, reportTranslator(lang))
 
     // AT-22: the cap is fine, the silence was not. A caller now always

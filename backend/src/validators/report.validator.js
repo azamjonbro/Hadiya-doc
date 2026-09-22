@@ -13,6 +13,16 @@ export const reportExportQuerySchema = z.object({
   pathId: objectId.optional(),
   dateFrom: z.coerce.date().optional(),
   dateTo: z.coerce.date().optional(),
+  // The report page's «add a filter» list (rasm «Прогресс учащихся»): who
+  // the report is about, narrowed the way the users list is. Each is
+  // resolved to a set of people and intersected with the role and scope
+  // fences in reportData.service.js, so every user-based report honours
+  // them at once.
+  department: z.string().trim().max(120).optional(),
+  branch: z.string().trim().max(60).optional(),
+  groupId: objectId.optional(),
+  managerId: objectId.optional(),
+  status: z.enum(['active', 'inactive']).optional(),
 })
 
 /**

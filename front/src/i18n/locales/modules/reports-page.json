@@ -8,6 +8,25 @@
         "rows": "Qatorlar: {n}",
         "loadedOf": "(ekranda {n} tasi)",
         "truncated": "Ekranda {shown} qator, jami {total} ta. To'liq ro'yxat uchun:"
+      },
+      "chips": {
+        "add": "Filtr qo'shish",
+        "allAdded": "Barcha filtrlar qo'shilgan",
+        "remove": "Filtrni olib tashlash",
+        "any": "Barchasi",
+        "allTime": "Butun davr",
+        "lastDays": "Oxirgi {n} kun",
+        "course": "Kurs",
+        "period": "Davr",
+        "role": "Rol",
+        "user": "Xodim",
+        "department": "Bo'lim",
+        "branch": "Filial",
+        "group": "Guruh",
+        "manager": "Rahbar",
+        "status": "Hisob holati",
+        "statusActive": "Faol",
+        "statusInactive": "Faol emas"
       }
     }
   },
@@ -20,6 +39,25 @@
         "rows": "Строк: {n}",
         "loadedOf": "(на экране {n})",
         "truncated": "На экране {shown} строк из {total}. Полный список:"
+      },
+      "chips": {
+        "add": "Добавить фильтр",
+        "allAdded": "Все фильтры добавлены",
+        "remove": "Убрать фильтр",
+        "any": "Все",
+        "allTime": "Весь период",
+        "lastDays": "Последние {n} дней",
+        "course": "Курс",
+        "period": "Период",
+        "role": "Роль",
+        "user": "Сотрудник",
+        "department": "Подразделение",
+        "branch": "Филиал",
+        "group": "Группа",
+        "manager": "Руководитель",
+        "status": "Статус учётной записи",
+        "statusActive": "Активен",
+        "statusInactive": "Неактивен"
       }
     }
   },
@@ -32,6 +70,25 @@
         "rows": "Rows: {n}",
         "loadedOf": "({n} on screen)",
         "truncated": "{shown} of {total} rows on screen. For the full list:"
+      },
+      "chips": {
+        "add": "Add filter",
+        "allAdded": "Every filter is added",
+        "remove": "Remove filter",
+        "any": "All",
+        "allTime": "All time",
+        "lastDays": "Last {n} days",
+        "course": "Course",
+        "period": "Period",
+        "role": "Role",
+        "user": "Employee",
+        "department": "Department",
+        "branch": "Branch",
+        "group": "Group",
+        "manager": "Manager",
+        "status": "Account status",
+        "statusActive": "Active",
+        "statusInactive": "Inactive"
       }
     }
   }

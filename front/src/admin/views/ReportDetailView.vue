@@ -14,23 +14,20 @@
 import { computed, onMounted, reactive, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from 'vue-router'
-import { ROLES } from '@lms/shared'
-import { roleLabel } from '@/utils/roleLabel'
 import { reportsApi } from '@/services/reports'
-import { coursesApi } from '@/services/courses'
 import { useToast } from '@/composables/useToast'
 import { onClickOutside } from '@/composables/onClickOutside'
 import { apiErrorText } from '@/utils/apiError'
 import AppButton from '@/components/ui/AppButton.vue'
 import AppInput from '@/components/ui/AppInput.vue'
-import FilterBar from '@/components/ui/FilterBar.vue'
+import ReportFilterChips from '@/admin/components/reports/ReportFilterChips.vue'
 import Icon from '@/components/ui/Icon.vue'
 import Pagination from '@/components/ui/Pagination.vue'
 import ProgressRing from '@/components/ui/ProgressRing.vue'
 import Skeleton from '@/components/ui/Skeleton.vue'
 import EmptyState from '@/components/ui/EmptyState.vue'
 
-const { t, te } = useI18n()
+const { t } = useI18n()
 const route = useRoute()
 const router = useRouter()
 const toast = useToast()
@@ -46,18 +43,24 @@ function typeLabel(key) {
 
 // ------------------------------------------------------------- filters
 
-const roleOptions = Object.values(ROLES).map((r) => ({ value: r, label: roleLabel(r, { t, te }) }))
-const courseOptions = ref([])
-const filters = reactive({ role: '', courseId: '', userId: '', userLabel: '', dateFrom: '', dateTo: '' })
-const filterFields = computed(() => [
-  { key: 'role', type: 'select', label: t('reports.filters.role'), placeholder: t('reports.filters.allRoles'), options: roleOptions },
-  { key: 'courseId', type: 'select', width: 'w-56', label: t('reports.filters.course'), placeholder: t('reports.filters.allCourses'), options: courseOptions.value },
-  { key: 'userId', type: 'user', width: 'w-56', displayKey: 'userLabel', label: t('reports.filters.user'), placeholder: t('reports.filters.userPlaceholder') },
-  { key: 'dateFrom', type: 'date', label: t('reports.filters.dateFrom'), placeholder: t('reports.filters.datePlaceholder') },
-  { key: 'dateTo', type: 'date', label: t('reports.filters.dateTo'), placeholder: t('reports.filters.datePlaceholder') },
-])
+// The chips write here; the labels (`userLabel`, `managerLabel`) are what
+// the chips show and not filters the server knows.
+const filters = ref({
+  courseId: '',
+  dateFrom: '',
+  dateTo: '',
+  role: '',
+  userId: '',
+  userLabel: '',
+  department: '',
+  branch: '',
+  groupId: '',
+  managerId: '',
+  managerLabel: '',
+  status: '',
+})
 const queryFilters = computed(() => {
-  const { userLabel, ...rest } = filters
+  const { userLabel, managerLabel, ...rest } = filters.value
   return rest
 })
 
@@ -87,15 +90,7 @@ watch(queryFilters, () => {
 })
 watch(type, load)
 
-onMounted(async () => {
-  load()
-  try {
-    const { items } = await coursesApi.list({ limit: 100 })
-    courseOptions.value = items.map((c) => ({ value: c.id, label: c.title }))
-  } catch {
-    courseOptions.value = []
-  }
-})
+onMounted(load)
 
 // ----------------------------------------------------------- columns
 
@@ -258,10 +253,8 @@ async function queueFull() {
       </div>
     </div>
 
-    <!-- The filter row -->
-    <div class="mt-4 rounded-xl border border-border bg-surface px-4 py-3">
-      <FilterBar v-model="filters" align="end" :fields="filterFields" :clear-label="t('reports.filters.clear')" />
-    </div>
+    <!-- The filter row: «Filtr qo'shish» and the chips -->
+    <ReportFilterChips v-model="filters" class="mt-4" />
 
     <p v-if="errorMessage" class="mt-4 text-small text-danger">{{ errorMessage }}</p>
 
