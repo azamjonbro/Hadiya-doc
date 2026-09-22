@@ -150,6 +150,32 @@ describe('projects · library folders', () => {
     })
   })
 
+  describe('folders inside a project', () => {
+    test('a folder takes the project\'s access, lists under it, and lifts its contents when deleted', async () => {
+      const project = await projectService.create(asAuthor(owner), { name: `Root ${stamp}` })
+      projectIds.push(new mongoose.Types.ObjectId(project.id))
+      await projectService.addMembers(asAuthor(owner), project.id, { userIds: [editor._id.toString()], access: 'EDIT' })
+
+      // An editor may make a folder; a stranger may not.
+      const folder = await projectService.create(asAuthor(editor), { name: `Sub ${stamp}`, parentId: project.id })
+      projectIds.push(new mongoose.Types.ObjectId(folder.id))
+      assert.equal(folder.parentId, project.id)
+      await assert.rejects(projectService.create(asAuthor(stranger), { name: 'x', parentId: project.id }), /Project not found|only view/)
+
+      // The folder is visible to the project's people, with the root's access.
+      const seen = await projectService.getById(asAuthor(editor), folder.id)
+      assert.equal(seen.access, 'EDIT')
+      assert.deepEqual(seen.path.map((p) => p.id), [project.id])
+      const parent = await projectService.getById(asAuthor(owner), project.id)
+      assert.deepEqual(parent.folders.map((f) => f.id), [folder.id])
+
+      // A course filed in the folder goes up to the project when the folder goes.
+      const course = await makeCourse(`In folder ${stamp}`, folder.id)
+      await projectService.remove(asAuthor(editor), folder.id)
+      assert.equal(String((await Course.findById(course._id)).projectId), project.id)
+    })
+  })
+
   describe('courses are filed, filtered, and released', () => {
     test('the list filter shows a project its own courses, and the general library the rest', async () => {
       const project = await projectService.create(asAuthor(owner), { name: `Filter ${stamp}` })

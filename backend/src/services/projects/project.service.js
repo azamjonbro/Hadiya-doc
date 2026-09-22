@@ -34,6 +34,21 @@ function accessFor(project, actor) {
   return memberOf(project, actor.id)?.access ?? null
 }
 
+// A folder answers with its root project's owner and members.
+async function rootOf(project) {
+  let current = project
+  for (let depth = 0; current.parentId && depth < 20; depth += 1) {
+    const parent = await Project.findById(current.parentId)
+    if (!parent) break
+    current = parent
+  }
+  return current
+}
+async function accessTo(project, actor) {
+  const root = project.parentId ? await rootOf(project) : project
+  return accessFor(root, actor)
+}
+
 // A name card, the same shape everywhere a member is drawn: the reference's
 // row is avatar, name, role badge, email — nothing a learner's profile
 // would need `user:read` for.
@@ -54,16 +69,17 @@ async function cardsFor(users) {
   return users.map((u) => toCard(u, roleRepository.effectiveFrom(u, roleById)))
 }
 
-function toPublicProject(project, { actor, courseCount = 0, owner = null, members = [] } = {}) {
+function toPublicProject(project, { actor, courseCount = 0, owner = null, members = [], access } = {}) {
   return {
     id: project._id.toString(),
     name: project.name,
+    parentId: project.parentId ? String(project.parentId) : null,
     ownerId: String(project.ownerId),
     owner,
     members,
     memberCount: project.members.length,
     courseCount,
-    access: actor ? accessFor(project, actor) : null,
+    access: access !== undefined ? access : actor ? accessFor(project, actor) : null,
     createdAt: project.createdAt,
     updatedAt: project.updatedAt,
   }
@@ -75,12 +91,12 @@ async function requireProject(id) {
   return project
 }
 
-function requireVisible(project, actor) {
-  if (!accessFor(project, actor)) throw ApiError.notFound('Project not found', 'PROJECT_NOT_FOUND')
+async function requireVisible(project, actor) {
+  if (!(await accessTo(project, actor))) throw ApiError.notFound('Project not found', 'PROJECT_NOT_FOUND')
 }
 
-function requireManage(project, actor) {
-  if (accessFor(project, actor) !== 'OWNER') {
+async function requireManage(project, actor) {
+  if ((await accessTo(project, actor)) !== 'OWNER') {
     throw ApiError.forbidden('Only the project owner can change the project', 'PROJECT_OWNER_ONLY')
   }
 }
@@ -99,15 +115,27 @@ export const projectService = {
   // person is in. Sorted by name — a folder list is read, not scrolled by
   // recency.
   async list(actor) {
-    const filter = isAdmin(actor) ? {} : { $or: [{ ownerId: actor.id }, { 'members.userId': actor.id }] }
-    const projects = await Project.find(filter).sort({ name: 1 }).lean()
-    const counts = await countCourses(projects.map((p) => p._id))
-    return projects.map((p) => toPublicProject(p, { actor, courseCount: counts.get(String(p._id)) ?? 0 }))
+    const all = await Project.find({}).sort({ name: 1 }).lean()
+    const byId = new Map(all.map((p) => [String(p._id), p]))
+    // Each record answers with its root: a folder is visible when the
+    // project it sits in is.
+    const rootFor = (p) => {
+      let current = p
+      for (let depth = 0; current.parentId && depth < 20; depth += 1) {
+        const parent = byId.get(String(current.parentId))
+        if (!parent) break
+        current = parent
+      }
+      return current
+    }
+    const visible = all.filter((p) => accessFor(rootFor(p), actor))
+    const counts = await countCourses(visible.map((p) => p._id))
+    return visible.map((p) => toPublicProject(p, { actor, access: accessFor(rootFor(p), actor), courseCount: counts.get(String(p._id)) ?? 0 }))
   },
 
   async getById(actor, id) {
     const project = await requireProject(id)
-    requireVisible(project, actor)
+    await requireVisible(project, actor)
     return this.detail(project, actor)
   },
 
@@ -127,19 +155,47 @@ export const projectService = {
       })
       .filter(Boolean)
     const counts = await countCourses([project._id])
-    return toPublicProject(project, { actor, owner, members, courseCount: counts.get(String(project._id)) ?? 0 })
+    // A folder carries its path up to the root, for the breadcrumb, and
+    // the folders directly inside it, for the table.
+    const path = []
+    let current = project
+    for (let depth = 0; current.parentId && depth < 20; depth += 1) {
+      const parent = await Project.findById(current.parentId)
+      if (!parent) break
+      path.unshift({ id: String(parent._id), name: parent.name })
+      current = parent
+    }
+    const children = await Project.find({ parentId: project._id }).sort({ name: 1 }).lean()
+    const childCounts = await countCourses(children.map((c) => c._id))
+    const access = await accessTo(project, actor)
+    return {
+      ...toPublicProject(project, { actor, owner, members, access, courseCount: counts.get(String(project._id)) ?? 0 }),
+      path,
+      folders: children.map((c) => ({ id: String(c._id), name: c.name, courseCount: childCounts.get(String(c._id)) ?? 0, createdAt: c.createdAt })),
+    }
   },
 
   // Made first, named after: the reference creates «Новый проект (Ism
   // Familiya)» the moment "+" is pressed and opens the rename dialog over
   // it. A name given up front is honoured as is.
-  async create(actor, { name } = {}) {
+  async create(actor, { name, parentId = null } = {}) {
     let title = name?.trim()
+    // A folder inside a project: the person must be able to fill the
+    // project, and the folder takes the root's owner so access stays one
+    // decision.
+    let ownerId = actor.id
+    if (parentId) {
+      const parent = await requireProject(parentId)
+      const access = await accessTo(parent, actor)
+      if (access !== 'OWNER' && access !== 'EDIT') throw ApiError.forbidden('You can only view this project', 'PROJECT_VIEW_ONLY')
+      ownerId = (await rootOf(parent)).ownerId
+      if (!title) title = 'Yangi papka'
+    }
     if (!title) {
       const me = await userRepository.findById(actor.id)
       title = `Yangi loyiha (${me?.fullName ?? ''})`.replace(' ()', '')
     }
-    const project = await Project.create({ name: title, ownerId: actor.id, createdBy: actor.id, members: [] })
+    const project = await Project.create({ name: title, ownerId, createdBy: actor.id, members: [], parentId: parentId || null })
     await auditLogRepository.record({
       actor: actor.id,
       action: 'PROJECT_CREATED',
@@ -152,7 +208,12 @@ export const projectService = {
 
   async rename(actor, id, name) {
     const project = await requireProject(id)
-    requireManage(project, actor)
+    // A folder is renamed by anyone who may fill the project; the project
+    // itself only by its owner.
+    if (project.parentId) {
+      const access = await accessTo(project, actor)
+      if (access !== 'OWNER' && access !== 'EDIT') throw ApiError.forbidden('You can only view this project', 'PROJECT_VIEW_ONLY')
+    } else await requireManage(project, actor)
     const previous = project.name
     project.name = name.trim()
     await project.save()
@@ -172,8 +233,15 @@ export const projectService = {
   // tidied up a folder is the wrong trade.
   async remove(actor, id) {
     const project = await requireProject(id)
-    requireManage(project, actor)
-    const result = await Course.updateMany({ projectId: project._id }, { $set: { projectId: null } })
+    if (project.parentId) {
+      const access = await accessTo(project, actor)
+      if (access !== 'OWNER' && access !== 'EDIT') throw ApiError.forbidden('You can only view this project', 'PROJECT_VIEW_ONLY')
+    } else await requireManage(project, actor)
+    // Deleting a folder lifts its contents one level up; deleting a
+    // project releases them to the general library.
+    const target = project.parentId ?? null
+    const result = await Course.updateMany({ projectId: project._id }, { $set: { projectId: target } })
+    await Project.updateMany({ parentId: project._id }, { $set: { parentId: target } })
     await Project.deleteOne({ _id: project._id })
     await auditLogRepository.record({
       actor: actor.id,
@@ -189,7 +257,7 @@ export const projectService = {
   // row; adding the owner is a no-op — they are already everything.
   async addMembers(actor, id, { userIds, access }) {
     const project = await requireProject(id)
-    requireManage(project, actor)
+    await requireManage(project, actor)
     const users = await userRepository.findByIds(userIds)
     const known = new Set(users.map((u) => String(u._id)))
     let added = 0
@@ -216,7 +284,7 @@ export const projectService = {
 
   async setMemberAccess(actor, id, userId, access) {
     const project = await requireProject(id)
-    requireManage(project, actor)
+    await requireManage(project, actor)
     const member = memberOf(project, userId)
     if (!member) throw ApiError.notFound('Member not found', 'PROJECT_MEMBER_NOT_FOUND')
     member.access = access
@@ -227,7 +295,7 @@ export const projectService = {
   async removeMember(actor, id, userId) {
     const project = await requireProject(id)
     // A member may leave on their own; anyone else's row takes the owner.
-    if (String(userId) !== String(actor.id)) requireManage(project, actor)
+    if (String(userId) !== String(actor.id)) await requireManage(project, actor)
     const before = project.members.length
     project.members = project.members.filter((m) => String(m.userId) !== String(userId))
     if (project.members.length === before) throw ApiError.notFound('Member not found', 'PROJECT_MEMBER_NOT_FOUND')
@@ -261,7 +329,7 @@ export const projectService = {
     if (!projectId) return
     const project = await Project.findById(projectId)
     if (!project) throw ApiError.badRequest('Project not found', 'PROJECT_NOT_FOUND')
-    const access = accessFor(project, actor)
+    const access = await accessTo(project, actor)
     if (access !== 'OWNER' && access !== 'EDIT') {
       throw ApiError.forbidden('You can only view this project', 'PROJECT_VIEW_ONLY')
     }

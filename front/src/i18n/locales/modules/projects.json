@@ -74,6 +74,14 @@
         "unfiled": "Umumiy kutubxona (loyihasiz)",
         "inProject": "Loyiha: {name}",
         "done": "«{title}» loyihaga ko'chirildi"
+      },
+      "folder": {
+        "one": "Papka",
+        "new": "Yangi papka",
+        "name": "Papka nomi",
+        "placeholder": "masalan: 2026 yil kurslari",
+        "path": "Joylashuv",
+        "inherits": "Papkaga kirish huquqi loyihanikidan olinadi — a'zolar loyihada boshqariladi."
       }
     },
     "library": {
@@ -230,6 +238,14 @@
         "unfiled": "Общая библиотека (без проекта)",
         "inProject": "Проект: {name}",
         "done": "«{title}» перенесён в проект"
+      },
+      "folder": {
+        "one": "Папка",
+        "new": "Новая папка",
+        "name": "Название папки",
+        "placeholder": "например: Курсы 2026",
+        "path": "Расположение",
+        "inherits": "Доступ к папке наследуется от проекта — участники управляются в проекте."
       }
     },
     "library": {
@@ -386,6 +402,14 @@
         "unfiled": "General library (no project)",
         "inProject": "Project: {name}",
         "done": "“{title}” moved into the project"
+      },
+      "folder": {
+        "one": "Folder",
+        "new": "New folder",
+        "name": "Folder name",
+        "placeholder": "e.g. 2026 courses",
+        "path": "Location",
+        "inherits": "A folder takes its access from the project — members are managed on the project."
       }
     },
     "library": {

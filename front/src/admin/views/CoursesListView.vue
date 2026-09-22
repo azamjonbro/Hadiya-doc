@@ -20,6 +20,7 @@ import ProjectManageModal from '@/admin/components/projects/ProjectManageModal.v
 import AddMembersModal from '@/admin/components/projects/AddMembersModal.vue'
 import FileCourseModal from '@/admin/components/projects/FileCourseModal.vue'
 import Avatar from '@/components/ui/Avatar.vue'
+import Modal from '@/components/ui/Modal.vue'
 import Tooltip from '@/components/ui/Tooltip.vue'
 import { projectsApi } from '@/services/projects'
 import { useProjectsStore } from '@/stores/projects'
@@ -121,7 +122,29 @@ function onProjectUpdated(updated) {
 }
 function onProjectDeleted(id) {
   projectsStore.forget(id)
-  router.replace('/bos/courses')
+  router.replace(project.value?.parentId ? `/bos/projects/${project.value.parentId}` : '/bos/courses')
+}
+
+// «Yaratish → Papka» (rasm «Создать»): a folder inside this project, named
+// on the spot, opened straight away.
+const folderOpen = ref(false)
+const folderName = ref('')
+const folderSaving = ref(false)
+async function createFolder() {
+  const name = folderName.value.trim()
+  if (!name) return
+  folderSaving.value = true
+  try {
+    const folder = await projectsApi.create({ name, parentId: projectId.value })
+    projectsStore.upsert(folder)
+    folderOpen.value = false
+    folderName.value = ''
+    router.push(`/bos/projects/${folder.id}`)
+  } catch (error) {
+    toast.error(apiErrorText(error))
+  } finally {
+    folderSaving.value = false
+  }
 }
 async function onCourseFiled(course) {
   fileOpen.value = false
@@ -289,6 +312,9 @@ const createRef = ref(null)
 onClickOutside(createRef, () => (createOpen.value = false))
 const createItems = computed(() =>
   [
+    ...(projectId.value
+      ? [{ key: 'folder', icon: 'grid', tone: 'bg-amber-100 text-amber-700', labelKey: 'projects.folder.one', action: () => { folderName.value = ''; folderOpen.value = true }, permission: 'course:create' }]
+      : []),
     { key: 'course', icon: 'layers', tone: 'bg-sky-100 text-sky-600', labelKey: 'portal.courses.typeCourse', to: withProject('/bos/courses/new'), permission: 'course:create' },
     // Inside a project: bring in a course that already exists (rasm 4's
     // "load or drag materials here"). Absent from the whole library, where
@@ -345,6 +371,12 @@ watch(
          Create menu -->
     <div class="flex flex-wrap items-start justify-between gap-3">
       <div v-if="projectId" class="min-w-0">
+        <nav v-if="project?.path?.length" class="mb-1 flex flex-wrap items-center gap-1 text-[13px] text-ink-muted" :aria-label="t('projects.folder.path')">
+          <template v-for="(crumb, index) in project.path" :key="crumb.id">
+            <router-link :to="`/bos/projects/${crumb.id}`" class="hover:text-ink">{{ crumb.name }}</router-link>
+            <Icon v-if="index < project.path.length - 1" name="chevron-right" size="12" class="text-ink-faint" />
+          </template>
+        </nav>
         <h1 class="truncate text-[24px] font-semibold text-ink">{{ project?.name ?? '…' }}</h1>
         <!-- Rasn 4: who works in the folder — the owner's avatar, the
              members', a "+" that adds more and "···" for the rest -->
@@ -487,8 +519,8 @@ watch(
     </div>
 
     <!-- The table (rasn 2): checkbox, icon + name, type, assignments,
-         author, added; 56px rows -->
-    <div v-else-if="items.length" class="mt-4 overflow-x-auto">
+         author, added; 56px rows. In a project, its folders come first. -->
+    <div v-else-if="items.length || project?.folders?.length" class="mt-4 overflow-x-auto">
       <table class="w-full min-w-[860px] text-[14px]">
         <thead>
           <tr class="h-11 border-b border-border text-left text-[13px] text-ink-muted">
@@ -502,6 +534,25 @@ watch(
           </tr>
         </thead>
         <tbody>
+          <tr
+            v-for="folder in project?.folders ?? []"
+            :key="`folder-${folder.id}`"
+            class="group h-14 cursor-pointer border-b border-border transition-default hover:bg-surface-2"
+            @click="router.push(`/bos/projects/${folder.id}`)"
+          >
+            <td class="pl-3" @click.stop><input type="checkbox" class="h-4 w-4 rounded border-border-strong" disabled /></td>
+            <td class="pr-2">
+              <span class="flex items-center gap-3">
+                <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-amber-100 text-amber-600 dark:bg-amber-500/15 dark:text-amber-300"><Icon name="grid" size="18" /></span>
+                <span class="block truncate text-ink">{{ folder.name }}</span>
+              </span>
+            </td>
+            <td class="px-2 text-ink">{{ t('projects.folder.one') }}</td>
+            <td class="px-2 text-ink">—</td>
+            <td class="px-2 text-ink">{{ folder.courseCount ? t('library.count', { n: folder.courseCount }) : '—' }}</td>
+            <td class="px-2 text-ink-muted">{{ formatDate(folder.createdAt, locale) }}</td>
+            <td class="pr-3"></td>
+          </tr>
           <tr
             v-for="course in items"
             :key="course.id"
@@ -550,7 +601,7 @@ watch(
     </div>
 
     <!-- Rasn 4: an empty folder asks for materials and names the formats -->
-    <div v-else-if="projectId" class="mt-6 flex flex-col items-center px-6 py-14 text-center">
+    <div v-else-if="projectId && !project?.folders?.length" class="mt-6 flex flex-col items-center px-6 py-14 text-center">
       <div class="relative flex h-40 w-40 items-center justify-center rounded-full bg-surface-2">
         <Icon name="file-text" size="56" class="text-ink-faint" />
         <span class="absolute bottom-5 right-4 h-12 w-2 rotate-45 rounded-full bg-primary" aria-hidden="true"></span>
@@ -569,6 +620,14 @@ watch(
     </div>
     <EmptyState v-else-if="view" :icon="view === 'favorites' ? 'star' : view === 'shared' ? 'users' : 'clock'" :title="t(`admin.views.${view}.empty`)" :description="t(`admin.views.${view}.hint`)" class="mt-6" />
     <EmptyState v-else icon="book-open" :title="t('courses.empty')" class="mt-6" />
+
+    <Modal v-model="folderOpen" :title="t('projects.folder.new')" size="sm">
+      <AppInput v-if="folderOpen" v-model="folderName" autofocus :label="t('projects.folder.name')" :placeholder="t('projects.folder.placeholder')" @keyup.enter="createFolder" />
+      <template #footer>
+        <AppButton variant="secondary" @click="folderOpen = false">{{ t('common.cancel') }}</AppButton>
+        <AppButton :disabled="!folderName.trim()" :loading="folderSaving" @click="createFolder">{{ t('common.create') }}</AppButton>
+      </template>
+    </Modal>
 
     <template v-if="project">
       <ProjectManageModal v-model="manageOpen" :project="project" @updated="onProjectUpdated" @deleted="onProjectDeleted" />

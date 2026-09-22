@@ -39,7 +39,7 @@ const nameInput = ref(null)
 const saving = ref(false)
 const addOpen = ref(false)
 
-const canManage = computed(() => props.project.access === 'OWNER')
+const canManage = computed(() => props.project.access === 'OWNER' || (props.project.parentId && props.project.access === 'EDIT'))
 
 watch(
   () => props.modelValue,
@@ -124,12 +124,14 @@ async function remove() {
       <span class="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-[13px] tabular-nums text-ink-faint">{{ name.length }}/{{ NAME_MAX }}</span>
     </div>
 
-    <div class="mt-7 flex flex-wrap items-center justify-between gap-3">
+    <!-- A folder has no members of its own: it answers with its project's -->
+    <p v-if="project.parentId" class="mt-5 text-[13px] text-ink-muted">{{ t('projects.folder.inherits') }}</p>
+    <div v-if="!project.parentId" class="mt-7 flex flex-wrap items-center justify-between gap-3">
       <h3 class="text-[18px] font-medium text-ink">{{ t('projects.manage.members') }}</h3>
       <AppButton v-if="canManage" variant="outline" icon="user-plus" @click="addOpen = true">{{ t('projects.members.addTitle') }}</AppButton>
     </div>
 
-    <ul class="mt-3 divide-y divide-border border-t border-border">
+    <ul v-if="!project.parentId" class="mt-3 divide-y divide-border border-t border-border">
       <li v-if="project.owner" class="flex items-center gap-3 py-3">
         <Avatar :name="project.owner.fullName" :src="project.owner.avatar" size="md" />
         <span class="min-w-0 flex-1">

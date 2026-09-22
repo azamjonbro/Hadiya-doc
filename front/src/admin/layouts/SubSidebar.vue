@@ -118,7 +118,7 @@ async function createProject() {
         </Tooltip>
       </div>
       <ul class="mt-2 max-h-[40vh] space-y-0.5 overflow-y-auto" :aria-label="t('projects.title')">
-        <li v-for="project in projects.items" :key="project.id">
+        <li v-for="project in projects.items.filter((p) => !p.parentId)" :key="project.id">
           <router-link
             :to="`/bos/projects/${project.id}`"
             class="flex items-center gap-2 rounded-lg px-3 py-2 text-[14px] transition-default"
@@ -130,7 +130,7 @@ async function createProject() {
             <span v-if="project.courseCount" class="shrink-0 text-[12px] text-ink-faint">{{ project.courseCount }}</span>
           </router-link>
         </li>
-        <li v-if="projects.loaded && !projects.items.length" class="px-3 py-2 text-[13px] text-ink-faint">
+        <li v-if="projects.loaded && !projects.items.some((p) => !p.parentId)" class="px-3 py-2 text-[13px] text-ink-faint">
           {{ t('projects.none') }}
         </li>
       </ul>

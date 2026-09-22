@@ -31,6 +31,10 @@ const projectSchema = new Schema(
     // admin) who may rename or delete the project.
     ownerId: { type: Schema.Types.ObjectId, ref: 'User', required: true },
     members: { type: [memberSchema], default: [] },
+    // A folder inside a project (the reference's «Папка»): the same record
+    // with a parent. Who may open or fill it is decided by the root
+    // project's owner and members — a folder has no membership of its own.
+    parentId: { type: Schema.Types.ObjectId, ref: 'Project', default: null },
     createdBy: { type: Schema.Types.ObjectId, ref: 'User', required: true },
   },
   { timestamps: true }
@@ -38,5 +42,6 @@ const projectSchema = new Schema(
 
 projectSchema.index({ ownerId: 1 })
 projectSchema.index({ 'members.userId': 1 })
+projectSchema.index({ parentId: 1 })
 
 export const Project = model('Project', projectSchema)

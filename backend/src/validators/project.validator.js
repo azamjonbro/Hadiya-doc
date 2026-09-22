@@ -11,6 +11,8 @@ export const projectNameSchema = z.object({
 // server after its owner, the way the reference does, and renamed after.
 export const createProjectSchema = z.object({
   name: z.string().trim().min(1).max(255).optional(),
+  // Set when making a folder inside a project.
+  parentId: objectId.nullable().optional(),
 })
 
 const access = z.enum(['VIEW', 'EDIT'])
