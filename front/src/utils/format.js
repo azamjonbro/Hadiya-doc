@@ -25,6 +25,9 @@ export function formatHours(hours, t) {
 // written out here and used whenever the interface is in Uzbek; every other
 // locale keeps the browser's own.
 const UZ_MONTHS = ['yan', 'fev', 'mar', 'apr', 'may', 'iyun', 'iyul', 'avg', 'sen', 'okt', 'noy', 'dek']
+const UZ_MONTHS_LONG = ['yanvar', 'fevral', 'mart', 'aprel', 'may', 'iyun', 'iyul', 'avgust', 'sentabr', 'oktabr', 'noyabr', 'dekabr']
+// Sunday first, like Date#getDay.
+const UZ_WEEKDAYS = ['Yak', 'Du', 'Se', 'Chor', 'Pay', 'Jum', 'Shan']
 const isUzbek = (locale) => String(locale ?? '').toLowerCase().startsWith('uz')
 const two = (n) => String(n).padStart(2, '0')
 
@@ -77,4 +80,29 @@ export function formatHms(seconds) {
   const m = Math.floor((total % 3600) / 60)
   const s = total % 60
   return [h, m, s].map((n) => String(n).padStart(2, '0')).join(':')
+}
+
+/** "sentabr 2026" — a calendar's heading. */
+export function formatMonthYear(date, locale) {
+  const value = new Date(date)
+  if (isUzbek(locale)) return `${UZ_MONTHS_LONG[value.getMonth()]} ${value.getFullYear()}`
+  return value.toLocaleDateString(locale, { month: 'long', year: 'numeric' })
+}
+
+/** The seven column headings of a Monday-first calendar. */
+export function weekdayNames(locale) {
+  const monday = new Date(2024, 0, 1)
+  return Array.from({ length: 7 }, (_, i) => {
+    const day = new Date(monday.getTime() + i * 86400e3)
+    return isUzbek(locale) ? UZ_WEEKDAYS[day.getDay()] : day.toLocaleDateString(locale, { weekday: 'short' })
+  })
+}
+
+/** "12-sen, 14:30" — a date with a time, as an event list writes it. */
+export function formatWhen(value, locale) {
+  if (!value) return '—'
+  const date = new Date(value)
+  const time = `${two(date.getHours())}:${two(date.getMinutes())}`
+  if (isUzbek(locale)) return `${date.getDate()}-${UZ_MONTHS[date.getMonth()]}, ${time}`
+  return date.toLocaleString(locale, { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })
 }

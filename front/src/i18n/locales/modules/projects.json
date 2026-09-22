@@ -161,6 +161,14 @@
         "summary": "Qoida:",
         "auto": "A'zolar qoida bo'yicha avtomatik yig'iladi"
       }
+    },
+    "events": {
+      "views": {
+        "week": "Hafta"
+      },
+      "fields": {
+        "trainers": "Trener"
+      }
     }
   },
   "ru": {
@@ -325,6 +333,14 @@
         "summary": "Правило:",
         "auto": "Участники подбираются по правилу автоматически"
       }
+    },
+    "events": {
+      "views": {
+        "week": "Неделя"
+      },
+      "fields": {
+        "trainers": "Тренер"
+      }
     }
   },
   "en": {
@@ -488,6 +504,14 @@
         "hint": "Pick at least one condition. Conditions of one kind combine with OR, of different kinds with AND.",
         "summary": "Rule:",
         "auto": "Members are gathered by the rule automatically"
+      }
+    },
+    "events": {
+      "views": {
+        "week": "Week"
+      },
+      "fields": {
+        "trainers": "Trainer"
       }
     }
   }
