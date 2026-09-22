@@ -2,7 +2,25 @@
   "uz": {
     "admin": {
       "section": {
-        "allMaterials": "Barcha materiallar"
+        "allMaterials": "Barcha materiallar",
+        "recent": "Yaqindagilar",
+        "favorites": "Sevimlilar",
+        "shared": "Menga ochiq",
+        "tools": "Boshqa"
+      },
+      "views": {
+        "recent": {
+          "empty": "Hali ochilgan kurslar yo'q",
+          "hint": "Siz ochgan oxirgi 20 ta kurs shu yerda turadi."
+        },
+        "favorites": {
+          "empty": "Sevimlilar bo'sh",
+          "hint": "Ro'yxatda kurs qatoridagi ⭐ ni bosing — u shu yerga tushadi."
+        },
+        "shared": {
+          "empty": "Sizga ochilgan loyihalar yo'q",
+          "hint": "Boshqa egasi bo'lgan loyihaga a'zo qilinsangiz, uning kurslari shu yerda ko'rinadi."
+        }
       }
     },
     "projects": {
@@ -140,7 +158,25 @@
   "ru": {
     "admin": {
       "section": {
-        "allMaterials": "Все материалы"
+        "allMaterials": "Все материалы",
+        "recent": "Недавние",
+        "favorites": "Избранное",
+        "shared": "Доступные мне",
+        "tools": "Прочее"
+      },
+      "views": {
+        "recent": {
+          "empty": "Недавно открытых курсов нет",
+          "hint": "Здесь последние 20 курсов, которые вы открывали."
+        },
+        "favorites": {
+          "empty": "В избранном пусто",
+          "hint": "Нажмите ⭐ в строке курса — он появится здесь."
+        },
+        "shared": {
+          "empty": "Вам не открыли ни одного проекта",
+          "hint": "Когда вас добавят в чужой проект, его курсы будут здесь."
+        }
       }
     },
     "projects": {
@@ -278,7 +314,25 @@
   "en": {
     "admin": {
       "section": {
-        "allMaterials": "All materials"
+        "allMaterials": "All materials",
+        "recent": "Recent",
+        "favorites": "Favourites",
+        "shared": "Shared with me",
+        "tools": "More"
+      },
+      "views": {
+        "recent": {
+          "empty": "Nothing opened lately",
+          "hint": "The last 20 courses you opened live here."
+        },
+        "favorites": {
+          "empty": "No favourites yet",
+          "hint": "Press ⭐ on a course row — it lands here."
+        },
+        "shared": {
+          "empty": "No projects shared with you",
+          "hint": "When someone adds you to their project, its courses show here."
+        }
       }
     },
     "projects": {

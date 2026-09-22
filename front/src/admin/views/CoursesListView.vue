@@ -23,8 +23,10 @@ import Avatar from '@/components/ui/Avatar.vue'
 import Tooltip from '@/components/ui/Tooltip.vue'
 import { projectsApi } from '@/services/projects'
 import { useProjectsStore } from '@/stores/projects'
+import { useCourseMarksStore } from '@/stores/courseMarks'
 import { useToast } from '@/composables/useToast'
 import { apiErrorText } from '@/utils/apiError'
+import { formatDate } from '@/utils/format'
 import { onClickOutside } from '@/composables/onClickOutside'
 
 const { t, locale } = useI18n()
@@ -40,6 +42,46 @@ const projectsStore = useProjectsStore()
 // filing what it makes into the folder. The table is the same either way,
 // which is why this is a mode and not a second view.
 const projectId = computed(() => (route.name === 'admin-project' ? String(route.params.id) : ''))
+
+// The reference's views of the library (rasm «Учебные материалы»):
+// «Yaqindagilar» — what this person opened lately, «Sevimlilar» — what
+// they starred, «Menga ochiq» — courses in projects others let them into.
+// The first two are marks kept in this browser (courseMarks store); the
+// third is read off the projects. None of them page: they are short by
+// nature, and a bookmark list with page 2 is a list nobody scrolls.
+const VIEWS = ['recent', 'favorites', 'shared']
+const view = computed(() => (!projectId.value && VIEWS.includes(route.query.view) ? route.query.view : ''))
+const marks = useCourseMarksStore()
+const viewTitleKey = computed(() => ({ recent: 'admin.section.recent', favorites: 'admin.section.favorites', shared: 'admin.section.shared' })[view.value] ?? 'admin.section.allMaterials')
+
+async function loadView() {
+  loading.value = true
+  errorMessage.value = ''
+  try {
+    let rows = []
+    if (view.value === 'shared') {
+      await projectsStore.load()
+      const others = projectsStore.items.filter((p) => p.access && p.access !== 'OWNER')
+      const pages = await Promise.all(others.map((p) => coursesApi.list({ page: 1, limit: 100, projectId: p.id }).catch(() => ({ items: [] }))))
+      rows = pages.flatMap((page) => page.items)
+    } else {
+      const ids = view.value === 'recent' ? marks.recent : marks.favorites
+      // One request per mark, and a mark whose course is gone is dropped
+      // rather than shown as a dead row.
+      const found = await Promise.all(ids.map((id) => coursesApi.getById(id).catch(() => null)))
+      rows = found.filter(Boolean)
+      for (const id of ids) if (!found[ids.indexOf(id)]) marks.forget(id)
+    }
+    items.value = rows
+    total.value = rows.length
+    totalPages.value = 1
+    page.value = 1
+  } catch (error) {
+    errorMessage.value = apiErrorText(error)
+  } finally {
+    loading.value = false
+  }
+}
 const project = ref(null)
 const projectError = ref('')
 const manageOpen = ref(false)
@@ -187,6 +229,7 @@ function buildParams() {
 }
 
 async function load() {
+  if (view.value) return loadView()
   loading.value = true
   errorMessage.value = ''
   try {
@@ -267,7 +310,7 @@ function create(item) {
 }
 // Authoring inside a folder needs write access to it; a VIEW member sees
 // the courses and no way to add to them.
-const canCreate = computed(() => auth.hasPermission('course:create') && (!projectId.value || canFile.value))
+const canCreate = computed(() => auth.hasPermission('course:create') && !view.value && (!projectId.value || canFile.value))
 
 const selected = ref([])
 const allSelected = computed(() => items.value.length > 0 && selected.value.length === items.value.length)
@@ -278,13 +321,20 @@ function toggleAll() {
 // The same component serves both routes, so moving from one project to
 // another (or back to the library) is a param change, not a remount.
 watch(
-  projectId,
+  [projectId, view],
   async () => {
     selected.value = []
     filtersOpen.value = false
     await Promise.all([loadProject(), loadFirstPage()])
   },
   { immediate: true },
+)
+// A star toggled on the favourites view removes the row from it.
+watch(
+  () => marks.favorites.length,
+  () => {
+    if (view.value === 'favorites') loadView()
+  },
 )
 </script>
 
@@ -341,8 +391,8 @@ watch(
         <p v-else-if="projectError" class="mt-1 text-[13px] text-danger">{{ projectError }}</p>
       </div>
       <div v-else>
-        <h1 class="text-[24px] font-semibold text-ink">{{ t('admin.section.allMaterials') }}</h1>
-        <p class="mt-1 text-[13px] text-ink-muted">{{ t('common.pagination.range', { from: rangeStart, to: rangeEnd, total }) }}</p>
+        <h1 class="text-[24px] font-semibold text-ink">{{ t(viewTitleKey) }}</h1>
+        <p class="mt-1 text-[13px] text-ink-muted">{{ view ? t('common.total') + ': ' + total : t('common.pagination.range', { from: rangeStart, to: rangeEnd, total }) }}</p>
       </div>
       <div class="flex flex-wrap items-center gap-2">
         <button
@@ -471,15 +521,28 @@ watch(
             <td class="px-2 text-ink">{{ t('portal.courses.typeCourse') }}</td>
             <td class="px-2 text-ink">{{ course.assignmentCount ? t('portal.courses.assigned') : '—' }}</td>
             <td class="px-2 text-ink">{{ course.authorName || '—' }}</td>
-            <td class="px-2 text-ink-muted">{{ new Date(course.createdAt).toLocaleDateString(locale, { day: 'numeric', month: 'short', year: 'numeric' }) }}</td>
+            <td class="px-2 text-ink-muted">{{ formatDate(course.createdAt, locale) }}</td>
             <td class="pr-3 text-right" @click.stop>
-              <CourseDangerActions
-                :course="course"
-                layout="icons"
-                class="justify-end opacity-0 transition-default focus-within:opacity-100 group-hover:opacity-100"
-                @archived="onCourseArchived"
-                @deleted="onCourseDeleted"
-              />
+              <span class="flex items-center justify-end gap-1">
+                <!-- The star (rasm «Избранное»): stays lit once set -->
+                <button
+                  type="button"
+                  class="flex h-8 w-8 items-center justify-center rounded-md transition-default hover:bg-surface-hover"
+                  :class="marks.isFavorite(course.id) ? 'text-warning' : 'text-ink-faint opacity-0 focus-visible:opacity-100 group-hover:opacity-100'"
+                  :aria-label="t('admin.section.favorites')"
+                  :aria-pressed="marks.isFavorite(course.id)"
+                  @click="marks.toggleFavorite(course.id)"
+                >
+                  <Icon name="star" size="16" />
+                </button>
+                <CourseDangerActions
+                  :course="course"
+                  layout="icons"
+                  class="justify-end opacity-0 transition-default focus-within:opacity-100 group-hover:opacity-100"
+                  @archived="onCourseArchived"
+                  @deleted="onCourseDeleted"
+                />
+              </span>
             </td>
           </tr>
         </tbody>
@@ -504,6 +567,7 @@ watch(
       </p>
       <p class="mt-16 text-[13px] text-ink-faint">{{ t('projects.empty.formats') }}</p>
     </div>
+    <EmptyState v-else-if="view" :icon="view === 'favorites' ? 'star' : view === 'shared' ? 'users' : 'clock'" :title="t(`admin.views.${view}.empty`)" :description="t(`admin.views.${view}.hint`)" class="mt-6" />
     <EmptyState v-else icon="book-open" :title="t('courses.empty')" class="mt-6" />
 
     <template v-if="project">

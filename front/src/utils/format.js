@@ -20,14 +20,26 @@ export function formatHours(hours, t) {
   return t('employee.units.days', { value: Math.round((hours / 24) * 10) / 10 })
 }
 
+// Chrome has no month names for Uzbek Latin: `toLocaleDateString('uz')`
+// prints "2026 M09 12", which nobody reads as a date. The short names are
+// written out here and used whenever the interface is in Uzbek; every other
+// locale keeps the browser's own.
+const UZ_MONTHS = ['yan', 'fev', 'mar', 'apr', 'may', 'iyun', 'iyul', 'avg', 'sen', 'okt', 'noy', 'dek']
+const isUzbek = (locale) => String(locale ?? '').toLowerCase().startsWith('uz')
+const two = (n) => String(n).padStart(2, '0')
+
 export function formatDate(value, locale) {
   if (!value) return '—'
-  return new Date(value).toLocaleDateString(locale, { day: '2-digit', month: 'short', year: 'numeric' })
+  const date = new Date(value)
+  if (isUzbek(locale)) return `${date.getDate()}-${UZ_MONTHS[date.getMonth()]}, ${date.getFullYear()}`
+  return date.toLocaleDateString(locale, { day: '2-digit', month: 'short', year: 'numeric' })
 }
 
 export function formatDateTime(value, locale) {
   if (!value) return '—'
-  return new Date(value).toLocaleString(locale, {
+  const date = new Date(value)
+  if (isUzbek(locale)) return `${date.getDate()}-${UZ_MONTHS[date.getMonth()]}, ${two(date.getHours())}:${two(date.getMinutes())}`
+  return date.toLocaleString(locale, {
     day: '2-digit',
     month: 'short',
     hour: '2-digit',

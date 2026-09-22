@@ -17,6 +17,7 @@ import AppButton from '@/components/ui/AppButton.vue'
 import AppInput from '@/components/ui/AppInput.vue'
 import AppSelect from '@/components/ui/AppSelect.vue'
 import { useProjectsStore } from '@/stores/projects'
+import { useCourseMarksStore } from '@/stores/courseMarks'
 import BranchSelect from '@/components/ui/BranchSelect.vue'
 import { usersApi } from '@/services/users'
 import Badge from '@/components/ui/Badge.vue'
@@ -56,6 +57,7 @@ const form = reactive({ title: '', description: '', status: 'DRAFT', targetRoles
 // Which folder the course sits in (project.model.js). '' is the general
 // library; the select's options are the projects this person can see.
 const projectsStore = useProjectsStore()
+const marks = useCourseMarksStore()
 projectsStore.load()
 const projectOptions = computed(() => [
   { value: '', label: t('projects.file.unfiled') },
@@ -101,6 +103,7 @@ async function load() {
   errorMessage.value = ''
   try {
     course.value = await coursesApi.getById(route.params.id)
+    marks.touch(course.value.id)
     form.title = course.value.title
     form.description = course.value.description
     form.status = course.value.status

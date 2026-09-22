@@ -7,7 +7,7 @@ function relativeDayFactory(t, locale) {
     const days = Math.floor((Date.now() - date.getTime()) / 86400e3)
     if (days === 0) return t('portal.news.today')
     if (days === 1) return t('news.yesterday')
-    return date.toLocaleDateString(locale.value, { day: 'numeric', month: 'short', year: 'numeric' })
+    return formatDay(date, locale.value)
   }
 }
 import { computed, onMounted, reactive, ref } from 'vue'
@@ -30,6 +30,7 @@ import Icon from '@/components/ui/Icon.vue'
 import ColumnSettings from '@/components/ui/ColumnSettings.vue'
 import { useTableColumns } from '@/composables/useTableColumns'
 import { apiErrorText } from '@/utils/apiError'
+import { formatDate as formatDay } from '@/utils/format'
 
 const { t, te, locale } = useI18n()
 const relativeDay = relativeDayFactory(t, locale)

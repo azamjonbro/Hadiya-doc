@@ -15,17 +15,26 @@ export const adminSections = [
       // library first, with its book icon, then the working pages. Projects
       // are drawn by the column itself, under their own «LOYIHALAR» heading.
       { name: 'library', path: '/bos/library', labelKey: 'admin.section.library', permission: 'course:read', icon: 'book-open' },
+      // The reference's four views of the library: recent, starred, what
+      // others let me into, and the trash. «Barcha materiallar» is ours —
+      // the reference has no flat list, but courses filed in no project
+      // need somewhere to be.
       { name: 'courses', path: '/bos/courses', labelKey: 'admin.section.allMaterials', permission: 'course:read' },
+      { name: 'recent', path: '/bos/courses?view=recent', labelKey: 'admin.section.recent', permission: 'course:read', query: 'recent' },
+      { name: 'favorites', path: '/bos/courses?view=favorites', labelKey: 'admin.section.favorites', permission: 'course:read', query: 'favorites' },
+      { name: 'shared', path: '/bos/courses?view=shared', labelKey: 'admin.section.shared', permission: 'course:read', query: 'shared' },
+      { name: 'trash', path: '/bos/trash', labelKey: 'nav.trash', permission: 'course:delete' },
       // Not a page of its own in the column — a project page belongs to this
       // section, and this entry is what tells sectionFor() so.
       { name: 'projects', path: '/bos/projects', labelKey: 'projects.title', permission: 'course:read', hidden: true },
-      { name: 'paths', path: '/bos/paths', labelKey: 'paths.adminTitle', permission: 'path:manage' },
-      { name: 'question-banks', path: '/bos/question-banks', labelKey: 'questions.title', permission: 'quiz:configure' },
-      { name: 'tasks', path: '/bos/tasks', labelKey: 'nav.tasks', permission: 'task:create' },
-      { name: 'media', path: '/bos/media', labelKey: 'media.title', permission: 'course:update' },
-      { name: 'ai', path: '/bos/ai', labelKey: 'ai.title', permission: 'course:create' },
-      { name: 'certificates', path: '/bos/certificates', labelKey: 'nav.certificates', permission: 'certificate:template:manage' },
-      { name: 'trash', path: '/bos/trash', labelKey: 'nav.trash', permission: 'course:delete' },
+      // The content pages the reference keeps inside its projects; ours are
+      // pages, drawn under their own small heading below the projects.
+      { name: 'paths', path: '/bos/paths', labelKey: 'paths.adminTitle', permission: 'path:manage', group: 'tools' },
+      { name: 'question-banks', path: '/bos/question-banks', labelKey: 'questions.title', permission: 'quiz:configure', group: 'tools' },
+      { name: 'tasks', path: '/bos/tasks', labelKey: 'nav.tasks', permission: 'task:create', group: 'tools' },
+      { name: 'media', path: '/bos/media', labelKey: 'media.title', permission: 'course:update', group: 'tools' },
+      { name: 'ai', path: '/bos/ai', labelKey: 'ai.title', permission: 'course:create', group: 'tools' },
+      { name: 'certificates', path: '/bos/certificates', labelKey: 'nav.certificates', permission: 'certificate:template:manage', group: 'tools' },
     ],
   },
   { key: 'events', icon: 'calendar', path: '/bos/events', labelKey: 'events.adminTitle', permission: 'event:create' },
@@ -134,7 +143,7 @@ export function sectionFor(path) {
   let best = null
   let bestLength = -1
   for (const section of adminSections) {
-    const paths = [section.path, ...(section.children ?? []).map((c) => c.path)]
+    const paths = [section.path, ...(section.children ?? []).map((c) => c.path.split('?')[0])]
     for (const p of paths) {
       const matches = p === '/bos' ? path === '/bos' : path === p || path.startsWith(`${p}/`)
       if (matches && p.length > bestLength) {

@@ -47,6 +47,7 @@ import Pagination from '@/components/ui/Pagination.vue'
 import ProgressBar from '@/components/ui/ProgressBar.vue'
 import ProgressRing from '@/components/ui/ProgressRing.vue'
 import UserPicker from '@/components/ui/UserPicker.vue'
+import { formatDate as formatDay } from '@/utils/format'
 
 const { t, locale } = useI18n()
 const route = useRoute()
@@ -194,7 +195,7 @@ const pendingCredits = computed(() => {
 
 function formatDate(value) {
   if (!value) return '—'
-  return new Date(value).toLocaleDateString(locale.value, { year: 'numeric', month: 'short', day: 'numeric' })
+  return formatDay(value, locale.value)
 }
 
 function toDateInput(value) {
