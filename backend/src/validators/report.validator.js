@@ -23,7 +23,12 @@ export const reportExportQuerySchema = z.object({
  * client that could raise it could turn a preview into an unbounded read,
  * which is the thing the caps exist to stop.
  */
-export const reportPreviewQuerySchema = reportExportQuerySchema.omit({ format: true })
+export const reportPreviewQuerySchema = reportExportQuerySchema.omit({ format: true }).extend({
+  // The report page (rasm «Прогресс учащихся») shows the table itself, with
+  // sorting and pages, and a hundred rows is a glimpse, not a report. The
+  // server still owns the ceiling — see PAGE_MAX_ROWS in the controller.
+  limit: z.coerce.number().int().min(1).max(1000).optional(),
+})
 
 /**
  * A scheduled report (8.4).

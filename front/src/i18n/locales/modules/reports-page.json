@@ -1,0 +1,38 @@
+{
+  "uz": {
+    "reports": {
+      "page": {
+        "export": "Eksport",
+        "exportAs": "{format} sifatida yuklab olish",
+        "average": "o'rtacha",
+        "rows": "Qatorlar: {n}",
+        "loadedOf": "(ekranda {n} tasi)",
+        "truncated": "Ekranda {shown} qator, jami {total} ta. To'liq ro'yxat uchun:"
+      }
+    }
+  },
+  "ru": {
+    "reports": {
+      "page": {
+        "export": "Экспорт",
+        "exportAs": "Скачать как {format}",
+        "average": "среднее",
+        "rows": "Строк: {n}",
+        "loadedOf": "(на экране {n})",
+        "truncated": "На экране {shown} строк из {total}. Полный список:"
+      }
+    }
+  },
+  "en": {
+    "reports": {
+      "page": {
+        "export": "Export",
+        "exportAs": "Download as {format}",
+        "average": "average",
+        "rows": "Rows: {n}",
+        "loadedOf": "({n} on screen)",
+        "truncated": "{shown} of {total} rows on screen. For the full list:"
+      }
+    }
+  }
+}

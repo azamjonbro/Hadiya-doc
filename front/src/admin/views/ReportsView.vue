@@ -1,7 +1,7 @@
 <script setup>
 import { computed, onMounted, onUnmounted, reactive, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { roleLabel } from '@/utils/roleLabel'
 import { ROLES } from '@lms/shared'
 import { reportsApi } from '@/services/reports'
@@ -12,8 +12,6 @@ import FilterBar from '@/components/ui/FilterBar.vue'
 import Badge from '@/components/ui/Badge.vue'
 import Icon from '@/components/ui/Icon.vue'
 import Modal from '@/components/ui/Modal.vue'
-import DataTable from '@/components/ui/DataTable.vue'
-import Chart from '@/components/ui/Chart.vue'
 import AppSelect from '@/components/ui/AppSelect.vue'
 import AppInput from '@/components/ui/AppInput.vue'
 import UserPicker from '@/components/ui/UserPicker.vue'
@@ -26,6 +24,7 @@ const { t, te, locale } = useI18n()
 const toast = useToast()
 const auth = useAuthStore()
 const route = useRoute()
+const router = useRouter()
 const confirm = useConfirm()
 
 const FORMATS = ['csv', 'xlsx', 'pdf']
@@ -141,7 +140,7 @@ async function loadTypes() {
     // Arrived from a dashboard tile (?report=…): open that report straight
     // away rather than landing on the catalogue and asking for a second click.
     const wanted = route.query.report
-    if (wanted && types.value.includes(wanted)) openPreview(wanted)
+    if (wanted && types.value.includes(wanted)) router.replace(`/bos/reports/${wanted}`)
   } catch (error) {
     typesError.value = apiErrorText(error, t('reports.error'))
   }
@@ -169,80 +168,13 @@ async function onDownload(type, format) {
   }
 }
 
-// ---------------------------------------------------------------- preview
+// ---------------------------------------------------------------- open
 
-/**
- * The report on screen (8.2, FL-29).
- *
- * Until this existed the only way to look at a report was to export it and
- * open the file — so "is this the filter I meant" cost a download, and the
- * answer arrived in Excel.
- */
-const preview = ref(null)
-const previewOpen = ref(false)
-const previewLoading = ref(false)
-const previewError = ref('')
-const previewType = ref('')
-const chartColumn = ref('')
-
-async function openPreview(type) {
-  previewType.value = type
-  previewOpen.value = true
-  previewLoading.value = true
-  previewError.value = ''
-  preview.value = null
-  try {
-    const data = await reportsApi.preview(type, queryFilters.value)
-    preview.value = data
-    chartColumn.value = numericColumnsOf(data)[0]?.key ?? ''
-  } catch (error) {
-    previewError.value = apiErrorText(error, t('reports.error'))
-  } finally {
-    previewLoading.value = false
-  }
+// A report is a page of its own (ReportDetailView): back arrow, filters,
+// summary card, sortable table. The catalogue only sends people there.
+function openReport(type) {
+  router.push(`/bos/reports/${type}`)
 }
-
-// A column counts as numeric when every row that has a value has a number in
-// it — tested against the data rather than declared by the server, because a
-// builder's columns carry a header and a key and nothing about type.
-function numericColumnsOf(data) {
-  if (!data?.rows?.length) return []
-  return data.columns.filter((column) =>
-    data.rows.some((row) => typeof row[column.key] === 'number') &&
-    data.rows.every((row) => row[column.key] == null || typeof row[column.key] === 'number')
-  )
-}
-
-const numericColumns = computed(() => numericColumnsOf(preview.value))
-
-const chartColumnOptions = computed(() =>
-  numericColumns.value.map((column) => ({ value: column.key, label: column.header }))
-)
-
-// DataTable speaks {key, label}; a report builder speaks {key, header}.
-const previewColumns = computed(
-  () => preview.value?.columns.map((column) => ({ key: column.key, label: column.header })) ?? []
-)
-
-// The first column that is not one of the numbers — the thing each row *is*,
-// which is what a bar wants as its label.
-const labelColumn = computed(() => {
-  const numeric = new Set(numericColumns.value.map((column) => column.key))
-  return preview.value?.columns.find((column) => !numeric.has(column.key))?.key ?? ''
-})
-
-const CHART_BARS = 12
-
-// Sorted and cut: twenty-two departments in one 300px-wide chart is a row of
-// slivers, and the question a bar chart answers is "which are the biggest".
-const chartSeries = computed(() => {
-  if (!preview.value || !chartColumn.value || !labelColumn.value) return []
-  return [...preview.value.rows]
-    .filter((row) => typeof row[chartColumn.value] === 'number')
-    .sort((a, b) => b[chartColumn.value] - a[chartColumn.value])
-    .slice(0, CHART_BARS)
-    .map((row) => ({ label: String(row[labelColumn.value] ?? '—'), value: row[chartColumn.value] }))
-})
 
 // ---------------------------------------------------------------- exports
 
@@ -490,7 +422,7 @@ onUnmounted(() => {
           <div class="divide-y divide-border overflow-hidden rounded-xl border border-border bg-surface">
             <div v-for="type in group.types" :key="type" class="group">
               <div class="flex min-h-[72px] items-center gap-4 px-5 py-3 transition-default hover:bg-surface-2">
-                <button type="button" class="flex min-w-0 flex-1 items-center gap-4 text-left" @click="openPreview(type)">
+                <button type="button" class="flex min-w-0 flex-1 items-center gap-4 text-left" @click="openReport(type)">
                   <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-surface-2 text-ink-muted">
                     <Icon :name="typeIcon[type] ?? 'file-text'" size="18" />
                   </span>
@@ -695,64 +627,5 @@ onUnmounted(() => {
       </form>
     </Modal>
 
-    <!-- The report on screen. A modal rather than an inline expansion: the
-         table is nine columns wide and would push the filter bar and every
-         other report off the top of the viewport. -->
-    <Modal v-model="previewOpen" size="xl" :title="preview?.title || t('reports.preview.title')">
-      <p v-if="previewError" class="text-small text-danger">{{ previewError }}</p>
-
-      <div v-else-if="previewLoading" class="space-y-2">
-        <p class="text-small text-ink-muted">{{ t('reports.preview.loading') }}</p>
-      </div>
-
-      <div v-else-if="preview" class="space-y-4">
-        <!-- A preview is capped far lower than an export, which is exactly
-             the sort of difference that misleads when it is not said. -->
-        <p class="text-caption" :class="preview.truncated ? 'text-warning' : 'text-ink-faint'">
-          {{
-            preview.truncated
-              ? t('reports.preview.capped', {
-                  shown: formatCount(preview.previewRows),
-                  total: formatCount(preview.totalRows),
-                })
-              : t('reports.preview.all', { total: formatCount(preview.totalRows) })
-          }}
-        </p>
-
-        <div v-if="chartSeries.length > 1" class="space-y-2">
-          <div class="flex flex-wrap items-center justify-between gap-2">
-            <p class="text-small font-medium text-ink">{{ t('reports.preview.chart', { count: chartSeries.length }) }}</p>
-            <div v-if="chartColumnOptions.length > 1" class="w-56">
-              <AppSelect v-model="chartColumn" :options="chartColumnOptions" />
-            </div>
-          </div>
-          <Chart type="bar" :series="chartSeries" height="h-40" />
-        </div>
-
-        <div class="max-h-[26rem] overflow-y-auto">
-          <DataTable
-            settings-key="report-preview"
-            :columns="previewColumns"
-            :rows="preview.rows"
-            empty-icon="file-text"
-            :empty-title="t('reports.preview.empty')"
-          />
-        </div>
-
-        <div class="flex flex-wrap justify-end gap-2">
-          <AppButton
-            v-for="format in FORMATS"
-            :key="format"
-            variant="outline"
-            size="sm"
-            icon="download"
-            :loading="pending[`${previewType}:${format}`]"
-            @click="onDownload(previewType, format)"
-          >
-            {{ format.toUpperCase() }}
-          </AppButton>
-        </div>
-      </div>
-    </Modal>
   </div>
 </template>

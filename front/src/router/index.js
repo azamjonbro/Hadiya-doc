@@ -244,6 +244,15 @@ export const router = createRouter({
           component: () => import('@/admin/views/ReportsView.vue'),
           meta: { permission: 'report:export', titleKey: 'nav.reports' },
         },
+        // One report as a page (rasm «Прогресс учащихся»): the same
+        // permission the catalogue asks for — reading a report is exporting
+        // it without the file.
+        {
+          path: 'reports/:type',
+          name: 'admin-report-detail',
+          component: () => import('@/admin/views/ReportDetailView.vue'),
+          meta: { permission: 'report:export', titleKey: 'nav.reports' },
+        },
         {
           path: 'team',
           name: 'admin-team-dashboard',
