@@ -1,6 +1,6 @@
 <script setup>
 import { computed, reactive, ref } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { roleLabel } from '@/utils/roleLabel'
 import { ROLES } from '@lms/shared'
@@ -19,6 +19,7 @@ import { apiErrorText } from '@/utils/apiError'
 
 const { t, te } = useI18n()
 const router = useRouter()
+const route = useRoute()
 const toast = useToast()
 const auth = useAuthStore()
 
@@ -130,6 +131,9 @@ async function onPublish(status) {
       ...form,
       status,
       categoryId: form.categoryId || null,
+      // Started from a project's page: the course is filed there on
+      // creation, so it appears in the folder it was made in.
+      projectId: typeof route.query.project === 'string' && route.query.project ? route.query.project : null,
       certificateTemplateId: form.certificateTemplateId || null,
       estimatedMinutes: Number(form.estimatedMinutes) || 0,
       validityDays: Number(form.validityDays) || 0,

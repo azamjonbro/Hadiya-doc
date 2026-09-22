@@ -92,6 +92,7 @@ export const courseRepository = {
     status,
     branch,
     categoryId,
+    projectId,
     level,
     tag,
     visibleToRoleName,
@@ -108,6 +109,10 @@ export const courseRepository = {
     if (status) filter.status = status
     if (branch) filter.branches = branch
     if (categoryId) filter.categoryId = categoryId
+    // Courses from before projects existed have no field at all, so "not
+    // filed" has to accept a missing value as well as an explicit null.
+    if (projectId === 'none') filter.$and = [...(filter.$and ?? []), { $or: [{ projectId: null }, { projectId: { $exists: false } }] }]
+    else if (projectId) filter.projectId = projectId
     if (level) filter.level = level
     if (tag) filter.tags = tag
     if (visibleToRoleName !== undefined) {
@@ -123,9 +128,10 @@ export const courseRepository = {
           { $or: [{ department: { $exists: false } }, { department: '' }, { department: visibleToDepartment ?? '' }] },
         ],
       }
-      filter.$and = assignedCourseIds?.length
-        ? [{ $or: [matchesTargeting, { _id: { $in: assignedCourseIds } }] }]
-        : [matchesTargeting]
+      const visibility = assignedCourseIds?.length
+        ? { $or: [matchesTargeting, { _id: { $in: assignedCourseIds } }] }
+        : matchesTargeting
+      filter.$and = [...(filter.$and ?? []), visibility]
     }
     return filter
   },

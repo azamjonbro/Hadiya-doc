@@ -28,6 +28,7 @@ import { lessonCompletion } from './lessonBlocks.js'
 import { meetsPackage } from '../scorm/scormCmi.js'
 import { logger } from '../../config/logger.js'
 import { canManageCourses } from '../courses/coursePermissions.js'
+import { projectService } from '../projects/project.service.js'
 
 // Course metadata is read on every catalog/detail page view and written
 // rarely (spec §39) — cached actor-independently (the DTO doesn't vary by
@@ -198,6 +199,7 @@ export function toPublicCourse(course) {
     // them stored, and a catalog card that reads `level: undefined` renders
     // as a blank chip instead of "Beginner".
     categoryId: course.categoryId ? course.categoryId.toString() : null,
+    projectId: course.projectId ? course.projectId.toString() : null,
     tags: course.tags ?? [],
     level: course.level ?? 'BEGINNER',
     authorIds: (course.authorIds ?? []).map((id) => id.toString()),
@@ -390,6 +392,7 @@ export const courseService = {
 
   async create(actor, payload) {
     const { autoAssign, ...courseFields } = payload
+    await projectService.assertCanFile(actor, payload.projectId)
     const slug = await uniqueSlugFor(payload.title)
     const course = await courseRepository.create({ ...courseFields, slug, createdBy: actor.id })
     await auditLogRepository.record({
@@ -407,6 +410,7 @@ export const courseService = {
     const existing = await courseRepository.findById(id)
     if (!existing) throw ApiError.notFound('Course not found')
     const { autoAssign, ...courseFields } = payload
+    if (payload.projectId) await projectService.assertCanFile(actor, payload.projectId)
     const updated = await courseRepository.updateById(id, { ...courseFields, updatedBy: actor.id })
     await cacheDel(courseCacheKey(id))
     await auditLogRepository.record({

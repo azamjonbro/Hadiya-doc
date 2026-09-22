@@ -27,6 +27,7 @@ import { orgRouter } from './org.routes.js'
 import { aiChatRouter } from './aiChat.routes.js'
 import { dashboardRouter } from './dashboard.routes.js'
 import { branchesRouter } from './branches.routes.js'
+import { projectsRouter } from './projects.routes.js'
 import { rolesRouter } from './roles.routes.js'
 import { orgListsRouter } from './orgLists.routes.js'
 import { proctorRouter } from './proctor.routes.js'
@@ -98,6 +99,7 @@ v1Router.use('/org', orgRouter)
 v1Router.use('/ai-chat', aiChatRouter)
 v1Router.use('/dashboard', dashboardRouter)
 v1Router.use('/branches', branchesRouter)
+v1Router.use('/projects', projectsRouter)
 v1Router.use('/roles', rolesRouter)
 v1Router.use('/org-lists', orgListsRouter)
 v1Router.use('/proctor', proctorRouter)

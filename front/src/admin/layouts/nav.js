@@ -11,7 +11,14 @@ export const adminSections = [
     path: '/bos/courses',
     labelKey: 'admin.section.materials',
     children: [
-      { name: 'courses', path: '/bos/courses', labelKey: 'admin.section.library', permission: 'course:read' },
+      // The reference's column (rasm «Учебные материалы»): the course
+      // library first, with its book icon, then the working pages. Projects
+      // are drawn by the column itself, under their own «LOYIHALAR» heading.
+      { name: 'library', path: '/bos/library', labelKey: 'admin.section.library', permission: 'course:read', icon: 'book-open' },
+      { name: 'courses', path: '/bos/courses', labelKey: 'admin.section.allMaterials', permission: 'course:read' },
+      // Not a page of its own in the column — a project page belongs to this
+      // section, and this entry is what tells sectionFor() so.
+      { name: 'projects', path: '/bos/projects', labelKey: 'projects.title', permission: 'course:read', hidden: true },
       { name: 'paths', path: '/bos/paths', labelKey: 'paths.adminTitle', permission: 'path:manage' },
       { name: 'question-banks', path: '/bos/question-banks', labelKey: 'questions.title', permission: 'quiz:configure' },
       { name: 'tasks', path: '/bos/tasks', labelKey: 'nav.tasks', permission: 'task:create' },

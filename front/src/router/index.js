@@ -179,6 +179,22 @@ export const router = createRouter({
           component: () => import('@/admin/views/CoursesListView.vue'),
           meta: { permission: 'course:read', titleKey: 'admin.nav.courses' },
         },
+        // One folder of the library: the same list view, scoped to the
+        // project (rasm 4).
+        {
+          path: 'projects/:id',
+          name: 'admin-project',
+          component: () => import('@/admin/views/CoursesListView.vue'),
+          meta: { permission: 'course:read', titleKey: 'projects.title' },
+        },
+        // The course library (rasm 1–3): the catalogue of ready courses,
+        // by collection, and the external libraries.
+        {
+          path: 'library',
+          name: 'admin-library',
+          component: () => import('@/admin/views/LibraryView.vue'),
+          meta: { permission: 'course:read', titleKey: 'admin.section.library' },
+        },
         {
           path: 'courses/new',
           name: 'admin-course-builder',

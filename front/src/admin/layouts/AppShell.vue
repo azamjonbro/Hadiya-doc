@@ -22,7 +22,7 @@ const auth = useAuthStore()
 
 const section = computed(() => sectionFor(route.path))
 const pages = computed(() =>
-  (section.value.children ?? []).filter((page) => !page.permission || auth.hasPermission(page.permission)),
+  (section.value.children ?? []).filter((page) => !page.hidden && (!page.permission || auth.hasPermission(page.permission))),
 )
 const showPages = computed(() => pages.value.length > 1)
 const plain = computed(() => route.meta.plain === true)

@@ -16,6 +16,12 @@ const courseSchema = new Schema(
     // issuing path in 3.2 has nothing to read without it.
     certificateTemplateId: { type: Schema.Types.ObjectId, ref: 'CertificateTemplate', default: null },
 
+    // The folder this course is filed in (project.model.js). Null is the
+    // general library — every course made before projects existed, and any
+    // course an author does not care to file. Purely organisational: nothing
+    // about who may learn from the course reads this field.
+    projectId: { type: Schema.Types.ObjectId, ref: 'Project', default: null },
+
     // --- Catalog metadata (3.4) ---
 
     categoryId: { type: Schema.Types.ObjectId, ref: 'CourseCategory', default: null },
@@ -119,5 +125,6 @@ courseSchema.index(
   { weights: { title: 10, tags: 4, description: 1 }, name: 'course_text' }
 )
 courseSchema.index({ categoryId: 1, status: 1 })
+courseSchema.index({ projectId: 1, deletedAt: 1 })
 
 export const Course = model('Course', courseSchema)

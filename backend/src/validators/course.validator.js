@@ -6,6 +6,9 @@ const objectId = z.string().regex(/^[a-f\d]{24}$/i, 'Invalid id')
 // never drift into accepting different shapes for the same field.
 const courseMetadataShape = {
   categoryId: objectId.nullable().optional(),
+  // Which project (folder) the course is filed in; null moves it back to
+  // the general library.
+  projectId: objectId.nullable().optional(),
   tags: z.array(z.string().trim().min(1).max(40)).max(20).optional(),
   level: z.enum(['BEGINNER', 'INTERMEDIATE', 'ADVANCED']).optional(),
   authorIds: z.array(objectId).max(20).optional(),
@@ -68,6 +71,9 @@ export const listCoursesQuerySchema = z.object({
   // widening anyone's access.
   branch: z.string().optional(),
   categoryId: objectId.optional(),
+  // A project's page lists only what is filed in it; `none` is the general
+  // library — courses filed nowhere.
+  projectId: z.union([objectId, z.literal('none')]).optional(),
   level: z.enum(['BEGINNER', 'INTERMEDIATE', 'ADVANCED']).optional(),
   tag: z.string().trim().max(40).optional(),
   // `page` opts into numbered pagination (response carries total/totalPages);

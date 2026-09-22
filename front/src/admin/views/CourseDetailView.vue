@@ -16,6 +16,7 @@ import AppCard from '@/components/ui/AppCard.vue'
 import AppButton from '@/components/ui/AppButton.vue'
 import AppInput from '@/components/ui/AppInput.vue'
 import AppSelect from '@/components/ui/AppSelect.vue'
+import { useProjectsStore } from '@/stores/projects'
 import BranchSelect from '@/components/ui/BranchSelect.vue'
 import { usersApi } from '@/services/users'
 import Badge from '@/components/ui/Badge.vue'
@@ -50,7 +51,16 @@ usersApi
 const topics = ref([])
 const expandedVideosTopicId = ref(null)
 
-const form = reactive({ title: '', description: '', status: 'DRAFT', targetRoles: [], branches: [], department: '', autoAssign: false })
+const form = reactive({ title: '', description: '', status: 'DRAFT', targetRoles: [], branches: [], department: '', autoAssign: false, projectId: '' })
+
+// Which folder the course sits in (project.model.js). '' is the general
+// library; the select's options are the projects this person can see.
+const projectsStore = useProjectsStore()
+projectsStore.load()
+const projectOptions = computed(() => [
+  { value: '', label: t('projects.file.unfiled') },
+  ...projectsStore.items.map((p) => ({ value: p.id, label: p.name })),
+])
 const showEditForm = ref(false)
 
 const roleList = Object.values(ROLES)
@@ -97,6 +107,7 @@ async function load() {
     form.targetRoles = [...(course.value.targetRoles ?? [])]
     form.branches = [...(course.value.branches ?? [])]
   form.department = course.value.department ?? ''
+    form.projectId = course.value.projectId ?? ''
     form.autoAssign = false
     topics.value = await coursesApi.listTopics(route.params.id)
   } catch (error) {
@@ -110,7 +121,13 @@ async function onSave() {
   saving.value = true
   errorMessage.value = ''
   try {
-    course.value = await coursesApi.update(route.params.id, { ...form })
+    const previousProject = course.value?.projectId ?? ''
+    course.value = await coursesApi.update(route.params.id, { ...form, projectId: form.projectId || null })
+    // Keep the sidebar's counts honest when the course changes folders.
+    if (previousProject !== form.projectId) {
+      if (previousProject) projectsStore.bump(previousProject, -1)
+      if (form.projectId) projectsStore.bump(form.projectId, 1)
+    }
   } catch (error) {
     errorMessage.value = apiErrorText(error)
   } finally {
@@ -259,6 +276,12 @@ onMounted(load)
             :label="t('courses.status.label')"
             :disabled="!auth.hasPermission('course:update')"
             :options="statusOptions.map((o) => ({ value: o.value, label: t(o.label) }))"
+          />
+          <AppSelect
+            v-model="form.projectId"
+            :label="t('projects.one')"
+            :disabled="!auth.hasPermission('course:update')"
+            :options="projectOptions"
           />
 
           <div class="sm:col-span-2">
