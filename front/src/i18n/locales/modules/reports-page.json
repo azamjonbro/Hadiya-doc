@@ -73,6 +73,14 @@
           "send": "Yuborish",
           "sent": "Hisobot navbatga qo'yildi — tayyor bo'lganda xabar boradi"
         }
+      },
+      "ideas": {
+        "title": "Savol yoki g'oya bormi?",
+        "text": "Hisobot bo'yicha savolni AI yordamchiga bering — u kerakli hisobot va filtrlarni topib beradi.",
+        "cta": "AI yordamchiga yozish"
+      },
+      "schedules": {
+        "filtersNote": "Reja hisobotni to'liq, filtrsiz tuzadi."
       }
     }
   },
@@ -150,6 +158,14 @@
           "send": "Отправить",
           "sent": "Отчёт поставлен в очередь — уведомление придёт, когда он готов"
         }
+      },
+      "ideas": {
+        "title": "Возникли идеи?",
+        "text": "Задайте вопрос по отчётам AI-помощнику — он подскажет нужный отчёт и фильтры.",
+        "cta": "Написать AI-помощнику"
+      },
+      "schedules": {
+        "filtersNote": "Отчёт по расписанию собирается целиком, без фильтров."
       }
     }
   },
@@ -227,6 +243,14 @@
           "send": "Send",
           "sent": "Report queued — you will be notified when it is ready"
         }
+      },
+      "ideas": {
+        "title": "Questions or ideas?",
+        "text": "Ask the AI assistant about the reports — it will point you to the right report and filters.",
+        "cta": "Ask the AI assistant"
+      },
+      "schedules": {
+        "filtersNote": "A scheduled report is built in full, without filters."
       }
     }
   }

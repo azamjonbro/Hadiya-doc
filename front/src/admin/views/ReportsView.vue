@@ -2,13 +2,9 @@
 import { computed, onMounted, onUnmounted, reactive, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from 'vue-router'
-import { roleLabel } from '@/utils/roleLabel'
-import { ROLES } from '@lms/shared'
 import { reportsApi } from '@/services/reports'
-import { coursesApi } from '@/services/courses'
 import AppCard from '@/components/ui/AppCard.vue'
 import AppButton from '@/components/ui/AppButton.vue'
-import FilterBar from '@/components/ui/FilterBar.vue'
 import Badge from '@/components/ui/Badge.vue'
 import Icon from '@/components/ui/Icon.vue'
 import Modal from '@/components/ui/Modal.vue'
@@ -20,7 +16,7 @@ import { useConfirm } from '@/composables/useConfirm'
 import { useToast } from '@/composables/useToast'
 import { apiErrorText } from '@/utils/apiError'
 
-const { t, te, locale } = useI18n()
+const { t, locale } = useI18n()
 const toast = useToast()
 const auth = useAuthStore()
 const route = useRoute()
@@ -92,40 +88,9 @@ const errors = reactive({})
 // they believe is complete.
 const lastExport = reactive({})
 
-const roleOptions = Object.values(ROLES).map((r) => ({ value: r, label: roleLabel(r, { t, te }) }))
-const courseOptions = ref([])
-
-const filters = reactive({ role: '', courseId: '', userId: '', userLabel: '', dateFrom: '', dateTo: '' })
-
-const filterFields = computed(() => [
-  { key: 'role', type: 'select', label: t('reports.filters.role'), placeholder: t('reports.filters.allRoles'), options: roleOptions },
-  {
-    key: 'courseId',
-    type: 'select',
-    width: 'w-52',
-    label: t('reports.filters.course'),
-    placeholder: t('reports.filters.allCourses'),
-    options: courseOptions.value,
-  },
-  {
-    key: 'userId',
-    type: 'user',
-    width: 'w-56',
-    displayKey: 'userLabel',
-    label: t('reports.filters.user'),
-    placeholder: t('reports.filters.userPlaceholder'),
-  },
-  // Without a placeholder the date trigger renders as a bare calendar icon
-  // and an empty box, which reads as a broken field rather than an empty one.
-  { key: 'dateFrom', type: 'date', label: t('reports.filters.dateFrom'), placeholder: t('reports.filters.datePlaceholder') },
-  { key: 'dateTo', type: 'date', label: t('reports.filters.dateTo'), placeholder: t('reports.filters.datePlaceholder') },
-])
-
-// `userLabel` is the name shown in the picker, not a filter the server knows.
-const queryFilters = computed(() => {
-  const { userLabel, ...rest } = filters
-  return rest
-})
+// Filters live on the report's own page now; a download or a schedule
+// made from the catalogue takes the whole report.
+const queryFilters = computed(() => ({}))
 
 function typeLabel(type) {
   // Falls back to the slug rather than rendering a raw i18n key: a report
@@ -143,15 +108,6 @@ async function loadTypes() {
     if (wanted && types.value.includes(wanted)) router.replace(`/bos/reports/${wanted}`)
   } catch (error) {
     typesError.value = apiErrorText(error, t('reports.error'))
-  }
-}
-
-async function loadCourseOptions() {
-  try {
-    const { items } = await coursesApi.list({ limit: 100 })
-    courseOptions.value = items.map((c) => ({ value: c.id, label: c.title }))
-  } catch {
-    courseOptions.value = []
   }
 }
 
@@ -395,7 +351,6 @@ function cadenceSummary(schedule) {
 
 onMounted(() => {
   loadTypes()
-  loadCourseOptions()
   loadJobs()
   loadSchedules()
 })
@@ -471,10 +426,14 @@ onUnmounted(() => {
       </div>
 
       <div class="space-y-4">
-        <div class="rounded-xl border border-border bg-surface p-5">
-          <p class="text-[16px] font-semibold text-ink">{{ t('common.filter') }}</p>
-          <p class="mt-1 text-caption text-ink-muted">{{ t('reports.subtitle') }}</p>
-          <FilterBar v-model="filters" class="mt-4" align="end" :fields="filterFields" :clear-label="t('reports.filters.clear')" />
+        <!-- Rasm «Отчёты»: the card on the right — «Возникли идеи?». Ours
+             points at the AI assistant, which is where a question about a
+             report gets an answer here. -->
+        <div class="rounded-xl border border-border bg-surface p-6 text-center">
+          <span class="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-surface-2 text-ink-faint"><Icon name="message-square" size="28" /></span>
+          <p class="mt-5 text-[16px] font-semibold text-ink">{{ t('reports.ideas.title') }}</p>
+          <p class="mt-2 text-[14px] leading-relaxed text-ink-muted">{{ t('reports.ideas.text') }}</p>
+          <AppButton class="mt-5 w-full" @click="router.push('/bos/ai')">{{ t('reports.ideas.cta') }}</AppButton>
         </div>
 
     <!-- Queued exports. Only rendered once there is something to show: an
