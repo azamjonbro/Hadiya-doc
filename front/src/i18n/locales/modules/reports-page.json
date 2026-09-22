@@ -81,6 +81,12 @@
       },
       "schedules": {
         "filtersNote": "Reja hisobotni to'liq, filtrsiz tuzadi."
+      },
+      "groups": {
+        "development": "Rivojlanish rejalari"
+      },
+      "types": {
+        "development-plan-progress": "Rivojlanish rejalari"
       }
     }
   },
@@ -166,6 +172,12 @@
       },
       "schedules": {
         "filtersNote": "Отчёт по расписанию собирается целиком, без фильтров."
+      },
+      "groups": {
+        "development": "Планы развития"
+      },
+      "types": {
+        "development-plan-progress": "Планы развития"
       }
     }
   },
@@ -251,6 +263,12 @@
       },
       "schedules": {
         "filtersNote": "A scheduled report is built in full, without filters."
+      },
+      "groups": {
+        "development": "Development plans"
+      },
+      "types": {
+        "development-plan-progress": "Development plans"
       }
     }
   }

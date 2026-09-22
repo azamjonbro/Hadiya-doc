@@ -39,6 +39,7 @@ const typesError = ref('')
 const TYPE_GROUPS = {
   learners: ['employee-progress', 'department-progress', 'group-progress', 'onboarding-progress'],
   courses: ['course-progress', 'video-analytics', 'quiz-results', 'question-difficulty', 'homework-submissions', 'path-progress', 'enrollment-audit', 'overdue-assignments'],
+  development: ['development-plan-progress'],
   events: ['event-attendance'],
   extra: [],
 }
@@ -60,6 +61,7 @@ const typeIcon = {
   'task-analytics': 'check-square',
   'certificate-register': 'award',
   'path-progress': 'layers',
+  'development-plan-progress': 'trending-up',
   'quiz-results': 'check-square',
   'question-difficulty': 'info',
   'compliance-status': 'shield',

@@ -1,4 +1,5 @@
 import { Certificate } from '../../models/certificate.model.js'
+import { DevelopmentPlan } from '../../models/developmentPlan.model.js'
 import { PathEnrollment } from '../../models/pathEnrollment.model.js'
 import { QuizAttempt } from '../../models/quizAttempt.model.js'
 import { OnboardingEnrollment } from '../../models/onboardingEnrollment.model.js'
@@ -145,6 +146,61 @@ async function pathProgress(filters, t) {
       deadline: isoDate(row.deadline),
       completedAt: isoDate(row.completedAt),
     })),
+  }
+}
+
+// --- Development plans ------------------------------------------------
+
+/**
+ * Where every individual development plan stands (the reference's «Планы
+ * развития» reports): the person, the plan, its period, how many of its
+ * goals are achieved, and the percentage that follows from the goals'
+ * weights — the same arithmetic the plan page shows, so a report and a
+ * page never disagree about one plan.
+ */
+async function developmentPlanProgress(filters, t) {
+  const columns = [
+    { key: 'fullName', header: t('col.fullName') },
+    { key: 'plan', header: t('col.plan', 'Plan') },
+    { key: 'status', header: t('col.status') },
+    { key: 'goals', header: t('col.goals', 'Goals') },
+    { key: 'achieved', header: t('col.achieved', 'Achieved') },
+    { key: 'completionPercent', header: t('col.avgCompletionPercent') },
+    { key: 'periodEnd', header: t('col.deadline') },
+  ]
+
+  const ids = population(filters)
+  if (ids && ids.length === 0) return empty(columns)
+
+  const filter = { ...scopeMatch(ids), ...dateRangeMatch('periodEnd', filters) }
+  const totalRows = await countFor(DevelopmentPlan, filter)
+  const rows = await DevelopmentPlan.find(filter)
+    .sort({ periodEnd: 1 })
+    .limit(capFor(filters))
+    .populate('userId', 'fullName')
+    .lean()
+
+  return {
+    columns,
+    totalRows,
+    rows: rows.map((row) => {
+      const goals = row.goals ?? []
+      // Dropped goals are not part of the plan any more: counting them
+      // would make dropping one look like failing it.
+      const live = goals.filter((goal) => goal.status !== 'DROPPED')
+      const achieved = live.filter((goal) => goal.status === 'ACHIEVED')
+      const weight = live.reduce((sum, goal) => sum + (goal.weight ?? 1), 0)
+      const done = achieved.reduce((sum, goal) => sum + (goal.weight ?? 1), 0)
+      return {
+        fullName: row.userId?.fullName ?? '',
+        plan: row.title ?? '',
+        status: t(`planStatus.${row.status}`, row.status),
+        goals: live.length,
+        achieved: achieved.length,
+        completionPercent: weight ? round1((done / weight) * 100) : 0,
+        periodEnd: isoDate(row.periodEnd),
+      }
+    }),
   }
 }
 
@@ -778,6 +834,7 @@ async function materialUsage(filters, t) {
 export const EXTRA_REPORT_BUILDERS = {
   'certificate-register': certificateRegister,
   'path-progress': pathProgress,
+  'development-plan-progress': developmentPlanProgress,
   'quiz-results': quizResults,
   'question-difficulty': questionDifficulty,
   'compliance-status': complianceStatus,
