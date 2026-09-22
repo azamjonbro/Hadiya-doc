@@ -20,29 +20,16 @@ export function formatHours(hours, t) {
   return t('employee.units.days', { value: Math.round((hours / 24) * 10) / 10 })
 }
 
-// Chrome has no month names for Uzbek Latin: `toLocaleDateString('uz')`
-// prints "2026 M09 12", which nobody reads as a date. The short names are
-// written out here and used whenever the interface is in Uzbek; every other
-// locale keeps the browser's own.
-const UZ_MONTHS = ['yan', 'fev', 'mar', 'apr', 'may', 'iyun', 'iyul', 'avg', 'sen', 'okt', 'noy', 'dek']
-const UZ_MONTHS_LONG = ['yanvar', 'fevral', 'mart', 'aprel', 'may', 'iyun', 'iyul', 'avgust', 'sentabr', 'oktabr', 'noyabr', 'dekabr']
-// Sunday first, like Date#getDay.
-const UZ_WEEKDAYS = ['Yak', 'Du', 'Se', 'Chor', 'Pay', 'Jum', 'Shan']
-const isUzbek = (locale) => String(locale ?? '').toLowerCase().startsWith('uz')
-const two = (n) => String(n).padStart(2, '0')
-
+// Month and weekday names for Uzbek come from utils/uzDateLocale.js, which
+// fills the gap in the runtime at boot — these helpers are plain Intl.
 export function formatDate(value, locale) {
   if (!value) return '—'
-  const date = new Date(value)
-  if (isUzbek(locale)) return `${date.getDate()}-${UZ_MONTHS[date.getMonth()]}, ${date.getFullYear()}`
-  return date.toLocaleDateString(locale, { day: '2-digit', month: 'short', year: 'numeric' })
+  return new Date(value).toLocaleDateString(locale, { day: '2-digit', month: 'short', year: 'numeric' })
 }
 
 export function formatDateTime(value, locale) {
   if (!value) return '—'
-  const date = new Date(value)
-  if (isUzbek(locale)) return `${date.getDate()}-${UZ_MONTHS[date.getMonth()]}, ${two(date.getHours())}:${two(date.getMinutes())}`
-  return date.toLocaleString(locale, {
+  return new Date(value).toLocaleString(locale, {
     day: '2-digit',
     month: 'short',
     hour: '2-digit',
@@ -84,25 +71,19 @@ export function formatHms(seconds) {
 
 /** "sentabr 2026" — a calendar's heading. */
 export function formatMonthYear(date, locale) {
-  const value = new Date(date)
-  if (isUzbek(locale)) return `${UZ_MONTHS_LONG[value.getMonth()]} ${value.getFullYear()}`
-  return value.toLocaleDateString(locale, { month: 'long', year: 'numeric' })
+  return new Date(date).toLocaleDateString(locale, { month: 'long', year: 'numeric' })
 }
 
 /** The seven column headings of a Monday-first calendar. */
 export function weekdayNames(locale) {
   const monday = new Date(2024, 0, 1)
-  return Array.from({ length: 7 }, (_, i) => {
-    const day = new Date(monday.getTime() + i * 86400e3)
-    return isUzbek(locale) ? UZ_WEEKDAYS[day.getDay()] : day.toLocaleDateString(locale, { weekday: 'short' })
-  })
+  return Array.from({ length: 7 }, (_, i) =>
+    new Date(monday.getTime() + i * 86400e3).toLocaleDateString(locale, { weekday: 'short' }),
+  )
 }
 
-/** "12-sen, 14:30" — a date with a time, as an event list writes it. */
+/** "12 sen, 14:30" — a date with a time, as an event list writes it. */
 export function formatWhen(value, locale) {
   if (!value) return '—'
-  const date = new Date(value)
-  const time = `${two(date.getHours())}:${two(date.getMinutes())}`
-  if (isUzbek(locale)) return `${date.getDate()}-${UZ_MONTHS[date.getMonth()]}, ${time}`
-  return date.toLocaleString(locale, { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })
+  return new Date(value).toLocaleString(locale, { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })
 }

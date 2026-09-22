@@ -10,6 +10,7 @@ import { useAuthStore } from './stores/auth'
 import { useToast } from './composables/useToast'
 import { apiErrorText } from './utils/apiError'
 import { registerPwa } from './composables/usePwaUpdate'
+import { installUzbekDateNames } from './utils/uzDateLocale'
 import './assets/main.css'
 
 /**
@@ -88,6 +89,10 @@ function reportUnhandled(app) {
 }
 
 function bootstrap() {
+  // Chrome has no Uzbek month or weekday names; install ours before the
+  // first screen formats a date (utils/uzDateLocale.js).
+  installUzbekDateNames()
+
   const app = createApp(App)
   const pinia = createPinia()
   app.use(pinia)
