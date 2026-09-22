@@ -11,8 +11,11 @@ export const rolesApi = {
       return r.data.data
     })
   },
-  create(name, scope) {
-    return http.post('/roles', { name, ...(scope ? { scope } : {}) }).then((r) => {
+  // `{ name, scope, description, permissions }` — the editor page saves the
+  // whole role at once.
+  create(payload) {
+    const body = typeof payload === 'string' ? { name: payload } : payload
+    return http.post('/roles', body).then((r) => {
       registerRoleLabels([r.data.data])
       return r.data.data
     })
@@ -24,13 +27,18 @@ export const rolesApi = {
   },
   // The permission list is the complete set for the role, not a delta — a
   // grid of checkboxes has no notion of "unchanged".
-  update(id, { permissions, scope }) {
+  update(id, { permissions, scope, label, description }) {
     return http
       .patch(`/roles/${id}`, {
         ...(permissions === undefined ? {} : { permissions }),
         ...(scope === undefined ? {} : { scope }),
+        ...(label === undefined ? {} : { label }),
+        ...(description === undefined ? {} : { description }),
       })
-      .then((r) => r.data.data)
+      .then((r) => {
+        registerRoleLabels([r.data.data])
+        return r.data.data
+      })
   },
   remove(id) {
     return http.delete(`/roles/${id}`).then((r) => r.data.data)

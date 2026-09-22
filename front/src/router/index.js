@@ -265,6 +265,20 @@ export const router = createRouter({
           component: () => import('@/admin/views/RolesPermissionsView.vue'),
           meta: { permission: 'role:manage', titleKey: 'roles.title' },
         },
+        // One role as a page (rasm «Редактирование роли»): name, description,
+        // the permission groups, Save on the right.
+        {
+          path: 'roles/new',
+          name: 'admin-role-new',
+          component: () => import('@/admin/views/RoleEditorView.vue'),
+          meta: { permission: 'role:manage', titleKey: 'roles.newRole' },
+        },
+        {
+          path: 'roles/:id',
+          name: 'admin-role-edit',
+          component: () => import('@/admin/views/RoleEditorView.vue'),
+          meta: { permission: 'role:manage', titleKey: 'roles.editTitle' },
+        },
         {
           path: 'competencies',
           name: 'admin-competencies',

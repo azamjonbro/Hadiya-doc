@@ -42,13 +42,14 @@ export const roleService = {
       // rather than as ALL.
       scope: resolveRoleScope(role),
       label: role.label ?? '',
+      description: role.description ?? '',
       permissions: role.permissions ?? [],
       isSystem: role.isSystem || SYSTEM_ROLE_NAMES.includes(role.name),
       users: usersByRoleId.get(role._id.toString()) ?? 0,
     }))
   },
 
-  async create(actor, name, scope = ROLE_SCOPES.SELF) {
+  async create(actor, name, scope = ROLE_SCOPES.SELF, { description = '', permissions } = {}) {
     // Role names are the uppercase keys the RBAC layer compares, so normalise
     // here rather than trusting the form to have done it. Through slugify so
     // a role typed in Cyrillic ("Кассир") or with an apostrophe ("O'qituvchi")
@@ -69,7 +70,10 @@ export const roleService = {
     const role = await Role.create({
       name: normalized,
       label,
-      permissions: NEW_ROLE_PERMISSIONS,
+      description,
+      // The baseline is always in: a role that cannot read its own profile
+      // is a role nobody can sign in with.
+      permissions: [...new Set([...NEW_ROLE_PERMISSIONS, ...(permissions ?? [])])],
       scope,
       isSystem: false,
     })
@@ -81,7 +85,7 @@ export const roleService = {
       metadata: { name: normalized, scope },
     })
 
-    return { id: role._id.toString(), name: role.name, label, scope: role.scope, isSystem: false, users: 0 }
+    return { id: role._id.toString(), name: role.name, label, description, permissions: role.permissions, scope: role.scope, isSystem: false, users: 0 }
   },
 
   /**
@@ -114,13 +118,18 @@ export const roleService = {
     return [...byModule.entries()].map(([module, items]) => ({ module, permissions: items }))
   },
 
-  async update(actor, id, { permissions, scope }) {
+  async update(actor, id, { permissions, scope, label, description }) {
     const role = await Role.findById(id)
     if (!role) throw ApiError.notFound('Role not found')
 
-    if (role.isSystem || SYSTEM_ROLE_NAMES.includes(role.name)) {
+    const system = role.isSystem || SYSTEM_ROLE_NAMES.includes(role.name)
+    // A built-in role's words may change — its description is documentation
+    // — but not what it can do or how far it sees.
+    if (system && (permissions !== undefined || scope !== undefined || label !== undefined)) {
       throw ApiError.badRequest('Built-in roles cannot be edited', 'SYSTEM_ROLE_PROTECTED')
     }
+    if (label !== undefined) role.label = label.replace(/\s+/g, ' ')
+    if (description !== undefined) role.description = description
 
     const before = { permissions: [...role.permissions], scope: resolveRoleScope(role) }
     if (permissions !== undefined) {
@@ -151,9 +160,11 @@ export const roleService = {
     return {
       id: role._id.toString(),
       name: role.name,
+      label: role.label ?? '',
+      description: role.description ?? '',
       permissions: role.permissions,
-      scope: role.scope,
-      isSystem: false,
+      scope: resolveRoleScope(role),
+      isSystem: system,
       users,
     }
   },

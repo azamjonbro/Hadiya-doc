@@ -7,6 +7,10 @@ export const roleNameSchema = z.object({
   // to ALL: a role created without saying how far it reaches should reach as
   // little as possible (AT-21).
   scope: z.enum(ROLE_SCOPE_VALUES).optional().default(ROLE_SCOPES.SELF),
+  description: z.string().trim().max(500).optional().default(''),
+  // The editor page saves the whole role in one go; without a list the
+  // role starts with the baseline.
+  permissions: z.array(z.enum(ALL_PERMISSIONS, { message: 'Unknown permission key' })).optional(),
 })
 
 // PATCH /roles/:id — the permission matrix saves a whole row at a time.
@@ -21,7 +25,10 @@ export const updateRoleSchema = z
       .array(z.enum(ALL_PERMISSIONS, { message: 'Unknown permission key' }))
       .optional(),
     scope: z.enum(ROLE_SCOPE_VALUES).optional(),
+    // The words, not the RBAC key: the key is what code compares and stays.
+    label: z.string().trim().min(2).max(40).optional(),
+    description: z.string().trim().max(500).optional(),
   })
-  .refine((body) => body.permissions !== undefined || body.scope !== undefined, {
-    message: 'Nothing to change — send permissions, scope, or both',
+  .refine((body) => Object.values(body).some((value) => value !== undefined), {
+    message: 'Nothing to change',
   })

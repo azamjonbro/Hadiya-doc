@@ -9,6 +9,10 @@ const roleSchema = new Schema(
     // words rather than the key. Empty for the seeded roles, whose labels
     // are translated on the client.
     label: { type: String, default: '', trim: true },
+    // One line on what the role is for (the reference's «Описание» column).
+    // Empty for the seeded roles, whose descriptions are translated on the
+    // client like their labels.
+    description: { type: String, default: '', trim: true, maxlength: 500 },
     permissions: { type: [String], default: [] },
 
     // How far this role can see: ALL, DEPARTMENT, TEAM or SELF. Data on the
