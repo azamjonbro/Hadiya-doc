@@ -139,7 +139,10 @@
         "employee": "Xodim",
         "observerLabel": "Kuzatuvchi",
         "checklistHint": "Xodim nimani qilib ko‘rsatishi kerak — faol standartlardan birini tanlang.",
-        "whenHint": "Kuzatuv qachon o‘tkaziladi. Sana keyin o‘zgartirilishi mumkin."
+        "whenHint": "Kuzatuv qachon o‘tkaziladi. Sana keyin o‘zgartirilishi mumkin.",
+        "addObserver": "Kuzatuvchi qo'shish",
+        "addEmployee": "Yana xodim qo'shish",
+        "willCreate": "{n} ta sessiya yaratiladi"
       },
       "columns": {
         "employee": "Xodim",
@@ -170,7 +173,8 @@
         "levelsHint": "Kamida ikkita daraja. Eng yuqori ball — bandning to‘liq vazni.",
         "nameRequired": "Nomini kiriting",
         "levelRequired": "Har bir daraja nomlangan bo‘lishi kerak"
-      }
+      },
+      "sessionsCreated": "{n} ta sessiya yaratildi"
     }
   },
   "ru": {
@@ -313,7 +317,10 @@
         "employee": "Сотрудник",
         "observerLabel": "Наблюдатель",
         "checklistHint": "Что сотрудник должен показать — выберите один из активных стандартов.",
-        "whenHint": "Когда пройдёт наблюдение. Дату можно изменить позже."
+        "whenHint": "Когда пройдёт наблюдение. Дату можно изменить позже.",
+        "addObserver": "Добавить наблюдателя",
+        "addEmployee": "Добавить ещё сотрудника",
+        "willCreate": "Будет создано сессий: {n}"
       },
       "columns": {
         "employee": "Сотрудник",
@@ -344,7 +351,8 @@
         "levelsHint": "Минимум два уровня. Максимальный балл — полный вес пункта.",
         "nameRequired": "Введите название",
         "levelRequired": "У каждого уровня должно быть название"
-      }
+      },
+      "sessionsCreated": "Создано сессий: {n}"
     }
   },
   "en": {
@@ -487,7 +495,10 @@
         "employee": "Employee",
         "observerLabel": "Observer",
         "checklistHint": "What the employee has to demonstrate — pick one of the active standards.",
-        "whenHint": "When the observation takes place. The date can be changed later."
+        "whenHint": "When the observation takes place. The date can be changed later.",
+        "addObserver": "Add an observer",
+        "addEmployee": "Add another employee",
+        "willCreate": "{n} sessions will be created"
       },
       "columns": {
         "employee": "Employee",
@@ -518,7 +529,8 @@
         "levelsHint": "At least two levels. The top score is the item's full weight.",
         "nameRequired": "Enter a name",
         "levelRequired": "Every level needs a name"
-      }
+      },
+      "sessionsCreated": "{n} sessions created"
     }
   }
 }

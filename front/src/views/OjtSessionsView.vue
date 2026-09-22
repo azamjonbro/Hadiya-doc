@@ -70,20 +70,35 @@ function tomorrowAtEight() {
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T08:00`
 }
 
+// Both sides are lists (rasm «Участники»): a round of on-the-job training
+// is usually several people, and sometimes two observers splitting a
+// shift. A session still holds one observer and one trainee — the wizard
+// creates one per pair, which is what keeps each one gradeable on its own.
 function emptyForm() {
   return {
     checklistId: '',
-    traineeId: '',
-    traineeName: '',
-    observerId: auth.user?.id ?? '',
-    observerName: auth.user?.fullName ?? '',
+    trainees: [],
+    observers: auth.user?.id ? [{ id: auth.user.id, fullName: auth.user.fullName, avatar: auth.user.avatar ?? '' }] : [],
     scheduledAt: tomorrowAtEight(),
     location: '',
   }
 }
 
+// How many sessions "Create" is about to make: every observer with every
+// trainee. Said out loud in the step, because one click making nine
+// records is a surprise nobody wants after the fact.
+const sessionCount = computed(() => form.value.observers.length * form.value.trainees.length)
+
+function addPerson(list, user) {
+  if (form.value[list].some((person) => person.id === user.id)) return
+  form.value[list] = [...form.value[list], { id: user.id, fullName: user.fullName, avatar: user.avatar ?? '' }]
+}
+function removePerson(list, id) {
+  form.value[list] = form.value[list].filter((person) => person.id !== id)
+}
+
 const stepDone = computed(() => [
-  Boolean(form.value.traineeId && form.value.observerId),
+  Boolean(form.value.trainees.length && form.value.observers.length),
   Boolean(form.value.checklistId),
   Boolean(form.value.scheduledAt),
 ])
@@ -222,28 +237,43 @@ async function openCreate() {
 }
 
 async function create() {
-  if (!form.value.checklistId || !form.value.traineeId || !form.value.observerId) {
+  if (!form.value.checklistId || !form.value.trainees.length || !form.value.observers.length) {
     toast.error(t('ojt.createRequired'))
     return
   }
   creating.value = true
   try {
-    const payload = {
-      checklistId: form.value.checklistId,
-      traineeId: form.value.traineeId,
-      observerId: form.value.observerId,
-      location: form.value.location.trim(),
+    const pairs = form.value.observers.flatMap((observer) =>
+      form.value.trainees.map((trainee) => ({ observerId: observer.id, traineeId: trainee.id })),
+    )
+    // One request each, and one failure does not sink the rest: the server
+    // refuses a pair where the observer is the trainee, and the other
+    // eight sessions of a nine-pair round should still exist.
+    const results = await Promise.allSettled(
+      pairs.map((pair) =>
+        ojtApi.createSession({
+          checklistId: form.value.checklistId,
+          ...pair,
+          location: form.value.location.trim(),
+          ...(form.value.scheduledAt ? { scheduledAt: form.value.scheduledAt } : {}),
+        }),
+      ),
+    )
+    const made = results.filter((result) => result.status === 'fulfilled').length
+    const failed = results.length - made
+    if (made) toast.success(made === 1 ? t('ojt.sessionCreated') : t('ojt.sessionsCreated', { n: made }))
+    if (failed) {
+      // The server is the one that knows "the observer cannot be the
+      // trainee" and "this checklist has no items"; its sentence is the
+      // useful one, so the first rejection speaks for the batch.
+      const first = results.find((result) => result.status === 'rejected')
+      toast.error(apiErrorText(first?.reason, t('ojt.saveError')))
     }
-    if (form.value.scheduledAt) payload.scheduledAt = form.value.scheduledAt
-    await ojtApi.createSession(payload)
-    modalOpen.value = false
-    toast.success(t('ojt.sessionCreated'))
-    page.value = 1
-    await load()
-  } catch (error) {
-    // The server is the one that knows "the observer cannot be the trainee"
-    // and "this checklist has no items"; its sentence is the useful one.
-    toast.error(apiErrorText(error, t('ojt.saveError')))
+    if (made) {
+      modalOpen.value = false
+      page.value = 1
+      await load()
+    }
   } finally {
     creating.value = false
   }
@@ -415,29 +445,48 @@ onMounted(load)
           <!-- Step 1: participants -->
           <template v-if="step === 0">
             <h3 class="text-[20px] font-semibold text-ink">{{ t('ojt.wizard.participants') }}</h3>
-            <div class="mt-8 grid grid-cols-[120px_minmax(0,1fr)] items-center gap-x-4 gap-y-6">
-              <span class="text-[14px] text-ink">{{ t('ojt.wizard.observerLabel') }}:</span>
-              <div v-if="pickingObserver">
-                <UserPicker :display-name="form.observerName" :placeholder="t('ojt.wizard.pickObserver')" @select="(u) => { form.observerId = u.id; form.observerName = u.fullName; pickingObserver = false }" @clear="form.observerId = ''" />
-              </div>
-              <button v-else type="button" class="flex items-center gap-2 text-left" @click="pickingObserver = true">
-                <Avatar :name="form.observerName" :src="form.observerId === auth.user?.id ? auth.user?.avatar : ''" size="sm" />
-                <span class="text-[14px] text-ink">{{ form.observerName }} <span v-if="form.observerId === auth.user?.id" class="text-ink-muted">{{ t('ojt.wizard.you') }}</span></span>
-                <Icon name="chevron-down" size="14" class="text-ink-faint" />
-              </button>
-
-              <span class="text-[14px] text-ink">{{ t('ojt.wizard.employee') }}:</span>
-              <div v-if="pickingTrainee || !form.traineeId">
-                <UserPicker v-if="pickingTrainee" :display-name="form.traineeName" :placeholder="t('ojt.wizard.pickEmployee')" @select="(u) => { form.traineeId = u.id; form.traineeName = u.fullName; pickingTrainee = false }" @clear="form.traineeId = ''" />
-                <button v-else type="button" class="flex items-center gap-2 text-[14px] text-primary hover:underline" @click="pickingTrainee = true">
-                  <Icon name="user-plus" size="16" /> {{ t('ojt.wizard.pickEmployee') }}
+            <div class="mt-8 grid grid-cols-[120px_minmax(0,1fr)] items-start gap-x-4 gap-y-6">
+              <!-- Observers: whoever is watching. Several may split a
+                   shift, so the row is a list with its own "add". -->
+              <span class="pt-1.5 text-[14px] text-ink">{{ t('ojt.wizard.observerLabel') }}:</span>
+              <div>
+                <ul v-if="form.observers.length" class="flex flex-wrap gap-2">
+                  <li v-for="person in form.observers" :key="person.id" class="flex items-center gap-2 rounded-full bg-surface-2 py-1 pl-1 pr-2">
+                    <Avatar :name="person.fullName" :src="person.avatar" size="xs" />
+                    <span class="text-[13px] text-ink">{{ person.fullName }}<span v-if="person.id === auth.user?.id" class="text-ink-muted"> {{ t('ojt.wizard.you') }}</span></span>
+                    <button type="button" class="text-ink-faint transition-default hover:text-danger" :aria-label="t('common.delete')" @click="removePerson('observers', person.id)"><Icon name="close" size="12" /></button>
+                  </li>
+                </ul>
+                <div v-if="pickingObserver" class="mt-2">
+                  <UserPicker :placeholder="t('ojt.wizard.pickObserver')" @select="(u) => { addPerson('observers', u); pickingObserver = false }" />
+                </div>
+                <button v-else type="button" class="mt-2 flex items-center gap-2 text-[14px] text-primary hover:underline" @click="pickingObserver = true">
+                  <Icon name="user-plus" size="16" /> {{ t('ojt.wizard.addObserver') }}
                 </button>
               </div>
-              <button v-else type="button" class="flex items-center gap-2 text-left" @click="pickingTrainee = true">
-                <Avatar :name="form.traineeName" size="sm" />
-                <span class="text-[14px] text-ink">{{ form.traineeName }}</span>
-                <span class="text-caption text-primary">{{ t('ojt.wizard.changeEmployee') }}</span>
-              </button>
+
+              <!-- Employees: one session each, so a whole shift is
+                   scheduled in one pass. -->
+              <span class="pt-1.5 text-[14px] text-ink">{{ t('ojt.wizard.employee') }}:</span>
+              <div>
+                <ul v-if="form.trainees.length" class="flex flex-wrap gap-2">
+                  <li v-for="person in form.trainees" :key="person.id" class="flex items-center gap-2 rounded-full bg-surface-2 py-1 pl-1 pr-2">
+                    <Avatar :name="person.fullName" :src="person.avatar" size="xs" />
+                    <span class="text-[13px] text-ink">{{ person.fullName }}</span>
+                    <button type="button" class="text-ink-faint transition-default hover:text-danger" :aria-label="t('common.delete')" @click="removePerson('trainees', person.id)"><Icon name="close" size="12" /></button>
+                  </li>
+                </ul>
+                <div v-if="pickingTrainee" class="mt-2">
+                  <UserPicker :placeholder="t('ojt.wizard.pickEmployee')" @select="(u) => { addPerson('trainees', u); pickingTrainee = false }" />
+                </div>
+                <button v-else type="button" class="mt-2 flex items-center gap-2 text-[14px] text-primary hover:underline" @click="pickingTrainee = true">
+                  <Icon name="user-plus" size="16" /> {{ form.trainees.length ? t('ojt.wizard.addEmployee') : t('ojt.wizard.pickEmployee') }}
+                </button>
+              </div>
+
+              <!-- What "Create" is about to do, when it is more than one -->
+              <span v-if="sessionCount > 1"></span>
+              <p v-if="sessionCount > 1" class="text-[13px] text-ink-muted">{{ t('ojt.wizard.willCreate', { n: sessionCount }) }}</p>
             </div>
           </template>
 
