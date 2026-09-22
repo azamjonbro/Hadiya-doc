@@ -48,16 +48,22 @@ const roleOptions = Object.values(ROLES).map((r) => ({ value: r, label: roleLabe
 
 // Every filter the row knows, in the order the menu lists them. `keys` is
 // what the filter writes into modelValue; `always` chips cannot be removed.
+// A `period` filter is a from/to pair: `keys` holds the two.
 const DEFS = [
   { id: 'course', icon: 'book-open', keys: ['courseId'], always: true, kind: 'select', list: 'courses' },
   { id: 'period', icon: 'calendar', keys: ['dateFrom', 'dateTo'], always: true, kind: 'period' },
-  { id: 'role', icon: 'user', keys: ['role'], kind: 'select', options: roleOptions },
-  { id: 'user', icon: 'user', keys: ['userId', 'userLabel'], kind: 'user' },
+  // The reference's list (rasm «Добавить фильтр»), in its order.
+  { id: 'completed', icon: 'calendar', keys: ['completedFrom', 'completedTo'], kind: 'period' },
+  { id: 'deadline', icon: 'calendar', keys: ['deadlineFrom', 'deadlineTo'], kind: 'period' },
+  { id: 'lastLogin', icon: 'calendar', keys: ['lastLoginFrom', 'lastLoginTo'], kind: 'period' },
+  { id: 'created', icon: 'calendar', keys: ['createdFrom', 'createdTo'], kind: 'period' },
   { id: 'department', icon: 'building', keys: ['department'], kind: 'select', list: 'departments' },
   { id: 'branch', icon: 'map-pin', keys: ['branch'], kind: 'select', list: 'branches' },
   { id: 'group', icon: 'users', keys: ['groupId'], kind: 'select', list: 'groups' },
+  { id: 'role', icon: 'user', keys: ['role'], kind: 'select', options: roleOptions },
+  { id: 'status', icon: 'user', keys: ['status'], kind: 'select', options: [{ value: 'active', label: t('reports.chips.statusActive') }, { value: 'inactive', label: t('reports.chips.statusInactive') }] },
   { id: 'manager', icon: 'user', keys: ['managerId', 'managerLabel'], kind: 'user' },
-  { id: 'status', icon: 'check-circle', keys: ['status'], kind: 'select', options: [{ value: 'active', label: t('reports.chips.statusActive') }, { value: 'inactive', label: t('reports.chips.statusInactive') }] },
+  { id: 'user', icon: 'user', keys: ['userId', 'userLabel'], kind: 'user' },
 ]
 
 // Added chips: the always-on ones, plus any whose key already holds a
@@ -99,9 +105,10 @@ function optionsOf(def) {
 function valueLabel(def) {
   const v = props.modelValue
   if (def.kind === 'period') {
-    if (!v.dateFrom && !v.dateTo) return t('reports.chips.allTime')
+    const [fromKey, toKey] = def.keys
+    if (!v[fromKey] && !v[toKey]) return t('reports.chips.allTime')
     const fmt = (d) => (d ? new Date(d).toLocaleDateString(undefined, { day: '2-digit', month: '2-digit', year: 'numeric' }) : '…')
-    return `${fmt(v.dateFrom)} – ${fmt(v.dateTo)}`
+    return `${fmt(v[fromKey])} – ${fmt(v[toKey])}`
   }
   if (def.kind === 'user') return v[def.keys[1]] || t('reports.chips.any')
   const value = v[def.keys[0]]
@@ -206,8 +213,8 @@ watch(
           </template>
           <template v-else>
             <div class="grid grid-cols-2 gap-3">
-              <AppDatePicker :model-value="modelValue.dateFrom" :label="t('reports.filters.dateFrom')" :placeholder="t('reports.filters.datePlaceholder')" @update:model-value="set({ dateFrom: $event })" />
-              <AppDatePicker :model-value="modelValue.dateTo" :label="t('reports.filters.dateTo')" :placeholder="t('reports.filters.datePlaceholder')" @update:model-value="set({ dateTo: $event })" />
+              <AppDatePicker :model-value="modelValue[def.keys[0]]" :label="t('reports.filters.dateFrom')" :placeholder="t('reports.filters.datePlaceholder')" @update:model-value="set({ [def.keys[0]]: $event })" />
+              <AppDatePicker :model-value="modelValue[def.keys[1]]" :label="t('reports.filters.dateTo')" :placeholder="t('reports.filters.datePlaceholder')" @update:model-value="set({ [def.keys[1]]: $event })" />
             </div>
             <div class="mt-3 flex flex-wrap gap-1.5">
               <button
@@ -215,11 +222,11 @@ watch(
                 :key="days"
                 type="button"
                 class="rounded-full bg-surface-2 px-3 py-1 text-[13px] text-ink transition-default hover:bg-surface-hover"
-                @click="set({ dateFrom: new Date(Date.now() - days * 864e5).toISOString().slice(0, 10), dateTo: new Date().toISOString().slice(0, 10) }); openId = ''"
+                @click="set({ [def.keys[0]]: new Date(Date.now() - days * 864e5).toISOString().slice(0, 10), [def.keys[1]]: new Date().toISOString().slice(0, 10) }); openId = ''"
               >
                 {{ t('reports.chips.lastDays', { n: days }) }}
               </button>
-              <button type="button" class="rounded-full px-3 py-1 text-[13px] text-ink-muted transition-default hover:text-ink" @click="set({ dateFrom: '', dateTo: '' }); openId = ''">
+              <button type="button" class="rounded-full px-3 py-1 text-[13px] text-ink-muted transition-default hover:text-ink" @click="set({ [def.keys[0]]: '', [def.keys[1]]: '' }); openId = ''">
                 {{ t('reports.chips.allTime') }}
               </button>
             </div>

@@ -26,7 +26,11 @@
         "manager": "Rahbar",
         "status": "Hisob holati",
         "statusActive": "Faol",
-        "statusInactive": "Faol emas"
+        "statusInactive": "Faol emas",
+        "completed": "Tugallash sanasi",
+        "deadline": "Bajarish muddati",
+        "lastLogin": "Oxirgi kirish sanasi",
+        "created": "Foydalanuvchi yaratilgan sana"
       }
     }
   },
@@ -57,7 +61,11 @@
         "manager": "Руководитель",
         "status": "Статус учётной записи",
         "statusActive": "Активен",
-        "statusInactive": "Неактивен"
+        "statusInactive": "Неактивен",
+        "completed": "Дата завершения",
+        "deadline": "Срок выполнения",
+        "lastLogin": "Дата последнего входа",
+        "created": "Дата создания пользователя"
       }
     }
   },
@@ -88,7 +96,11 @@
         "manager": "Manager",
         "status": "Account status",
         "statusActive": "Active",
-        "statusInactive": "Inactive"
+        "statusInactive": "Inactive",
+        "completed": "Completion date",
+        "deadline": "Due date",
+        "lastLogin": "Last sign-in date",
+        "created": "User creation date"
       }
     }
   }

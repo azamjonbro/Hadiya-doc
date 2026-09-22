@@ -23,6 +23,17 @@ export const reportExportQuerySchema = z.object({
   groupId: objectId.optional(),
   managerId: objectId.optional(),
   status: z.enum(['active', 'inactive']).optional(),
+  // Date ranges on the person, not the row: when they last signed in, when
+  // the account was made, when they completed something, when something
+  // of theirs is due. Each narrows the population like the ones above.
+  lastLoginFrom: z.coerce.date().optional(),
+  lastLoginTo: z.coerce.date().optional(),
+  createdFrom: z.coerce.date().optional(),
+  createdTo: z.coerce.date().optional(),
+  completedFrom: z.coerce.date().optional(),
+  completedTo: z.coerce.date().optional(),
+  deadlineFrom: z.coerce.date().optional(),
+  deadlineTo: z.coerce.date().optional(),
 })
 
 /**

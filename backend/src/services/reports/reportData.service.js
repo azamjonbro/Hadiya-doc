@@ -29,12 +29,23 @@ import { EXTRA_REPORT_BUILDERS } from './reportBuilders.extra.js'
 // manager, account status) — one list, or null when none is set. Combined
 // with the role and scope lists below by intersection, so every user-based
 // report narrows the same way without each builder knowing the filters.
+function rangeOf(from, to) {
+  const range = {}
+  if (from) range.$gte = from
+  if (to) range.$lte = to
+  return Object.keys(range).length ? range : null
+}
+
 async function resolvePopulationFilter(filters) {
   const match = {}
   if (filters.department) match.department = filters.department
   if (filters.branch) match.branch = filters.branch
   if (filters.managerId) match.managerId = toObjectId(filters.managerId)
   if (filters.status) match.isActive = filters.status === 'active'
+  const lastLogin = rangeOf(filters.lastLoginFrom, filters.lastLoginTo)
+  if (lastLogin) match.lastLoginAt = lastLogin
+  const created = rangeOf(filters.createdFrom, filters.createdTo)
+  if (created) match.createdAt = created
   const lists = []
   if (Object.keys(match).length) {
     const ids = await User.distinct('_id', match)
@@ -43,6 +54,18 @@ async function resolvePopulationFilter(filters) {
   if (filters.groupId) {
     const group = await Group.findById(filters.groupId, { memberIds: 1 }).lean()
     lists.push((group?.memberIds ?? []).map((id) => id.toString()))
+  }
+  // People with a completion, or a due date, inside the range — read off
+  // their assignments (cancelled ones excluded).
+  const completed = rangeOf(filters.completedFrom, filters.completedTo)
+  if (completed) {
+    const ids = await CourseAssignment.distinct('userId', { completedAt: completed, status: { $ne: 'CANCELLED' } })
+    lists.push(ids.map((id) => id.toString()))
+  }
+  const deadline = rangeOf(filters.deadlineFrom, filters.deadlineTo)
+  if (deadline) {
+    const ids = await CourseAssignment.distinct('userId', { deadline, status: { $ne: 'CANCELLED' } })
+    lists.push(ids.map((id) => id.toString()))
   }
   if (!lists.length) return null
   return lists.reduce((acc, list) => intersectIds(acc, list), null)

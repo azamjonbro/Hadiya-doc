@@ -58,6 +58,14 @@ const filters = ref({
   managerId: '',
   managerLabel: '',
   status: '',
+  completedFrom: '',
+  completedTo: '',
+  deadlineFrom: '',
+  deadlineTo: '',
+  lastLoginFrom: '',
+  lastLoginTo: '',
+  createdFrom: '',
+  createdTo: '',
 })
 const queryFilters = computed(() => {
   const { userLabel, managerLabel, ...rest } = filters.value

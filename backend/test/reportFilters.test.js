@@ -82,6 +82,14 @@ describe('report filters · who the report is about', () => {
     assert.deepEqual(namesOf(result), [sales.fullName])
   })
 
+  test('last login and account creation dates', async () => {
+    await User.updateOne({ _id: sales._id }, { $set: { lastLoginAt: new Date('2026-01-15') } })
+    const jan = await reportDataService.build(actor(), 'employee-progress', { lastLoginFrom: new Date('2026-01-01'), lastLoginTo: new Date('2026-01-31') })
+    assert.deepEqual(namesOf(jan), [sales.fullName])
+    const future = await reportDataService.build(actor(), 'employee-progress', { createdFrom: new Date(Date.now() + 864e5) })
+    assert.equal(future.rows.length, 0)
+  })
+
   test('account status, and filters intersect rather than add up', async () => {
     const inactive = await reportDataService.build(actor(), 'employee-progress', { status: 'inactive', role: role.name })
     assert.deepEqual(namesOf(inactive), [store.fullName])
