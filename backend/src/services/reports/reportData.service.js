@@ -6,6 +6,7 @@ import { News } from '../../models/news.model.js'
 import { NewsView } from '../../models/newsView.model.js'
 import { Task } from '../../models/task.model.js'
 import { Group } from '../../models/group.model.js'
+import { containsRegex } from '../../utils/escapeRegex.js'
 import { roleRepository } from '../../repositories/role.repository.js'
 import { ApiError } from '../../utils/ApiError.js'
 import { DEFAULT_REPORT_LANG, reportTranslator } from './reportI18n.js'
@@ -46,6 +47,16 @@ async function resolvePopulationFilter(filters) {
   if (lastLogin) match.lastLoginAt = lastLogin
   const created = rangeOf(filters.createdFrom, filters.createdTo)
   if (created) match.createdAt = created
+  const hired = rangeOf(filters.hireFrom, filters.hireTo)
+  if (hired) match.hireDate = hired
+  const left = rangeOf(filters.terminationFrom, filters.terminationTo)
+  if (left) match.terminationDate = left
+  if (filters.gender) match.gender = filters.gender
+  // Free-text fields of the record, matched the way the users list
+  // searches them: as a substring, case-insensitively.
+  for (const key of ['firstName', 'lastName', 'jshshir', 'email', 'phone', 'position', 'country', 'address']) {
+    if (filters[key]) match[key] = containsRegex(filters[key])
+  }
   const lists = []
   if (Object.keys(match).length) {
     const ids = await User.distinct('_id', match)
@@ -65,6 +76,23 @@ async function resolvePopulationFilter(filters) {
   const deadline = rangeOf(filters.deadlineFrom, filters.deadlineTo)
   if (deadline) {
     const ids = await CourseAssignment.distinct('userId', { deadline, status: { $ne: 'CANCELLED' } })
+    lists.push(ids.map((id) => id.toString()))
+  }
+  const assigned = rangeOf(filters.assignedFrom, filters.assignedTo)
+  if (assigned) {
+    const ids = await CourseAssignment.distinct('userId', { assignedAt: assigned, status: { $ne: 'CANCELLED' } })
+    lists.push(ids.map((id) => id.toString()))
+  }
+  // How they got onto a course: the row says. Self-enrolment is the one
+  // where the person assigned themselves; a group row carries its group.
+  const enrollment = Array.isArray(filters.enrollment) ? filters.enrollment : filters.enrollment ? [filters.enrollment] : []
+  if (enrollment.length) {
+    const ways = {
+      group: { groupId: { $ne: null } },
+      self: { $expr: { $eq: ['$assignedBy', '$userId'] } },
+      manual: { groupId: null, $expr: { $ne: ['$assignedBy', '$userId'] } },
+    }
+    const ids = await CourseAssignment.distinct('userId', { $or: enrollment.map((way) => ways[way]), status: { $ne: 'CANCELLED' } })
     lists.push(ids.map((id) => id.toString()))
   }
   if (!lists.length) return null

@@ -90,6 +90,16 @@ describe('report filters · who the report is about', () => {
     assert.equal(future.rows.length, 0)
   })
 
+  test('the record\'s own fields: position as a substring, gender, hire date', async () => {
+    await User.updateOne({ _id: sales._id }, { $set: { position: 'Senior seller', gender: 'FEMALE', hireDate: new Date('2025-03-01') } })
+    assert.deepEqual(namesOf(await reportDataService.build(actor(), 'employee-progress', { position: 'SELLER' })), [sales.fullName])
+    assert.deepEqual(namesOf(await reportDataService.build(actor(), 'employee-progress', { gender: 'FEMALE' })), [sales.fullName])
+    assert.deepEqual(
+      namesOf(await reportDataService.build(actor(), 'employee-progress', { hireFrom: new Date('2025-01-01'), hireTo: new Date('2025-12-31') })),
+      [sales.fullName]
+    )
+  })
+
   test('account status, and filters intersect rather than add up', async () => {
     const inactive = await reportDataService.build(actor(), 'employee-progress', { status: 'inactive', role: role.name })
     assert.deepEqual(namesOf(inactive), [store.fullName])

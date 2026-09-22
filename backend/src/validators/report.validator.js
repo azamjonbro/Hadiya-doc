@@ -5,6 +5,13 @@ const objectId = z.string().regex(/^[a-f\d]{24}$/i, 'Invalid id')
 
 export const reportExportQuerySchema = z.object({
   format: z.enum(['csv', 'xlsx', 'pdf']),
+  // Queued exports only: who else is told when the file is ready
+  // («Emailga yuborish»), as comma-separated user ids.
+  notify: z
+    .string()
+    .transform((value) => value.split(',').map((v) => v.trim()).filter(Boolean))
+    .pipe(z.array(objectId).max(20))
+    .optional(),
   // The language the admin is looking at — the exported file is written in it.
   lang: z.enum(REPORT_LANGS).optional().default(DEFAULT_REPORT_LANG),
   role: z.string().optional(),
@@ -34,6 +41,31 @@ export const reportExportQuerySchema = z.object({
   completedTo: z.coerce.date().optional(),
   deadlineFrom: z.coerce.date().optional(),
   deadlineTo: z.coerce.date().optional(),
+  assignedFrom: z.coerce.date().optional(),
+  assignedTo: z.coerce.date().optional(),
+  hireFrom: z.coerce.date().optional(),
+  hireTo: z.coerce.date().optional(),
+  terminationFrom: z.coerce.date().optional(),
+  terminationTo: z.coerce.date().optional(),
+  // How the person got onto a course: assigned by hand, through a group,
+  // or enrolled themselves.
+  // Several may be ticked at once: "manual,self".
+  enrollment: z
+    .string()
+    .transform((value) => value.split(',').map((v) => v.trim()).filter(Boolean))
+    .pipe(z.array(z.enum(['manual', 'group', 'self'])).max(3))
+    .optional(),
+  // The rest of the employee record, matched as typed (contains, case
+  // insensitive) except gender, which is one of two.
+  firstName: z.string().trim().max(120).optional(),
+  lastName: z.string().trim().max(120).optional(),
+  jshshir: z.string().trim().max(40).optional(),
+  email: z.string().trim().max(160).optional(),
+  phone: z.string().trim().max(40).optional(),
+  position: z.string().trim().max(120).optional(),
+  country: z.string().trim().max(80).optional(),
+  address: z.string().trim().max(200).optional(),
+  gender: z.enum(['MALE', 'FEMALE']).optional(),
 })
 
 /**

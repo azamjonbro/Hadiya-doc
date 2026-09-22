@@ -76,7 +76,7 @@ export const reportController = {
 
   export: asyncHandler(async (req, res) => {
     const { type } = req.params
-    const { format, lang, ...filters } = req.validatedQuery
+    const { format, lang, notify: _notify, ...filters } = req.validatedQuery
     const t = reportTranslator(lang)
     // The sheet/document title is localised, but the download filename stays
     // the ASCII slug — non-ASCII in Content-Disposition is where downloads
@@ -141,7 +141,7 @@ export const reportController = {
    */
   queueExport: asyncHandler(async (req, res) => {
     const { type } = req.params
-    const { format, lang, ...filters } = req.validatedQuery
+    const { format, lang, notify, ...filters } = req.validatedQuery
 
     // Resolved here, not in the worker: the job has to export what this
     // person could see when they asked.
@@ -151,6 +151,9 @@ export const reportController = {
       lang,
       filters,
       scopedUserIds: req.scopedUserIds ?? null,
+      // «Send by email»: the people named are told when the file is ready,
+      // the same way a schedule's recipients are.
+      notify: notify ?? [],
     })
     await queueExport(job._id)
 

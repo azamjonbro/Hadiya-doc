@@ -24,6 +24,9 @@ import ReportFilterChips from '@/admin/components/reports/ReportFilterChips.vue'
 import Icon from '@/components/ui/Icon.vue'
 import Pagination from '@/components/ui/Pagination.vue'
 import ProgressRing from '@/components/ui/ProgressRing.vue'
+import Modal from '@/components/ui/Modal.vue'
+import UserPicker from '@/components/ui/UserPicker.vue'
+import Avatar from '@/components/ui/Avatar.vue'
 import Skeleton from '@/components/ui/Skeleton.vue'
 import EmptyState from '@/components/ui/EmptyState.vue'
 
@@ -45,32 +48,123 @@ function typeLabel(key) {
 
 // The chips write here; the labels (`userLabel`, `managerLabel`) are what
 // the chips show and not filters the server knows.
-const filters = ref({
+const EMPTY_FILTERS = {
+  enrollment: '',
   courseId: '',
   dateFrom: '',
   dateTo: '',
-  role: '',
-  userId: '',
-  userLabel: '',
-  department: '',
-  branch: '',
-  groupId: '',
-  managerId: '',
-  managerLabel: '',
-  status: '',
   completedFrom: '',
   completedTo: '',
   deadlineFrom: '',
   deadlineTo: '',
+  assignedFrom: '',
+  assignedTo: '',
   lastLoginFrom: '',
   lastLoginTo: '',
   createdFrom: '',
   createdTo: '',
-})
+  department: '',
+  branch: '',
+  groupId: '',
+  role: '',
+  status: '',
+  managerId: '',
+  managerLabel: '',
+  userId: '',
+  userLabel: '',
+  firstName: '',
+  lastName: '',
+  jshshir: '',
+  email: '',
+  phone: '',
+  position: '',
+  country: '',
+  gender: '',
+  address: '',
+  hireFrom: '',
+  hireTo: '',
+  terminationFrom: '',
+  terminationTo: '',
+}
+const filters = ref({ ...EMPTY_FILTERS })
 const queryFilters = computed(() => {
   const { userLabel, managerLabel, ...rest } = filters.value
   return rest
 })
+
+// ----------------------------------------------------------- templates
+
+/**
+ * Saved filter sets (rasm «Создание шаблона отчёта») and the recent
+ * ones, per report type, in this browser. A template is the reference's
+ * bookmark: the filters as they stand, under a name, to come back to.
+ */
+const TEMPLATES_KEY = () => `report-templates:${type.value}`
+const templates = ref([])
+function loadTemplates() {
+  try {
+    templates.value = JSON.parse(localStorage.getItem(TEMPLATES_KEY()) ?? '[]')
+  } catch {
+    templates.value = []
+  }
+}
+function persistTemplates() {
+  try {
+    localStorage.setItem(TEMPLATES_KEY(), JSON.stringify(templates.value))
+  } catch {
+    // Storage may be unavailable; the templates still work for the session.
+  }
+}
+const templateOpen = ref(false)
+const templateName = ref('')
+function saveTemplate() {
+  const name = templateName.value.trim()
+  if (!name) return
+  templates.value = [{ id: String(Date.now()), name, filters: { ...filters.value }, savedAt: new Date().toISOString(), openedAt: new Date().toISOString() }, ...templates.value.filter((tpl) => tpl.name !== name)]
+  persistTemplates()
+  templateOpen.value = false
+  templateName.value = ''
+  toast.success(t('reports.chips.template.saved'))
+}
+const historyOpen = ref(false)
+const historyRef = ref(null)
+onClickOutside(historyRef, () => (historyOpen.value = false))
+const recentTemplates = computed(() => [...templates.value].sort((a, b) => (b.openedAt ?? '').localeCompare(a.openedAt ?? '')))
+function applyTemplate(tpl) {
+  filters.value = { ...EMPTY_FILTERS, ...tpl.filters }
+  tpl.openedAt = new Date().toISOString()
+  persistTemplates()
+  historyOpen.value = false
+}
+function removeTemplate(tpl) {
+  templates.value = templates.value.filter((row) => row.id !== tpl.id)
+  persistTemplates()
+}
+
+// ---------------------------------------------------------------- «···»
+
+const moreOpen = ref(false)
+const moreRef = ref(null)
+onClickOutside(moreRef, () => (moreOpen.value = false))
+const emailOpen = ref(false)
+const recipients = ref([])
+const sending = ref(false)
+function addRecipient(user) {
+  if (!recipients.value.some((r) => r.id === user.id)) recipients.value = [...recipients.value, { id: user.id, fullName: user.fullName }]
+}
+async function sendByEmail() {
+  sending.value = true
+  try {
+    await reportsApi.queueExport(type.value, 'xlsx', { ...queryFilters.value, notify: recipients.value.map((r) => r.id).join(',') })
+    toast.success(t('reports.chips.more.sent'))
+    emailOpen.value = false
+    recipients.value = []
+  } catch (error) {
+    toast.error(apiErrorText(error, t('reports.exports.queueFailed')))
+  } finally {
+    sending.value = false
+  }
+}
 
 // --------------------------------------------------------------- data
 
@@ -96,9 +190,16 @@ watch(queryFilters, () => {
   clearTimeout(debounce)
   debounce = setTimeout(load, 300)
 })
-watch(type, load)
+watch(type, () => {
+  filters.value = { ...EMPTY_FILTERS }
+  loadTemplates()
+  load()
+})
 
-onMounted(load)
+onMounted(() => {
+  loadTemplates()
+  load()
+})
 
 // ----------------------------------------------------------- columns
 
@@ -237,6 +338,7 @@ async function queueFull() {
         </router-link>
         <h1 class="truncate text-[24px] font-semibold text-ink">{{ report?.title || typeLabel(type) }}</h1>
       </div>
+      <div class="flex items-center gap-2">
       <div ref="exportRef" class="relative">
         <AppButton variant="secondary" icon="download" :aria-expanded="exportOpen" aria-haspopup="menu" @click="exportOpen = !exportOpen">{{ t('reports.page.export') }}</AppButton>
         <Transition enter-active-class="transition-default" enter-from-class="opacity-0 -translate-y-1" leave-active-class="transition-default" leave-to-class="opacity-0 -translate-y-1">
@@ -258,6 +360,65 @@ async function queueFull() {
             </button>
           </div>
         </Transition>
+      </div>
+      <!-- 🔖 save the filters as a template -->
+      <button
+        type="button"
+        class="flex h-10 w-10 items-center justify-center rounded-lg bg-surface-2 text-ink-muted transition-default hover:bg-surface-hover hover:text-ink"
+        :title="t('reports.chips.template.save')"
+        :aria-label="t('reports.chips.template.save')"
+        @click="templateOpen = true"
+      >
+        <Icon name="star" size="18" />
+      </button>
+      <!-- 🕘 templates and recently opened -->
+      <div ref="historyRef" class="relative">
+        <button
+          type="button"
+          class="flex h-10 w-10 items-center justify-center rounded-lg bg-surface-2 text-ink-muted transition-default hover:bg-surface-hover hover:text-ink"
+          :title="t('reports.chips.template.history')"
+          :aria-label="t('reports.chips.template.history')"
+          :aria-expanded="historyOpen"
+          @click="historyOpen = !historyOpen"
+        >
+          <Icon name="clock" size="18" />
+        </button>
+        <Transition enter-active-class="transition-default" enter-from-class="opacity-0 -translate-y-1" leave-active-class="transition-default" leave-to-class="opacity-0 -translate-y-1">
+          <div v-if="historyOpen" class="absolute right-0 z-20 mt-2 w-80 rounded-xl bg-surface p-2 shadow-xl ring-1 ring-border">
+            <p class="px-3 pb-1 pt-1.5 text-[11px] font-semibold uppercase tracking-wider text-ink-muted">{{ t('reports.chips.template.recent') }}</p>
+            <p v-if="!recentTemplates.length" class="px-3 py-3 text-[13px] text-ink-faint">{{ t('reports.chips.template.none') }}</p>
+            <div v-for="tpl in recentTemplates" :key="tpl.id" class="group flex items-center gap-2 rounded-lg px-3 py-2 transition-default hover:bg-surface-2">
+              <button type="button" class="min-w-0 flex-1 text-left" @click="applyTemplate(tpl)">
+                <span class="block truncate text-[14px] text-ink">{{ tpl.name }}</span>
+                <span class="block text-[12px] text-ink-faint">{{ new Date(tpl.openedAt ?? tpl.savedAt).toLocaleString() }}</span>
+              </button>
+              <button type="button" class="rounded-md p-1 text-ink-faint opacity-0 transition-default hover:text-danger group-hover:opacity-100" :aria-label="t('reports.chips.template.delete')" @click="removeTemplate(tpl)">
+                <Icon name="trash" size="14" />
+              </button>
+            </div>
+          </div>
+        </Transition>
+      </div>
+      <!-- «···» → send by email -->
+      <div ref="moreRef" class="relative">
+        <button
+          type="button"
+          class="flex h-10 w-10 items-center justify-center rounded-lg bg-surface-2 text-ink-muted transition-default hover:bg-surface-hover hover:text-ink"
+          :aria-label="t('library.more')"
+          :aria-expanded="moreOpen"
+          aria-haspopup="menu"
+          @click="moreOpen = !moreOpen"
+        >
+          <Icon name="more-horizontal" size="18" />
+        </button>
+        <Transition enter-active-class="transition-default" enter-from-class="opacity-0 -translate-y-1" leave-active-class="transition-default" leave-to-class="opacity-0 -translate-y-1">
+          <div v-if="moreOpen" class="absolute right-0 z-20 mt-2 w-64 rounded-xl bg-surface p-1.5 shadow-xl ring-1 ring-border" role="menu">
+            <button type="button" role="menuitem" class="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-left text-[14px] text-ink transition-default hover:bg-surface-2" @click="moreOpen = false; emailOpen = true">
+              <Icon name="send" size="16" class="text-ink-muted" />{{ t('reports.chips.more.email') }}
+            </button>
+          </div>
+        </Transition>
+      </div>
       </div>
     </div>
 
@@ -337,6 +498,32 @@ async function queueFull() {
       <div v-if="totalPages > 1" class="mt-4 flex justify-end">
         <Pagination :page="page" :total-pages="totalPages" @update:page="page = $event" />
       </div>
+
+      <!-- Rasm «Создание шаблона отчёта» -->
+      <Modal v-model="templateOpen" :title="t('reports.chips.template.title')" size="md">
+        <div class="grid gap-3 sm:grid-cols-[180px_minmax(0,1fr)] sm:items-center">
+          <label class="text-[14px] text-ink" for="template-name">{{ t('reports.chips.template.name') }}:</label>
+          <AppInput id="template-name" v-model="templateName" :placeholder="t('reports.chips.template.namePlaceholder')" @keyup.enter="saveTemplate" />
+        </div>
+        <template #footer>
+          <AppButton variant="secondary" @click="templateOpen = false">{{ t('common.cancel') }}</AppButton>
+          <AppButton :disabled="!templateName.trim()" @click="saveTemplate">{{ t('reports.chips.template.create') }}</AppButton>
+        </template>
+      </Modal>
+
+      <Modal v-model="emailOpen" :title="t('reports.chips.more.emailTitle')" :description="t('reports.chips.more.emailHint')" size="md">
+        <UserPicker :label="t('reports.chips.more.recipients')" :placeholder="t('reports.filters.userPlaceholder')" @select="addRecipient" />
+        <ul v-if="recipients.length" class="mt-3 flex flex-wrap gap-2">
+          <li v-for="person in recipients" :key="person.id" class="flex items-center gap-2 rounded-full bg-surface-2 py-1 pl-1 pr-2 text-[13px] text-ink">
+            <Avatar :name="person.fullName" size="xs" />{{ person.fullName }}
+            <button type="button" class="text-ink-faint hover:text-danger" :aria-label="t('common.delete')" @click="recipients = recipients.filter((r) => r.id !== person.id)"><Icon name="close" size="12" /></button>
+          </li>
+        </ul>
+        <template #footer>
+          <AppButton variant="secondary" @click="emailOpen = false">{{ t('common.cancel') }}</AppButton>
+          <AppButton icon="send" :disabled="!recipients.length" :loading="sending" @click="sendByEmail">{{ t('reports.chips.more.send') }}</AppButton>
+        </template>
+      </Modal>
 
       <p v-if="report.truncated" class="mt-4 flex items-center gap-2 text-[13px] text-ink-muted">
         <Icon name="alert-triangle" size="14" class="text-warning" />
