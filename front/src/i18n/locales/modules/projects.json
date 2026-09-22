@@ -121,6 +121,20 @@
         "done": "{n} ta xodim yuklab olindi",
         "truncated": "Faylda {exported} ta qator, jami {total} ta — filtrni toraytirib qayta yuklang."
       }
+    },
+    "groups": {
+      "newSmartGroup": "Yangi smart-guruh",
+      "smart": "Smart-guruh",
+      "smartHint": "A'zolar qoidaga ko'ra avtomatik yig'iladi: yangi xodim mos kelsa — qo'shiladi, mos kelmay qolsa — chiqadi.",
+      "rule": {
+        "roles": "Rollar",
+        "departments": "Bo'limlar",
+        "branches": "Filiallar",
+        "positions": "Lavozimlar",
+        "hint": "Kamida bitta shart tanlang. Bir turdagi shartlar YOKI bilan, turli turdagilar VA bilan birikadi.",
+        "summary": "Qoida:",
+        "auto": "A'zolar qoida bo'yicha avtomatik yig'iladi"
+      }
     }
   },
   "ru": {
@@ -245,6 +259,20 @@
         "done": "Выгружено сотрудников: {n}",
         "truncated": "В файле {exported} строк из {total} — сузьте фильтр и выгрузите снова."
       }
+    },
+    "groups": {
+      "newSmartGroup": "Новая смарт-группа",
+      "smart": "Смарт-группа",
+      "smartHint": "Участники подбираются по правилу автоматически: новый сотрудник, подходящий под правило, добавляется, переставший подходить — выбывает.",
+      "rule": {
+        "roles": "Роли",
+        "departments": "Подразделения",
+        "branches": "Филиалы",
+        "positions": "Должности",
+        "hint": "Выберите хотя бы одно условие. Условия одного типа — ИЛИ, разных типов — И.",
+        "summary": "Правило:",
+        "auto": "Участники подбираются по правилу автоматически"
+      }
     }
   },
   "en": {
@@ -368,6 +396,20 @@
         "exportCsv": "List as CSV",
         "done": "{n} employees exported",
         "truncated": "{exported} of {total} rows in the file — narrow the filter and export again."
+      }
+    },
+    "groups": {
+      "newSmartGroup": "New smart group",
+      "smart": "Smart group",
+      "smartHint": "Members are gathered by a rule automatically: a new employee who matches is added, one who stops matching leaves.",
+      "rule": {
+        "roles": "Roles",
+        "departments": "Departments",
+        "branches": "Branches",
+        "positions": "Positions",
+        "hint": "Pick at least one condition. Conditions of one kind combine with OR, of different kinds with AND.",
+        "summary": "Rule:",
+        "auto": "Members are gathered by the rule automatically"
       }
     }
   }
